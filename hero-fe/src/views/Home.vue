@@ -5,8 +5,8 @@
   </div>
 </template>
 
-<script setup>
-// No script logic needed for this simple page
+<script setup lang="ts">
+
 </script>
 
 <style scoped>

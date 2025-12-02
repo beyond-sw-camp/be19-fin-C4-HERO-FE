@@ -1,27 +1,23 @@
+<!-- src/components/layout/TheFooter.vue -->
 <template>
   <footer class="footer">
     <div class="footer__content">
-      <p>&copy; 2024 HERO Project. All rights reserved.</p>
-      <!-- TODO: Add footer links or information -->
+      <span>© 2025 HERO. All rights reserved.</span>
     </div>
   </footer>
 </template>
 
-<script setup>
-// No script logic needed for a simple placeholder
-</script>
+<script setup lang="ts"></script>
 
 <style scoped>
 .footer {
-  width: 100%;
-  padding: 2rem;
-  background-color: #343a40;
-  color: #f8f9fa;
-  text-align: center;
+  border-top: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  padding: 20px 32px;
 }
 
 .footer__content {
-  max-width: 1200px;
-  margin: 0 auto;
+  font-size: 12px;
+  color: #9ca3af;
 }
 </style>
