@@ -1,287 +1,482 @@
 <template>
-  <aside class="sidebar" :class="{ 'sidebar--collapsed': isCollapsed }">
-    <nav class="sidebar__nav">
-      <ul class="sidebar__menu">
+  <div :class="['sidebar-container', { collapsed: isCollapsed }]">
+    <div class="sidebar-wrapper">
+      <div class="menu-list-top">
+
         <!-- 대시보드 -->
-        <li
-          class="sidebar__item"
-          :class="{ 'sidebar__item--active': isActive('/') && route.path === '/' }"
-        >
-          <RouterLink to="/" class="sidebar__link">
-            <span class="sidebar__icon">📊</span>
-            <span v-if="!isCollapsed" class="sidebar__label">대시보드</span>
-          </RouterLink>
-        </li>
+        <div class="menu-item"
+             :class="{ 'active-parent': activeParent === 'dashboard' }"
+             @click="handleParentClick('dashboard')">
+          <div class="menu-content">
+            <div class="icon-wrapper">
+              <img class="dashboard-icon sidebar-icon" :src="getMenuIcon('dashboard')" />
+            </div>
+            <div class="menu-text">대시보드</div>
+          </div>
+        </div>
 
-        <!-- 근태관리  -->
-        <li
-          class="sidebar__item"
-          :class="{ 'sidebar__item--active': isActive('/attendance') }"
-        >
-          <RouterLink
-            to="/attendance"
-            class="sidebar__link sidebar__link--with-caret"
-          >
-            <span class="sidebar__icon">⏱</span>
-            <span v-if="!isCollapsed" class="sidebar__label">근태관리</span>
-            <span
-              v-if="!isCollapsed"
-              class="sidebar__caret"
-            >
-              ⌵
-            </span>
-          </RouterLink>
+        <!-- 근태관리 -->
+        <div class="menu-item has-dropdown"
+            :class="{ 'active-parent': activeParent === 'attendance' }"
+            @click="handleParentClick('attendance')">
+          <div class="menu-content">
+            <div class="icon-wrapper">
+              <img class="attendance-icon sidebar-icon" :src="getMenuIcon('attendance')" />
+            </div>
+            <div class="menu-text">근태관리</div>
+          </div>
+          <div class="dropdown-arrow" :class="{ rotate: isAttendanceOpen }">
+            <img class="attendance-dropdown-arrow" src="/images/dropdownArrow.png" />
+          </div>
+        </div>
 
-          <!-- 근태 서브 메뉴 (접혔을 땐 안보이게) -->
-          <ul v-if="!isCollapsed" class="sidebar__submenu">
-            <li>
-              <RouterLink
-                to="/attendance"
-                class="sidebar__submenu-link"
-                :class="{
-                  'sidebar__submenu-link--active': route.path === '/attendance'
-                }"
-              >
-                근태 기록
-              </RouterLink>
-            </li>
-            <li>
-           
-              <button class="sidebar__submenu-link">
-                근무 시간 변경
-              </button>
-            </li>
-          </ul>
-        </li>
+        <!-- 근태 하위 메뉴 -->
+        <div v-if="isAttendanceOpen && !isCollapsed" class="sub-menu-list">
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'attendanceRecord' }"
+              @click="handleSubMenuClick('attendanceRecord')">
+            <div class="sub-menu-text">근태 기록</div>
+          </div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'attendanceDept' }"
+              @click="handleSubMenuClick('attendanceDept')">
+            <div class="sub-menu-text">부서 근태 현황</div>
+          </div>
+        </div>
 
         <!-- 휴가/연차 -->
-        <li class="sidebar__item">
-          <button class="sidebar__link sidebar__link--with-caret">
-            <span class="sidebar__icon">📅</span>
-            <span v-if="!isCollapsed" class="sidebar__label">휴가/연차</span>
-            <span v-if="!isCollapsed" class="sidebar__caret">⌵</span>
-          </button>
-        </li>
+        <div class="menu-item has-dropdown"
+             :class="{ 'active-parent': activeParent === 'vacation' }"
+             @click="handleParentClick('vacation')">
+          <div class="menu-content">
+            <div class="icon-wrapper">
+              <img class="vacation-icon sidebar-icon" :src="getMenuIcon('vacation')" />
+            </div>
+            <div class="menu-text">휴가/연차</div>
+          </div>
+          <div class="dropdown-arrow">
+            <img class="vacation-dropdown-arrow" src="/images/dropdownArrow.png" />
+          </div>
+        </div>
+
+        <!-- 휴가/연차 하위 메뉴 -->
+        <div v-if="isVacationOpen && !isCollapsed" class="sub-menu-list">
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'vacationHistory' }"
+              @click="handleSubMenuClick('vacationHistory')">
+            <div class="sub-menu-text">휴가 이력</div>
+          </div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'vacationDept' }"
+              @click="handleSubMenuClick('vacationDept')">
+            <div class="sub-menu-text">부서 휴가 현황</div>
+          </div>
+        </div>
 
         <!-- 전자결재 -->
-        <li
-          class="sidebar__item"
-          :class="{ 'sidebar__item--active': isActive('/electronic-approval') }"
-        >
-          <RouterLink to="/electronic-approval" class="sidebar__link">
-            <span class="sidebar__icon">📄</span>
-            <span v-if="!isCollapsed" class="sidebar__label">전자결재</span>
-          </RouterLink>
-        </li>
+        <div class="menu-item has-dropdown"
+             :class="{ 'active-parent': activeParent === 'approval' }"
+             @click="handleParentClick('approval')">
+          <div class="menu-content">
+            <div class="icon-wrapper">
+              <img class="approval-icon sidebar-icon" :src="getMenuIcon('approval')" />
+            </div>
+            <div class="menu-text">전자결재</div>
+          </div>
+          <div class="dropdown-arrow" :class="{ rotate: isApprovalOpen }">
+            <img src="/images/dropdownArrow.png" />
+          </div>
+        </div>
+
+        <div v-if="isApprovalOpen && !isCollapsed" class="sub-menu-list">
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'form' }"
+               @click="handleSubMenuClick('form')">
+            <div class="sub-menu-text">결재문서서식</div>
+          </div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'archive' }"
+               @click="handleSubMenuClick('archive')">
+            <div class="sub-menu-text">결재문서함</div>
+          </div>
+        </div>
 
         <!-- 성과평가 -->
-        <li
-          class="sidebar__item"
-          :class="{ 'sidebar__item--active': isActive('/performance') }"
-        >
-          <RouterLink to="/performance" class="sidebar__link">
-            <span class="sidebar__icon">⭐</span>
-            <span v-if="!isCollapsed" class="sidebar__label">성과평가</span>
-          </RouterLink>
-        </li>
+        <div class="menu-item has-dropdown"
+             :class="{ 'active-parent': activeParent === 'evaluation' }"
+             @click="handleParentClick('evaluation')">
+          <div class="menu-content">
+            <div class="icon-wrapper">
+              <img class="evaluation-icon sidebar-icon" :src="getMenuIcon('evaluation')" />
+            </div>
+            <div class="menu-text">성과평가</div>
+          </div>
+          <div class="dropdown-arrow" :class="{ rotate: isEvaluationOpen }">
+            <img src="/images/dropdownArrow.png" />
+          </div>
+        </div>
 
-        <!-- 급여 -->
-        <li
-          class="sidebar__item"
-          :class="{ 'sidebar__item--active': isActive('/payroll') }"
-        >
-          <RouterLink
-            to="/payroll"
-            class="sidebar__link sidebar__link--with-caret"
-          >
-            <span class="sidebar__icon">💲</span>
-            <span v-if="!isCollapsed" class="sidebar__label">급여</span>
-            <span v-if="!isCollapsed" class="sidebar__caret">⌵</span>
-          </RouterLink>
-        </li>
-      </ul>
-    </nav>
+        <div v-if="isEvaluationOpen && !isCollapsed" class="sub-menu-list">
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'template' }"
+               @click="handleSubMenuClick('template')">
+            <div class="sub-menu-text">평가템플릿</div>
+          </div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'list' }"
+               @click="handleSubMenuClick('list')">
+            <div class="sub-menu-text">평가 목록</div>
+          </div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'guide' }"
+               @click="handleSubMenuClick('guide')">
+            <div class="sub-menu-text">평가 가이드</div>
+          </div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'teamDash' }"
+               @click="handleSubMenuClick('teamDash')">
+            <div class="sub-menu-text">팀 평가 대시보드</div>
+          </div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'deptDash' }"
+               @click="handleSubMenuClick('deptDash')">
+            <div class="sub-menu-text">부서별 역량 대시보드</div>
+          </div>
+        </div>
 
-    <!-- 하단 접기 버튼 -->
-    <div class="sidebar__bottom">
-      <button class="sidebar__collapse" @click="toggleSidebar">
-        <span class="sidebar__collapse-icon">
-          {{ isCollapsed ? '▶' : '◀' }}
-        </span>
-        <span v-if="!isCollapsed" class="sidebar__collapse-label">접기</span>
-      </button>
+        <!-- 인사 관리 -->
+        <div class="menu-item has-dropdown"
+            :class="{ 'active-parent': activeParent === 'personnel' }"
+            @click="handleParentClick('personnel')">
+          <div class="menu-content">
+            <div class="icon-wrapper">
+              <img class="personnel-icon sidebar-icon" :src="getMenuIcon('personnel')" />
+            </div>
+            <div class="menu-text">사원 관리</div>
+          </div>
+          <div class="dropdown-arrow" :class="{ rotate: isPersonnelOpen }">
+            <img class="personnel-dropdown-arrow" src="/images/dropdownArrow.png" />
+          </div>
+        </div>
+
+        <div v-if="isPersonnelOpen && !isCollapsed" class="sub-menu-list">
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'register' }"
+              @click="handleSubMenuClick('register')">
+            <div class="sub-menu-text">신규 사원 등록</div>
+          </div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'turnover' }"
+              @click="handleSubMenuClick('turnover')">
+            <div class="sub-menu-text">이직률</div>
+          </div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'plan' }"
+              @click="handleSubMenuClick('plan')">
+            <div class="sub-menu-text">승진 계획 등록</div>
+          </div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'recommend' }"
+              @click="handleSubMenuClick('recommend')">
+            <div class="sub-menu-text">승진 추천</div>
+          </div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'review' }"
+              @click="handleSubMenuClick('review')">
+            <div class="sub-menu-text">승진 심사</div>
+          </div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'special' }"
+              @click="handleSubMenuClick('special')">
+            <div class="sub-menu-text">특별 승진</div>
+          </div>
+        </div>
+
+        <!-- 조직도 -->
+        <div class="menu-item"
+             :class="{ 'active-parent': activeParent === 'organization' }"
+             @click="handleParentClick('organization')">
+          <div class="menu-content">
+            <div class="icon-wrapper">
+              <img class="organization-icon sidebar-icon" :src="getMenuIcon('organization')" />
+            </div>
+            <div class="menu-text">조직도</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 아래 유지 -->
+      <div class="menu-list-bottom">
+        <div class="admin-link" v-if="!isCollapsed">
+          <div class="icon-wrapper">
+            <img class="config-icon sidebar-icon" src="/images/config.svg" />
+          </div>
+          <div class="menu-text">관리자 페이지</div>
+        </div>
+
+        <div class="divider" v-if="!isCollapsed"></div>
+
+        <div class="collapse-item" @click="handleCollapse">
+          <div class="collapse-content">
+            <div class="icon-wrapper">
+              <img 
+                :src="isCollapsed ? '/images/spread.svg' : '/images/fold.svg'" 
+                alt="collapse-icon"
+              />
+            </div>
+            <div class="menu-text" v-if="!isCollapsed">접기</div>
+          </div>
+        </div>
+
+      </div>
     </div>
-  </aside>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { RouterLink, useRoute } from 'vue-router';
 
-const route = useRoute();
-const isCollapsed = ref(false);
+const activeParent = ref<string>('dashboard');
+const activeSubMenu = ref<string>('');
 
-const isActive = (basePath: string) => {
-  return route.path.startsWith(basePath);
+const isPersonnelOpen = ref<boolean>(false);
+const isEvaluationOpen = ref<boolean>(false);
+const isApprovalOpen = ref<boolean>(false);
+const isAttendanceOpen = ref<boolean>(false);
+const isVacationOpen = ref<boolean>(false);
+const isPayrollOpen = ref<boolean>(false);
+
+const isCollapsed = ref<boolean>(false);
+
+const menuIcons = {
+  dashboard: { default: '/images/dashboard.svg', active: '/images/dashboard-white.svg' },
+  attendance: { default: '/images/attendance.svg', active: '/images/attendance-white.svg' },
+  vacation: { default: '/images/vacation.svg', active: '/images/vacation-white.svg' },
+  approval: { default: '/images/approval.svg', active: '/images/approval-white.svg' },
+  evaluation: { default: '/images/evaluation.svg', active: '/images/evaluation-white.svg' },
+  personnel: { default: '/images/personnel.svg', active: '/images/personnel-white.svg' },
+  organization: { default: '/images/organization.svg', active: '/images/organization-white.svg' },
 };
 
-const toggleSidebar = () => {
+const getMenuIcon = (key: string) => {
+  return activeParent.value === key ? (menuIcons as any)[key].active : (menuIcons as any)[key].default;
+};
+
+const handleParentClick = (key: string) => {
+
+  if (isCollapsed.value) {
+    isCollapsed.value = false;
+  }
+
+  activeParent.value = key;
+
+  isPersonnelOpen.value = key === 'personnel' ? !isPersonnelOpen.value : false;
+  isEvaluationOpen.value = key === 'evaluation' ? !isEvaluationOpen.value : false;
+  isApprovalOpen.value = key === 'approval' ? !isApprovalOpen.value : false;
+  isAttendanceOpen.value = key === 'attendance' ? !isAttendanceOpen.value : false;
+  isVacationOpen.value = key === 'vacation' ? !isVacationOpen.value : false;
+  isPayrollOpen.value = key === 'payroll' ? !isPayrollOpen.value : false;
+};
+
+const handleSubMenuClick = (key: string) => {
+  activeSubMenu.value = key;
+};
+
+const handleCollapse = () => {
   isCollapsed.value = !isCollapsed.value;
+
+  if (isCollapsed.value) {
+   
+    isPersonnelOpen.value = false;
+    isEvaluationOpen.value = false;
+    isApprovalOpen.value = false;
+    isAttendanceOpen.value = false;
+    isVacationOpen.value = false;
+    isPayrollOpen.value = false;
+
+    activeParent.value = '';
+    activeSubMenu.value = '';
+  }
 };
+
+
 </script>
 
 <style scoped>
-.sidebar {
+.sidebar-container {
+  height: 100vh;
+  width: 230px;
+  background: white;
+  transition: width 0.3s ease;
+  overflow: hidden;
+}
+
+.sidebar-container.collapsed {
+  width: 60px;
+}
+
+.sidebar-wrapper {
+  height: 100%;
+  padding: 20px;
+  border-right: 2px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  width: 260px;
-  background-color: #ffffff;
-  border-right: 1px solid #eef0f4;
-  padding-top: 24px;
-  transition: width 0.2s ease;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* 접힌 상태 */
-.sidebar--collapsed {
-  width: 72px;
-}
-
-.sidebar__nav {
-  padding: 0 16px;
-  flex: 1;
-  overflow-y: auto;
-}
-
-.sidebar--collapsed .sidebar__nav {
-  padding: 0 8px;
-}
-
-.sidebar__menu {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.sidebar__item {
-  margin-bottom: 4px;
-}
-
-
-.sidebar__link {
-  width: 100%;
-  border: none;
-  background-color: transparent;
+.menu-list-top {
+  align-self: stretch;
   display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.menu-item {
+  align-self: stretch;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 11.25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.menu-item:not(.active-parent):not(.sub-menu-item):hover {
+  background-color: #f0f4f8;
+}
+
+.menu-content {
+  display: flex;
+  align-items: center;
+  gap: 13.5px;
+  flex: 1;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-container.collapsed .menu-text {
+  display: none;
+}
+
+.sidebar-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-wrapper {
+  width: 22.5px;
+  height: 22.5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.menu-text {
+  color: #45556c;
+  font-size: 13px;
+  font-family: Inter, sans-serif;
+  font-weight: 400;
+  line-height: 27px;
+}
+
+/* 하위 메뉴 */
+.sub-menu-list {
+  width: 100%;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-self: flex-end;
+}
+
+.sub-menu-item {
+  height: 40px;
+  margin-left: 10px;
+  padding: 10px;
+  border-radius: 11.25px;
+  background: white;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.sub-menu-item:hover {
+  background-color: #f0f4f8;
+}
+
+.sub-menu-text {
+  color: #62748e;
+  font-size: 12px;
+  font-family: Inter, sans-serif;
+  font-weight: 400;
+  line-height: 24px;
+  padding-left: 20px;
+}
+
+.sub-menu-item.active {
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
+}
+
+.sub-menu-item.active .sub-menu-text {
+  color: white;
+  font-weight: 700;
+}
+
+.dropdown-arrow.rotate img {
+  transform: rotate(180deg);
+  transition: transform 0.25s ease;
+}
+
+.active-parent {
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
+}
+
+.active-parent .menu-text {
+  color: white;
+}
+
+.menu-list-bottom {
+  height: 148px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
-  border-radius: 999px;
-  font-size: 14px;
-  color: #374151;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background-color 0.12s ease-out, color 0.12s ease-out,
-    box-shadow 0.12s ease-out;
+  align-self: stretch;
 }
 
-.sidebar--collapsed .sidebar__link {
-  justify-content: center;
-  padding: 10px 10px;
-}
-
-.sidebar__link:hover {
-  background-color: #f3f4ff;
-  color: #111827;
-}
-
-.sidebar__icon {
-  font-size: 16px;
-  width: 18px;
-  text-align: center;
-}
-
-.sidebar__label {
-  flex: 1;
-  text-align: left;
-}
-
-.sidebar__link--with-caret .sidebar__caret {
-  font-size: 10px;
-  color: #9ca3af;
-}
-
-
-.sidebar__item--active .sidebar__link {
-  background: linear-gradient(135deg, #06336f, #123c9c);
-  color: #ffffff;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.45);
-}
-
-.sidebar__item--active .sidebar__caret {
-  color: #e5e7eb;
-}
-
-
-.sidebar__submenu {
-  list-style: none;
-  margin: 4px 0 8px;
-  padding: 0 8px 0 42px;
+.admin-link {
+  padding: 10px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.sidebar__submenu-link {
-  width: 100%;
-  border: none;
-  background-color: transparent;
-  border-radius: 8px;
-  font-size: 13px;
-  padding: 6px 10px;
-  color: #4b5563;
-  text-align: left;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
   cursor: pointer;
-  text-decoration: none;
-  transition: background-color 0.12s ease-out, color 0.12s ease-out;
 }
 
-.sidebar__submenu-link:hover {
-  background-color: #e5edff;
-  color: #1f2937;
-}
-
-.sidebar__submenu-link--active {
-  background-color: #4f88ff;
-  color: #ffffff;
-}
-
-
-.sidebar__bottom {
-  padding: 12px 16px 20px;
-  border-top: 1px solid #eef0f4;
-}
-
-.sidebar--collapsed .sidebar__bottom {
-  padding: 12px 8px 20px;
-}
-
-.sidebar__collapse {
+.divider {
   width: 100%;
-  border-radius: 999px;
-  border: none;
-  background-color: #f3f4ff;
-  color: #4b5563;
-  padding: 8px 12px;
-  display: inline-flex;
+  height: 2px;
+  background-color: #e2e8f0;
+}
+
+.collapse-item {
+  align-self: stretch;
+  height: 48px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  font-size: 13px;
   cursor: pointer;
 }
 
-.sidebar__collapse-icon {
-  font-size: 11px;
+.collapse-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.sidebar-container.collapsed .menu-item,
+.sidebar-container.collapsed .sub-menu-item {
+  justify-content: center; /* 텍스트 없이 아이콘만 가운데 정렬 */
+  padding: 0;
+}
+
+.sidebar-container.collapsed .menu-content {
+  gap: 0; /* 아이콘만 남기기 */
+  justify-content: center;
+}
+
+.sidebar-container.collapsed .sub-menu-list {
+  display: none; /* 하위 메뉴 숨김 */
+}
+
+.sidebar-container.collapsed .dropdown-arrow {
+  display: none;
 }
 </style>
