@@ -38,8 +38,8 @@
     <div class="panel">
 
       <!-- 상단 탭 (라우터 탭으로 동작) -->
-      <!-- 개인 근태 이력 --> 
       <div class="panel-tabs">
+        <!-- 개인 근태 이력 --> 
         <RouterLink
           :to="{ name: 'AttendancePersonal' }"
           class="tab tab-left"
@@ -152,7 +152,6 @@
 import { RouterLink, useRoute } from "vue-router";
 
 const route = useRoute();
-
 const isActiveTab = (name: string) => route.name === name;
 
 interface AttendanceRow {

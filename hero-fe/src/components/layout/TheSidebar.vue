@@ -16,51 +16,45 @@
         </div>
 
         <!-- 근태관리  -->
-        <li
-          class="sidebar__item"
-          :class="{ 'sidebar__item--active': $route.path.startsWith('/attendance') }"
+        <div
+             class="menu-item has-dropdown"
+             :class="{
+                'active-parent':
+                  activeParent === 'attendance' || $route.path.startsWith('/attendance')
+             }"
+             @click="handleParentClick('attendance')"
         >
-          <RouterLink
-            to="/attendance" 
-            class="sidebar__link sidebar__link--with-caret"
+          <div class="menu-content">
+            <div class="icon-wrapper">
+              <img
+                class="attendance-icon sidebar-icon"
+                :src="getMenuIcon('attendance')"
+              />
+            </div>
+            <div class="menu-text">근태관리</div>
+          </div>
+          <div class="dropdown-arrow" :class="{rotate:isAttendanceOpen}">
+            <img src="/images/dropdownArrow.png" />
+          </div>
+        </div>
+
+        <!-- 근태관리 하위 메뉴 -->
+        <div v-if="isAttendanceOpen && !isCollapsed" class="sub-menu-list">
+          <div
+            class="sub-menu-item"
+            :class="{ active: activeSubMenu === 'attendanceRecord' }"
+            @click="handleSubMenuClick('attendanceRecord')"
           >
-            <span class="sidebar__icon">⏱</span>
-            <span v-if="!isCollapsed" class="sidebar__label">근태관리</span>
-            <span v-if="!isCollapsed"class="sidebar__caret">⌵</span>
-          </RouterLink>
-
-          <!-- 근태 서브 메뉴 (접혔을 땐 안보이게) -->
-          <ul v-if="!isCollapsed" class="sidebar__submenu">
-
-            <!-- 개인 근태 기록 디폴트 값-->
-            <li>
-              <RouterLink
-                to="/attendance/attendance_record/personal"
-                class="sidebar__submenu-link"
-                :class="{
-                  'sidebar__submenu-link--active': 
-                    $route.path.startsWith('/attendance/attendance_record')
-                }"
-              >
-                근태 기록
-              </RouterLink>
-            </li>
-
-            <!-- 부서 근태 현황 -->
-            <li>
-              <RouterLink
-                to="/attendance/department"
-                class="sidebar__submenu-link"
-                :class="{
-                  'sidebar__submenu-link--active':
-                    $route.path.startsWith('/attendance/department')
-                }"
-              >
-                부서 근태 현황   
-              </RouterLink>
-            </li>
-          </ul>
-        </li>
+            <div class="sub-menu-text">근태 기록</div>
+          </div>
+          <div
+            class="sub-menu-item"
+            :class="{ active: activeSubMenu === 'attendanceDept' }"
+            @click="handleSubMenuClick('attendanceDept')"
+          >
+            <div class="sub-menu-text">부서 근태 현황</div>
+          </div>
+        </div>
 
         <!-- 휴가/연차 -->
         <div class="menu-item has-dropdown"
@@ -239,7 +233,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
+const router = useRouter();
+const route = useRoute();
 const activeParent = ref<string>('dashboard');
 const activeSubMenu = ref<string>('');
 
@@ -284,6 +281,13 @@ const handleParentClick = (key: string) => {
 
 const handleSubMenuClick = (key: string) => {
   activeSubMenu.value = key;
+
+  // 근태 관리 하위 메뉴 라우팅
+  if(key === 'attendanceRecord') {
+    router.push('/attendance/attendance_record/personal');
+  } else if (key === 'attendanceDept'){
+    router.push('/attendance/department')
+  }
 };
 
 const handleCollapse = () => {
