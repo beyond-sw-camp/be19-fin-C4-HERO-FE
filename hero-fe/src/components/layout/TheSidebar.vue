@@ -218,7 +218,10 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
 import { ref } from 'vue';
+
+const router = useRouter();
 
 const activeParent = ref<string>('dashboard');
 const activeSubMenu = ref<string>('');
@@ -264,6 +267,10 @@ const handleParentClick = (key: string) => {
 
 const handleSubMenuClick = (key: string) => {
   activeSubMenu.value = key;
+
+  if (key === 'template') {
+    router.push('/evaluationtemplatelist');
+  }
 };
 
 const handleCollapse = () => {
@@ -288,7 +295,8 @@ const handleCollapse = () => {
 
 <style scoped>
 .sidebar-container {
-  height: 100vh;
+  height: 100%;
+  max-width: 100%;
   width: 230px;
   background: white;
   transition: width 0.3s ease;

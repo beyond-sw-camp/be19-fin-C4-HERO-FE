@@ -37,20 +37,26 @@ watch(
 
 <style scoped>
 #app {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: #f5f6fa;
+  overflow: hidden;
 }
 
 .layout-body {
   flex: 1;
   display: flex;
+  min-height: 0;              
+  overflow: hidden; 
 }
 
 .main-content {
   flex: 1;
-  padding: 24px;
-  background-color: #f5f6fa;
+  padding: 0px;
+  background: #f5f6fa;
+  height: 100%;               
+  min-height: 0;              
+  overflow-y: auto; 
 }
 </style>
