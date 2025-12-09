@@ -50,7 +50,7 @@ watch(
 
 .main-content {
   flex: 1;
-  padding: 24px;
-  background-color: #f5f6fa;
+    padding: 0px;
+    background: #F9FAFB;
 }
 </style>
