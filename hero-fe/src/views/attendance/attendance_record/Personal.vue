@@ -222,7 +222,7 @@ import { onMounted } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 
-import { useAttendanceStore } from '@/stores/attendanceStore';
+import { useAttendanceStore } from '@/stores/attendance/attendanceStore';
 
 // 4. Store & Router
 const attendanceStore = useAttendanceStore();
