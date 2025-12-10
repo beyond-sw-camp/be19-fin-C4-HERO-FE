@@ -281,6 +281,10 @@ const handleParentClick = (key: string) => {
 
 const handleSubMenuClick = (key: string) => {
   activeSubMenu.value = key;
+  if (key === 'template') {
+    router.push('/evaluationtemplatelist');
+  }
+
 
   // 근태 관리 하위 메뉴 라우팅
   if(key === 'attendanceRecord') {

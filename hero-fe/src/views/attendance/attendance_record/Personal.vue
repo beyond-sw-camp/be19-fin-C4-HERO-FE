@@ -91,57 +91,86 @@
       <!-- 테이블 영역 -->
       <div class="panel-table-wrapper">
         <div class="panel-table">
-          <table>
-            <thead>
-              <tr>
-                <th>날짜</th>
-                <th>상태</th>
-                <th>출근시간</th>
-                <th>퇴근시간</th>
-                <th>근무시간</th>
-                <th>근무제</th>
-                <th>결재양식 작성</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(row, index) in attendanceRows"
-                :key="row.date"
-                :class="{ 'row-striped': index % 2 === 1 }"
-              >
-                <td>{{ row.date }}</td>
-                <td>
-                  <span
-                    class="status-pill"
-                    :class="{
-                      'status-normal': row.status === '정상출근',
-                      'status-late': row.status === '지각'
-                    }"
-                  >
-                    {{ row.status }}
-                  </span>
-                </td>
-                <td>{{ row.startTime }}</td>
-                <td>{{ row.endTime }}</td>
-                <td>{{ row.workDuration }}</td>
-                <td>{{ row.shift }}</td>
-                <td>
-                  <button class="link-button">
-                    {{ row.requestLabel }}
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <table class="attendance-table">
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th>상태</th>
+              <th>출근시간</th>
+              <th>퇴근시간</th>
+              <th>근무시간</th>
+              <th>근무제</th>
+              <th>결재양식 작성</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr
+              v-for="(row, index) in store.personalList"
+              :key="row.attendanceId"
+              :class="{ 'row-striped': index % 2 === 1 }"
+            >
+              <td>{{ row.workDate }}</td>
+
+              <td>
+                <span
+                  class="status-pill"
+                  :class="{
+                    'status-normal': row.state === '정상',
+                    'status-late': row.state === '지각'
+                  }"
+                >
+                  {{ row.state }}
+                </span>
+              </td>
+
+              <td>{{ formatTime(row.startTime)}}</td>
+              <td>{{ formatTime(row.endTime) }}</td>
+
+              <td>{{ row.workDuration }}</td>
+
+              <td>{{ row.workSystemName }}</td>
+
+              <td>
+                <button class="link-button">
+                  근태 정정 / 초과 근무 신청
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table> 
+      </div>
 
         <!-- 페이지네이션 -->
         <div class="pagination">
-          <button class="page-button">이전</button>
-          <button class="page-button page-active">1</button>
-          <button class="page-button">2</button>
-          <button class="page-button">3</button>
-          <button class="page-button">다음</button>
+          <!-- 이전 -->
+          <button
+            class="page-button"
+            :disabled="store.currentPage === 1"
+            @click="goPage(store.currentPage - 1)"
+          >
+            이전
+          </button>
+
+          <!-- 숫자 버튼 -->
+          <button
+            v-for="page in store.totalPages"
+            :key="page"
+            class="page-button"
+            :class="{ 'page-active': page === store.currentPage }"
+            @click="goPage(page)"
+          >
+            {{ page }}
+          </button>
+
+          <!-- 다음 -->
+          <button
+            class="page-button"
+            :disabled="store.currentPage === store.totalPages"
+            @click="goPage(store.currentPage + 1)"
+          >
+            다음
+          </button>
         </div>
       </div>
     </div>
@@ -150,67 +179,25 @@
 
 <script lang="ts" setup>
 import { RouterLink, useRoute } from "vue-router";
+import { onMounted } from "vue";
+import { useAttendanceStore } from "@/stores/attendanceStore";
 
+const store = useAttendanceStore()
 const route = useRoute();
 const isActiveTab = (name: string) => route.name === name;
 
-interface AttendanceRow {
-  date: string;
-  status: "정상출근" | "지각";
-  startTime: string;
-  endTime: string;
-  workDuration: string;
-  shift: string;
-  requestLabel: string;
+onMounted(() => {
+  store.fetchPersonal(1)
+})
+
+function formatTime(time: string) {
+  return time ? time.substring(0, 5) : '';
 }
 
-const attendanceRows: AttendanceRow[] = [
-  {
-    date: "2025-12-01",
-    status: "정상출근",
-    startTime: "09:00",
-    endTime: "18:00",
-    workDuration: "8시간",
-    shift: "기본 근무제",
-    requestLabel: "근태 정정 / 초과 근무 신청",
-  },
-  {
-    date: "2025-11-30",
-    status: "지각",
-    startTime: "09:15",
-    endTime: "18:10",
-    workDuration: "7시간 55분",
-    shift: "기본 근무제",
-    requestLabel: "근태 정정 / 초과 근무 신청",
-  },
-  {
-    date: "2025-11-29",
-    status: "정상출근",
-    startTime: "08:55",
-    endTime: "18:05",
-    workDuration: "8시간 10분",
-    shift: "기본 근무제",
-    requestLabel: "근태 정정 / 초과 근무 신청",
-  },
-  {
-    date: "2025-11-28",
-    status: "정상출근",
-    startTime: "09:02",
-    endTime: "18:00",
-    workDuration: "7시간 58분",
-    shift: "기본 근무제",
-    requestLabel: "근태 정정 / 초과 근무 신청",
-  },
-  {
-    date: "2025-11-27",
-    status: "정상출근",
-    startTime: "09:00",
-    endTime: "18:30",
-    workDuration: "8시간 30분",
-    shift: "기본 근무제",
-    requestLabel: "근태 정정 / 초과 근무 신청",
-  },
-];
+function goPage(page: number) {
+  if (page < 1 || page > store.totalPages) return
+  store.fetchPersonal(page)
+}
 </script>
 
 <style scoped>
@@ -406,11 +393,11 @@ tbody tr.row-striped {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 60px;
+  min-width: auto;
   height: 24px;
   border-radius: 999px;
   font-size: 12px;
-  padding: 0 12px;
+  padding: 0 4px;
 }
 
 .status-normal {
@@ -459,4 +446,28 @@ tbody tr.row-striped {
   color: #ffffff;
   border-color: #155dfc;
 }
+
+.attendance-table thead tr {
+  background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
+}
+
+.attendance-table th {
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 16px;
+  text-align: left;
+}
+
+.attendance-table td {
+  padding: 16px;
+  font-size: 14px;
+  color: #62748e;
+  border-top: 0.67px solid #e2e8f0;
+}
+
+.attendance-table tbody tr.row-striped {
+  background: #f8fafc;
+}
+
 </style>
