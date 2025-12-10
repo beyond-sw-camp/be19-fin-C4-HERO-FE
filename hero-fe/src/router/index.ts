@@ -7,6 +7,7 @@ import electronicApprovalRoutes from './modules/electronicApproval';
 import payrollRoutes from './modules/payroll';
 import evaluationRoutes from './modules/evaluation';
 import personnelRoutes from './modules/personnel';
+import notificationRoutes from './modules/notification';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -19,6 +20,7 @@ const routes: RouteRecordRaw[] = [
   ...payrollRoutes,
   ...evaluationRoutes,
   ...personnelRoutes,
+  ...notificationRoutes
 ];
 
 const router = createRouter({
