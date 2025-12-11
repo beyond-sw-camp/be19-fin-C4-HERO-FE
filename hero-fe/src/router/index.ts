@@ -10,6 +10,9 @@ import { setupAuthGuard } from './guard'; // guard.ts에서 setupAuthGuard 함�
 import personnelRoutes from './modules/personnel';
 import authRoutes from './modules/auth';
 
+import notificationRoutes from './modules/notification';
+
+
 const routes: RouteRecordRaw[] = [
   ...authRoutes,
   {
@@ -25,6 +28,7 @@ const routes: RouteRecordRaw[] = [
   ...payrollRoutes,
   ...evaluationRoutes,
   ...personnelRoutes,
+  ...notificationRoutes
 ];
 
 const router = createRouter({

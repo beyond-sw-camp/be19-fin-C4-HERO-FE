@@ -1,3 +1,18 @@
+<!-- 
+ <pre>
+ Vue Name: Header
+ Description: 공통 헤더 컴포넌트 - 로고, 알림, 세션 타이머, 사용자 프로필 표시
+ 
+ History
+ 2025/12/08 (동근) 최초 작성 
+ 2025/12/09 (승민) 헤더 사이즈 조정
+ 2025/12/10 (혜원) 알림 페이지 라우팅 기능 추가
+ </pre>
+ 
+ @author 동근
+ @version 1.2 
+ -->
+
 <template>
   <div class="header-container">
     <div class="logo-area">
@@ -8,7 +23,8 @@
 
     <div class="right-area">
       <div class="right-content">
-        <div class="icon-box">
+         <!-- 알림 버튼 클릭 이벤트 추가 -->
+        <div class="icon-box" @click="goToNotifications">
           <div class="folder-wrap">
             <div class="folder-icon">
               <img class="alarm" src="/images/alarm.png" />
@@ -44,6 +60,16 @@
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const goToNotifications = () => {
+  router.push('/notifications')
+}
+</script>
 
 <style scoped>
 .header-container {
@@ -105,7 +131,15 @@
   display: inline-flex;
   flex-direction: column;
   align-items: flex-end;
+  cursor: pointer; /* 알림 클릭 가능하다는 표시 */
+  transition: background-color 0.2s; /* 알림을 위한 부드러운 효과 */
 }
+
+/* 알림 호버 효과 추가 */
+.icon-box:hover {
+  background-color: #F8FAFC;
+}
+
 
 .folder-wrap {
   height: 22.5px;

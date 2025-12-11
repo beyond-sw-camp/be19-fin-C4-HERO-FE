@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@toast-ui/editor": "^3.2.2",
     "axios": "^1.13.2",
     "chart.js": "^4.4.3",
     "html2pdf.js": "^0.10.1",

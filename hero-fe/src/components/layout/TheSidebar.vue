@@ -85,12 +85,12 @@
         </div>
 
         <div v-if="isApprovalOpen && !isCollapsed" class="sub-menu-list">
-          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'form' }"
-               @click="handleSubMenuClick('form')">
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'document-templates' }"
+               @click="handleSubMenuClick('document-templates')">
             <div class="sub-menu-text">결재문서서식</div>
           </div>
-          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'archive' }"
-               @click="handleSubMenuClick('archive')">
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'inbox' }"
+               @click="handleSubMenuClick('inbox')">
             <div class="sub-menu-text">결재문서함</div>
           </div>
         </div>
@@ -218,9 +218,12 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
 import { ref } from 'vue';
 
-const activeParent = ref<string>('dashboard');
+const router = useRouter();
+
+const activeParent = ref<string>('');
 const activeSubMenu = ref<string>('');
 
 const isPersonnelOpen = ref<boolean>(false);
@@ -264,6 +267,16 @@ const handleParentClick = (key: string) => {
 
 const handleSubMenuClick = (key: string) => {
   activeSubMenu.value = key;
+
+  if (key === 'template') {
+    router.push('/evaluation/template/list');
+  }else if (key === 'guide') {
+    router.push('/evaluation/guide/list');
+  } else if (key === 'document-templates') {
+    router.push('/approval/document-templates');
+  } else if (key === 'inbox') {
+    router.push('/approval/inbox');
+  }
 };
 
 const handleCollapse = () => {
@@ -288,11 +301,21 @@ const handleCollapse = () => {
 
 <style scoped>
 .sidebar-container {
-  height: 100vh;
+  height: 100%;
+  max-width: 100%;
   width: 230px;
   background: white;
   transition: width 0.3s ease;
-  overflow: hidden;
+  overflow-y: auto;
+  /* IE, Edge (구버전) */
+  -ms-overflow-style: none;
+    /* Firefox */
+  scrollbar-width: none;
+}
+
+/* sidebar 내 스크롤 바 숨기는 CSS */
+.sidebar-container::-webkit-scrollbar {
+    display: none;
 }
 
 .sidebar-container.collapsed {
