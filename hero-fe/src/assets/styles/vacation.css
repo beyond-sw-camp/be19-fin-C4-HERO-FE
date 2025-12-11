@@ -1,0 +1,562 @@
+/* -----------------------------------------------------------
+   1. GLOBAL LAYOUT & RESET
+   ----------------------------------------------------------- */
+* {
+  box-sizing: border-box;
+}
+
+.vacation-form-wrapper {
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.paper-sheet {
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.paper-padding {
+  padding: 36px 50px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  align-items: center;
+  width: 100%;
+}
+
+.paper-content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+}
+
+/* -----------------------------------------------------------
+   2. TYPOGRAPHY & COMMON UTILS
+   ----------------------------------------------------------- */
+.label-text, .value-text, .stamp-role-label, .approver-name, .approver-rank, .input-text {
+  font-family: "Inter-Regular", sans-serif;
+  font-weight: 400;
+}
+
+.label-text {
+  color: #45556c;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.value-text, .approver-name, .input-text {
+  color: #0f172b;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/* -----------------------------------------------------------
+   3. TITLE SECTION
+   ----------------------------------------------------------- */
+.title-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.title-row {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-title {
+  color: #0f172b;
+  text-align: center;
+  font-family: "Inter-Regular", sans-serif;
+  font-size: 30px;
+  line-height: 36px;
+  letter-spacing: 0.4px;
+  margin: 0;
+}
+
+/* -----------------------------------------------------------
+   4. TOP SECTION (INFO & STAMPS)
+   ----------------------------------------------------------- */
+.top-section {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap; /* 반응형 대응 */
+  width: 100%;
+}
+
+/* 왼쪽: 기본 정보 테이블 스타일 */
+.info-table {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+  min-width: 300px;
+}
+
+.info-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+}
+.info-row.last-row {
+  border-bottom: none;
+}
+
+.th-cell {
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  padding: 10px 18px;
+  width: 140px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.td-cell {
+  padding: 10px 18px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* 오른쪽: 결재 도장 스타일 */
+.stamp-area {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 2;
+  min-width: 320px;
+}
+
+.stamp-group {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.stamp-box {
+  border: 0.67px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 100px;
+  overflow: hidden;
+}
+
+.stamp-header {
+  background: #f8fafc;
+  width: 100%;
+  padding: 5px 0;
+  display: flex;
+  justify-content: center;
+}
+.stamp-role-label {
+  color: #90a1b9;
+  font-size: 12px;
+}
+
+.stamp-body {
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  height: 100px;
+  justify-content: center;
+}
+
+.approver-info {
+  display: flex;
+  gap: 10px;
+}
+.approver-rank {
+  color: #62748e;
+  font-size: 12px;
+}
+
+.stamp-signature {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.stamp-signature.approved {
+  border: 2px solid #fb2c36;
+}
+.stamp-signature.pending {
+  border: 0.67px solid #cad5e2;
+  border-radius: 4px;
+}
+
+.status-approved {
+  color: #e7000b;
+  font-size: 12px;
+}
+.status-pending {
+  color: #90a1b9;
+  font-size: 12px;
+}
+
+.stamp-footer {
+  background: #f8fafc;
+  width: 100%;
+  padding: 7px 0;
+  display: flex;
+  justify-content: center;
+}
+.stamp-date {
+  color: #90a1b9;
+  font-size: 12px;
+}
+
+
+/* -----------------------------------------------------------
+   5. MAIN FORM SECTION
+   ----------------------------------------------------------- */
+.main-form-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px 14px 0 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.form-row {
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap; /* 반응형 */
+}
+
+.row-label {
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  padding: 16px;
+  width: 140px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  align-self: stretch; /* 높이 꽉 채우기 */
+}
+
+.row-content {
+  padding: 16px 20px;
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  width: 100%;
+}
+.input-text {
+  font-size: 16px;
+}
+
+/* 결재선 흐름 영역 */
+.flow-content {
+  gap: 15px;
+}
+.approval-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  align-items: center;
+}
+
+.flow-card {
+  border: 0.7px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  width: 165px;
+  height: 92px;
+  position: relative;
+  flex-shrink: 0;
+}
+.card-inner {
+  display: flex;
+  gap: 12px;
+}
+.avatar-circle {
+  width: 32px;
+  height: 32px;
+  background: #1c398e;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.avatar-text {
+  color: #fff;
+  font-size: 16px;
+}
+.card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.detail-row {
+  display: flex;
+  font-size: 11px;
+  color: #62748e;
+}
+.detail-name {
+  color: #0f172b;
+  font-size: 13px;
+}
+.btn-delete {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.flow-arrow {
+  width: 24px;
+  height: 24px;
+}
+.add-card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+.add-icon {
+  font-size: 40px;
+  color: #62748e;
+}
+
+/* 첨부파일 영역 */
+.file-content {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.file-upload-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  background: #fff;
+}
+.hidden-file-input {
+  display: none;
+}
+.icon-upload {
+  width: 16px;
+  height: 16px;
+}
+.upload-label {
+  color: #62748e;
+  font-size: 14px;
+}
+.desc-text {
+  color: #90a1b9;
+  font-size: 12px;
+}
+
+/* 참조 영역 */
+.ref-content {
+  gap: 20px;
+}
+.ref-input-area {
+  flex: 1;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 41px;
+}
+.btn-ref-add {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 5px;
+  background: #fff;
+  cursor: pointer;
+  min-width: 95px;
+}
+.btn-text-sm {
+  font-size: 14px;
+}
+
+
+/* -----------------------------------------------------------
+   6. DETAIL FORM SECTION
+   ----------------------------------------------------------- */
+.detail-form-section {
+  border: 1px solid #e2e8f0;
+  border-top: none; /* 위쪽 보더는 main-form과 겹치지 않게 */
+  border-radius: 0 0 14px 14px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.section-header {
+  border-bottom: 0.67px solid #e2e8f0;
+  display: flex;
+}
+
+.section-body {
+  padding: 20px;
+  flex: 1;
+}
+
+.input-group-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.col-type { width: 208px; }
+.col-period { flex: 1; min-width: 300px; }
+
+.group-label {
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-box {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+}
+.placeholder-text {
+  font-size: 16px;
+  color: #0a0a0a;
+}
+.icon-dropdown {
+  width: 18px;
+}
+
+.date-range-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.date-input {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+.tilde {
+  color: #90a1b9;
+  font-size: 16px;
+}
+
+/* 사유 영역 */
+.border-top {
+  border-top: 1px solid #e2e8f0;
+}
+.reason-content {
+  flex-direction: column;
+  padding: 0; /* 내부 컨테이너에 패딩 위임 혹은 제거 */
+}
+.textarea-box {
+  padding: 16px;
+  height: 200px;
+  width: 100%;
+}
+.text-line {
+  min-height: 24px;
+}
+
+/* -----------------------------------------------------------
+   7. BUTTONS
+   ----------------------------------------------------------- */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  padding-bottom: 20px;
+}
+
+.btn-secondary {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 14px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 8px 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-text {
+  color: #62748e;
+  font-size: 16px;
+}
+
+.btn-text-white {
+  color: #ffffff;
+  font-size: 16px;
+}

@@ -1,4 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router';
+import WriteDocument from '@/views/electronicApproval/write/WriteDocument.vue';
 
 const electronicApprovalRoutes: RouteRecordRaw[] = [
   {
@@ -16,7 +17,7 @@ const electronicApprovalRoutes: RouteRecordRaw[] = [
   {
     path: '/approval/write/:formName', 
     name: 'WriteDocument',
-    component: () => import('@/views/electronicApproval/write/WriteDocument.vue'),
+    component: WriteDocument,
     props: true, 
     meta: { title: '기안 작성' }
   }

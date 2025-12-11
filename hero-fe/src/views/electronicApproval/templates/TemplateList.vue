@@ -88,6 +88,7 @@
 // 1. Import 구문
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import WriteDocument from '../write/WriteDocument.vue';
 
 // 2. Types 정의 (내부 사용 타입이므로 별도 파일 분리 전까지 여기서 정의)
 interface FormItem {
@@ -109,9 +110,11 @@ const rawForms = ref<FormItem[]>([
   { id: 2, title: '승진계획서', name: 'promotionplan', category: '인사', bookmarking: false },
   { id: 3, title: '사직서', name: 'resign', category: '인사', bookmarking: false },
   { id: 4, title: '휴가신청서', name: 'vacation', category: '휴가', bookmarking: true },
-  { id: 5, title: '근무기록수정신청서', name: 'modifyworkrecord', category: '근태', bookmarking: true },
+  { id: 5, title: '근태기록수정신청서', name: 'modifyworkrecord', category: '근태', bookmarking: true },
   { id: 6, title: '근무변경신청서', name: 'changework', category: '근태', bookmarking: true },
   { id: 7, title: '초과근무신청서', name: 'overtime', category: '근태', bookmarking: false },
+  { id: 9, title: '급여조정신청서', name: 'modifypayroll', category: '급여', bookmarking: false,},
+  { id: 10, title: '급여인상신청서', name: 'raisepayroll', category: '급여', bookmarking: false,},
 ]);
 
 // 5. Computed 속성
@@ -167,6 +170,8 @@ const getCategoryIcon = (category: string): string => {
       return '/images/vacation.svg';
     case '근태':
       return '/images/attendance.svg';
+    case '급여':
+      return '/images/payroll.svg';
     default:
       return '/images/default.svg';
   }
@@ -189,8 +194,11 @@ const toggleBookmark = (id: number) => {
  * @param {FormItem} form - 선택된 양식 객체
  */
 const handleCardClick = (form: FormItem) => {
-  // console.log('선택된 양식:', form.name);
-  router.push(`/approval/write/${form.name}`);
+  console.log('선택된 양식:', form.name);
+  router.push({
+    name: 'WriteDocument',
+    params: {formName: form.name}
+  });
 };
 </script>
 

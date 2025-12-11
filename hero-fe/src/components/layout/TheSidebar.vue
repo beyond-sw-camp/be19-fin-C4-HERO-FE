@@ -306,16 +306,6 @@ const handleCollapse = () => {
   width: 230px;
   background: white;
   transition: width 0.3s ease;
-  overflow-y: auto;
-  /* IE, Edge (구버전) */
-  -ms-overflow-style: none;
-    /* Firefox */
-  scrollbar-width: none;
-}
-
-/* sidebar 내 스크롤 바 숨기는 CSS */
-.sidebar-container::-webkit-scrollbar {
-    display: none;
 }
 
 .sidebar-container.collapsed {
@@ -330,6 +320,16 @@ const handleCollapse = () => {
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
+  overflow-y: auto;
+  /* IE, Edge (구버전) */
+  -ms-overflow-style: none;
+  /* Firefox */
+  scrollbar-width: none;
+}
+
+/* 크롬 등 다양한 브라우저 */
+.sidebar-wrapper::-webkit-scrollbar {
+    display: none;
 }
 
 .menu-list-top {

@@ -37,6 +37,6 @@ const router = createRouter({
 });
 
 // 라우터 인스턴스에 인증 가드 설정
-setupAuthGuard(router);
+// setupAuthGuard(router);
 
 export default router;

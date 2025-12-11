@@ -2,7 +2,8 @@
   <div class="page-wrapper">
     <div class="page-header">
         <div class="header-inner">
-            <button class="btn-back">
+            <button class="btn-back"
+                    @click="backToList()">
                 <img class="icon-arrow" src="/images/arrow.svg" alt="화살표"/>
                 <div class="back-label-wrap">
                     <div class="back-label">목록으로</div>
@@ -29,8 +30,7 @@
     <div class="page-body">
         <div class="form-wrapper">
             <div class="form-container">
-                <!-- <Changework/> -->
-                 <Vacation/>
+                <component :is="currentForm"></component>
             </div>
         </div>
 
@@ -39,8 +39,45 @@
 </template>
 
 <script setup lang="ts">
-import Changework from './Changework.vue';
-import Vacation from './Vacation.vue';
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { 
+  Vacation, 
+  Changework, 
+  Overtime, 
+  ModifyWorkRecord, 
+  PersonnelAppointment, 
+  PromotionPlan, 
+  Resign,
+  RaisePayroll,
+  ModifyPayroll, 
+} from './forms';
+
+const router = useRouter();
+
+const backToList = () => {
+    router.push('/approval/document-templates');
+};
+
+const props  = defineProps<{
+    formName: string
+}>();
+
+const componentMap: Record<string, any> = {
+    vacation: Vacation,
+    changework: Changework,
+    overtime: Overtime,
+    modifyworkrecord: ModifyWorkRecord,
+    personnelappointment: PersonnelAppointment,
+    promotionplan: PromotionPlan,
+    resign:Resign,
+    raisepayroll: RaisePayroll,
+    modifypayroll: ModifyPayroll,
+};
+
+const currentForm = computed(() => {
+    return componentMap[props.formName]    
+});
 </script>
 
 <style scoped>
@@ -209,7 +246,6 @@ import Vacation from './Vacation.vue';
     flex-direction: column;
     min-height: 0;
     overflow-y: auto;
-
 }
 
 .form-wrapper {
