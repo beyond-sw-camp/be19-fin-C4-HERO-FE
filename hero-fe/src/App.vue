@@ -1,13 +1,18 @@
 <template>
   <div id="app">
-    <TheHeader />
-    <div class="layout-body">
-      <TheSidebar />
-      <main class="main-content">
-        <router-view />
-      </main>
-    </div>
-    <TheFooter />
+    <template v-if="!route.meta.hiddenLayout">
+      <TheHeader />
+      <div class="layout-body">
+        <TheSidebar />
+        <main class="main-content">
+          <router-view />
+        </main>
+      </div>
+      <TheFooter />
+    </template>
+    <template v-else>
+      <router-view />
+    </template>
   </div>
 </template>
 
@@ -31,7 +36,7 @@ watch(
   () => route.fullPath,
   () => {
     session.refreshSession();
-  }
+  },
 );
 </script>
 
