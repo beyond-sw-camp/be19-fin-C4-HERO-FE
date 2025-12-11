@@ -21,8 +21,8 @@
  * </pre>
  *
  * @module app-root
- * @author 동근
- * @version 1.2
+ * @author 승건
+ * @version 1.3
 -->
 
 

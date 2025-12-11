@@ -14,7 +14,7 @@
  * @author 동근
  * @version 1.0
  */
-import client from '@/api/client';
+import client from '@/api/apiClient';
 
 import type {
     MyPaySummary,
