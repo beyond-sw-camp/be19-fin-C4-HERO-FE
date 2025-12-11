@@ -29,7 +29,7 @@ export interface PersonalDTO {
 /**
  * 개인 근태 이력 페이지 응답 DTO
  */
-export interface PersonalPageResponse {
+export interface PageResponse<T> {
   items: PersonalDTO[];
   page: number;
   size: number;
@@ -95,7 +95,7 @@ export const useAttendanceStore = defineStore('attendanceStore', {
       this.currentPage = page;
 
       try {
-        const response = await axios.get<PersonalPageResponse>(
+        const response = await axios.get<PageResponse<PersonalDTO>>(
           '/api/attendance/personal',
           {
             params: {

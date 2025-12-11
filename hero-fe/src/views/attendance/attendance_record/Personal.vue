@@ -581,7 +581,8 @@ tbody tr.row-striped {
 .search-button-group {
   display: flex;
   align-items: center;
-  gap: 6px;             
+  gap: 6px;
+  padding-bottom: 2px;          
 }
 
 /* 날짜 필터 그룹 */
