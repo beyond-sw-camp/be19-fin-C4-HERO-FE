@@ -155,7 +155,7 @@ const template = ref<any>(null);
  */
 const getTemplateDetail = async () => {
   const res = await axios.get(
-    `http://localhost:8080/api/public/evaluation-template/select/${templateId}`
+    `http://localhost:8080/api/eval/evaluation-template/select/${templateId}`
   );
   template.value = res.data;
 };
@@ -253,7 +253,7 @@ onMounted(() => {
 
 .header {
   width: 100%;
-  height: 60px;
+  height: 50px;
   background: white;
   padding: 20px;
   border-bottom: 2px solid #E2E8F0;
