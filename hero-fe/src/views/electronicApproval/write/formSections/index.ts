@@ -1,0 +1,9 @@
+export { default as VacationSection } from './VacationSection.vue';
+export { default as OvertimeSection } from './OvertimeSection.vue';
+export { default as ChangeWorkSection } from './ChangeWorkSection.vue';
+export { default as ModifyWorkRecordSection } from './ModifyWorkRecordSection.vue';
+export { default as PersonnelAppointmentSection } from './PersonnelAppointmentSection.vue';
+export { default as PromotionPlanSection } from './PromotionPlanSection.vue';
+export { default as ResignSection } from './ResignSection.vue';
+export { default as RaisePayrollSection } from './RaisePayrollSection.vue';
+export { default as ModifyPayrollSection } from './ModifyPayrollSection.vue';
