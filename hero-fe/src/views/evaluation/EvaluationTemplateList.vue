@@ -17,8 +17,8 @@
     <div class="inner-wrapper">
       <div class="content-box">
         <div class="header">
-          <button class="btn-new">
-            <span @click="createTemplate">+ 새 템플릿 작성</span>
+          <button class="btn-new" @click="createTemplate">
+            + 새 템플릿 작성
           </button>
         </div>
 
@@ -100,7 +100,7 @@ interface EvaluationTemplateResponseDTO {
   evaluationTemplateEmployeeName: string
   evaluationTemplateDepartmentId: number
   evaluationTemplateDepartmentName: string
-  evaluationTemplatePosition: number
+  evaluationTemplateGradeId: number
   evaluationTemplateGrade: string
   evaluationTemplateType: number
   evaluationPeriodEvaluationPeriodId: number
@@ -122,7 +122,7 @@ const selectEvaluationTemplateList = async (): Promise<void> => {
   try {
     loading.value = true
     const res = await axios.get<EvaluationTemplateResponseDTO[]>(
-      'http://localhost:8080/api/public/evaluation-template/selectall'
+      'http://localhost:8080/api/eval/evaluation-template/selectall'
     )
     evaluationTemplates.value = res.data
   } catch (error) {
@@ -147,7 +147,7 @@ const formatDate = (dateString: string): string => {
  * 설명 : 평가 템플릿 생성 페이지로 이동하는 메소드
  */
 const createTemplate = () => {
-    router.push('/createevaluationtemplate')
+    router.push('/evaluation/template/create')
 }
 
 /**
@@ -155,7 +155,7 @@ const createTemplate = () => {
  * @param {number} templateId - 평가 템플릿 pk 
  */
 const goToDetail = (templateId: number) => {
-  router.push(`/evaluationtemplate/${templateId}`);
+  router.push(`/evaluation/template/${templateId}`);
 };
 
 /**

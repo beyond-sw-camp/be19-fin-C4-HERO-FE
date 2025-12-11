@@ -41,22 +41,20 @@
           <div class="form-item">
             <label>생성자</label>
             <input 
-                class="input employee-input" 
-                type="text" 
-                placeholder="이름 입력" 
-                v-model="creator"
+              class="input employee-input" 
+              type="text" 
+              v-model="creator",
+              readonly
             />
           </div>
           <div class="form-item">
             <label>생성부서</label>
-            <select class="input department-input" v-model="departmentName">
-              <option>부서 선택</option>
-              <option>개발1팀</option>
-              <option>개발2팀</option>
-              <option>개발3팀</option>
-              <option>인사팀</option>
-              <option>마케팅팀</option>
-            </select>
+            <input 
+              class="input department-input" 
+              type="text"
+              v-model="departmentName"
+              readonly
+            />  
           </div>
         </div>
 
@@ -81,7 +79,7 @@
 
         <!-- 평가 유형 -->
         <div class="form-item">
-          <label>평가 유형</label>
+          <h3 class="sub-title">평가 유형</h3>
           <select class="input" v-model="evaluationType">
             <option :value="1">성과평가</option>
             <option :value="2">능력평가</option>
@@ -321,7 +319,7 @@ const saveTemplate = async () => {
     };
 
     const response = await axios.post(
-      "http://localhost:8080/api/public/evaluation-template/create",
+      "http://localhost:8080/api/eval/evaluation-template/create",
       payload
     );
 
@@ -379,7 +377,7 @@ const goBack = () => router.back();
 
 .header {
   width: 100%;
-  height: 60px;
+  height: 50px;
   background: white;
   padding: 20px;
   border-bottom: 2px solid #E2E8F0;
@@ -395,7 +393,7 @@ const goBack = () => router.back();
 }
 
 .title {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
   color: #0F172B;
 }
@@ -425,13 +423,6 @@ const goBack = () => router.back();
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
-}
-
-.section-title {
-  text-align: center;
-  font-size: 24px;
-  color: #0F172B;
-  font-weight: 600;
 }
 
 .sub-title {
@@ -515,6 +506,7 @@ const goBack = () => router.back();
 .section-title {
   flex: 1;
   margin-left: 16px;
+  text-align: center;
   font-size: 18px;
   font-weight: 600;
   color: #1c398e;

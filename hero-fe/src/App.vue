@@ -57,6 +57,8 @@ watch(
   background: #f5f6fa;
   height: 100%;               
   min-height: 0;              
-  overflow-y: auto; 
+  overflow-y:hidden;
+  display: flex;
+  flex-direction: column;
 }
 </style>
