@@ -24,6 +24,7 @@ import electronicApprovalRoutes from './modules/electronicApproval';
 import payrollRoutes from './modules/payroll';
 import evaluationRoutes from './modules/evaluation';
 import personnelRoutes from './modules/personnel';
+import notificationRoutes from './modules/notification';
 
 // 전체 애플리케이션 라우트 정의
 const routes: RouteRecordRaw[] = [
@@ -37,6 +38,7 @@ const routes: RouteRecordRaw[] = [
   ...payrollRoutes,
   ...evaluationRoutes,
   ...personnelRoutes,
+  ...notificationRoutes
 ];
 
 const router = createRouter({

@@ -1,17 +1,18 @@
 <!-- 
   <pre>
   Vue Name   : TheHeader.vue
-  Description : 상단 공통 헤더 컴포넌트
+  Description : 공통 헤더 컴포넌트 - 로고, 알림, 세션 타이머, 사용자 프로필 표시
  
   History
   2025/11/28 - 승건 최초 작성
   2025/12/02 - 동근 헤더 레이아웃 및 스타일링 수정 & js->ts 변환
   2025/12/08 - 승민 헤더 레이아웃 디자인 최종 수정
-  2025/12/09 - 동근 로고 클릭 시 대시보드 이동 기능 추가, 로그인 세션 남은 시간 표시 & JSDoc 추가
+  2025/12/10 - 혜원 알림 페이지 라우팅 기능 추가
+  2025/12/11 - 동근 로고 클릭 시 대시보드 이동 기능 추가, 로그인 세션 남은 시간 표시 & JSDoc 추가
   </pre>
  
   @author 동근
-  @version 1.3
+  @version 1.4
  -->
 <template>
   <div class="header-container">
@@ -25,7 +26,8 @@
     <!-- 우측 영역 : 알림, 로그인 세션, 프로필 정보  -->
     <div class="right-area">
       <div class="right-content">
-        <div class="icon-box">
+         <!-- 알림 버튼 클릭 이벤트 추가 -->
+        <div class="icon-box" @click="goToNotifications">
           <div class="folder-wrap">
             <div class="folder-icon">
               <img class="alarm" src="/images/alarm.png" />
@@ -78,6 +80,11 @@ const goDashboard = () => {
   router.push('/');
 };
 
+// 알림 아이콘 클릭 시 알림 페이지로 이동
+const goToNotifications = () => {
+  router.push('/notifications')
+}
+
 // 남은 세션 시간 포맷팅 (MM:SS)
 const formattedTime = computed(() => {
   const minutes = Math.floor(session.remainingSeconds / 60)
@@ -86,6 +93,9 @@ const formattedTime = computed(() => {
   const seconds = (session.remainingSeconds % 60).toString().padStart(2, '0');
   return `${minutes}:${seconds}`;
 });
+
+
+
 
 </script>
 
@@ -150,7 +160,15 @@ const formattedTime = computed(() => {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-end;
+  cursor: pointer; /* 알림 클릭 가능하다는 표시 */
+  transition: background-color 0.2s; /* 알림을 위한 부드러운 효과 */
 }
+
+/* 알림 호버 효과 추가 */
+.icon-box:hover {
+  background-color: #F8FAFC;
+}
+
 
 .folder-wrap {
   height: 22.5px;
