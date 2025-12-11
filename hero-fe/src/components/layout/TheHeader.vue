@@ -2,17 +2,18 @@
   <pre>
   Vue Name   : TheHeader.vue
   Description : 공통 헤더 컴포넌트 - 로고, 알림, 세션 타이머, 사용자 프로필 표시
- 
+
   History
   2025/11/28 - 승건 최초 작성
   2025/12/02 - 동근 헤더 레이아웃 및 스타일링 수정 & js->ts 변환
   2025/12/08 - 승민 헤더 레이아웃 디자인 최종 수정
   2025/12/10 - 혜원 알림 페이지 라우팅 기능 추가
+  2025/12/11 - 승건 프로필 드롭다운 및 로그아웃 기능 추가
   2025/12/11 - 동근 로고 클릭 시 대시보드 이동 기능 추가, 로그인 세션 남은 시간 표시 & JSDoc 추가
   </pre>
  
   @author 동근
-  @version 1.4
+  @version 1.5
  -->
 <template>
   <div class="header-container">
@@ -50,16 +51,23 @@
 
         <div class="divider"></div>
 
+
         <!-- 사용자 프로필 정보 -->
-        <div class="profile-box">
-          <div class="profile-icon">K</div>
-          <div class="profile-info">
-            <!-- 현재 하드 코딩해서 사용중, 후에 변경-->
-            <div class="profile-name">김히어로 대리</div>
-            <div class="profile-team">애플리케이션 개발3팀</div>
+        <div v-if="user" class="profile-container">
+          <div class="profile-box" @click="toggleDropdown">
+            <div class="profile-icon">{{ user.employeeName?.charAt(0) }}</div>
+            <div class="profile-info">
+              <div class="profile-name">{{ user.employeeName }} {{ user.gradeName }}</div>
+              <div class="profile-team">{{ user.departmentName }}</div>
+            </div>
+            <div class="arrow-box">
+              <img class="arrow-icon" :class="{ 'rotate': isDropdownOpen }" src="/images/dropdownArrow.png" />
+            </div>
           </div>
-          <div class="arrow-box">
-            <img class="arrow-icon" src="/images/dropdownArrow.png" />
+          <!-- 드롭다운 메뉴 -->
+          <div v-if="isDropdownOpen" class="profile-dropdown">
+            <div class="dropdown-item" @click="goToMyPage">마이페이지</div>
+            <div class="dropdown-item" @click="handleLogout">로그아웃</div>
           </div>
         </div>
       </div>
@@ -68,12 +76,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useSessionStore } from '@/stores/session';
+
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+//세션 관리
+import { useSessionStore } from '@/stores/session';
+//인증 관리
+import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
 const session = useSessionStore(); // 로그인 세션 관리하는 Pinia 스토어
+
+//인증 스토어
+const authStore = useAuthStore();
+const { user } = storeToRefs(authStore);
+
+const isDropdownOpen = ref(false);
+
 
 // 메인 로고 버튼 클릭 시 대시보드 이동
 const goDashboard = () => {
@@ -94,9 +114,26 @@ const formattedTime = computed(() => {
   return `${minutes}:${seconds}`;
 });
 
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
 
+const goToMyPage = () => {
+  // TODO: 마이페이지 라우트가 정의되면 활성화
+  // router.push('/my-page');
+  console.log('마이페이지로 이동');
+  isDropdownOpen.value = false; // 클릭 후 드롭다운 닫기
+};
 
+const handleLogout = async () => {
+  // 스토어의 logout 액션을 호출하고 완료될 때까지 기다립니다.
+  await authStore.logout();
 
+  isDropdownOpen.value = false; // 클릭 후 드롭다운 닫기
+
+  // 상태가 모두 초기화된 후, 로그인 페이지로 이동합니다.
+  router.push('/login');
+};
 </script>
 
 <style scoped>
@@ -162,6 +199,10 @@ const formattedTime = computed(() => {
   align-items: flex-end;
   cursor: pointer; /* 알림 클릭 가능하다는 표시 */
   transition: background-color 0.2s; /* 알림을 위한 부드러운 효과 */
+}
+
+.profile-container {
+  position: relative; /* 드롭다운 메뉴의 기준점 */
 }
 
 /* 알림 호버 효과 추가 */
@@ -277,6 +318,10 @@ const formattedTime = computed(() => {
   display: flex;
   gap: 10px;
   align-items: center;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 12px;
+  transition: background-color 0.2s;
 }
 
 .profile-icon {
@@ -317,5 +362,39 @@ const formattedTime = computed(() => {
 .arrow-icon {
   width: 20px;
   height: 15px;
+}
+
+.arrow-icon.rotate {
+  transform: rotate(180deg);
+}
+
+.arrow-icon {
+  transition: transform 0.3s ease;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: 100%; /* profile-box 바로 아래에 위치 */
+  right: 0;
+  margin-top: 8px;
+  width: 160px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #f1f3f5;
 }
 </style>

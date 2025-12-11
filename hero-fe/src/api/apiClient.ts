@@ -17,7 +17,7 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'ax
 import { useAuthStore } from '@/stores/auth';
 
 // 1. 기본 API 설정
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 const apiClient: AxiosInstance = axios.create({
     baseURL: BASE_URL,
@@ -41,7 +41,7 @@ apiClient.interceptors.request.use(
 
         // 로그인이나 토큰 갱신 요청에는 토큰을 첨부하지 않음
         // 실제 사용하는 URL 경로로 수정해야 합니다.
-        if (config.url?.includes('/api/auth/login') || config.url?.includes('/api/auth/refresh')) {
+        if (config.url?.includes('/auth/login') || config.url?.includes('/auth/refresh')) {
             return config;
         }
 
