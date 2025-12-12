@@ -1,6 +1,6 @@
 /**
  * <pre>
- * TypeScript Name : payrollStore.ts
+ * TypeScript Name : payrollMeStore.ts
  * Description     : 급여(Payroll) 도메인의 Pinia Store (프론트 상태 + API 연동)
  *
  * Responsibility

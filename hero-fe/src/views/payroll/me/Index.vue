@@ -178,7 +178,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { usePayrollStore } from '@/stores/payrollStore';
+import { usePayrollStore } from '@/stores/payroll/payrollMeStore';
 import AccountModal from '@/views/payroll/me/BankAccountModal.vue';
 import PayslipModal from '@/views/payroll/me/PayslipModal.vue';
 

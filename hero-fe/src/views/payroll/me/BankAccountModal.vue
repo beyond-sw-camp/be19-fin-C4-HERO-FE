@@ -147,7 +147,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { usePayrollStore } from '@/stores/payrollStore';
+import { usePayrollStore } from '@/stores/payroll/payrollMeStore';
 import type { BankAccount, MyPaySummary } from '@/types/payroll/payroll.me';
 
 /**

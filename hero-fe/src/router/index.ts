@@ -21,7 +21,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import Home from '@/views/Home.vue';
 import attendanceRoutes from './modules/attendance';
 import electronicApprovalRoutes from './modules/electronicApproval';
-import payrollRoutes from './modules/payroll';
+import payrollRoutes from './modules/payrollMe';
 import evaluationRoutes from './modules/evaluation';
 import { setupAuthGuard } from './guard'; // guard.ts에서 setupAuthGuard 함수 임포트
 import personnelRoutes from './modules/personnel';
