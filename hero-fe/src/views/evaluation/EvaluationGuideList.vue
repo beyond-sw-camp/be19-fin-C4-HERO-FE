@@ -69,7 +69,7 @@
 <!--script-->
 <script setup lang="ts">
 //Import 구문
-import axios from "axios"
+import apiClient from "@/api/apiClient"
 import { ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
 
@@ -102,8 +102,8 @@ const selectEvaluationGuideList = async (): Promise<void> => {
   try {
     loading.value = true
 
-    const res = await axios.get<EvaluationGuideResponseDTO[]>(
-      "http://localhost:8080/api/evaluation/evaluation-guide/selectall"
+    const res = await apiClient.get<EvaluationGuideResponseDTO[]>(
+      "/evaluation/evaluation-guide/selectall"
     )
 
     evaluationGuides.value = res.data

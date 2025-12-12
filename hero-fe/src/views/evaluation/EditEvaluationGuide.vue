@@ -64,7 +64,7 @@
 // Import 구문
 import { ref, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import axios from "axios"
+import apiClient from "@/api/apiClient"
 
 // TOAST UI Editor
 import Editor from "@toast-ui/editor"
@@ -118,8 +118,8 @@ const updateGuide = async () => {
   }
 
   try {
-    await axios.put(
-      "http://localhost:8080/api/evaluation/evaluation-guide/update",
+    await apiClient.put(
+      "/evaluation/evaluation-guide/update",
       payload
     )
 
@@ -147,8 +147,8 @@ onMounted(async () => {
   guideId.value = Number(paramId)
 
   try {
-    const res = await axios.get(
-      `http://localhost:8080/api/evaluation/evaluation-guide/select/${guideId.value}`
+    const res = await apiClient.get(
+      `/evaluation/evaluation-guide/select/${guideId.value}`
     )
 
     const data = res.data

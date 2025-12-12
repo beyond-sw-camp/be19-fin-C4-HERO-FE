@@ -138,7 +138,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import axios from "axios";
+import apiClient from "@/api/apiClient";
 
 // useRouter()를 router 변수로 정의, useRoute()를 route 변수로 정의 (외부 로직)
 const route = useRoute();
@@ -154,8 +154,8 @@ const template = ref<any>(null);
  * 설명 : 평가 템플릿 상세 데이터 조회 메소드
  */
 const getTemplateDetail = async () => {
-  const res = await axios.get(
-    `http://localhost:8080/api/evaluation/evaluation-template/select/${templateId}`
+  const res = await apiClient.get(
+    `/evaluation/evaluation-template/select/${templateId}`
   );
   template.value = res.data;
 };
@@ -190,8 +190,8 @@ const deleteTemplate = async () => {
   if (!confirmDelete) return;
 
   try {
-    await axios.delete(
-      `http://localhost:8080/api/public/evaluation-template/delete/${templateId}`
+    await apiClient.delete(
+      `/evaluation/evaluation-template/delete/${templateId}`
     );
 
     alert("평가 템플릿이 삭제되었습니다.");

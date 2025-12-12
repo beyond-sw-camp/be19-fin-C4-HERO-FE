@@ -173,7 +173,7 @@
 <script setup lang="ts">
 // Import 구문
 import { ref } from "vue";
-import axios from "axios";
+import apiClient from "@/api/apiClient";
 import { useRouter } from "vue-router";
 
 // useRouter()를 router 변수로 정의 (외부 로직)
@@ -318,8 +318,8 @@ const saveTemplate = async () => {
       }
     };
 
-    const response = await axios.post(
-      "http://localhost:8080/api/evaluation/evaluation-template/create",
+    const response = await apiClient.post(
+      "/evaluation/evaluation-template/create",
       payload
     );
 

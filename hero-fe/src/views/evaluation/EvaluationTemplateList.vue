@@ -65,7 +65,7 @@
 
 <!--script-->
 <script setup lang="ts">
-import axios from 'axios'
+import apiClient from '@/api/apiClient';
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router';
 
@@ -121,8 +121,8 @@ const errorMessage = ref<string>('')
 const selectEvaluationTemplateList = async (): Promise<void> => {
   try {
     loading.value = true
-    const res = await axios.get<EvaluationTemplateResponseDTO[]>(
-      'http://localhost:8080/api/evaluation/evaluation-template/selectall'
+    const res = await apiClient.get<EvaluationTemplateResponseDTO[]>(
+      '/evaluation/evaluation-template/selectall'
     )
     evaluationTemplates.value = res.data
   } catch (error) {

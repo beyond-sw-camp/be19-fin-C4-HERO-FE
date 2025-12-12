@@ -80,7 +80,7 @@
 // Import 구문
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import apiClient from '@/api/apiClient'
 import Editor from "@toast-ui/editor"
 import "@toast-ui/editor/dist/toastui-editor.css"
 
@@ -127,8 +127,8 @@ const saveGuide = async () => {
         evaluationGuideDepartmentId: departmentId.value
     }
 
-    const response = await axios.post(
-        "http://localhost:8080/api/evaluation/evaluation-guide/create",
+    const response = await apiClient.post(
+        "/evaluation/evaluation-guide/create",
         payload
     )
 

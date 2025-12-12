@@ -64,7 +64,7 @@
 //Import 구문
 import { ref, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import axios from "axios"
+import apiClient from "@/api/apiClient"
 import "@toast-ui/editor/dist/toastui-editor.css"
 
 // 외부 로직
@@ -105,8 +105,8 @@ const deleteGuide = async (): Promise<void> => {
   if (!confirmDelete) return
 
   try {
-    await axios.delete(
-      `http://localhost:8080/api/evaluation/evaluation-guide/delete/${guideId.value}`
+    await apiClient.delete(
+      `/evaluation/evaluation-guide/delete/${guideId.value}`
     )
 
     alert("평가 가이드가 삭제되었습니다.")
@@ -133,8 +133,8 @@ onMounted(async (): Promise<void> => {
 
     guideId.value = Number(paramId)
 
-    const response = await axios.get(
-      `http://localhost:8080/api/evaluation/evaluation-guide/select/${guideId.value}`
+    const response = await apiClient.get(
+      `/evaluation/evaluation-guide/select/${guideId.value}`
     )
 
     const data = response.data

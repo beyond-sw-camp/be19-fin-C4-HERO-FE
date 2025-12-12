@@ -156,7 +156,7 @@
 //Import 구문
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import axios from "axios";
+import apiClient from "@/api/apiClient";
 
 //외부 로직
 const route = useRoute();
@@ -203,8 +203,8 @@ interface TemplateItem {
  * 설명: 마운트 시, 평가 가이드 데이터 조회 및 수정 데이터 변수 초기화
  */
 onMounted(async () => {
-  const res = await axios.get(
-    `http://localhost:8080/api/evaluation/evaluation-template/select/${templateId}`
+  const res = await apiClient.get(
+    `/evaluation/evaluation-template/select/${templateId}`
   );
 
   const data = res.data;
@@ -347,8 +347,8 @@ const updateTemplate = async () => {
       deletedCriteriaIds: deletedCriteriaIds.value
     };
 
-    await axios.put(
-      "http://localhost:8080/api/evaluation/evaluation-template/update",
+    await apiClient.put(
+      "/evaluation/evaluation-template/update",
       payload
     );
 
