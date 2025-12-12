@@ -32,29 +32,43 @@
           </div>
         </div>
 
-        <!-- 근태관리 -->
-        <div class="menu-item has-dropdown"
-            :class="{ 'active-parent': activeParent === 'attendance' }"
-            @click="handleParentClick('attendance')">
+        <!-- 근태관리  -->
+        <div
+             class="menu-item has-dropdown"
+             :class="{
+                'active-parent':
+                  activeParent === 'attendance' || $route.path.startsWith('/attendance')
+             }"
+             @click="handleParentClick('attendance')"
+        >
           <div class="menu-content">
             <div class="icon-wrapper">
-              <img class="attendance-icon sidebar-icon" :src="getMenuIcon('attendance')" />
+              <img
+                class="attendance-icon sidebar-icon"
+                :src="getMenuIcon('attendance')"
+              />
             </div>
             <div class="menu-text">근태관리</div>
           </div>
-          <div class="dropdown-arrow" :class="{ rotate: isAttendanceOpen }">
-            <img class="attendance-dropdown-arrow" src="/images/dropdownArrow.png" />
+          <div class="dropdown-arrow" :class="{rotate:isAttendanceOpen}">
+            <img src="/images/dropdownArrow.png" />
           </div>
         </div>
 
-        <!-- 근태 하위 메뉴 -->
+        <!-- 근태관리 하위 메뉴 -->
         <div v-if="isAttendanceOpen && !isCollapsed" class="sub-menu-list">
-          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'attendanceRecord' }"
-              @click="handleSubMenuClick('attendanceRecord')">
+          <div
+            class="sub-menu-item"
+            :class="{ active: activeSubMenu === 'attendanceRecord' }"
+            @click="handleSubMenuClick('attendanceRecord')"
+          >
             <div class="sub-menu-text">근태 기록</div>
           </div>
-          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'attendanceDept' }"
-              @click="handleSubMenuClick('attendanceDept')">
+          <div
+            class="sub-menu-item"
+            :class="{ active: activeSubMenu === 'attendanceDept' }"
+            @click="handleSubMenuClick('attendanceDept')"
+          >
             <div class="sub-menu-text">부서 근태 현황</div>
           </div>
         </div>
@@ -335,8 +349,8 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
 import { ref } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
 
@@ -413,7 +427,6 @@ const handleParentClick = (key: string) => {
  */
 const handleSubMenuClick = (key: string) => {
   activeSubMenu.value = key;
-
   if (key === 'template') {
     router.push('/evaluation/template/list');
   }else if (key === 'guide') {
@@ -425,6 +438,14 @@ const handleSubMenuClick = (key: string) => {
   }
 
 
+  // 근태 관리 하위 메뉴 라우팅
+  if(key === 'attendanceRecord') {
+    router.push('/attendance/attendance_record/personal');
+  } else if (key === 'attendanceDept'){
+    router.push('/attendance/department')
+  }
+
+
   // 급여(사원)
   if (key === 'myPayroll') {
     router.push('/payroll');              // 내 급여
@@ -433,21 +454,21 @@ const handleSubMenuClick = (key: string) => {
     }
       
   // 급여관리(관리자)
-if (key === 'dashboard') {
+if (key === 'payrollAdminDash') {
   router.push('/payroll/admin');                 // 급여 대시보드
-} else if (key === 'batch') {
+} else if (key === 'payrollBatch') {
   router.push('/payroll/admin/batch');           // 월별 급여 배치
-} else if (key === 'adjust') {
+} else if (key === 'payrollAdjust') {
   router.push('/payroll/admin/adjust');          // 급여 조정
-} else if (key === 'employeeSearch') {
+} else if (key === 'payrollSearch') {
   router.push('/payroll/admin/search');          // 사원 급여 조회
-} else if (key === 'paymentHistory') {
+} else if (key === 'payrollPaymentHistory') {
   router.push('/payroll/admin/payment-history'); // 지급 이력
-} else if (key === 'items') {
+} else if (key === 'payrollItems') {
   router.push('/payroll/admin/items');           // 급여 항목 관리
-} else if (key === 'report') {
+} else if (key === 'payrollReport') {
   router.push('/payroll/admin/report');          // 급여 보고서
-} else if (key === 'policy') {
+} else if (key === 'payrollPolicy') {
   router.push('/payroll/admin/policy');          // 급여 정책/설정 관리
 }
 };

@@ -1,3 +1,4 @@
+
 /*
     <pre>
     (File=>TypeScript) Name   : guard.ts
