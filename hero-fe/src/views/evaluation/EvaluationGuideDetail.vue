@@ -19,9 +19,10 @@
         <h1 class="title">평가 가이드 상세 페이지</h1>
       </div>
 
-      <button class="btn-remove" @click="deleteGuide">
-        <span>삭제</span>
-      </button>
+      <div class="btn-container">
+        <button class="btn-edit" @click="goToEdit">수정</button>
+        <button class="btn-remove" @click="deleteGuide">삭제</button>
+      </div>
     </div>
 
     <div class="content">
@@ -85,6 +86,13 @@ const goBack = () => {
 }
 
 /**
+ * 설명: 평가 가이드 수정 페이지로 이동하는 메소드
+ */
+const goToEdit = () => {
+  router.push(`/evaluation/guide/edit/${guideId.value}`);
+};
+
+/**
  * 설명 : 평가 템플릿 제거 메소드
  */
 const deleteGuide = async (): Promise<void> => {
@@ -98,7 +106,7 @@ const deleteGuide = async (): Promise<void> => {
 
   try {
     await axios.delete(
-      `http://localhost:8080/api/eval/evaluation-guide/delete/${guideId.value}`
+      `http://localhost:8080/api/evaluation/evaluation-guide/delete/${guideId.value}`
     )
 
     alert("평가 가이드가 삭제되었습니다.")
@@ -126,7 +134,7 @@ onMounted(async (): Promise<void> => {
     guideId.value = Number(paramId)
 
     const response = await axios.get(
-      `http://localhost:8080/api/eval/evaluation-guide/select/${guideId.value}`
+      `http://localhost:8080/api/evaluation/evaluation-guide/select/${guideId.value}`
     )
 
     const data = response.data
@@ -150,13 +158,19 @@ onMounted(async (): Promise<void> => {
   flex-direction: column;
   width: 100%;
   background: #f5f6fa;
+  min-height: 0;
+  flex: 1;       
+  height: 100%;
 }
 
 .content {
   width: 100%;
   padding: 24px;
-  display: flex;
+  display: block;
   justify-content: center;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .form-box {
@@ -261,11 +275,11 @@ onMounted(async (): Promise<void> => {
 }
 
 .employee-input {
-  width: 400px;
+  width: 550px;
 }
 
 .department-input {
-  width: 420px;
+  width: 550px;
 }
 
 .back-icon {
@@ -284,7 +298,16 @@ label {
   padding: 10px 24px;
   border-radius: 10px;
   border: none;
+  cursor: pointer; 
+}
+
+.btn-edit {
+  background: #4b89dc;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: none;
   cursor: pointer;
-  
+  margin-right: 10px;
 }
 </style>

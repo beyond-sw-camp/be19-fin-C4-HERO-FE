@@ -103,7 +103,7 @@ const selectEvaluationGuideList = async (): Promise<void> => {
     loading.value = true
 
     const res = await axios.get<EvaluationGuideResponseDTO[]>(
-      "http://localhost:8080/api/eval/evaluation-guide/selectall"
+      "http://localhost:8080/api/evaluation/evaluation-guide/selectall"
     )
 
     evaluationGuides.value = res.data

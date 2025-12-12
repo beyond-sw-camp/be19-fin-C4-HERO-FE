@@ -122,7 +122,7 @@ const selectEvaluationTemplateList = async (): Promise<void> => {
   try {
     loading.value = true
     const res = await axios.get<EvaluationTemplateResponseDTO[]>(
-      'http://localhost:8080/api/eval/evaluation-template/selectall'
+      'http://localhost:8080/api/evaluation/evaluation-template/selectall'
     )
     evaluationTemplates.value = res.data
   } catch (error) {

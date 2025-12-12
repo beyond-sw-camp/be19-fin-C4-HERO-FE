@@ -270,7 +270,7 @@ const handleSubMenuClick = (key: string) => {
 
   if (key === 'template') {
     router.push('/evaluation/template/list');
-  }else if (key === 'guide') {
+  } else if (key === 'guide') {
     router.push('/evaluation/guide/list');
   } else if (key === 'document-templates') {
     router.push('/approval/document-templates');

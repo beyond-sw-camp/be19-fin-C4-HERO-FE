@@ -319,7 +319,7 @@ const saveTemplate = async () => {
     };
 
     const response = await axios.post(
-      "http://localhost:8080/api/eval/evaluation-template/create",
+      "http://localhost:8080/api/evaluation/evaluation-template/create",
       payload
     );
 
@@ -354,13 +354,19 @@ const goBack = () => router.back();
   flex-direction: column;
   width: 100%;
   background: #f5f6fa;
+  min-height: 0;
+  flex: 1;       
+  height: 100%;
 }
 
 .content {
   width: 100%;
   padding: 24px;
-  display: flex;
+  display: block;
   justify-content: center;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .form-box {

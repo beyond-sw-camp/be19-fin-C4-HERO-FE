@@ -21,9 +21,10 @@
         <h1 class="title">평가 템플릿 상세</h1>
       </div>
 
-      <button class="btn-remove" @click="deleteTemplate">
-        <span>삭제</span>
-      </button>
+      <div class="btn-container">
+        <button class="btn-edit" @click="goToEdit">수정</button>
+        <button class="btn-remove" @click="deleteTemplate">삭제</button>
+      </div>
     </div>
 
     <!--평가 템플릿 세부 페이지 내용-->
@@ -128,7 +129,6 @@
             </div>
           </section>
         </div>
-
       </div>
     </div>
   </div>
@@ -155,7 +155,7 @@ const template = ref<any>(null);
  */
 const getTemplateDetail = async () => {
   const res = await axios.get(
-    `http://localhost:8080/api/eval/evaluation-template/select/${templateId}`
+    `http://localhost:8080/api/evaluation/evaluation-template/select/${templateId}`
   );
   template.value = res.data;
 };
@@ -176,6 +176,13 @@ const formatDate = (date: string | null) => {
 const goBack = () => router.back();
 
 /**
+ * 설명 : 수정 페이지로 이동
+ */
+const goToEdit = () => {
+  router.push(`/evaluation/template/edit/${templateId}`);
+};
+
+/**
  * 설명 : 평가 템플릿 제거 메소드
  */
 const deleteTemplate = async () => {
@@ -188,7 +195,7 @@ const deleteTemplate = async () => {
     );
 
     alert("평가 템플릿이 삭제되었습니다.");
-    router.back(); // ✅ 삭제 후 이전 페이지로 이동
+    router.back(); 
 
   } catch (error) {
     console.error("삭제 실패:", error);
@@ -230,13 +237,19 @@ onMounted(() => {
   flex-direction: column;
   width: 100%;
   background: #f5f6fa;
+  min-height: 0;
+  flex: 1;       
+  height: 100%;
 }
 
 .content {
   width: 100%;
   padding: 24px;
-  display: flex;
+  display: block;
   justify-content: center; 
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .form-box {
@@ -281,6 +294,16 @@ onMounted(() => {
   border-radius: 10px;
   border: none;
   cursor: pointer;
+}
+
+.btn-edit {
+  background: #4b89dc;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  margin-right: 10px;
 }
 
 .form-item {
@@ -560,5 +583,10 @@ label {
 
 .back-icon {
     cursor: pointer;
+}
+
+.btn-container {
+  display:flex; 
+  gap:10px;
 }
 </style>
