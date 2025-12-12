@@ -432,6 +432,7 @@ const formatTime = (time?: string | null): string => {
   display: flex;
   align-items: center;
   gap: 6px;
+  padding-bottom: 2px;
 }
 
 /* 날짜 필터 그룹 */
