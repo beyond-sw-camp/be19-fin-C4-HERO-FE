@@ -1,3 +1,31 @@
+<!--
+ * <pre>
+ * Vue Name        : App.vue
+ * Description     : HERO 프론트엔드 최상위 레이아웃 컴포넌트
+ *
+ * 기능
+ *  - 공통 헤더 / 사이드바 / 푸터 레이아웃 구성
+ *  - 페이지 전환 시 세션 타이머 갱신 (SessionStore 연동)
+ *
+ * Layout
+ *  - 헤더(TheHeader) : 상단 공통 네비게이션 영역
+ *  - 사이드바(TheSidebar) : 좌측 도메인 메뉴
+ *  - 메인(main-content) : 라우터 뷰 영역 (페이지 컨텐츠)
+ *  - 푸터(TheFooter) : 하단 공통 정보 영역
+ *
+ * History
+ *   2025/11/28 - 승건 최초 작성
+ *   2025/12/08 - 승민 레이아웃 디자인 수정
+ *   2025/12/10 - 민철 main-content 스타일 수정
+ *   2025/12/11 - 동근 세션 타이머 연동 추가
+ * </pre>
+ *
+ * @module app-root
+ * @author 승건
+ * @version 1.3
+-->
+
+
 <template>
   <div id="app">
     <template v-if="!route.meta.hiddenLayout">
@@ -24,14 +52,17 @@ import { onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useSessionStore } from "@/stores/session";
 
+
+// 현재 라우트 및 세션 스토어 (route.fullPath 변화를 감지하여 세션을 연장)
 const route = useRoute();
 const session = useSessionStore();
 
+// 최초 진입 시 세션 타이머 시작됨
 onMounted(() => {
   session.startSession();
 });
 
-// 페이지 전환 될 때 세션 갱신
+// 페이지 전환 될 때 세션 갱신 (사용자가 화면 이동하면 세션 시간 초기화)
 watch(
   () => route.fullPath,
   () => {
@@ -39,6 +70,12 @@ watch(
   },
 );
 </script>
+
+<style>
+html {
+  font-size: 14px;
+}
+</style>
 
 <style scoped>
 #app {

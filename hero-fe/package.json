@@ -9,13 +9,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docs": "typedoc --entryPointStrategy expand --out docs src"
   },
   "dependencies": {
     "@toast-ui/editor": "^3.2.2",
     "axios": "^1.13.2",
     "chart.js": "^4.4.3",
-    "html2pdf.js": "^0.10.1",
+    "html2pdf.js": "^0.10.3",
     "jwt-decode": "^4.0.0",
     "pinia": "^2.1.7",
     "vue": "^3.5.25",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "@types/node": "^20.19.25",
     "@vitejs/plugin-vue": "^6.0.2",
+    "typedoc": "^0.28.15",
     "typescript": "^5.9.3",
     "vite": "^7.2.4",
     "vite-plugin-vue-devtools": "^8.0.5",

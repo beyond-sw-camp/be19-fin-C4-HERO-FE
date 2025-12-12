@@ -88,7 +88,7 @@ const handleLogin = async () => {
   }
 
   try {
-    const response = await apiClient.post('/api/auth/login', {
+    const response = await apiClient.post('/auth/login', {
       account: account.value,
       password: password.value,
     });

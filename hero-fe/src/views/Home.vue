@@ -1,3 +1,4 @@
+<!-- 대시보드 페이지 -->
 <template>
   <div class="home">
     <h2>Welcome to HERO</h2>

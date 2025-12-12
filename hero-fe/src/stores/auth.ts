@@ -47,7 +47,7 @@ export const useAuthStore = defineStore('auth', () => {
     const user = ref<JwtPayload | null>(null);
 
     // 게터 (Getters): 인증 여부를 쉽게 확인할 수 있는 계산된 속성입니다.
-    const isAuthenticated = computed(() => 
+    const isAuthenticated = computed(() =>
         !!accessToken.value && !!user.value);
 
     // 액션 (Actions)
@@ -61,7 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
     function login(token: string) {
         try {
             // const decoded = jwtDecode<JwtPayload>(token);
-            
+
             accessToken.value = token;
             user.value = jwtDecode<JwtPayload>(token);
         } catch (error) {
@@ -78,7 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
         // 서버에 로그아웃을 요청하여 서버 측 세션/토큰을 무효화합니다.
         try {
             const apiClient = (await import('@/api/apiClient')).default;
-            await apiClient.post('/api/auth/logout');
+            await apiClient.post('/auth/logout');
             console.log('서버 로그아웃 요청 성공');
         } catch (error) {
             console.error('서버 로그아웃 요청 실패:', error);
@@ -99,8 +99,8 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             // apiClient를 함수 내에서 동적으로 가져와 순환 참조 문제를 방지합니다.
             const apiClient = (await import('@/api/apiClient')).default;
-            
-            const response = await apiClient.post('/api/auth/refresh');
+
+            const response = await apiClient.post('/auth/refresh');
 
             // 응답 본문에 새로운 액세스 토큰이 있는지 확인합니다.
             const newAccessToken = response.data?.data?.accessToken;
@@ -116,6 +116,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    
+
     return { accessToken, user, isAuthenticated, login, logout, refresh };
 });

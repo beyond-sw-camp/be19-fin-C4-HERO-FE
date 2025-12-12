@@ -3,7 +3,6 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-
     "strict": true,
     "jsx": "preserve",
     "useDefineForClassFields": true,
@@ -11,14 +10,17 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-
     "allowJs": true,
     "checkJs": false,
-
-    "lib": ["ESNext", "DOM"],
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "src/*"
+      ]
     }
   },
   "include": [

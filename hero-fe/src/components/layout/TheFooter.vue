@@ -1,4 +1,16 @@
-<template>
+<!-- 
+  <pre>
+  Vue Name   : TheFooter.vue
+  Description : 하단 공통 푸터 컴포넌트
+ 
+  History
+  2025/11/28 - 승건 최초 작성
+  </pre>
+ 
+  @author 승건
+  @version 1.0
+ -->
+ <template>
   <footer class="footer">
     <div class="footer__content">
       <span>© 2025 HERO. All rights reserved.</span>

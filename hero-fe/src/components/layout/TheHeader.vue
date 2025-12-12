@@ -1,27 +1,30 @@
 <!-- 
- <pre>
- Vue Name: Header
- Description: 공통 헤더 컴포넌트 - 로고, 알림, 세션 타이머, 사용자 프로필 표시
- 
- History
- 2025/12/08 (동근) 최초 작성 
- 2025/12/09 (승민) 헤더 사이즈 조정
- 2025/12/10 (혜원) 알림 페이지 라우팅 기능 추가
- 2025/12/11 (승건) 프로필 드롭다운 및 로그아웃 기능 추가
- </pre>
- 
- @author 동근
- @version 1.3
- -->
+  <pre>
+  Vue Name   : TheHeader.vue
+  Description : 공통 헤더 컴포넌트 - 로고, 알림, 세션 타이머, 사용자 프로필 표시
 
+  History
+  2025/11/28 - 승건 최초 작성
+  2025/12/02 - 동근 헤더 레이아웃 및 스타일링 수정 & js->ts 변환
+  2025/12/08 - 승민 헤더 레이아웃 디자인 최종 수정
+  2025/12/10 - 혜원 알림 페이지 라우팅 기능 추가
+  2025/12/11 - 승건 프로필 드롭다운 및 로그아웃 기능 추가
+  2025/12/11 - 동근 로고 클릭 시 대시보드 이동 기능 추가, 로그인 세션 남은 시간 표시 & JSDoc 추가
+  </pre>
+ 
+  @author 동근
+  @version 1.5
+ -->
 <template>
   <div class="header-container">
-    <div class="logo-area">
+    <!-- 로고영역 : 클릭 시 대시보드 페이지로 이동 -->
+    <div class="logo-area" @click="goDashboard">
       <div class="logo-box">
         <img class="logo" src="/images/logo.png" />
       </div>
     </div>
 
+    <!-- 우측 영역 : 알림, 로그인 세션, 프로필 정보  -->
     <div class="right-area">
       <div class="right-content">
          <!-- 알림 버튼 클릭 이벤트 추가 -->
@@ -35,18 +38,21 @@
 
         <div class="divider"></div>
 
+        <!-- 로그인 세션 타이머 -->
         <div class="session-box">
           <div class="session-title">로그인 세션</div>
           <div class="session-time">
             <div class="clock-icon">
               <img class="clock" src="/images/clock.png"/>
             </div>
-            <div class="time-text">60:00</div>
+            <div class="time-text">{{ formattedTime }}</div>
           </div>
         </div>
 
         <div class="divider"></div>
 
+
+        <!-- 사용자 프로필 정보 -->
         <div v-if="user" class="profile-container">
           <div class="profile-box" @click="toggleDropdown">
             <div class="profile-icon">{{ user.employeeName?.charAt(0) }}</div>
@@ -70,20 +76,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { storeToRefs } from 'pinia';
+
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
+//세션 관리
+import { useSessionStore } from '@/stores/session';
+//인증 관리
 import { useAuthStore } from '@/stores/auth';
 
-const router = useRouter()
+const router = useRouter();
+const session = useSessionStore(); // 로그인 세션 관리하는 Pinia 스토어
+
+//인증 스토어
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 
 const isDropdownOpen = ref(false);
 
+
+// 메인 로고 버튼 클릭 시 대시보드 이동
+const goDashboard = () => {
+  router.push('/');
+};
+
+// 알림 아이콘 클릭 시 알림 페이지로 이동
 const goToNotifications = () => {
   router.push('/notifications')
 }
+
+// 남은 세션 시간 포맷팅 (MM:SS)
+const formattedTime = computed(() => {
+  const minutes = Math.floor(session.remainingSeconds / 60)
+    .toString()
+    .padStart(2, '0');
+  const seconds = (session.remainingSeconds % 60).toString().padStart(2, '0');
+  return `${minutes}:${seconds}`;
+});
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
@@ -126,6 +155,7 @@ const handleLogout = async () => {
   display: inline-flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
 }
 
 .logo-box {
@@ -228,7 +258,7 @@ const handleLogout = async () => {
   flex-direction: column;
   justify-content: center;
   gap: 2px;
-  justify-content: center; 
+  justify-content: center;
   align-items: center;
 }
 

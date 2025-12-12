@@ -1,3 +1,19 @@
+<!-- 
+  <pre>
+  Vue Name   : TheSidebar.vue
+  Description : 좌측 공통 사이드바 네비게이션 컴포넌트
+ 
+  History
+  2025/11/28 - 승건 최초 작성
+  2025/12/02 - 동근 Sidebar 레이아웃 및 스타일링 수정 & js->ts 변환
+  2025/12/08 - 승민 Sidebar 레이아웃 디자인 최종 수정
+  2025/12/10 - 민철 결재 도메인 라우터 추가
+  2025/12/11 - 동근 급여 부분 추가 & JSDoc 추가
+  </pre>
+ 
+  @author 승건
+  @version 1.4
+ -->
 <template>
   <div :class="['sidebar-container', { collapsed: isCollapsed }]">
     <div class="sidebar-wrapper">
@@ -52,7 +68,7 @@
             </div>
             <div class="menu-text">휴가/연차</div>
           </div>
-          <div class="dropdown-arrow">
+          <div class="dropdown-arrow" :class="{ rotate: isVacationOpen }">
             <img class="vacation-dropdown-arrow" src="/images/dropdownArrow.png" />
           </div>
         </div>
@@ -109,7 +125,6 @@
             <img src="/images/dropdownArrow.png" />
           </div>
         </div>
-
         <div v-if="isEvaluationOpen && !isCollapsed" class="sub-menu-list">
           <div class="sub-menu-item" :class="{ active: activeSubMenu === 'template' }"
                @click="handleSubMenuClick('template')">
@@ -133,6 +148,43 @@
           </div>
         </div>
 
+          <!-- 급여 -->
+        <div
+          class="menu-item has-dropdown"
+          :class="{ 'active-parent': activeParent === 'payroll' }"
+          @click="handleParentClick('payroll')"
+        >
+          <div class="menu-content">
+            <div class="icon-wrapper">
+              <img
+                class="payroll-icon sidebar-icon"
+                :src="getMenuIcon('payroll')"
+              />
+            </div>
+            <div class="menu-text">급여</div>
+          </div>
+          <div class="dropdown-arrow" :class="{ rotate: isPayrollOpen }">
+            <img class="payroll-dropdown-arrow" src="/images/dropdownArrow.png" />
+          </div>
+        </div>
+
+        <!-- 급여 하위 메뉴 -->
+        <div v-if="isPayrollOpen && !isCollapsed" class="sub-menu-list">
+          <div
+            class="sub-menu-item"
+            :class="{ active: activeSubMenu === 'myPayroll' }"
+            @click="handleSubMenuClick('myPayroll')"
+          >
+            <div class="sub-menu-text">내 급여</div>
+          </div>
+          <div
+            class="sub-menu-item"
+            :class="{ active: activeSubMenu === 'myPayrollHistory' }"
+            @click="handleSubMenuClick('myPayrollHistory')"
+          >
+            <div class="sub-menu-text">내 급여 이력</div>
+          </div>
+        </div>
         <!-- 인사 관리 -->
         <div class="menu-item has-dropdown"
             :class="{ 'active-parent': activeParent === 'personnel' }"
@@ -211,7 +263,6 @@
             <div class="menu-text" v-if="!isCollapsed">접기</div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -223,9 +274,12 @@ import { ref } from 'vue';
 
 const router = useRouter();
 
-const activeParent = ref<string>('');
+// 활성화 된 상위 메뉴
+const activeParent = ref<string>('dashboard');
+// 활성화 된 서브 메뉴
 const activeSubMenu = ref<string>('');
 
+// 각 도메인의 서브 메뉴 오픈 여부
 const isPersonnelOpen = ref<boolean>(false);
 const isEvaluationOpen = ref<boolean>(false);
 const isApprovalOpen = ref<boolean>(false);
@@ -233,8 +287,10 @@ const isAttendanceOpen = ref<boolean>(false);
 const isVacationOpen = ref<boolean>(false);
 const isPayrollOpen = ref<boolean>(false);
 
+//Sidebar 접힘 여부
 const isCollapsed = ref<boolean>(false);
 
+//상위 메뉴별 아이콘 (활성/비활성)
 const menuIcons = {
   dashboard: { default: '/images/dashboard.svg', active: '/images/dashboard-white.svg' },
   attendance: { default: '/images/attendance.svg', active: '/images/attendance-white.svg' },
@@ -242,13 +298,25 @@ const menuIcons = {
   approval: { default: '/images/approval.svg', active: '/images/approval-white.svg' },
   evaluation: { default: '/images/evaluation.svg', active: '/images/evaluation-white.svg' },
   personnel: { default: '/images/personnel.svg', active: '/images/personnel-white.svg' },
+  payroll: { default: '/images/payroll.svg', active: '/images/payroll-white.svg' },
   organization: { default: '/images/organization.svg', active: '/images/organization-white.svg' },
 };
 
+/**
+ * 상위 메뉴 활성 상태에 따라 적절한 아이콘 경로를 반환
+ * @param {string} key - 상위 메뉴
+ * @return {string} - 아이콘 경로
+ */
 const getMenuIcon = (key: string) => {
   return activeParent.value === key ? (menuIcons as any)[key].active : (menuIcons as any)[key].default;
 };
 
+/**
+ * 상위 메뉴 클릭 시 호출되는 핸들러 
+ * - 클릭한 메뉴를 활성화하고, 해당 메뉴의 서브메뉴 오픈 상태를 토글
+ * - 대시보드인 경우 '/'로 라우팅
+ * @param {string} key - 상위 메뉴 키
+ */
 const handleParentClick = (key: string) => {
 
   if (isCollapsed.value) {
@@ -256,7 +324,12 @@ const handleParentClick = (key: string) => {
   }
 
   activeParent.value = key;
+// 대시보드는 바로 이동
+  if( key === 'dashboard'){
+    router.push('/');
+  }
 
+  //클릭한 메뉴만 토글, 나머지는 자동으로 열린 메뉴 닫기
   isPersonnelOpen.value = key === 'personnel' ? !isPersonnelOpen.value : false;
   isEvaluationOpen.value = key === 'evaluation' ? !isEvaluationOpen.value : false;
   isApprovalOpen.value = key === 'approval' ? !isApprovalOpen.value : false;
@@ -265,6 +338,10 @@ const handleParentClick = (key: string) => {
   isPayrollOpen.value = key === 'payroll' ? !isPayrollOpen.value : false;
 };
 
+/**
+ * 서브 메뉴 클릭 시 호출되는 핸들러
+ * @param {string} key - 서브 메뉴 키
+ */
 const handleSubMenuClick = (key: string) => {
   activeSubMenu.value = key;
 
@@ -277,8 +354,16 @@ const handleSubMenuClick = (key: string) => {
   } else if (key === 'inbox') {
     router.push('/approval/inbox');
   }
+
+
+  if (key === 'myPayroll') {
+    router.push('/payroll'); 
+    }else if (key === 'myPayrollHistory') {
+      router.push('/payroll/history'); 
+      }
 };
 
+// 사이드바 접기/펼치기 토글
 const handleCollapse = () => {
   isCollapsed.value = !isCollapsed.value;
 
@@ -295,8 +380,6 @@ const handleCollapse = () => {
     activeSubMenu.value = '';
   }
 };
-
-
 </script>
 
 <style scoped>
