@@ -1,42 +1,53 @@
-// src/stores/overtime.ts
-import { defineStore } from 'pinia'
-import apiClient from '@/api/apiClient'
+/**
+ * (File => TypeScript) Name   : overtime.ts
+ * Description : 초과 근무(Overtime) 도메인 Pinia 스토어
+ *               - 초과 근무 이력 리스트 + 페이지네이션 + 기간 필터 상태 관리
+ *
+ * History
+ * 2025/12/10 - 이지윤 최초 작성
+ *
+ * @author 이지윤
+ * @version 1.0
+ */
+
+import { defineStore } from 'pinia';
+import apiClient from '@/api/apiClient';
 
 /**
  * 초과 근무 한 건에 대한 DTO
  */
 export interface OvertimeDTO {
-  overtimeId: number
-  date: string
-  startTime: string
-  endTime: string
-  overtimeHours: number
-  reason: string
+  overtimeId: number;
+  date: string;
+  startTime: string;
+  endTime: string;
+  overtimeHours: number;
+  reason: string;
 }
 
 /**
  * 공통 페이지 응답 DTO (백엔드 PageResponseDTO<T>와 매칭)
  */
 export interface PageResponse<T> {
-  items: T[]
-  page: number
-  size: number
-  totalCount: number
-  totalPages: number
+  items: T[];
+  page: number;
+  size: number;
+  totalCount: number;
+  totalPages: number;
 }
 
 /**
  * Overtime 스토어 상태 타입
  */
 interface OvertimeState {
-  overtimeList: OvertimeDTO[]
-  currentPage: number
-  pageSize: number
-  totalPages: number
-  totalCount: number
-  loading: boolean
-  startDate: string
-  endDate: string
+  overtimeList: OvertimeDTO[];
+  currentPage: number;
+  pageSize: number;
+  totalPages: number;
+  totalCount: number;
+  loading: boolean;
+  startDate: string;
+  endDate: string;
 }
 
 /**
@@ -57,24 +68,33 @@ export const useOvertimeStore = defineStore('overtimeStore', {
 
   actions: {
     /**
-     * 조회 기간 필터(시작일/종료일) 설정
+     * 조회 기간 필터(시작일/종료일)를 설정합니다.
+     *
+     * @param {string} start - 조회 시작일 (YYYY-MM-DD), 빈 문자열이면 필터 미적용
+     * @param {string} end - 조회 종료일 (YYYY-MM-DD), 빈 문자열이면 필터 미적용
+     ****************************************
+     * @param → 함수의 인자(Parameter)
+     ****************************************
      */
     setFilterDates(start: string, end: string): void {
-      this.startDate = start
-      this.endDate = end
+      this.startDate = start;
+      this.endDate = end;
     },
 
     /**
-     * 초과 근무 이력 조회 (서버 페이지네이션)
-     *  - page: 조회할 페이지 번호 (1부터)
-     *  - this.startDate / this.endDate 도 함께 전송
+     * 초과 근무 이력을 조회합니다. (서버 페이지네이션)
+     * - page: 조회할 페이지 번호 (1부터 시작)
+     * - this.startDate / this.endDate 가 설정되어 있으면 함께 전송됩니다.
+     *
+     * @param {number} [page=1] - 조회할 페이지 번호
+     * @returns {Promise<void>} API 호출 완료 후 상태 업데이트
      */
     async fetchOvertime(page = 1): Promise<void> {
-      this.loading = true
-      this.currentPage = page
+      this.loading = true;
+      this.currentPage = page;
 
       try {
-        const res = await apiClient.get<PageResponse<OvertimeDTO>>(
+        const response = await apiClient.get<PageResponse<OvertimeDTO>>(
           '/attendance/overtime',
           {
             params: {
@@ -84,20 +104,21 @@ export const useOvertimeStore = defineStore('overtimeStore', {
               endDate: this.endDate || undefined,
             },
           },
-        )
+        );
 
-        const data = res.data
+        const data = response.data;
 
-        this.overtimeList = data.items
-        this.currentPage = data.page
-        this.pageSize = data.size
-        this.totalCount = data.totalCount
-        this.totalPages = data.totalPages
+        this.overtimeList = data.items;
+        this.currentPage = data.page;
+        this.pageSize = data.size;
+        this.totalCount = data.totalCount;
+        this.totalPages = data.totalPages;
       } catch (error) {
-        console.error('초과 근무 이력 조회 실패:', error)
+        // TODO: 필요 시 에러 상태 필드(errorMessage 등)를 추가하여 UI와 연동
+        console.error('초과 근무 이력 조회 실패:', error);
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
   },
-})
+});
