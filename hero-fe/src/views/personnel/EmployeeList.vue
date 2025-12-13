@@ -1,0 +1,335 @@
+<template>
+  <div class="page-container">
+    <!-- 페이지 헤더 -->
+    <div class="header-container">
+      <h2>사원 정보</h2>
+      <button class="register-btn" @click="$router.push('/personnel/register')">
+        + 신규 사원 등록
+      </button>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="main-card">
+        <!-- 필터링 섹션 -->
+        <div class="filter-container">
+          <div class="filter-group">
+            <select v-model="searchParams.resigningExpected" class="filter-select">
+                <option :value="0">재직자 전원</option>
+                <option :value="1">재직자</option>
+                <option :value="2">퇴사예정자</option>
+            </select>
+            <select v-model="searchParams.departmentName" class="filter-select">
+              <option value="">부서 전체</option>
+              <option v-for="dept in departmentOptions" :key="dept" :value="dept">{{ dept }}</option>
+            </select>
+            <select v-model="searchParams.jobTitleName" class="filter-select">
+              <option value="">직책 전체</option>
+              <option v-for="title in jobTitleOptions" :key="title" :value="title">{{ title }}</option>
+            </select>
+            <select v-model="searchParams.gradeName" class="filter-select">
+              <option value="">직급 전체</option>
+              <option v-for="grade in gradeOptions" :key="grade" :value="grade">{{ grade }}</option>
+            </select>
+            <input type="text" v-model="searchParams.employeeName" placeholder="사원명" class="filter-input" />
+          </div>
+          <button class="search-btn" @click="searchEmployees">검색</button>
+        </div>
+    
+        <!-- 사원 목록 테이블 -->
+        <div class="content">
+          <table class="employee-table">
+            <thead>
+              <tr>
+                <th>사번</th>
+                <th>이름</th>
+                <th>부서</th>
+                <th>직급</th>
+                <th>직책</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="!isLoading && employees.length === 0">
+                <td colspan="5" class="no-data">표시할 데이터가 없습니다.</td>
+              </tr>
+              <tr v-for="employee in employees" :key="employee.employeeId" @click="handleRowClick(employee)">
+                <td>{{ employee.employeeNumber }}</td>
+                <td>{{ employee.employeeName }}</td>
+                <td>{{ employee.departmentName }}</td>
+                <td>{{ employee.gradeName }}</td>
+                <td>{{ employee.jobTitleName }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+  
+      <!-- 페이지네이션 -->
+      <div class="pagination-container">
+        <button :disabled="pagination.page === 0" @click="goToPage(pagination.page - 1)">이전</button>
+        <span>{{ pagination.page + 1 }} / {{ pagination.totalPages }}</span>
+        <button :disabled="pagination.page >= pagination.totalPages - 1" @click="goToPage(pagination.page + 1)">다음</button>
+      </div>
+    </div>
+
+    <EmployeeDetailModal 
+      v-model="isModalOpen"
+      :employee-id="selectedEmployeeId"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { fetchEmployees as apiFetchEmployees, fetchEmployeeSearchOptions } from '@/api/personnel';
+import type { EmployeeListResponse, EmployeeSearchParams } from '@/types/personnel';
+import EmployeeDetailModal from './EmployeeDetailModal.vue';
+
+// --- 상태(State) ---
+const employees = ref<EmployeeListResponse[]>([]);
+const searchParams = ref<Omit<EmployeeSearchParams, 'page' | 'size'>>({
+  departmentName: '',
+  jobTitleName: '',
+  gradeName: '',
+  employeeName: '',
+  resigningExpected: 0, // 0: 재직자 전원 (기본값)
+});
+const pagination = ref({
+  page: 0,
+  size: 10,
+  totalElements: 0,
+  totalPages: 1,
+});
+const isLoading = ref(false);
+const errorMessage = ref('');
+const isModalOpen = ref(false);
+const selectedEmployeeId = ref<number | null>(null);
+
+const departmentOptions = ref<string[]>([]);
+const gradeOptions = ref<string[]>([]);
+const jobTitleOptions = ref<string[]>([]);
+
+// --- 메소드(Methods) ---
+
+/**
+ * 사원 목록 데이터를 API로부터 가져옵니다.
+ */
+const getEmployees = async () => {
+  isLoading.value = true;
+  errorMessage.value = '';
+  try {
+    // 백엔드는 page를 1부터 시작하므로 +1 해서 보냅니다.
+    const params: EmployeeSearchParams = {
+      ...searchParams.value,
+      page: pagination.value.page + 1,
+      size: pagination.value.size,
+    };
+
+    const response = await apiFetchEmployees(params);
+
+    if (response.data.success) {
+      const pageData = response.data.data;
+      employees.value = pageData.content;
+      pagination.value.page = pageData.page;
+      pagination.value.totalPages = pageData.totalPages;
+      pagination.value.totalElements = pageData.totalElements;
+    } else {
+      errorMessage.value = '사원 정보를 불러오는데 실패했습니다.';
+      // TODO: 사용자에게 에러 메시지 표시 (예: alert, toast)
+    }
+  } catch (error) {
+    console.error('사원 정보 조회 에러:', error);
+    errorMessage.value = '사원 정보 조회 중 오류가 발생했습니다.';
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const loadSearchOptions = async () => {
+  try {
+    const response = await fetchEmployeeSearchOptions();
+    if (response.data.success) {
+      const { department, grade, jobTitle } = response.data.data;
+      departmentOptions.value = department;
+      gradeOptions.value = grade;
+      jobTitleOptions.value = jobTitle;
+    }
+  } catch (error) {
+    console.error('검색 옵션 로딩 실패:', error);
+  }
+};
+
+/**
+ * 검색 버튼 클릭 시, 첫 페이지부터 다시 검색합니다.
+ */
+const searchEmployees = () => {
+  pagination.value.page = 0;
+  getEmployees();
+}
+
+/**
+ * 테이블 행 클릭 시 사원 상세 정보 모달을 엽니다.
+ * @param employee 클릭된 사원 객체
+ */
+const handleRowClick = (employee: EmployeeListResponse) => {  
+  console.log('모달 열기 시도:', employee.employeeId); // 디버깅용 로그
+  selectedEmployeeId.value = employee.employeeId;
+  isModalOpen.value = true; // 이 부분이 있어야 모달이 열립니다.
+};
+
+/**
+ * 페이지 이동 핸들러
+ * @param page 이동할 페이지 번호
+ */
+const goToPage = (page: number) => {
+  pagination.value.page = page;
+  getEmployees();
+}
+
+// 컴포넌트가 마운트될 때 사원 목록을 조회합니다.
+onMounted(() => {
+  getEmployees();
+  loadSearchOptions();
+});
+</script>
+
+<style scoped>
+.page-container {
+  background-color: #f8fafc;
+}
+
+.header-container {
+  width: 100%;
+  height: 50px;
+  background: white;
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-container h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0f172b;
+}
+
+.content-wrapper {
+  padding: 20px;
+}
+
+.register-btn {
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.register-btn:hover {
+  background-color: #162456;
+}
+
+.main-card {
+  background: white;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.filter-container {
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.filter-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-input, .filter-select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  min-width: 150px;
+}
+
+.search-btn {
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
+  color: white;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.search-btn:hover {
+  background-color: #475569;
+}
+
+.content {
+  padding: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.employee-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.employee-table th, .employee-table td {
+  padding: 15px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.employee-table th {
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.employee-table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.employee-table tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+.no-data {
+  padding: 60px 0;
+  color: #94a3b8;
+  font-size: 16px;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.pagination-container button {
+  padding: 5px 10px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.pagination-container button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+</style>

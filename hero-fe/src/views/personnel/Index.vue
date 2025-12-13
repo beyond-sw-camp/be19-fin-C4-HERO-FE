@@ -1,10 +1,15 @@
 <template>
-  <section>
-    <h2>인사 관리</h2>
-    <p>인사 관리 메인 페이지입니다.</p>
-  </section>
+  <div class="personnel-container">
+    <router-view />
+  </div>
 </template>
 
 <script setup lang="ts">
-
 </script>
+
+<style scoped>
+.personnel-container {
+  width: 100%;
+  height: 100%;
+}
+</style>
