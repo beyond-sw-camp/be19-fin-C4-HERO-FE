@@ -1,5 +1,5 @@
 /**
- * TypeScript Name : payroll.ts
+ * TypeScript Name : payroll.me.ts
  * Description : 급여 도메인의 타입 정의 (인터페이스)
  *               [Frontend 급여 화면에서 사용하는 모든 DTO 타입 정의]
  *

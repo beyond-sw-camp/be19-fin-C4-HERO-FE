@@ -8,6 +8,7 @@
 
     History
     2025/12/11 - 승건 최초 작성
+    2025/12/12 - 동근 세션 스토어와 연동, 토큰 갱신 시 세션 타이머 리셋 기능 추가
     </pre>
     
     @author 승건
@@ -16,6 +17,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { jwtDecode } from 'jwt-decode';
+import { useSessionStore } from '@/stores/session';
 
 // JWT 페이로드의 타입을 정의합니다.
 // 서버에서 실제 보내주는 토큰의 내용(클레임)과 일치해야 합니다.
@@ -64,6 +66,10 @@ export const useAuthStore = defineStore('auth', () => {
 
             accessToken.value = token;
             user.value = jwtDecode<JwtPayload>(token);
+
+            //로그인 성공 시 세션 시작
+            const sessionStore = useSessionStore();
+            sessionStore.startSession();
         } catch (error) {
             console.error('토큰 디코딩 또는 로그인 처리 중 오류 발생:', error);
             logout(); // 문제가 생기면 안전하게 로그아웃 처리
@@ -75,6 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
      * @returns {void}
      */
     async function logout() {
+        const sessionStore = useSessionStore(); // 세션 정리용
         // 서버에 로그아웃을 요청하여 서버 측 세션/토큰을 무효화합니다.
         try {
             const apiClient = (await import('@/api/apiClient')).default;
@@ -87,6 +94,8 @@ export const useAuthStore = defineStore('auth', () => {
             // 클라이언트 측 상태(토큰, 사용자 정보)를 모두 초기화합니다.
             accessToken.value = null;
             user.value = null;
+            //타이머 종료 (중복&메모리 누수 방지)
+            sessionStore.stopSession();
         }
     }
 
@@ -107,6 +116,10 @@ export const useAuthStore = defineStore('auth', () => {
             if (newAccessToken) {
                 // 새 토큰으로 로그인 상태를 업데이트합니다.
                 login(newAccessToken);
+
+                // 토큰 갱신 성공 = 활동으로 간주 (세션 리셋)
+                const sessionStore = useSessionStore();
+                sessionStore.refreshSession();
             } else {
                 throw new Error('Refresh response does not contain a new access token.');
             }

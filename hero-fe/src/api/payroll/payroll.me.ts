@@ -1,6 +1,6 @@
 /**
  * <pre>
- * File Name   : payroll.ts
+ * TypeScript Name   : payroll.me.ts
  * Description : 급여(Payroll) 관련 API 호출 모듈
  *               - 내 급여 조회
  *               - 명세서 조회
@@ -21,7 +21,7 @@ import type {
     PayslipDetail,
     PayHistoryResponse,
     BankAccount,
-} from '@/types/payroll';
+} from '@/types/payroll/payroll.me';
 
 export interface BankAccountPayload {
     bankCode: string;

@@ -13,37 +13,22 @@
  *
  * History
  *   2025/12/10 - 동근 최초 작성 (Pinia + Composition API)
+ *   2025/12/12 - 동근 세션 만료 시 로그아웃 및 로그인 페이지 이동 기능 추가
  * </pre>
  *
  * @module session-store
  * @author 동근
- * @version 1.0
+ * @version 1.1
  */
 import { defineStore } from "pinia";
 import { ref, onUnmounted } from "vue";
+import router from '@/router';
+import { useAuthStore } from '@/stores/auth';
 
 export const useSessionStore = defineStore("session", () => {
-    const remainingSeconds = ref(3600); // 60분
+    const SESSION_DURATION = 3600; // 60분
+    const remainingSeconds = ref(SESSION_DURATION);
     let timer: number | null = null;
-
-    const startSession = () => {
-        stopSession();
-        remainingSeconds.value = 3600;
-
-        timer = window.setInterval(() => {
-            remainingSeconds.value--;
-            if (remainingSeconds.value <= 0) {
-                //후에 해야될것 -> 실제 로그아웃 처리 (API, 토큰 삭제 등)
-                console.log("세션 만료, 로그아웃 처리");
-                stopSession();
-            }
-        }, 1000);
-    };
-
-    // 페이지 전환될 때만 호출
-    const refreshSession = () => {
-        remainingSeconds.value = 3600;
-    };
 
     const stopSession = () => {
         if (timer !== null) {
@@ -52,7 +37,29 @@ export const useSessionStore = defineStore("session", () => {
         }
     };
 
-    onUnmounted(stopSession);
+    const startSession = () => {
+        stopSession();
+        remainingSeconds.value = SESSION_DURATION;
+
+        timer = window.setInterval(async () => {
+            remainingSeconds.value--;
+
+            if (remainingSeconds.value <= 0) {
+                stopSession();
+
+                const authStore = useAuthStore();
+                await authStore.logout();
+
+                // 로그인 페이지로 이동
+                router.push('/login');
+            }
+        }, 1000);
+    };
+
+    // 페이지 전환될 때만 호출
+    const refreshSession = () => {
+        remainingSeconds.value = SESSION_DURATION;
+    };
 
     return {
         remainingSeconds,
