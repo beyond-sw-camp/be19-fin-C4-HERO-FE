@@ -68,9 +68,9 @@
   flex-wrap: wrap;
 }
 
-/* .border-top {
+.border-top {
   border-top: 1px solid #e2e8f0;
-} */
+}
 
 .row-label {
   background: #f8fafc;

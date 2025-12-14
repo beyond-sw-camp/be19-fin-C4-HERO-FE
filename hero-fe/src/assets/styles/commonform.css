@@ -1,7 +1,5 @@
-/* commonform.css - 전자결재 CommonForm 공통 스타일 */
-
 /* -----------------------------------------------------------
-   1. GLOBAL LAYOUT & RESET
+    1. GLOBAL LAYOUT & RESET
    ----------------------------------------------------------- */
 * {
   box-sizing: border-box;
@@ -41,7 +39,7 @@
 }
 
 /* -----------------------------------------------------------
-   2. TYPOGRAPHY & COMMON UTILS
+    2. TYPOGRAPHY & COMMON UTILS
    ----------------------------------------------------------- */
 .label-text, .value-text, .stamp-role-label, .approver-name, .approver-rank, .input-text, .placeholder-text {
   font-family: "Inter-Regular", sans-serif;
@@ -66,7 +64,7 @@
 }
 
 /* -----------------------------------------------------------
-   3. TITLE SECTION
+    3. TITLE SECTION
    ----------------------------------------------------------- */
 .title-section {
   display: flex;
@@ -262,10 +260,9 @@
 }
 
 /* -----------------------------------------------------------
-   5. MAIN FORM SECTION (공통 입력 영역)
+    5. MAIN FORM SECTION (공통 입력 영역)
    ----------------------------------------------------------- */
 .form-section {
-  overflow: hidden;
   border-radius: 14px;
 }
 
@@ -284,6 +281,18 @@
   flex-direction: row;
   align-items: center;
   flex-wrap: wrap; 
+}
+
+.row-label-top {
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  border-top-left-radius: 14px;
+  padding: 16px;
+  width: 140px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  align-self: stretch; 
 }
 
 .row-label {
@@ -310,7 +319,14 @@
   border-radius: 10px;
   padding: 10px 12px;
   width: 100%;
+  font-family: "Inter-Regular", sans-serif;
+  font-size: 14px;
 }
+
+.input-wrapper::placeholder {
+  color: #94a3b8;
+}
+
 .input-text {
   font-size: 16px;
 }

@@ -13,6 +13,10 @@
           <button class="formtpl-search-button">검색</button>
         </div>
   
+        <div v-if="filteredList.length === 0" class="no-data-msg" style="text-align:center; padding: 20px; color:#666;">
+          표시할 서식이 없습니다.
+        </div>
+
         <section 
           v-if="bookmarkedForms.length > 0"
           class="formtpl-section" 
@@ -85,130 +89,121 @@
 </template>
 
 <script setup lang="ts">
-// 1. Import 구문
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTemplateStore } from '@/stores/approval/approval';
+import apiClient from '@/api/apiClient';
 
-
-// 2. Types 정의 (내부 사용 타입이므로 별도 파일 분리 전까지 여기서 정의)
+// ✅ 프론트엔드 템플릿 사용을 위해 title로 통일
 interface FormItem {
   id: number;
-  title: string;
-  name: string; // URL 라우팅용 영문 이름
+  title: string;       // 백엔드 DTO의 name을 여기에 매핑
+  templateKey: string;
   category: string;
+  description: string;
   bookmarking: boolean;
 }
 
-// 3. Composables
 const router = useRouter();
 const approvalStore = useTemplateStore();
 
-// 4. Reactive 데이터
 const searchKeyword = ref<string>('');
+const rawForms = ref<FormItem[]>([]);
 
-const rawForms = ref<FormItem[]>([
-  { id: 1, title: '인사발령품의서', name: 'personnelappointment', category: '인사', bookmarking: false },
-  { id: 2, title: '승진계획서', name: 'promotionplan', category: '인사', bookmarking: false },
-  { id: 3, title: '사직서', name: 'resign', category: '인사', bookmarking: false },
-  { id: 4, title: '휴가신청서', name: 'vacation', category: '휴가', bookmarking: true },
-  { id: 5, title: '근태기록수정신청서', name: 'modifyworkrecord', category: '근태', bookmarking: true },
-  { id: 6, title: '근무변경신청서', name: 'changework', category: '근태', bookmarking: true },
-  { id: 7, title: '초과근무신청서', name: 'overtime', category: '근태', bookmarking: false },
-  { id: 9, title: '급여조정신청서', name: 'modifypayroll', category: '급여', bookmarking: false,},
-  { id: 10, title: '급여인상신청서', name: 'raisepayroll', category: '급여', bookmarking: false,},
-]);
+// ✅ API 호출 및 데이터 매핑
+const fetchTemplates = async () => {
+  try {
+    const response = await apiClient.get('/approval/templates');
+    
+    rawForms.value = response.data.map((item: any) => ({
+      id: item.id,
+      title: item.name,           // 백엔드 'name' -> 프론트 'title'
+      templateKey: item.templateKey,
+      category: item.category,
+      description: item.description,
+      bookmarking: item.bookmarking 
+    }));
+  } catch (error) {
+    console.error('서식 목록 조회 실패:', error);
+  }
+};
 
-// 5. Computed 속성
-/**
- * 검색어가 적용된 필터링 리스트를 반환합니다.
- * 이름(name) 또는 카테고리(category)에 검색어가 포함된 항목만 필터링합니다.
- */
+// ✅ 즐겨찾기 토글 (API 연동)
+const toggleBookmark = async (id: number) => {
+  try {
+    // 1. 백엔드 요청
+    await apiClient.post(`/approval/templates/${id}/bookmark`);
+
+    // 2. 성공 시 로컬 상태 업데이트
+    const target = rawForms.value.find(f => f.id === id);
+    if (target) {
+      target.bookmarking = !target.bookmarking;
+    }
+  } catch (error) {
+    console.error('즐겨찾기 변경 실패:', error);
+    alert('즐겨찾기 처리에 실패했습니다.');
+  }
+};
+
+// ✅ 컴포넌트 마운트 시 데이터 조회
+onMounted(() => {
+  fetchTemplates();
+});
+
+// ✅ 검색 필터링
 const filteredList = computed(() => {
   const keyword = searchKeyword.value.trim();
   if (!keyword) return rawForms.value;
   
   return rawForms.value.filter(item => 
-    item.name.includes(keyword) || 
+    item.templateKey.includes(keyword) || 
     item.category.includes(keyword) ||
-    item.title.includes(keyword) // 제목 검색 추가
+    item.title.includes(keyword) // title로 검색
   );
 });
 
-/**
- * 즐겨찾기(bookmarking)된 항목 목록을 반환합니다.
- */
+// ✅ 즐겨찾기 목록
 const bookmarkedForms = computed(() => {
   return filteredList.value.filter(item => item.bookmarking);
 });
 
-/**
- * 필터링된 목록을 카테고리별로 그룹화하여 반환합니다.
- */
+// ✅ 카테고리 그룹화
 const groupedForms = computed(() => {
   const groups: Record<string, FormItem[]> = {};
-  
   filteredList.value.forEach(item => {
     if (!groups[item.category]) {
       groups[item.category] = [];
     }
     groups[item.category].push(item);
   });
-  
   return groups;
 });
 
-// 6. 메소드
-/**
- * 카테고리 명에 따른 아이콘 이미지 경로를 반환합니다.
- * @param {string} category - 양식 카테고리 (예: 인사, 휴가, 근태)
- * @returns {string} SVG 이미지 경로
- */
+// ✅ 아이콘 매핑
 const getCategoryIcon = (category: string): string => {
   switch (category) {
-    case '인사':
-      return '/images/personnel.svg';
-    case '휴가':
-      return '/images/vacation.svg';
-    case '근태':
-      return '/images/attendance.svg';
-    case '급여':
-      return '/images/payroll.svg';
-    default:
-      return '/images/default.svg';
+    case '인사': return '/images/personnel.svg';
+    case '휴가': return '/images/vacation.svg';
+    case '근태': return '/images/attendance.svg';
+    case '급여': return '/images/payroll.svg';
+    default: return '/images/payroll.svg';
   }
 };
 
-/**
- * 특정 양식의 즐겨찾기 상태를 토글합니다.
- * @param {number} id - 대상 양식 ID
- */
-const toggleBookmark = (id: number) => {
-  const target = rawForms.value.find(f => f.id === id);
-  if (target) {
-    target.bookmarking = !target.bookmarking;
-  }
-};
-
-/**
- * 양식 카드 클릭 시 해당 작성 페이지로 이동합니다.
- * 라우터 경로는 '/approval/write/:formName' 패턴을 따릅니다.
- * @param {FormItem} form - 선택된 양식 객체
- */
+// ✅ 카드 클릭 핸들러
 const handleCardClick = (form: FormItem) => {
-  console.log('선택된 양식:', form.name);
+  console.log('선택된 양식:', form.templateKey);
   approvalStore.setCurrentForm({
     title: form.title, 
     category: form.category
-  })
+  });
   router.push({
     name: 'WriteDocument',
-    params: {formName: form.name}
+    params: { formName: form.templateKey }
   });
 };
 </script>
 
 <style scoped>
 @import "@/assets/styles/templateList.css";
-
 </style>
