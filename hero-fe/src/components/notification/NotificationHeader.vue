@@ -1,7 +1,7 @@
 <!--
   <pre>
-  File Name   : NotificationHeader.vue
-  Description : 알림 페이지 헤더 컴포넌트
+  Vue Name: NotificationHeader
+  Description: 알림 페이지 헤더 컴포넌트
                 - 뒤로가기 버튼
                 - 페이지 제목 (알림)
                 - 읽지 않은 알림 개수 뱃지
