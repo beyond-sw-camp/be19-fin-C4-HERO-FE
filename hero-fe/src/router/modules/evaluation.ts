@@ -81,6 +81,51 @@ const evaluationRoutes: RouteRecordRaw[] = [
       title: '평가 가이드 세부 페이지',
     },
     children: [],
+  },
+  {
+    path: '/evaluation/list',
+    name: 'evaluationlist',
+    component: () => import('@/views/evaluation/EvaluationList.vue'),
+    meta: {
+      title: '평가 목록',
+    },
+    children: [],
+  },
+  {
+    path: '/evaluation/list2',
+    name: 'evaluationlist2',
+    component: () => import('@/views/evaluation/EvaluationList2.vue'),
+    meta: {
+      title: '평가 목록2',
+    },
+    children: [],
+  },
+  {
+    path: '/evaluation/create/:id',
+    name: 'createevaluation',
+    component: () => import('@/views/evaluation/CreateEvaluation.vue'),
+    meta: {
+      title: '평가 생성',
+    },
+    children: [],
+  },
+  {
+    path: '/evaluation/evaluation/:id',
+    name: 'evaluationdetail',
+    component: () => import('@/views/evaluation/EvaluationDetail.vue'),
+    meta: {
+      title: '평가 세부 페이지',
+    },
+    children: [],
+  },
+  {
+    path: '/evaluation/form/create/:id',
+    name: 'createevaluationform',
+    component: () => import('@/views/evaluation/CreateEvaluationForm.vue'),
+    meta: {
+      title: '평가서 생성',
+    },
+    children: [],
   }
 ];
 

@@ -55,11 +55,23 @@
 
         <!-- 페이징 (UI용) -->
         <div class="paging">
-          <div class="page-btn">이전</div>
-          <div class="page-btn active">1</div>
-          <div class="page-btn">2</div>
-          <div class="page-btn">3</div>
-          <div class="page-btn">다음</div>
+          <div class="page-btn" @click="goPage(currentPage - 1)">
+            이전
+          </div>
+
+          <div
+            class="page-btn"
+            v-for="page in pageNumbers"
+            :key="page"
+            :class="{ active: page === currentPage }"
+            @click="goPage(page)"
+          >
+            {{ page + 1 }}
+          </div>
+
+          <div class="page-btn" @click="goPage(currentPage + 1)">
+            다음
+          </div>
         </div>
       </div>
     </div>
@@ -70,11 +82,20 @@
 <script setup lang="ts">
 //Import 구문
 import apiClient from "@/api/apiClient"
-import { ref, onMounted } from "vue"
+import { ref, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
 
 //외부 로직
 const router = useRouter()
+
+//페이지네이션 타입
+interface PageResponse<T> {
+  content: T[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
 
 // 평가 가이드 객체 
 interface EvaluationGuideResponseDTO {
@@ -95,25 +116,53 @@ const evaluationGuides = ref<EvaluationGuideResponseDTO[]>([])
 const loading = ref<boolean>(false)
 const errorMessage = ref<string>("")
 
+const currentPage = ref(0) 
+const pageSize = ref(10)
+const totalPages = ref(0)
+
 /**
  * 설명: 전체 평가 가이드 조회
  */
-const selectEvaluationGuideList = async (): Promise<void> => {
+const selectEvaluationGuideList = async () => {
   try {
     loading.value = true
 
-    const res = await apiClient.get<EvaluationGuideResponseDTO[]>(
-      "/evaluation/evaluation-guide/selectall"
+    const res = await apiClient.get<PageResponse<EvaluationGuideResponseDTO>>(
+      "/evaluation/evaluation-guide/selectall",
+      {
+        params: {
+          page: currentPage.value,
+          size: pageSize.value,
+        },
+      }
     )
 
-    evaluationGuides.value = res.data
-  } catch (error) {
+    evaluationGuides.value = res.data.content
+    totalPages.value = res.data.totalPages
+  } catch (e) {
     errorMessage.value = "평가 가이드 조회에 실패했습니다."
-    console.error(error)
+    console.error(e)
   } finally {
     loading.value = false
   }
 }
+
+/**
+ * 설명: 페이지 번호로 이동하는 메소드
+ * @param {number} page - 페이지 번호
+ */
+const goPage = (page: number) => {
+  if (page < 0 || page >= totalPages.value) return
+  currentPage.value = page
+  selectEvaluationGuideList()
+}
+
+/**
+ * 페이지 계산 메소드
+ */
+const pageNumbers = computed(() => {
+  return Array.from({ length: totalPages.value }, (_, i) => i)
+})
 
 /**
  * 설명 : String 타입 날짜 Date 타입으로 변화하는 메소드

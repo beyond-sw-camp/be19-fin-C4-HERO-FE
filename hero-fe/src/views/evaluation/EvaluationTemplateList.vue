@@ -51,12 +51,32 @@
         </div>
 
         <!--페이지 네이션 버튼-->
-        <div class="paging">
-          <div class="page-btn">이전</div>
-          <div class="page-btn active">1</div>
-          <div class="page-btn">2</div>
-          <div class="page-btn">3</div>
-          <div class="page-btn">다음</div>
+        <div class="paging" v-if="totalPages > 0">
+          <div
+            class="page-btn"
+            :class="{ disabled: currentPage === 0 }"
+            @click="goPrev"
+          >
+            이전
+          </div>
+
+          <div
+            v-for="page in totalPages"
+            :key="page"
+            class="page-btn"
+            :class="{ active: currentPage === page - 1 }"
+            @click="goToPage(page - 1)"
+          >
+            {{ page }}
+          </div>
+
+          <div
+            class="page-btn"
+            :class="{ disabled: currentPage === totalPages - 1 }"
+            @click="goNext"
+          >
+            다음
+          </div>
         </div>
       </div>
     </div>
@@ -71,6 +91,17 @@ import { useRouter } from 'vue-router';
 
 // useRouter()를 router변수로 정의 (외부 로직)
 const router = useRouter();
+
+//페이지네이션 타입
+interface PageResponse<T> {
+  content: T[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  first: boolean
+  last: boolean
+}
 
 //평가 기준 타입
 interface CriteriaResponseDTO {
@@ -112,8 +143,15 @@ interface EvaluationTemplateResponseDTO {
 
 // Reactive 데이터
 const evaluationTemplates = ref<EvaluationTemplateResponseDTO[]>([])
-const loading = ref<boolean>(false)
-const errorMessage = ref<string>('')
+
+const currentPage = ref(0)   // 0부터 시작
+const pageSize = ref(10)
+const totalPages = ref(0)
+
+const loading = ref(false)
+const errorMessage = ref('')
+
+
 
 /**
  * 설명 : 전체 평가 템플릿 조회 메소드
@@ -121,10 +159,20 @@ const errorMessage = ref<string>('')
 const selectEvaluationTemplateList = async (): Promise<void> => {
   try {
     loading.value = true
-    const res = await apiClient.get<EvaluationTemplateResponseDTO[]>(
-      '/evaluation/evaluation-template/selectall'
+
+    const res = await apiClient.get<PageResponse<EvaluationTemplateResponseDTO>>(
+      '/evaluation/evaluation-template/selectall',
+      {
+        params: {
+          page: currentPage.value,
+          size: pageSize.value
+        }
+      }
     )
-    evaluationTemplates.value = res.data
+
+    evaluationTemplates.value = res.data.content
+    totalPages.value = res.data.totalPages
+
   } catch (error) {
     errorMessage.value = '평가 템플릿 조회에 실패했습니다.'
     console.error(error)
@@ -132,6 +180,7 @@ const selectEvaluationTemplateList = async (): Promise<void> => {
     loading.value = false
   }
 }
+
 
 /**
  * 설명 : String 타입 날짜 Date 타입으로 변화하는 메소드
@@ -157,6 +206,34 @@ const createTemplate = () => {
 const goToDetail = (templateId: number) => {
   router.push(`/evaluation/template/${templateId}`);
 };
+
+/**
+ * 설명 : 원하는 페이지 번호로 이동하는 메서드
+ * @param {number} page - 페이지 번호 
+ */
+const goToPage = async (page: number) => {
+  if (page < 0 || page >= totalPages.value) return
+  currentPage.value = page
+  await selectEvaluationTemplateList()
+}
+
+/**
+ * 설명 : 이전 페이지로 이동하는 메서드 
+ */
+const goPrev = async () => {
+  if (currentPage.value > 0) {
+    await goToPage(currentPage.value - 1)
+  }
+}
+
+/**
+ * 설명 : 다음 페이지로 이동하는 메서드
+ */
+const goNext = async () => {
+  if (currentPage.value < totalPages.value - 1) {
+    await goToPage(currentPage.value + 1)
+  }
+}
 
 /**
  * 설명 : 페이지 마운트 시, 전체 평가 템플릿의 데이터를 조회하기 위한 생명주기(onMounted) 훅
@@ -272,5 +349,10 @@ onMounted(async () => {
   background: #155DFC;
   border: none;
   color: #fff;
+}
+
+.page-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 </style>

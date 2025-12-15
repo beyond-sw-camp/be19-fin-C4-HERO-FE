@@ -195,7 +195,7 @@ const deleteTemplate = async () => {
     );
 
     alert("평가 템플릿이 삭제되었습니다.");
-    router.back(); 
+    router.back();
 
   } catch (error) {
     console.error("삭제 실패:", error);
