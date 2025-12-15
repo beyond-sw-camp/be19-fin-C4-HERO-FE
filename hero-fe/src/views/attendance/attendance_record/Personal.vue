@@ -314,7 +314,7 @@ onMounted(() => {
 .attendance-page {
   width: 100%;
   height: 85%;              
-  padding: 36px;
+  padding: 24px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -332,9 +332,9 @@ onMounted(() => {
 .summary-card {
   flex: 1;
   background: #ffffff;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  padding: 12px 12px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -342,7 +342,7 @@ onMounted(() => {
 
 .summary-title {
   color: #64748b;
-  font-size: 24px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1.2;
   margin-bottom: 8px;
@@ -355,13 +355,13 @@ onMounted(() => {
 }
 
 .summary-value {
-  font-size: 38px;
+  font-size: 18px;
   font-weight: 700;
   color: #000000;
 }
 
 .summary-unit {
-  font-size: 26px;
+  font-size: 18px;
   font-weight: 500;
   color: #64748b;
 }
@@ -446,7 +446,7 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 18px 0 18px;
+  padding: 0px 0 18px;
   gap: 20px;
 }
 
@@ -554,7 +554,7 @@ tbody tr.row-striped {
 
 .attendance-table th {
   color: white;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   padding: 16px;
   text-align: left;
@@ -562,7 +562,7 @@ tbody tr.row-striped {
 
 .attendance-table td {
   padding: 16px;
-  font-size: 14px;
+  font-size: 13px;
   color: #62748e;
   border-top: 0.67px solid #e2e8f0;
 }

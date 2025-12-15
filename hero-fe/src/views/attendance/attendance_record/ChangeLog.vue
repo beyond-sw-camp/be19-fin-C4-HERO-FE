@@ -311,7 +311,7 @@ const formatTime = (time?: string | null): string => {
 .attendance-page {
   width: 100%;
   height: 85%;
-  padding: 36px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 36px;
@@ -328,9 +328,9 @@ const formatTime = (time?: string | null): string => {
 .summary-card {
   flex: 1;
   background: #ffffff;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  padding: 12px 12px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -338,7 +338,7 @@ const formatTime = (time?: string | null): string => {
 
 .summary-title {
   color: #64748b;
-  font-size: 24px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1.2;
   margin-bottom: 8px;
@@ -351,13 +351,13 @@ const formatTime = (time?: string | null): string => {
 }
 
 .summary-value {
-  font-size: 38px;
+  font-size: 18px;
   font-weight: 700;
   color: #000000;
 }
 
 .summary-unit {
-  font-size: 26px;
+  font-size: 18px;
   font-weight: 500;
   color: #64748b;
 }

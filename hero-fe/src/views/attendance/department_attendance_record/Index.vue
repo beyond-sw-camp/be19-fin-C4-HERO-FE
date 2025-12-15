@@ -298,7 +298,7 @@ function goPage(page: number) {
 .employee-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
+  /* table-layout: fixed; */
 }
 
 /* 헤더 */
@@ -410,5 +410,9 @@ function goPage(page: number) {
   background-color: #155dfc;
   border-color: #155dfc;
   color: #ffffff;
+}
+
+.employee-table tbody tr:last-child td {
+  border-bottom: 1px solid #e2e8f0;
 }
 </style>
