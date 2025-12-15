@@ -88,7 +88,8 @@
 // 1. Import 구문
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import WriteDocument from '../write/WriteDocument.vue';
+import { useTemplateStore } from '@/stores/approval/approval';
+
 
 // 2. Types 정의 (내부 사용 타입이므로 별도 파일 분리 전까지 여기서 정의)
 interface FormItem {
@@ -101,6 +102,7 @@ interface FormItem {
 
 // 3. Composables
 const router = useRouter();
+const approvalStore = useTemplateStore();
 
 // 4. Reactive 데이터
 const searchKeyword = ref<string>('');
@@ -195,6 +197,10 @@ const toggleBookmark = (id: number) => {
  */
 const handleCardClick = (form: FormItem) => {
   console.log('선택된 양식:', form.name);
+  approvalStore.setCurrentForm({
+    title: form.title, 
+    category: form.category
+  })
   router.push({
     name: 'WriteDocument',
     params: {formName: form.name}

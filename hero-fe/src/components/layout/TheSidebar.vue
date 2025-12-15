@@ -281,9 +281,9 @@
         </div>
 
         <div v-if="isPersonnelOpen && !isCollapsed" class="sub-menu-list">
-          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'register' }"
-              @click="handleSubMenuClick('register')">
-            <div class="sub-menu-text">신규 사원 등록</div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'employeeList' }"
+              @click="handleSubMenuClick('employeeList')">
+            <div class="sub-menu-text">사원</div>
           </div>
           <div class="sub-menu-item" :class="{ active: activeSubMenu === 'turnover' }"
               @click="handleSubMenuClick('turnover')">
@@ -443,6 +443,21 @@ const handleSubMenuClick = (key: string) => {
     router.push('/attendance/attendance_record/personal');
   } else if (key === 'attendanceDept'){
     router.push('/attendance/department')
+  }
+  
+  // 사원 관리 하위 메뉴 라우팅
+  if (key === 'employeeList') {
+    router.push('/personnel/list');
+  } else if (key === 'turnover') {
+    router.push('/personnel/turnover');
+  } else if (key === 'plan') {
+    router.push('/personnel/plan');
+  } else if (key === 'recommend') {
+    router.push('/personnel/recommend');
+  } else if (key === 'review') {
+    router.push('/personnel/review');
+  } else if (key === 'special') {
+    router.push('/personnel/special');
   }
 
 
