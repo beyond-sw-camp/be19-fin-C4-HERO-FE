@@ -27,7 +27,7 @@ export const notificationApi = {
    * @param employeeId - 직원 ID
    * @returns 알림 목록
    */
-  async registNotifications(employeeId: number): Promise<NotificationDTO[]> {
+  async findNotifications(employeeId: number): Promise<NotificationDTO[]> {
     const response: AxiosResponse<NotificationDTO[]> = await client.get(
       `/notifications/${employeeId}`
     );
@@ -50,7 +50,7 @@ export const notificationApi = {
    * 알림 읽음 처리
    * @param notificationId - 알림 ID
    */
-  async ModifyIsRead(notificationId: number): Promise<void> {
+  async modifyIsRead(notificationId: number): Promise<void> {
     await client.patch(`/notifications/${notificationId}/read`);
   },
 
@@ -58,7 +58,7 @@ export const notificationApi = {
    * 전체 알림 읽음 처리
    * @param employeeId - 직원 ID
    */
-  async ModifyAllIsRead(employeeId: number): Promise<void> {
+  async modifyAllIsRead(employeeId: number): Promise<void> {
     await client.patch(`/notifications/${employeeId}/read-all`);
   },
 };
