@@ -10,6 +10,7 @@
   History
   2025/12/09 (혜원) 최초작성
   2025/12/09 (혜원) 컴포넌트 분리 및 통합
+  2025/12/12 (혜원) TypeScript 변환 및 Store 연동
   </pre>
 
   @author 혜원
@@ -30,11 +31,17 @@
     <NotificationFilter
       :tabs="tabs"
       v-model:activeTab="activeTab"
-      @markAllRead="markAllAsRead"
+      @markAllRead="handleMarkAllRead"
     />
 
+    <!-- 로딩 상태 -->
+    <div v-if="isLoading" class="loading">
+      <div class="spinner"></div>
+      <p>알림을 불러오는 중...</p>
+    </div>
+
     <!-- 알림 목록 영역 -->
-    <div class="notification-list">
+    <div v-else class="notification-list">
       <!-- 알림 아이템 트랜지션 그룹 -->
       <transition-group name="notification" tag="div">
         <!-- 알림 아이템 컴포넌트 -->
@@ -54,47 +61,50 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // 1. Import 구문
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted, Ref, ComputedRef } from 'vue';
 import { useRouter } from 'vue-router';
+import { useNotificationStore } from '@/stores/notification/notificationStore';
 import NotificationHeader from '@/components/notification/NotificationHeader.vue';
 import NotificationFilter from '@/components/notification/NotificationFilter.vue';
 import NotificationItem from '@/components/notification/NotificationItem.vue';
 import NotificationEmpty from '@/components/notification/NotificationEmpty.vue';
+import type { Notification, Tab, NotificationCategory } from '@/types/notification/notification.types';
 
 // 2. Composables
 const router = useRouter();
+const notificationStore = useNotificationStore();
 
 // 3. Reactive 데이터
 /**
  * 현재 활성화된 탭 ID
  * @type {Ref<string>}
  */
-const activeTab = ref('all');
+const activeTab: Ref<string> = ref('all');
 
 /**
  * 탭 목록 데이터
- * @type {Ref<Array>}
+ * @type {Ref<Array<Tab>>}
  * @property {string} id - 탭 고유 ID
  * @property {string} label - 탭 표시 라벨
  * @property {number} count - 해당 탭의 알림 개수
  */
-const tabs = ref([
+const tabs: Ref<Tab[]> = ref([
   { id: 'all', label: '전체', count: 0 },
-  { id: 'unread', label: '읽지 않음', count: 3 },
-  { id: 'attendance', label: '근태', count: 1 },
-  { id: 'payroll', label: '급여', count: 1 },
-  { id: 'approval', label: '결재', count: 1 },
-  { id: 'leave', label: '휴가', count: 1 },
-  { id: 'evaluation', label: '평가', count: 1 },
-  { id: 'system', label: '시스템', count: 1 }
+  { id: 'unread', label: '읽지 않음', count: 0 },
+  { id: 'attendance', label: '근태', count: 0 },
+  { id: 'payroll', label: '급여', count: 0 },
+  { id: 'approval', label: '결재', count: 0 },
+  { id: 'leave', label: '휴가', count: 0 },
+  { id: 'evaluation', label: '평가', count: 0 },
+  { id: 'system', label: '시스템', count: 0 }
 ]);
 
-// 추후 수정: 실제 API 연동
+// 4. Computed 속성 (Store에서 가져오기)
 /**
- * 알림 목록 데이터
- * @type {Ref<Array>}
+ * 알림 목록 데이터 (Store에서 관리)
+ * @type {ComputedRef<Array<Notification>>}
  * @property {number} id - 알림 고유 ID
  * @property {string} type - 알림 타입 (approval, leave, evaluation 등)
  * @property {string} title - 알림 제목
@@ -103,122 +113,80 @@ const tabs = ref([
  * @property {string} date - 알림 발생 날짜
  * @property {boolean} isNew - 읽지 않은 알림 여부
  * @property {string|null} action - 액션 버튼 텍스트
+ * @property {string|null} link - 알림 클릭 시 이동할 링크
  */
-const notifications = ref([
-  {
-    id: 1,
-    type: 'approval',
-    title: '결재 요청 도착',
-    description: '2025년 1월 비용 결산 건에 대한 결재가 요청되었습니다.',
-    timeAgo: '5분 전',
-    date: '2025-12-02',
-    isNew: true,
-    action: '결재 처리'
-  },
-  {
-    id: 2,
-    type: 'leave',
-    title: '연차 소멸 예정',
-    description: '2025년 11월 연차 소멸 예정자 집계 알림을 발송합니다. 남은 연차: 3.5일/20일',
-    timeAgo: '1시간 전',
-    date: '2025-11-30',
-    isNew: true,
-    action: '상세 보기'
-  },
-  {
-    id: 3,
-    type: 'evaluation',
-    title: '평가 시즌 시작',
-    description: '2025년 하반기 성과평가가 시작되었습니다. 평가 기간: 12/01 ~ 12/20',
-    timeAgo: '2시간 전',
-    date: '2025-12-01',
-    isNew: true,
-    action: '평가 작성'
-  },
-  {
-    id: 4,
-    type: 'attendance',
-    title: '출근 미체크',
-    description: '2025년 12월 01일 출근 체크가 없습니다. 지정된 시간에 미체크 알림을 발송합니다.',
-    timeAgo: '3시간 전',
-    date: '2025-12-01',
-    isNew: false,
-    action: null
-  },
-  {
-    id: 5,
-    type: 'payroll',
-    title: '급여명세서 도착',
-    description: '2025년 11월 급여명세서가 발급되었습니다.',
-    timeAgo: '1일 전',
-    date: '2025-11-28',
-    isNew: false,
-    action: '명세서 보기'
-  },
-  {
-    id: 6,
-    type: 'system',
-    title: '시스템 공지 발송',
-    description: '2025년 12월 05일 오전 2시 ~ 4시 시스템 정기 점검이 예정되어 있습니다.',
-    timeAgo: '3일 전',
-    date: '2025-12-05',
-    isNew: false,
-    action: null
-  }
-]);
+const notifications: ComputedRef<Notification[]> = computed(
+  () => notificationStore.notifications
+);
 
-// 4. Computed 속성
 /**
- * 읽지 않은 알림 개수 계산
+ * 읽지 않은 알림 개수 계산 (Store에서 관리)
  * @returns {number} 읽지 않은 알림 개수
  */
-const unreadCount = computed(() => {
-  return notifications.value.filter(n => n.isNew).length;
-});
+const unreadCount: ComputedRef<number> = computed(() => notificationStore.unreadCount);
+
+/**
+ * 로딩 상태 (Store에서 관리)
+ * @returns {boolean} 로딩 중 여부
+ */
+const isLoading: ComputedRef<boolean> = computed(() => notificationStore.isLoading);
 
 /**
  * 선택된 탭에 따른 필터링된 알림 목록
- * @returns {Array} 필터링된 알림 배열
+ * @returns {Array<Notification>} 필터링된 알림 배열
  */
-const filteredNotifications = computed(() => {
+const filteredNotifications: ComputedRef<Notification[]> = computed(() => {
   if (activeTab.value === 'all') {
     return notifications.value;
   }
   if (activeTab.value === 'unread') {
-    return notifications.value.filter(n => n.isNew);
+    return notifications.value.filter((n) => n.isNew);
   }
-  return notifications.value.filter(n => n.type === activeTab.value);
+  return notifications.value.filter(
+    (n) => n.type === (activeTab.value as NotificationCategory)
+  );
 });
 
 // 5. 메소드
 /**
  * 알림 클릭 이벤트 핸들러
  * - 읽지 않은 알림을 읽음 처리
- * - 알림 상세 페이지로 이동
- * @param {Object} notification - 클릭된 알림 객체
+ * - 알림 상세 페이지로 이동 (link가 있는 경우)
+ * @param {Notification} notification - 클릭된 알림 객체
  */
-const handleNotificationClick = (notification) => {
-  // 읽음 처리
-  if (notification.isNew) {
-    notification.isNew = false;
-    updateTabCounts();
+const handleNotificationClick = async (notification: Notification): Promise<void> => {
+  try {
+    // 읽음 처리
+    if (notification.isNew) {
+      await notificationStore.markAsRead(notification.id);
+      updateTabCounts();
+    }
+
+    // 링크가 있으면 해당 페이지로 이동
+    if (notification.link) {
+      router.push(notification.link);
+    }
+  } catch (error) {
+    console.error('알림 클릭 처리 실패:', error);
   }
-  
-  // 상세 페이지로 이동
-  router.push({
-    name: 'NotificationDetail',
-    params: { id: notification.id }
-  });
 };
 
 /**
  * 알림 액션 버튼 클릭 이벤트 핸들러
  * - 액션 타입에 따라 적절한 페이지로 라우팅
- * @param {Object} notification - 액션이 발생한 알림 객체
+ * @param {Notification} notification - 액션이 발생한 알림 객체
  */
-const handleAction = (notification) => {
+const handleAction = (notification: Notification): void => {
   console.log('Action clicked:', notification);
+  
+  // 링크가 있으면 해당 페이지로 이동
+  if (notification.link) {
+    router.push(notification.link);
+  }
+  
   // TODO: 액션별 라우팅 처리 구현
+  // 예: approval -> /approval/detail/:id
+  // 예: payroll -> /payroll/detail/:id
 };
 
 /**
@@ -227,9 +195,10 @@ const handleAction = (notification) => {
  * - 탭별 알림 개수 업데이트
  * @param {number} id - 삭제할 알림 ID
  */
-const deleteNotification = (id) => {
-  const index = notifications.value.findIndex(n => n.id === id);
+const deleteNotification = (id: number): void => {
+  const index = notifications.value.findIndex((n) => n.id === id);
   if (index !== -1) {
+    // TODO: 백엔드 삭제 API 추가 필요
     notifications.value.splice(index, 1);
     updateTabCounts();
   }
@@ -240,18 +209,20 @@ const deleteNotification = (id) => {
  * - 모든 알림의 isNew를 false로 변경
  * - 탭별 알림 개수 업데이트
  */
-const markAllAsRead = () => {
-  notifications.value.forEach(n => {
-    n.isNew = false;
-  });
-  updateTabCounts();
+const handleMarkAllRead = async (): Promise<void> => {
+  try {
+    await notificationStore.markAllAsRead();
+    updateTabCounts();
+  } catch (error) {
+    console.error('전체 읽음 처리 실패:', error);
+  }
 };
 
 /**
  * 설정 버튼 클릭 이벤트 핸들러
  * - 알림 설정 페이지로 이동
  */
-const toggleSettings = () => {
+const toggleSettings = (): void => {
   console.log('Settings clicked');
   // TODO: 알림 설정 페이지로 이동
   // router.push({ name: 'NotificationSettings' });
@@ -261,14 +232,16 @@ const toggleSettings = () => {
  * 탭별 알림 개수 업데이트
  * - 각 탭의 count 속성을 현재 알림 데이터 기준으로 재계산
  */
-const updateTabCounts = () => {
-  tabs.value.forEach(tab => {
+const updateTabCounts = (): void => {
+  tabs.value.forEach((tab) => {
     if (tab.id === 'all') {
       tab.count = 0; // 전체 탭은 개수 표시 안 함
     } else if (tab.id === 'unread') {
-      tab.count = notifications.value.filter(n => n.isNew).length;
+      tab.count = notifications.value.filter((n) => n.isNew).length;
     } else {
-      tab.count = notifications.value.filter(n => n.type === tab.id).length;
+      tab.count = notifications.value.filter(
+        (n) => n.type === (tab.id as NotificationCategory)
+      ).length;
     }
   });
 };
@@ -277,9 +250,37 @@ const updateTabCounts = () => {
  * 뒤로가기
  * - 이전 페이지로 이동
  */
-const goBack = () => {
+const goBack = (): void => {
   router.back();
 };
+
+// 6. Lifecycle Hooks
+/**
+ * 컴포넌트 마운트 시 실행
+ * - 알림 목록 조회
+ * - 탭 개수 업데이트
+ * - WebSocket 연결
+ */
+onMounted(async () => {
+  try {
+    // 알림 목록 조회
+    await notificationStore.fetchNotifications();
+    updateTabCounts();
+
+    // WebSocket 연결
+    notificationStore.connectWebSocket();
+  } catch (error) {
+    console.error('초기화 실패:', error);
+  }
+});
+
+/**
+ * 컴포넌트 언마운트 시 실행
+ * - WebSocket 연결 해제
+ */
+onUnmounted(() => {
+  notificationStore.disconnectWebSocket();
+});
 </script>
 
 <style scoped>
@@ -303,6 +304,32 @@ const goBack = () => {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 32px 40px;
+}
+
+/* 로딩 상태 */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: #64748b;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 애니메이션 */
