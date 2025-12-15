@@ -1,6 +1,6 @@
 /**
  * <pre>
- * TypeScript Name : payrollStore.ts
+ * TypeScript Name : payrollMeStore.ts
  * Description     : 급여(Payroll) 도메인의 Pinia Store (프론트 상태 + API 연동)
  *
  * Responsibility
@@ -33,14 +33,14 @@ import {
     setPrimaryBankAccount as apiSetPrimaryBankAccount,
     updateBankAccount,
     deleteBankAccount,
-} from '@/api/payroll';
+} from '@/api/payroll/payroll.me';
 
 import type {
     MyPaySummary,
     PayslipDetail,
     PayHistoryResponse,
     BankAccount
-} from '@/types/payroll';
+} from '@/types/payroll/payroll.me';
 
 
 //급여(Payroll) 도메인 상태 및 API 연동을 관리하는 Pinia 스토어
@@ -206,14 +206,23 @@ export const usePayrollStore = defineStore('payroll', {
          * @param accountId 삭제할 계좌 ID
          */
         async deleteMyBankAccount(accountId: number) {
-            await deleteBankAccount(accountId);
+            try {
+                await deleteBankAccount(accountId);
 
-            await this.loadAccounts();
-            if (this.currentMonth) {
-                await this.loadMyPayroll(this.currentMonth);
-            } else {
-                await this.loadMyPayroll();
+                await this.loadAccounts();
+                if (this.currentMonth) {
+                    await this.loadMyPayroll(this.currentMonth);
+                } else {
+                    await this.loadMyPayroll();
+                }
+            } catch (e: any) {
+                console.log('DELETE ERROR RESPONSE DATA:', e?.response?.data); // 확인용
+
+                throw {
+                    code: e?.response?.data?.errorCode ?? e?.response?.data?.code,
+                    message: e?.response?.data?.message ?? '계좌 삭제 중 오류가 발생했습니다.',
+                };
             }
-        },
+        }
     },
 });

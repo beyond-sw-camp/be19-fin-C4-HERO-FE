@@ -8,7 +8,25 @@ const personnelRoutes: RouteRecordRaw[] = [
     meta: {
       title: '인사관리',
     },
-    children: [],
+    redirect: '/personnel/list',
+    children: [
+      {
+        path: 'list',
+        name: 'EmployeeList',
+        component: () => import('@/views/personnel/EmployeeList.vue'),
+        meta: {
+          title: '사원 정보',
+        },
+      },
+      {
+        path: 'register',
+        name: 'EmployeeRegister',
+        component: () => import('@/views/personnel/EmployeeRegister.vue'),
+        meta: {
+          title: '사원 등록',
+        },
+      },
+    ],
   },
 ];
 

@@ -9,10 +9,12 @@
   2025/12/08 - 승민 Sidebar 레이아웃 디자인 최종 수정
   2025/12/10 - 민철 결재 도메인 라우터 추가
   2025/12/11 - 동근 급여 부분 추가 & JSDoc 추가
+  2025/12/12 - 동근 급여 관리 부분 추가
+  2025/12/14 - 동근 헤더 메인로고 클릭 시 대시보드 경로 일 때 사이드바 상태 동기화
   </pre>
  
   @author 승건
-  @version 1.4
+  @version 1.6
  -->
 <template>
   <div :class="['sidebar-container', { collapsed: isCollapsed }]">
@@ -188,17 +190,82 @@
             class="sub-menu-item"
             :class="{ active: activeSubMenu === 'myPayroll' }"
             @click="handleSubMenuClick('myPayroll')"
-          >
+            >
             <div class="sub-menu-text">내 급여</div>
           </div>
-          <div
+            <div
             class="sub-menu-item"
             :class="{ active: activeSubMenu === 'myPayrollHistory' }"
             @click="handleSubMenuClick('myPayrollHistory')"
-          >
+            >
             <div class="sub-menu-text">내 급여 이력</div>
           </div>
         </div>
+
+        <!-- 급여 관리 (관리자) -->
+          <div
+          class="menu-item has-dropdown"
+          :class="{ 'active-parent': activeParent === 'payrollAdmin' }"
+          @click="handleParentClick('payrollAdmin')"
+          >
+          <div class="menu-content">
+          <div class="icon-wrapper">
+          <img class="sidebar-icon" :src="getMenuIcon('payrollAdmin')" />
+        </div>
+          <div class="menu-text">급여 관리</div>
+        </div>
+
+          <div class="dropdown-arrow" :class="{ rotate: isPayrollAdminOpen }">
+          <img src="/images/dropdownArrow.png" />
+        </div>
+      </div>
+
+        <!-- 급여 관리 하위 메뉴 -->
+        <div v-if="isPayrollAdminOpen && !isCollapsed" class="sub-menu-list">
+        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'payrollAdminDash' }"
+        @click="handleSubMenuClick('payrollAdminDash')">
+        <div class="sub-menu-text">급여 대시보드</div>
+      </div>
+
+        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'payrollBatch' }"
+        @click="handleSubMenuClick('payrollBatch')">
+        <div class="sub-menu-text">급여 배치</div>
+      </div>
+
+        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'payrollAdjust' }"
+        @click="handleSubMenuClick('payrollAdjust')">
+        <div class="sub-menu-text">급여 조정</div>
+      </div>
+
+        <div class="sub-menu-item"
+        :class="{ active: activeSubMenu === 'payrollSearch' }"
+        @click="handleSubMenuClick('payrollSearch')">
+        <div class="sub-menu-text">사원 급여 조회</div>
+      </div>
+
+        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'payrollPaymentHistory' }"
+        @click="handleSubMenuClick('payrollPaymentHistory')">
+        <div class="sub-menu-text">지급 이력</div>
+      </div>
+
+        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'payrollItems' }"
+        @click="handleSubMenuClick('payrollItems')">
+        <div class="sub-menu-text">급여 항목 관리</div>
+      </div>
+
+        <div class="sub-menu-item"
+        :class="{ active: activeSubMenu === 'payrollReport' }"
+        @click="handleSubMenuClick('payrollReport')">
+        <div class="sub-menu-text">급여 보고서</div>
+      </div>
+
+        <div class="sub-menu-item"
+        :class="{ active: activeSubMenu === 'payrollPolicy' }"
+        @click="handleSubMenuClick('payrollPolicy')">
+        <div class="sub-menu-text">급여 정책/설정 관리</div>
+      </div>
+    </div>
+
         <!-- 인사 관리 -->
         <div class="menu-item has-dropdown"
             :class="{ 'active-parent': activeParent === 'personnel' }"
@@ -215,9 +282,9 @@
         </div>
 
         <div v-if="isPersonnelOpen && !isCollapsed" class="sub-menu-list">
-          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'register' }"
-              @click="handleSubMenuClick('register')">
-            <div class="sub-menu-text">신규 사원 등록</div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'employeeList' }"
+              @click="handleSubMenuClick('employeeList')">
+            <div class="sub-menu-text">사원</div>
           </div>
           <div class="sub-menu-item" :class="{ active: activeSubMenu === 'turnover' }"
               @click="handleSubMenuClick('turnover')">
@@ -283,10 +350,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 
 // 활성화 된 상위 메뉴
 const activeParent = ref<string>('dashboard');
@@ -300,6 +368,7 @@ const isApprovalOpen = ref<boolean>(false);
 const isAttendanceOpen = ref<boolean>(false);
 const isVacationOpen = ref<boolean>(false);
 const isPayrollOpen = ref<boolean>(false);
+const isPayrollAdminOpen = ref<boolean>(false);
 
 //Sidebar 접힘 여부
 const isCollapsed = ref<boolean>(false);
@@ -313,6 +382,7 @@ const menuIcons = {
   evaluation: { default: '/images/evaluation.svg', active: '/images/evaluation-white.svg' },
   personnel: { default: '/images/personnel.svg', active: '/images/personnel-white.svg' },
   payroll: { default: '/images/payroll.svg', active: '/images/payroll-white.svg' },
+  payrollAdmin: { default: '/images/payroll-admin.svg', active: '/images/payroll-admin-white.svg' },
   organization: { default: '/images/organization.svg', active: '/images/organization-white.svg' },
 };
 
@@ -350,6 +420,7 @@ const handleParentClick = (key: string) => {
   isAttendanceOpen.value = key === 'attendance' ? !isAttendanceOpen.value : false;
   isVacationOpen.value = key === 'vacation' ? !isVacationOpen.value : false;
   isPayrollOpen.value = key === 'payroll' ? !isPayrollOpen.value : false;
+  isPayrollAdminOpen.value = key === 'payrollAdmin' ? !isPayrollAdminOpen.value : false;
 };
 
 /**
@@ -377,13 +448,48 @@ const handleSubMenuClick = (key: string) => {
   } else if (key === 'attendanceDept'){
     router.push('/attendance/department')
   }
+  
+  // 사원 관리 하위 메뉴 라우팅
+  if (key === 'employeeList') {
+    router.push('/personnel/list');
+  } else if (key === 'turnover') {
+    router.push('/personnel/turnover');
+  } else if (key === 'plan') {
+    router.push('/personnel/plan');
+  } else if (key === 'recommend') {
+    router.push('/personnel/recommend');
+  } else if (key === 'review') {
+    router.push('/personnel/review');
+  } else if (key === 'special') {
+    router.push('/personnel/special');
+  }
 
+
+  // 급여(사원)
   if (key === 'myPayroll') {
-    router.push('/payroll'); 
+    router.push('/payroll');              // 내 급여
     }else if (key === 'myPayrollHistory') {
-      router.push('/payroll/history'); 
-      }
-
+      router.push('/payroll/history');    // 내 급여 이력
+    }
+      
+  // 급여관리(관리자)
+if (key === 'payrollAdminDash') {
+  router.push('/payroll/admin');                 // 급여 대시보드
+} else if (key === 'payrollBatch') {
+  router.push('/payroll/admin/batch');           // 월별 급여 배치
+} else if (key === 'payrollAdjust') {
+  router.push('/payroll/admin/adjust');          // 급여 조정
+} else if (key === 'payrollSearch') {
+  router.push('/payroll/admin/search');          // 사원 급여 조회
+} else if (key === 'payrollPaymentHistory') {
+  router.push('/payroll/admin/payment-history'); // 지급 이력
+} else if (key === 'payrollItems') {
+  router.push('/payroll/admin/items');           // 급여 항목 관리
+} else if (key === 'payrollReport') {
+  router.push('/payroll/admin/report');          // 급여 보고서
+} else if (key === 'payrollPolicy') {
+  router.push('/payroll/admin/policy');          // 급여 정책/설정 관리
+}
 };
 
 // 사이드바 접기/펼치기 토글
@@ -398,11 +504,31 @@ const handleCollapse = () => {
     isAttendanceOpen.value = false;
     isVacationOpen.value = false;
     isPayrollOpen.value = false;
+    isPayrollAdminOpen.value = false;
 
     activeParent.value = '';
     activeSubMenu.value = '';
   }
 };
+
+const syncDashboardOnly = () => {
+  if (route.path === '/') {
+    // 대시보드만 활성(hover/active 효과)
+    activeParent.value = 'dashboard';
+    activeSubMenu.value = '';
+
+    // 서브메뉴 전부 닫기
+    isPersonnelOpen.value = false;
+    isEvaluationOpen.value = false;
+    isApprovalOpen.value = false;
+    isAttendanceOpen.value = false;
+    isVacationOpen.value = false;
+    isPayrollOpen.value = false;
+    isPayrollAdminOpen.value = false;
+  }
+};
+
+watch(() => route.path, syncDashboardOnly, { immediate: true });
 </script>
 
 <style scoped>

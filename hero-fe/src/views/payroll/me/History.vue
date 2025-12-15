@@ -98,7 +98,7 @@
 
 <script setup lang="ts">
 import { onMounted, computed } from 'vue';
-import { usePayrollStore } from '@/stores/payrollStore';
+import { usePayrollStore } from '@/stores/payroll/payrollMeStore';
 import BaseLineChart from '@/components/charts/BaseLineChart.vue';
 
 // store : loadHistory() -> API 호출

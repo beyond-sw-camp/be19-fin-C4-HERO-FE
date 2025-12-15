@@ -8,24 +8,27 @@
  * History
  * 2025/11/28 - 승건 최초 작성
  * 2025/12/09 - 동근 JSDoc 추가
+ * 2025/12/12 - 동근 급여 관련 도메인 분리 & 라우터 전역 가드에 세션 갱신 로직 추가 및 인증 라우트(/auth/*) 제외 처리
  * </pre>
  *
  * @author 동근
- * @version 1.1
+ * @version 1.2
  */
 
 
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
-
 import Home from '@/views/Home.vue';
 import attendanceRoutes from './modules/attendance';
 import electronicApprovalRoutes from './modules/electronicApproval';
-import payrollRoutes from './modules/payroll';
+import payrollMeRoutes from './modules/payrollMe';
+import payrollAdminRoutes from "./modules/payrollAdmin";
 import evaluationRoutes from './modules/evaluation';
 import { setupAuthGuard } from './guard'; // guard.ts에서 setupAuthGuard 함수 임포트
 import personnelRoutes from './modules/personnel';
 import authRoutes from './modules/auth';
+import { useAuthStore } from '@/stores/auth';
+import { useSessionStore } from '@/stores/session';
 
 import notificationRoutes from './modules/notification';
 
@@ -43,7 +46,8 @@ const routes: RouteRecordRaw[] = [
   },
   ...attendanceRoutes,
   ...electronicApprovalRoutes,
-  ...payrollRoutes,
+  ...payrollMeRoutes,
+  ...payrollAdminRoutes,
   ...evaluationRoutes,
   ...personnelRoutes,
   ...notificationRoutes
@@ -52,6 +56,20 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+});
+
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+  const sessionStore = useSessionStore();
+
+  // 인증관련 페이지들(/auth/*)는 가드 대상에서 제외시킴
+  const isAuthRoute = to.path.startsWith('/auth');
+
+  if (authStore.isAuthenticated && !isAuthRoute) {
+    sessionStore.refreshSession();
+  }
+
+  next();
 });
 
 // 라우터 인스턴스에 인증 가드 설정
