@@ -188,10 +188,14 @@ const deleteAccount = async (id: number) => {
     await store.deleteMyBankAccount(id);
 
     emit('saved');
-  } catch (e) {
+  } catch (e: any) {
+    console.log('UI CATCH:', e); // 확인용 로그
+
+    alert(e?.message ?? '계좌 삭제 실패');
     console.error('계좌 삭제 실패', e);
   }
 };
+
 
 const store = usePayrollStore();
 
@@ -291,16 +295,13 @@ const saveAccount = async () => {
         return;
       }
 
-      if (!confirm('새 계좌를 등록하시겠습니까? (대표계좌로 등록)')) return;
+      if (!confirm('새 계좌를 등록하시겠습니까?')) return;
 
-      const newAcc = await store.addMyBankAccount({
+      await store.addMyBankAccount({
         bankCode: accountForm.value.bankCode.trim(),
         accountNumber: accountForm.value.accountNumber.trim(),
         accountHolder: accountForm.value.accountHolder.trim()
       });
-
-      // 새 계좌를 대표 계좌로 설정
-      await store.setPrimaryBankAccount(newAcc.id);
 
       emit('saved');
       emit('update:open', false);
