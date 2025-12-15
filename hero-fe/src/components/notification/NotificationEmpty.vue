@@ -1,6 +1,6 @@
 <!--
   <pre>
-  Vue Name: NotificationEmpty.vue
+  Vue Name: NotificationEmpty
   Description: 알림 빈 상태 컴포넌트
                - 사용자가 받은 알림이 없을 때 표시
                - 안내 메시지와 아이콘으로 구성된 빈 화면

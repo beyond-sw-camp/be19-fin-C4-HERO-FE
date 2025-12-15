@@ -70,7 +70,7 @@ export const fetchPayHistory = () => {
  * @returns {Promise<BankAccount[]>} 등록된 내 급여 계좌 목록
  */
 export const fetchMyBankAccounts = () => {
-    return client.get<BankAccount[]>('/me/bank-accounts');
+    return client.get<BankAccount[]>('/me/payroll/bank-accounts');
 };
 
 /**
@@ -79,7 +79,7 @@ export const fetchMyBankAccounts = () => {
  * @returns {Promise<BankAccount>} 신규로 생성된 급여 계좌 정보
  */
 export const createBankAccount = (payload: BankAccountPayload) => {
-    return client.post<BankAccount>('/me/bank-accounts', payload);
+    return client.post<BankAccount>('/me/payroll/bank-accounts', payload);
 };
 
 /**
@@ -88,7 +88,7 @@ export const createBankAccount = (payload: BankAccountPayload) => {
  * @returns {Promise<void>}
  */
 export const setPrimaryBankAccount = (bankAccountId: number) => {
-    return client.put<void>(`/me/bank-accounts/${bankAccountId}/primary`);
+    return client.put<void>(`/me/payroll/bank-accounts/${bankAccountId}/primary`);
 };
 
 /**
@@ -98,7 +98,7 @@ export const setPrimaryBankAccount = (bankAccountId: number) => {
  * @returns {Promise<void>}
  */
 export const updateBankAccount = (id: number, payload: BankAccountPayload) => {
-    return client.put<void>(`/me/bank-accounts/${id}`, payload);
+    return client.put<void>(`/me/payroll/bank-accounts/${id}`, payload);
 };
 
 /**
@@ -107,5 +107,5 @@ export const updateBankAccount = (id: number, payload: BankAccountPayload) => {
  * @returns {Promise<void>}
  */
 export const deleteBankAccount = (id: number) => {
-    return client.delete<void>(`/me/bank-accounts/${id}`);
+    return client.delete<void>(`/me/payroll/bank-accounts/${id}`);
 };

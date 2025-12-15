@@ -1,113 +1,68 @@
 <!--
   <pre>
-  File Name   : NotificationItem.vue
-  Description : 알림 개별 아이템 컴포넌트
-                - 알림 유형별 아이콘, 제목, 설명, 메타 정보 표시
-                - NEW 배지로 읽지 않은 알림 강조
-                - 삭제 버튼 (읽은 알림만 표시)
-                - 액션 버튼으로 관련 페이지 이동
-                - 클릭 시 알림 상세 페이지로 이동
-
+  Vue Name: NotificationItem.vue
+  Description: 알림 아이템 컴포넌트
+                - 알림 타입별 아이콘 표시
+                - 읽음/안 읽음 상태 스타일 구분
+                - 클릭 시 상세 페이지 이동
+                - 액션 버튼 및 삭제 버튼 제공
+  
   History
-  2025/12/09 (혜원) 최초 작성
+  2025/12/09 (혜원) 최초작성
+  2025/12/14 (혜원) TypeScript 변환 및 타입 정의
   </pre>
 
   @author 혜원
-  @version 1.0
+  @version 2.0
 -->
 
 <template>
-  <!-- 알림 아이템 카드 (새 알림일 경우 is-new 클래스 추가) -->
-  <div
-    :class="['notification-item', { 'is-new': notification.isNew }]"
-    @click="$emit('click', notification)"
+  <!-- 알림 아이템 컨테이너 -->
+  <div 
+    class="notification-item"
+    :class="{ 'unread': props.notification.isNew }"
+    @click="handleClick"
   >
-    <!-- 알림 유형 아이콘 -->
-    <div class="notification-icon">
-      <img :src="iconPath" :alt="notification.type" />
+    <!-- 알림 타입별 아이콘 -->
+    <!-- img 태그로 사용 -->
+    <img 
+      :src="getIcon(notification.type)" 
+      :alt="`${notification.type} 아이콘`"
+      class="notification-icon"
+  />
+
+    <!-- 알림 내용 -->
+    <div class="content">
+      <h3 class="title">{{ props.notification.title }}</h3>
+      <p class="description">{{ props.notification.description }}</p>
+      <span class="time">{{ props.notification.timeAgo }}</span>
     </div>
 
-    <!-- 알림 내용 영역 -->
-    <div class="notification-content">
-      <!-- 헤더: 제목, NEW 배지, 삭제 버튼 -->
-      <div class="content-header">
-        <div class="title-wrapper">
-          <!-- 알림 제목 -->
-          <h3 class="notification-title">{{ notification.title }}</h3>
-          <!-- NEW 배지 (새 알림만 표시) -->
-          <span v-if="notification.isNew" class="new-badge">NEW</span>
-        </div>
-        <!-- 삭제 버튼 (읽은 알림만 표시) -->
-        <button 
-          v-if="!notification.isNew" 
-          class="delete-button"
-          @click.stop="$emit('delete', notification.id)"
-        >
-          ✕
-        </button>
-      </div>
+    <!-- 액션 버튼 (action이 있는 경우에만 표시) -->
+    <button 
+      v-if="props.notification.action"
+      class="action-btn"
+      @click="handleActionClick"
+    >
+      {{ props.notification.action }}
+    </button>
 
-      <!-- 알림 설명 텍스트 -->
-      <p class="notification-description">{{ notification.description }}</p>
-
-      <!-- 푸터: 메타 정보 + 액션 버튼 -->
-      <div class="notification-footer">
-        <!-- 메타 정보: 시간 경과, 날짜 -->
-        <div class="meta-info">
-          <!-- 시간 경과 표시 -->
-          <div class="meta-item">
-            <img src="/images/alarm/alarm-time.svg" alt="time" />
-            <span>{{ notification.timeAgo }}</span>
-          </div>
-          <div class="meta-divider">•</div>
-          <!-- 날짜 표시 -->
-          <div class="meta-item">
-            <img src="/images/alarm/alarm-calendar.svg" alt="date" />
-            <span>{{ notification.date }}</span>
-          </div>
-        </div>
-
-        <!-- 액션 버튼 (action이 있는 경우만 표시) -->
-        <button 
-          v-if="notification.action" 
-          class="action-button"
-          @click.stop="$emit('action', notification)"
-        >
-          {{ notification.action }} →
-        </button>
-      </div>
-    </div>
+    <!-- 삭제 버튼 -->
+    <button 
+      class="delete-btn"
+      @click="handleDeleteClick"
+      title="삭제"
+    >
+      ✕
+    </button>
   </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 // 1. Import 구문
-import { computed } from 'vue';
+import type { Notification } from '@/types/notification/notification.types';
 
-// 2. 타입 정의
-/**
- * 알림 객체 타입 정의
- * @property {number} id - 알림 고유 ID
- * @property {string} type - 알림 유형 (approval, leave, evaluation, attendance, payroll, system)
- * @property {string} title - 알림 제목
- * @property {string} description - 알림 상세 설명
- * @property {boolean} isNew - 읽지 않은 알림 여부
- * @property {string} timeAgo - 알림 발생 시간 (상대 시간)
- * @property {string} date - 알림 발생 날짜
- * @property {string} action - 액션 버튼 텍스트 (선택적)
- */
-interface Notification {
-  id: number;
-  type: 'approval' | 'leave' | 'evaluation' | 'attendance' | 'payroll' | 'system';
-  title: string;
-  description: string;
-  isNew: boolean;
-  timeAgo: string;
-  date: string;
-  action?: string;
-}
-
-// 3. Props 정의
+// 2. Props 정의
 /**
  * Props
  * @property {Notification} notification - 표시할 알림 객체
@@ -116,7 +71,7 @@ const props = defineProps<{
   notification: Notification;
 }>();
 
-// 4. Emits 정의
+// 3. Emits 정의
 /**
  * Emits
  * @event click - 알림 아이템 클릭 시 상세 페이지 이동
@@ -129,253 +84,210 @@ const emit = defineEmits<{
   action: [notification: Notification];    // 액션 버튼 클릭 (관련 페이지 이동)
 }>();
 
-// 5. Computed 속성
+// 4. 메소드
 /**
- * 알림 유형별 아이콘 경로를 반환
- * - approval: 결재 알림 (체크 아이콘)
- * - leave: 휴가 알림 (캘린더 아이콘)
- * - evaluation: 평가 알림 (문서 아이콘)
- * - attendance: 근태 알림 (시계 아이콘)
- * - payroll: 급여 알림 (돈 아이콘)
- * - system: 시스템 알림 (문서 아이콘)
- * @returns {string} 아이콘 이미지 경로
+ * 알림 아이템 클릭 핸들러
+ * - 부모 컴포넌트로 click 이벤트 발행
  */
-const iconPath = computed<string>(() => {
-  // 알림 유형별 아이콘 매핑
-  const iconMap: Record<Notification['type'], string> = {
-    approval: '/images/alarm/alarm-check.svg',      // 결재 알림
-    leave: '/images/alarm/alarm-calendar.svg',      // 휴가 알림
-    evaluation: '/images/alarm/alarm-paper.svg',    // 평가 알림
-    attendance: '/images/alarm/alarm-time.svg',     // 근태 알림
-    payroll: '/images/alarm/alarm-money.svg',       // 급여 알림
-    system: '/images/alarm/alarm-paper.svg'         // 시스템 알림
+const handleClick = (): void => {
+  emit('click', props.notification);
+};
+
+/**
+ * 삭제 버튼 클릭 핸들러
+ * - 이벤트 전파 방지 (알림 클릭 이벤트 발생 안 함)
+ * - 부모 컴포넌트로 delete 이벤트 발행
+ * @param {Event} event - 클릭 이벤트 객체
+ */
+const handleDeleteClick = (event: Event): void => {
+  event.stopPropagation(); // 이벤트 전파 방지
+  emit('delete', props.notification.id);
+};
+
+/**
+ * 액션 버튼 클릭 핸들러
+ * - 이벤트 전파 방지 (알림 클릭 이벤트 발생 안 함)
+ * - 부모 컴포넌트로 action 이벤트 발행
+ * @param {Event} event - 클릭 이벤트 객체
+ */
+const handleActionClick = (event: Event): void => {
+  event.stopPropagation(); // 이벤트 전파 방지
+  emit('action', props.notification);
+};
+
+/**
+ * 알림 타입에 따른 아이콘 경로 반환
+ * 
+ * @param type - 알림 카테고리
+ * @returns SVG 아이콘 경로
+ */
+const getIcon = (type: string): string => {
+  const iconMap: Record<string, string> = {
+    'attendance': '/images/alarm/alarm-check.svg',      // 근태
+    'payroll': '/images/alarm/alarm-money.svg',         // 급여
+    'approval': '/images/alarm/alarm-paper.svg',        // 결재
+    'leave': '/images/alarm/alarm-calendar.svg',        // 휴가
+    'evaluation': '/images/alarm/alarm-paper.svg',      // 평가
+    'system': '/images/alarm/alarmsetting.svg'          // 시스템
   };
   
-  // 매핑된 아이콘이 없으면 기본 아이콘 반환
-  return iconMap[props.notification.type] || '/images/alarm/alarm-paper.svg';
-});
+  return iconMap[type] || '/images/alarm/alarmsetting.svg';  // 기본값
+};
 </script>
 
 <style scoped>
-/* 알림 아이템 카드 */
+/* 알림 아이템 컨테이너 */
 .notification-item {
   display: flex;
-  height: 180px;
-  gap: 20px;
-  padding: 24px;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
   background: white;
-  border: 1.5px solid #E2E8F0;
-  border-radius: 16px;
-  margin-bottom: 12px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  margin-bottom: 8px;
+  border-left: 4px solid transparent;
 }
 
-/* 알림 아이템 호버 효과 */
+/* 호버 효과 */
 .notification-item:hover {
-  border-color: #CBD5E1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transform: translateY(-1px);
+  background: #f8fafc;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* 새 알림 강조 스타일 (왼쪽 파란색 테두리 + 배경 그라데이션) */
-.notification-item.is-new {
-  border-left: 4px solid #1E40AF;
-  background: linear-gradient(to right, #EFF6FF 0%, white 100%);
+/* 읽지 않은 알림 스타일 */
+.notification-item.unread {
+  border-left-color: #3b82f6;
+  background: #f0f7ff;
 }
 
-/* 새 알림 호버 효과 */
-.notification-item.is-new:hover {
-  box-shadow: 0 4px 16px rgba(30, 64, 175, 0.1);
-}
-
-/* 알림 아이콘 */
-.notification-icon {
+/* 아이콘 영역 */
+.icon {
+  font-size: 32px;
   flex-shrink: 0;
   width: 48px;
   height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #DBEAFE;
-  border-radius: 12px;
+  background: #f1f5f9;
+  border-radius: 50%;
 }
 
-.notification-icon img {
-  width: 24px;
-  height: 24px;
-  opacity: 0.8;
-}
-
-/* 알림 내용 영역 */
-.notification-content {
+/* 내용 영역 */
+.content {
   flex: 1;
-  min-width: 0; /* flex 아이템 텍스트 오버플로우 방지 */
+  min-width: 0; /* 텍스트 오버플로우 처리를 위해 */
 }
 
-/* 헤더: 제목 + 배지 + 삭제 버튼 */
-.content-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
-  gap: 16px;
-}
-
-/* 제목과 배지를 감싸는 래퍼 */
-.title-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  min-width: 0;
-}
-
-/* 알림 제목 */
-.notification-title {
-  font-size: 17px;
+/* 제목 */
+.title {
+  font-size: 16px;
   font-weight: 600;
-  color: #0F172A;
+  margin: 0 0 4px 0;
+  color: #1e293b;
   line-height: 1.4;
 }
 
-/* NEW 배지 */
-.new-badge {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 10px;
-  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-  color: white;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
-}
-
-/* 알림 설명 텍스트 */
-.notification-description {
-  font-size: 15px;
-  line-height: 1.6;
-  color: #475569;
-  margin-bottom: 16px;
-}
-
-/* 푸터: 메타 정보 + 액션 버튼 */
-.notification-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-/* 메타 정보 컨테이너 (시간, 날짜) */
-.meta-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #94A3B8;
+/* 설명 */
+.description {
   font-size: 14px;
+  color: #64748b;
+  margin: 0 0 8px 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 2줄까지만 표시 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* 개별 메타 아이템 */
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+/* 시간 */
+.time {
+  font-size: 12px;
+  color: #94a3b8;
 }
 
-.meta-item img {
-  width: 16px;
-  height: 16px;
-  opacity: 0.6;
-}
-
-/* 메타 정보 구분자 */
-.meta-divider {
-  color: #CBD5E1;
-}
-
-/* 버튼 스타일 */
-/* 액션 버튼 (예: "결재 처리 →", "상세 보기 →") */
-.action-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #1E40AF 0%, #1E3A8A 100%);
+/* 액션 버튼 */
+.action-btn {
+  padding: 8px 16px;
+  background: #3b82f6;
   color: white;
   border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(30, 64, 175, 0.3);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-/* 액션 버튼 호버 효과 */
-.action-button:hover {
-  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4);
+.action-btn:hover {
+  background: #2563eb;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-/* 삭제 버튼 (읽은 알림만 표시) */
-.delete-button {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+.action-btn:active {
+  transform: translateY(0);
+}
+
+/* 삭제 버튼 */
+.delete-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: 8px;
-  color: #94A3B8;
-  font-size: 20px;
-  cursor: pointer;
-  transition: all 0.2s;
+  flex-shrink: 0;
 }
 
-/* 삭제 버튼 호버 효과 */
-.delete-button:hover {
-  background: #FEE2E2;
-  color: #EF4444;
-  transform: scale(1.1);
+.delete-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
 }
 
-/* 반응형 디자인 */
-/* 모바일 (768px 이하) */
+/* ===== 반응형 디자인 ===== */
+/* 모바일 */
 @media (max-width: 768px) {
-  /* 세로 레이아웃으로 변경 */
   .notification-item {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  /* 아이콘을 왼쪽 정렬 */
-  .notification-icon {
-    align-self: flex-start;
-  }
-
-  /* 푸터를 세로 배치 */
-  .notification-footer {
-    flex-direction: column;
-    align-items: stretch;
+    flex-wrap: wrap;
     gap: 12px;
+    padding: 12px;
   }
 
-  /* 메타 정보 왼쪽 정렬 */
-  .meta-info {
-    justify-content: flex-start;
+  .icon {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
   }
 
-  /* 액션 버튼 전체 너비 */
-  .action-button {
+  .title {
+    font-size: 14px;
+  }
+
+  .description {
+    font-size: 13px;
+  }
+
+  .action-btn {
     width: 100%;
-    justify-content: center;
+    order: 4; /* 하단으로 이동 */
+  }
+
+  .delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
   }
 }
 </style>

@@ -10,10 +10,11 @@
   2025/12/10 - 민철 결재 도메인 라우터 추가
   2025/12/11 - 동근 급여 부분 추가 & JSDoc 추가
   2025/12/12 - 동근 급여 관리 부분 추가
+  2025/12/14 - 동근 헤더 메인로고 클릭 시 대시보드 경로 일 때 사이드바 상태 동기화
   </pre>
  
   @author 승건
-  @version 1.5
+  @version 1.6
  -->
 <template>
   <div :class="['sidebar-container', { collapsed: isCollapsed }]">
@@ -288,9 +289,9 @@
         </div>
 
         <div v-if="isPersonnelOpen && !isCollapsed" class="sub-menu-list">
-          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'register' }"
-              @click="handleSubMenuClick('register')">
-            <div class="sub-menu-text">신규 사원 등록</div>
+          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'employeeList' }"
+              @click="handleSubMenuClick('employeeList')">
+            <div class="sub-menu-text">사원</div>
           </div>
           <div class="sub-menu-item" :class="{ active: activeSubMenu === 'turnover' }"
               @click="handleSubMenuClick('turnover')">
@@ -356,10 +357,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
 
 // 활성화 된 상위 메뉴
 const activeParent = ref<string>('dashboard');
@@ -453,6 +455,21 @@ const handleSubMenuClick = (key: string) => {
   } else if (key == 'attendanceDashboard') {
     router.push('/attendance/dashboard')
   }
+  
+  // 사원 관리 하위 메뉴 라우팅
+  if (key === 'employeeList') {
+    router.push('/personnel/list');
+  } else if (key === 'turnover') {
+    router.push('/personnel/turnover');
+  } else if (key === 'plan') {
+    router.push('/personnel/plan');
+  } else if (key === 'recommend') {
+    router.push('/personnel/recommend');
+  } else if (key === 'review') {
+    router.push('/personnel/review');
+  } else if (key === 'special') {
+    router.push('/personnel/special');
+  }
 
 
   // 급여(사원)
@@ -507,6 +524,25 @@ const handleCollapse = () => {
     activeSubMenu.value = '';
   }
 };
+
+const syncDashboardOnly = () => {
+  if (route.path === '/') {
+    // 대시보드만 활성(hover/active 효과)
+    activeParent.value = 'dashboard';
+    activeSubMenu.value = '';
+
+    // 서브메뉴 전부 닫기
+    isPersonnelOpen.value = false;
+    isEvaluationOpen.value = false;
+    isApprovalOpen.value = false;
+    isAttendanceOpen.value = false;
+    isVacationOpen.value = false;
+    isPayrollOpen.value = false;
+    isPayrollAdminOpen.value = false;
+  }
+};
+
+watch(() => route.path, syncDashboardOnly, { immediate: true });
 </script>
 
 <style scoped>

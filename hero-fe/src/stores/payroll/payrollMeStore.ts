@@ -206,14 +206,23 @@ export const usePayrollStore = defineStore('payroll', {
          * @param accountId 삭제할 계좌 ID
          */
         async deleteMyBankAccount(accountId: number) {
-            await deleteBankAccount(accountId);
+            try {
+                await deleteBankAccount(accountId);
 
-            await this.loadAccounts();
-            if (this.currentMonth) {
-                await this.loadMyPayroll(this.currentMonth);
-            } else {
-                await this.loadMyPayroll();
+                await this.loadAccounts();
+                if (this.currentMonth) {
+                    await this.loadMyPayroll(this.currentMonth);
+                } else {
+                    await this.loadMyPayroll();
+                }
+            } catch (e: any) {
+                console.log('DELETE ERROR RESPONSE DATA:', e?.response?.data); // 확인용
+
+                throw {
+                    code: e?.response?.data?.errorCode ?? e?.response?.data?.code,
+                    message: e?.response?.data?.message ?? '계좌 삭제 중 오류가 발생했습니다.',
+                };
             }
-        },
+        }
     },
 });

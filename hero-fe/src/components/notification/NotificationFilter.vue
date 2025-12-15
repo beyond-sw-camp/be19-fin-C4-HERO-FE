@@ -1,6 +1,6 @@
 <!--
   <pre>
-  Vue Name: NotificationFilter.vue
+  Vue Name: NotificationFilter
   Description: 알림 필터 탭 컴포넌트
                - 알림 유형별 필터링 탭 (전체, 시스템, 업무, 인사 등)
                - 각 탭별 읽지 않은 알림 개수 배지 표시
