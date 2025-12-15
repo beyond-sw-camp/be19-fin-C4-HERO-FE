@@ -75,8 +75,8 @@ export const useNotificationStore = defineStore('notification', (): Notification
       isLoading.value = true;
       
       // computed된 employeeId 사용
-      const data: NotificationDTO[] = await notificationApi.registNotifications(
-        employeeId.value  // ← .value 사용!
+      const data: NotificationDTO[] = await notificationApi.findNotifications(
+        employeeId.value  // .value 사용
       );
 
       notifications.value = data.map((n) => mapDTOToNotification(n));
@@ -106,7 +106,7 @@ export const useNotificationStore = defineStore('notification', (): Notification
    */
   const markAsRead = async (notificationId: number): Promise<void> => {
     try {
-      await notificationApi.ModifyIsRead(notificationId);
+      await notificationApi.modifyIsRead(notificationId);
 
       const notification = notifications.value.find((n) => n.id === notificationId);
       if (notification && notification.isNew) {
@@ -124,7 +124,7 @@ export const useNotificationStore = defineStore('notification', (): Notification
    */
   const markAllAsRead = async (): Promise<void> => {
     try {
-      await notificationApi.ModifyAllIsRead(employeeId.value);
+      await notificationApi.modifyAllIsRead(employeeId.value);
 
       notifications.value.forEach((n) => {
         n.isNew = false;
