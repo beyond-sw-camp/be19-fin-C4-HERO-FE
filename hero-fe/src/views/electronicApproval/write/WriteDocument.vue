@@ -11,7 +11,7 @@
         </button>
 
         <div class="action-group">
-          <button class="btn-secondary" @click="saveDraft()">
+          <button class="btn-secondary" @click="handleSaveDraft()">
             <img class="btn-icon" src="/images/file.svg" />
             <div class="btn-text">임시저장</div>
           </button>
@@ -19,7 +19,7 @@
             <img class="btn-icon" src="/images/preview.svg" />
             <div class="btn-text">미리보기</div>
           </button>
-          <button class="btn-primary" @click="submitDocument()">
+          <button class="btn-primary" @click="handleSubmit()">
             <img class="btn-icon" src="/images/submit.svg" />
             <div class="btn-text-white">상신</div>
           </button>
@@ -31,19 +31,23 @@
     <div class="page-body">
       <div class="form-wrapper">
         <div class="form-container">
-          <!-- CommonForm과 동적 섹션 컴포넌트 -->
           <CommonForm
+            ref="commonFormRef"
             :title="title"
             :category="category"
             :empName="empName"
             :empDept="empDept"
             :empGrade="empGrade"
-            @save-draft="saveDraft"
-            @cancel="backToList"
-            @submit="submitDocument"
+            @preview="previewDocument()"
+            @cancel="backToList()"
+            @submit="handleSubmit()"
           >
             <template #detail-section>
-              <component :is="currentDetailSection" />
+              <!-- v-model로 sectionData와 양방향 바인딩 -->
+              <component 
+                :is="currentDetailSection"
+                v-model="sectionData"
+              />
             </template>
           </CommonForm>
         </div>
@@ -53,8 +57,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import apiClient from '@/api/apiClient';
 import CommonForm from './CommonForm.vue';
 import { 
   VacationSection,
@@ -78,6 +83,9 @@ const props = defineProps<{
   formName: string;
 }>();
 
+// CommonForm 참조
+const commonFormRef = ref<InstanceType<typeof CommonForm>>();
+
 // 섹션 컴포넌트 매핑
 const sectionMap: Record<string, any> = {
   vacation: VacationSection,
@@ -95,43 +103,154 @@ const currentDetailSection = computed(() => {
   return sectionMap[props.formName];
 });
 
-const title = computed(() => {
-  return approvalStore.title || '서식명';
+const title = computed(() => approvalStore.title || '서식명');
+const category = computed(() => approvalStore.category || '분류명');
+const empName = computed(() => authStore.user?.employeeName || '직원이름');
+const empDept = computed(() => authStore.user?.departmentName || '부서');
+const empGrade = computed(() => authStore.user?.gradeName || '직급');
+
+const currentDate = computed(() => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 });
 
-const category = computed(() => {
-  return approvalStore.category || '분류명';
-});
+// 핵심: Section 데이터를 저장하는 ref (v-model로 자동 업데이트됨)
+const sectionData = ref<any>({});
 
-const empName = computed(() => {
-  return authStore.user?.employeeName || '직원이름';
-});
+// ✅ FormData 생성 함수 (JSON + File)
+const createFormData = (status: 'draft' | 'submitted') => {
+  const commonFormData = commonFormRef.value?.getCommonData();
+  
+  // sectionData를 JSON 문자열로 변환
+  const detailsJsonString = JSON.stringify(sectionData.value);
+  
+  // ✅ [LOG] 여기서 변환된 JSON 문자열 확인 가능
+  console.log('details (JSON String):', detailsJsonString);
+  
+  // 1. FormData 객체 생성
+  const formData = new FormData();
 
-const empDept = computed(() => {
-  return authStore.user?.departmentName || '부서';
-});
+  // 2. DTO 데이터 생성 (파일 제외)
+  const requestDto = {
+    formType: props.formName,
+    documentType: category.value,
+    title: commonFormData?.title || '',
+    drafter: empName.value,
+    department: empDept.value,
+    grade: empGrade.value,
+    draftDate: currentDate.value,
+    status: status,
+    submittedAt: status === 'submitted' ? new Date().toISOString() : null,
+    approvalLine: commonFormData?.approvalLine || [],
+    references: commonFormData?.references || [],
+    details: detailsJsonString
+  };
 
-const empGrade = computed(() => {
-  return authStore.user?.gradeName || '직급';
-});
+  // 3. DTO를 'data' 파트에 JSON Blob으로 추가
+  formData.append('data', new Blob([JSON.stringify(requestDto)], { type: 'application/json' }));
+
+  // 4. 파일들을 'files' 파트에 추가
+  if (commonFormData?.attachments) {
+    commonFormData.attachments.forEach((file: File) => {
+      formData.append('files', file);
+    });
+  }
+  
+  return formData;
+};
 
 const backToList = () => {
   router.push('/approval/document-templates');
 };
 
-const saveDraft = () => {
-  console.log('임시저장 버튼 클릭');
-  // 임시저장을 위한 API 호출
+// 임시저장
+const handleSaveDraft = async () => {
+  try {
+    const formData = createFormData('draft');
+    
+    const response = await apiClient.post('/approval/draft', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    alert('임시저장되었습니다.');
+    console.log('저장 결과:', response.data);
+  } catch (error) {
+    console.error('임시저장 실패:', error);
+    alert('임시저장에 실패했습니다.');
+  }
 };
 
+// 미리보기
 const previewDocument = () => {
-  console.log('미리보기 버튼 클릭');
-  // 미리보기를 위한 API 호출
+  const formData = createFormData('draft');
+  console.log('🔍 미리보기 (FormData 생성됨)');
+  
+  // (formData as any)를 사용하여 타입 에러 우회
+  for (const pair of (formData as any).entries()) {
+    console.log(`${pair[0]}:`, pair[1]);
+  }
 };
 
-const submitDocument = () => {
-  console.log('상신 버튼 클릭');
-  // 상신을 위한 API 호출
+// 상신
+const handleSubmit = async () => {
+  try {
+    if (!validateForm()) {
+      return;
+    }
+
+    const formData = createFormData('submitted');
+
+    const response = await apiClient.post('/approval/submit', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    alert('상신되었습니다.');
+    console.log('상신 결과:', response.data);
+    
+    router.push('/approval/document-templates');
+  } catch (error) {
+    console.error('상신 실패:', error);
+    alert('상신에 실패했습니다.');
+  }
+};
+
+// 폼 유효성 검사
+const validateForm = (): boolean => {
+  const commonFormData = commonFormRef.value?.getCommonData();
+  
+  if (!commonFormData?.title) {
+    alert('제목을 입력하세요.');
+    return false;
+  }
+
+  if (props.formName === 'vacation') {
+    if (!sectionData.value.vacationType) {
+      alert('휴가 종류를 선택하세요.');
+      return false;
+    }
+    if (!sectionData.value.startDate || !sectionData.value.endDate) {
+      alert('휴가 기간을 선택하세요.');
+      return false;
+    }
+  } else if (props.formName === 'overtime') {
+    if (!sectionData.value.workDate) {
+      alert('근무 날짜를 선택하세요.');
+      return false;
+    }
+    if (!sectionData.value.startTime || !sectionData.value.endTime) {
+      alert('근무 시간을 입력하세요.');
+      return false;
+    }
+  }
+
+  return true;
 };
 </script>
 
