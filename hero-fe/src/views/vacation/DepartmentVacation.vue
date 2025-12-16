@@ -1,4 +1,19 @@
-<!-- src/views/vacation/DepartmentVacation.vue -->
+<!-- 
+  <pre>
+  (File => TypeScript / Vue) Name   : DeptVacationCalendar.vue
+  Description : 부서 휴가 캘린더 페이지
+                - 월 단위 캘린더에 부서원들의 휴가 일정을 시각화
+                - 본인 휴가 / 팀원 휴가 색상 구분
+                - 월 이동(이전/다음) 기능 지원
+
+  History
+  2025/12/16 - 이지윤 최초 작성
+  </pre>
+
+  @author 이지윤
+  @version 1.0
+-->
+
 <template>
   <div class="dept-vacation-wrapper">
     <div class="dept-vacation-page">
@@ -54,6 +69,7 @@
                 <div class="cell-date">
                   {{ cell.date.getDate() }}
                 </div>
+
                 <div class="cell-events">
                   <div
                     v-for="event in cell.events"
@@ -89,21 +105,41 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref } from 'vue';
+
+/**
+ * 부서 휴가 이벤트 한 건에 대한 타입
+ * - employeeName : 직원명
+ * - type         : 휴가 유형 (연차 / 반차 / 병가 등)
+ * - startDate    : 시작일 (YYYY-MM-DD)
+ * - endDate      : 종료일 (YYYY-MM-DD)
+ * - isSelf       : 본인 여부 (색상 구분용)
+ */
+interface DeptVacationEvent {
+  id: number;
+  employeeName: string;
+  type: string;
+  startDate: string;
+  endDate: string;
+  isSelf: boolean;
+}
+
+/**
+ * 캘린더 한 칸(셀)에 대한 타입
+ * - isEmpty : 월 범위 바깥의 빈 셀 여부
+ * - date    : 해당 셀의 실제 날짜 (빈 셀인 경우 null)
+ * - events  : 해당 날짜에 포함된 휴가 이벤트 목록
+ */
+interface CalendarCell {
+  isEmpty: boolean;
+  date: Date | null;
+  events: DeptVacationEvent[];
+}
 
 /**
  * 부서 휴가 이벤트 더미 데이터
- * - 나중에 백엔드 연동 시 API 응답으로 대체
+ * - 나중에 백엔드 연동 시 API 응답으로 대체 예정
  */
-interface DeptVacationEvent {
-  id: number
-  employeeName: string
-  type: string        // 연차 / 반차 / 병가 등
-  startDate: string   // '2025-12-05'
-  endDate: string     // '2025-12-05'
-  isSelf: boolean     // 본인 여부 (색상 구분용)
-}
-
 const events = ref<DeptVacationEvent[]>([
   {
     id: 1,
@@ -145,48 +181,57 @@ const events = ref<DeptVacationEvent[]>([
     endDate: '2025-12-25',
     isSelf: true,
   },
-])
+]);
 
 /**
  * 현재 표시 중인 연/월
  * - 디자인에 맞춰 2025년 12월로 초기화
  */
-const currentYear = ref(2025)
-const currentMonth = ref(11) // 0: 1월, 11: 12월
+const currentYear = ref<number>(2025);
+const currentMonth = ref<number>(11); // 0: 1월, 11: 12월
 
-const weekdayLabels = ['일', '월', '화', '수', '목', '금', '토']
+/** 요일 라벨 (일 ~ 토) */
+const weekdayLabels: string[] = ['일', '월', '화', '수', '목', '금', '토'];
 
 /**
- * 특정 날짜에 포함되는 이벤트 목록 반환
+ * 특정 날짜에 포함되는 휴가 이벤트 목록을 반환합니다.
+ *
+ * @param {Date} date - 기준 날짜
+ * @returns {DeptVacationEvent[]} 해당 날짜에 시작일~종료일 범위가 포함된 이벤트 배열
+ ****************************************
+ * @param → 함수의 인자(Parameter)
+ ****************************************
  */
 const getEventsForDate = (date: Date): DeptVacationEvent[] => {
-  const dStr = (d: Date) => d.toISOString().slice(0, 10)
+  const toDateString = (d: Date): string => d.toISOString().slice(0, 10);
 
-  return events.value.filter(ev => {
-    const start = new Date(ev.startDate)
-    const end = new Date(ev.endDate)
+  return events.value.filter((ev) => {
+    const start = new Date(ev.startDate);
+    const end = new Date(ev.endDate);
+
+    const target = toDateString(date);
+    const startStr = toDateString(start);
+    const endStr = toDateString(end);
 
     // 날짜 범위 포함 여부
-    return dStr(date) >= dStr(start) && dStr(date) <= dStr(end)
-  })
-}
+    return target >= startStr && target <= endStr;
+  });
+};
 
 /**
- * 캘린더 셀 데이터 생성
- * - 앞/뒤 빈 칸 포함해서 7의 배수로 맞춤
+ * 캘린더 셀 데이터
+ * - 앞/뒤 빈 칸을 포함하여 7의 배수 길이로 구성
+ *
+ * @returns {CalendarCell[]} 캘린더 셀 배열
  */
-const calendarCells = computed(() => {
-  const first = new Date(currentYear.value, currentMonth.value, 1)
-  const last = new Date(currentYear.value, currentMonth.value + 1, 0)
+const calendarCells = computed<CalendarCell[]>(() => {
+  const first = new Date(currentYear.value, currentMonth.value, 1);
+  const last = new Date(currentYear.value, currentMonth.value + 1, 0);
 
-  const firstWeekday = first.getDay() // 0: 일요일
-  const totalDays = last.getDate()
+  const firstWeekday = first.getDay(); // 0: 일요일
+  const totalDays = last.getDate();
 
-  const cells: {
-    isEmpty: boolean
-    date: Date | null
-    events: DeptVacationEvent[]
-  }[] = []
+  const cells: CalendarCell[] = [];
 
   // 앞쪽 빈 칸
   for (let i = 0; i < firstWeekday; i += 1) {
@@ -194,17 +239,18 @@ const calendarCells = computed(() => {
       isEmpty: true,
       date: null,
       events: [],
-    })
+    });
   }
 
   // 실제 날짜 셀
   for (let day = 1; day <= totalDays; day += 1) {
-    const date = new Date(currentYear.value, currentMonth.value, day)
+    const date = new Date(currentYear.value, currentMonth.value, day);
+
     cells.push({
       isEmpty: false,
       date,
       events: getEventsForDate(date),
-    })
+    });
   }
 
   // 뒤쪽 빈 칸 (행 맞추기)
@@ -213,24 +259,34 @@ const calendarCells = computed(() => {
       isEmpty: true,
       date: null,
       events: [],
-    })
+    });
   }
 
-  return cells
-})
+  return cells;
+});
 
 /**
  * 월 이동 (이전/다음)
+ * - diff: -1 이면 이전 달, 1 이면 다음 달
+ *
+ * @param {number} diff - 이동할 개월 수 (보통 -1 또는 1)
  */
-const moveMonth = (diff: number) => {
-  const year = currentYear.value
-  const month = currentMonth.value + diff
+const moveMonth = (diff: number): void => {
+  const year = currentYear.value;
+  const month = currentMonth.value + diff;
 
-  const newDate = new Date(year, month, 1)
-  currentYear.value = newDate.getFullYear()
-  currentMonth.value = newDate.getMonth()
-}
+  const newDate = new Date(year, month, 1);
+
+  currentYear.value = newDate.getFullYear();
+  currentMonth.value = newDate.getMonth();
+};
 </script>
+
+<style scoped>
+/* TODO: dept-vacation-wrapper / dept-vacation-page / calendar-container 등
+   BEM 네이밍 컨벤션에 맞춰 점진적 리팩터링 예정 */
+</style>
+
 
 <style scoped>
 .dept-vacation-wrapper {

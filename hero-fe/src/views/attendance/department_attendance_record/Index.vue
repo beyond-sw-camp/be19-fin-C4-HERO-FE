@@ -1,3 +1,19 @@
+<!-- 
+  <pre>
+  (File => TypeScript / Vue) Name   : WorkSystemStatus.vue
+  Description : 근무제 현황 조회 페이지
+                - 이름·근무제·직급에 대한 검색
+                - 프론트 단 필터링 + 페이지네이션
+                - 더미 데이터를 기반으로 근무제/근무시간 목록 표시
+
+  History
+  2025/12/16 - 이지윤 최초 작성
+  </pre>
+
+  @author 이지윤
+  @version 1.0
+-->
+
 <template>
   <div class="worksystem-wrapper">
     <div class="worksystem-page">
@@ -11,8 +27,18 @@
               class="search-input"
               placeholder="이름·근무제·직급으로 검색"
             />
-            <button class="btn-search" @click="onSearch">검색</button>
-            <button class="btn-reset" @click="onReset">초기화</button>
+            <button
+              class="btn-search"
+              @click="onSearch"
+            >
+              검색
+            </button>
+            <button
+              class="btn-reset"
+              @click="onReset"
+            >
+              초기화
+            </button>
           </div>
         </div>
 
@@ -35,7 +61,9 @@
                   :key="row.id"
                   :class="{ 'row-striped': index % 2 === 1 }"
                 >
-                  <td class="cell-name">{{ row.name }}</td>
+                  <td class="cell-name">
+                    {{ row.name }}
+                  </td>
 
                   <td class="cell-status">
                     <span class="status-pill">
@@ -57,7 +85,10 @@
                 </tr>
 
                 <tr v-if="pagedList.length === 0">
-                  <td colspan="5" class="empty-row">
+                  <td
+                    colspan="5"
+                    class="empty-row"
+                  >
                     조회된 근무제 현황이 없습니다.
                   </td>
                 </tr>
@@ -66,7 +97,10 @@
           </div>
 
           <!-- 페이지네이션 -->
-          <div class="pagination" v-if="totalPages > 0">
+          <div
+            v-if="totalPages > 0"
+            class="pagination"
+          >
             <button
               class="page-button"
               :disabled="currentPage === 1"
@@ -99,20 +133,30 @@
   </div>
 </template>
 
-<script lang="ts" setup>
-import { computed, ref } from 'vue'
+<script setup lang="ts">
+import { computed, ref } from 'vue';
 
+/**
+ * 근무제 현황 테이블 한 행에 대한 타입
+ * - id        : 행 고유 ID (프론트 전용)
+ * - name      : 직원명
+ * - status    : 출근 상태 (예: 정상출근)
+ * - position  : 직급
+ * - workSystem: 근무제 이름
+ * - workTime  : 근무 시간대 (예: 09:00 - 18:00)
+ */
 interface EmployeeWorkSystemRow {
-  id: number
-  name: string
-  status: string
-  position: string
-  workSystem: string
-  workTime: string
+  id: number;
+  name: string;
+  status: string;
+  position: string;
+  workSystem: string;
+  workTime: string;
 }
 
 /**
  * 더미 데이터 (Figma 예시 기준)
+ * - 추후 백엔드 연동 시 API 응답으로 교체 예정
  */
 const allList = ref<EmployeeWorkSystemRow[]>([
   {
@@ -155,58 +199,99 @@ const allList = ref<EmployeeWorkSystemRow[]>([
     workSystem: '기본 근무제',
     workTime: '09:00 - 18:00',
   },
-  // 필요하면 여기서 더 추가해서 페이지네이션 테스트 가능
-])
+  // TODO: 필요 시 더미 데이터를 추가하여 페이지네이션 테스트
+]);
 
-// 검색 키워드
-const keyword = ref('')
+/** 검색 키워드 */
+const keyword = ref<string>('');
 
-// 페이지네이션 상태 (프론트 전용)
-const currentPage = ref(1)
-const pageSize = ref(5)
+/** 페이지네이션 상태 (프론트 전용) */
+const currentPage = ref<number>(1);
+const pageSize = ref<number>(5);
 
-// 검색 결과 리스트 (프론트 필터링)
-const filteredList = computed(() => {
-  if (!keyword.value.trim()) {
-    return allList.value
+/**
+ * 검색 키워드를 적용한 근무제 현황 리스트
+ * - 이름 / 직급 / 근무제 필드에 대해 부분 일치 검색 수행
+ *
+ * @returns {EmployeeWorkSystemRow[]} 필터링된 리스트
+ */
+const filteredList = computed<EmployeeWorkSystemRow[]>(() => {
+  const rawKeyword = keyword.value.trim();
+
+  if (!rawKeyword) {
+    return allList.value;
   }
 
-  const lower = keyword.value.trim().toLowerCase()
+  const lower = rawKeyword.toLowerCase();
+
   return allList.value.filter((row) => {
     return (
       row.name.toLowerCase().includes(lower) ||
       row.position.toLowerCase().includes(lower) ||
       row.workSystem.toLowerCase().includes(lower)
-    )
-  })
-})
+    );
+  });
+});
 
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredList.value.length / pageSize.value)),
-)
+/**
+ * 전체 페이지 수
+ *
+ * @returns {number} 전체 페이지 수 (최소 1)
+ */
+const totalPages = computed<number>(() => {
+  return Math.max(1, Math.ceil(filteredList.value.length / pageSize.value));
+});
 
-// 현재 페이지에 보여줄 데이터
-const pagedList = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredList.value.slice(start, end)
-})
+/**
+ * 현재 페이지에 보여줄 데이터
+ *
+ * @returns {EmployeeWorkSystemRow[]} 현재 페이지 리스트
+ */
+const pagedList = computed<EmployeeWorkSystemRow[]>(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
 
-function onSearch() {
-  // 프론트 필터링이 computed로 적용되므로 페이지만 초기화
-  currentPage.value = 1
-}
+  return filteredList.value.slice(start, end);
+});
 
-function onReset() {
-  keyword.value = ''
-  currentPage.value = 1
-}
+/**
+ * 검색 버튼 클릭 시 실행되는 핸들러
+ * - 검색 키워드를 기준으로 필터링이 적용되며,
+ *   페이지는 항상 1 페이지로 초기화합니다.
+ */
+const onSearch = (): void => {
+  currentPage.value = 1;
+};
 
-function goPage(page: number) {
-  if (page < 1 || page > totalPages.value) return
-  currentPage.value = page
-}
+/**
+ * 초기화 버튼 클릭 시 실행되는 핸들러
+ * - 검색 키워드를 비우고 1 페이지로 이동합니다.
+ */
+const onReset = (): void => {
+  keyword.value = '';
+  currentPage.value = 1;
+};
+
+/**
+ * 페이지 이동 핸들러
+ * - 1보다 작거나 전체 페이지 수를 초과하는 경우 이동하지 않습니다.
+ *
+ * @param {number} page - 이동할 페이지 번호
+ */
+const goPage = (page: number): void => {
+  if (page < 1 || page > totalPages.value) {
+    return;
+  }
+
+  currentPage.value = page;
+};
 </script>
+
+<style scoped>
+/* TODO: worksystem-wrapper / worksystem-page / panel 등
+   BEM 네이밍 컨벤션에 맞춰 점진적 리팩터링 예정 */
+</style>
+
 
 <style scoped>
 .worksystem-wrapper {

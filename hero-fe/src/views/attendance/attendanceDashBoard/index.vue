@@ -1,4 +1,19 @@
-<!-- src/views/attendance/attendanceDashBoard/index.vue -->
+<!-- 
+  <pre>
+  (File => TypeScript / Vue) Name   : AttendanceScoreDashboard.vue
+  Description : 근태 점수 대시보드 페이지
+                - 상단 요약 카드(전체 직원 / 우수 직원 / 위험 직원 / 점수 계산식)
+                - 검색(이름 / 부서 / 사번) + 페이지네이션
+                - 근태 점수: 100 - (지각 × 1) - (결근 × 2)
+
+  History
+  2025/12/16 - 이지윤 최초 작성
+  </pre>
+
+  @author 이지윤
+  @version 1.0
+-->
+
 <template>
   <div class="attendance-dashboard-wrapper">
     <!-- 상단 요약 카드 4개 -->
@@ -53,7 +68,11 @@
             placeholder="이름 / 부서 / 사번 검색"
             @keyup.enter="onSearch"
           />
-          <button type="button" class="btn-search" @click="onSearch">
+          <button
+            type="button"
+            class="btn-search"
+            @click="onSearch"
+          >
             검색
           </button>
         </div>
@@ -78,7 +97,7 @@
               :key="row.empNo"
               :class="{ 'row-striped': index % 2 === 1 }"
             >
-              <!-- 사번 / 순번 -->
+              <!-- 사번 -->
               <td>{{ row.empNo }}</td>
 
               <!-- 이름 -->
@@ -100,8 +119,13 @@
               <!-- 점수 -->
               <td>{{ row.score }}점</td>
             </tr>
+
+            <!-- 데이터 없음 -->
             <tr v-if="pagedEmployees.length === 0">
-              <td colspan="6" class="empty-row">
+              <td
+                colspan="6"
+                class="empty-row"
+              >
                 검색 조건에 해당하는 직원이 없습니다.
               </td>
             </tr>
@@ -145,15 +169,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref } from 'vue';
 
+/**
+ * 근태 점수 행 데이터 타입
+ * - empNo        : 사번
+ * - name         : 이름
+ * - department   : 부서
+ * - tardyCount   : 지각 횟수
+ * - absenceCount : 결근 횟수
+ * - score        : 근태 점수
+ */
 interface EmployeeScoreRow {
-  empNo: string
-  name: string
-  department: string
-  tardyCount: number
-  absenceCount: number
-  score: number
+  empNo: string;
+  name: string;
+  department: string;
+  tardyCount: number;
+  absenceCount: number;
+  score: number;
 }
 
 /**
@@ -201,63 +234,111 @@ const employees = ref<EmployeeScoreRow[]>([
     absenceCount: 4,
     score: 100 - 5 * 1 - 4 * 2, // 87
   },
-])
+]);
 
 /** 검색 키워드 */
-const searchKeyword = ref('')
+const searchKeyword = ref<string>('');
 
 /** 페이지네이션 상태 */
-const currentPage = ref(1)
-const pageSize = ref(5)
+const currentPage = ref<number>(1);
+const pageSize = ref<number>(5);
 
-/** 상단 카드용 집계 */
-const totalEmployees = computed(() => employees.value.length)
+/**
+ * 상단 카드용 집계 - 전체 직원 수
+ *
+ * @returns {number} 전체 직원 수
+ */
+const totalEmployees = computed<number>(() => employees.value.length);
 
-const excellentEmployees = computed(() =>
-  employees.value.filter(emp => emp.score >= 95).length,
-)
+/**
+ * 상단 카드용 집계 - 우수 직원 수 (95점 이상)
+ *
+ * @returns {number} 우수 직원 수
+ */
+const excellentEmployees = computed<number>(() => {
+  return employees.value.filter((emp) => emp.score >= 95).length;
+});
 
-const riskyEmployees = computed(() =>
-  employees.value.filter(emp => emp.score <= 85).length,
-)
+/**
+ * 상단 카드용 집계 - 위험 직원 수 (85점 이하)
+ *
+ * @returns {number} 위험 직원 수
+ */
+const riskyEmployees = computed<number>(() => {
+  return employees.value.filter((emp) => emp.score <= 85).length;
+});
 
-/** 검색 필터 적용 */
-const filteredEmployees = computed(() => {
-  const keyword = searchKeyword.value.trim()
-  if (!keyword) return employees.value
+/**
+ * 검색 키워드를 적용한 직원 목록
+ * - 사번 / 이름 / 부서에 대해 부분 일치 검색
+ *
+ * @returns {EmployeeScoreRow[]} 필터링된 직원 목록
+ */
+const filteredEmployees = computed<EmployeeScoreRow[]>(() => {
+  const keyword = searchKeyword.value.trim();
 
-  return employees.value.filter(emp => {
+  if (!keyword) {
+    return employees.value;
+  }
+
+  return employees.value.filter((emp) => {
     return (
       emp.empNo.includes(keyword) ||
       emp.name.includes(keyword) ||
       emp.department.includes(keyword)
-    )
-  })
-})
+    );
+  });
+});
 
-/** 전체 페이지 수 */
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredEmployees.value.length / pageSize.value)),
-)
+/**
+ * 전체 페이지 수
+ *
+ * @returns {number} 전체 페이지 수 (최소 1)
+ */
+const totalPages = computed<number>(() => {
+  return Math.max(1, Math.ceil(filteredEmployees.value.length / pageSize.value));
+});
 
-/** 현재 페이지 데이터 */
-const pagedEmployees = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredEmployees.value.slice(start, end)
-})
+/**
+ * 현재 페이지에 해당하는 직원 목록
+ *
+ * @returns {EmployeeScoreRow[]} 현재 페이지 직원 목록
+ */
+const pagedEmployees = computed<EmployeeScoreRow[]>(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
 
-/** 검색 버튼 클릭 */
-const onSearch = () => {
-  currentPage.value = 1
-}
+  return filteredEmployees.value.slice(start, end);
+});
 
-/** 페이지 이동 */
-const goPage = (page: number) => {
-  if (page < 1 || page > totalPages.value) return
-  currentPage.value = page
-}
+/**
+ * 검색 버튼 / Enter 입력 시 호출되는 핸들러
+ * - 페이지를 1 페이지로 초기화하여 첫 페이지부터 다시 조회
+ */
+const onSearch = (): void => {
+  currentPage.value = 1;
+};
+
+/**
+ * 페이지 이동 핸들러
+ * - 1보다 작거나 전체 페이지 수를 초과하는 경우 무시
+ *
+ * @param {number} page - 이동할 페이지 번호
+ */
+const goPage = (page: number): void => {
+  if (page < 1 || page > totalPages.value) {
+    return;
+  }
+
+  currentPage.value = page;
+};
 </script>
+
+<style scoped>
+/* TODO: attendance-dashboard-wrapper / summary-cards / dashboard-panel 등
+   BEM 네이밍 컨벤션에 맞춰 점진적 리팩터링 예정 */
+</style>
+
 
 <style scoped>
 .attendance-dashboard-wrapper {

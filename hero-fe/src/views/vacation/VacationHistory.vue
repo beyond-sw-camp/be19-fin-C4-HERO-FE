@@ -1,3 +1,19 @@
+<!-- 
+  <pre>
+  (File => TypeScript / Vue) Name   : VacationHistory.vue
+  Description : 개인 휴가 이력 조회 페이지
+                - 상단 요약 카드(총 연차 / 사용 연차 / 남은 연차 / 소멸 예정)
+                - 기간 필터(시작일 / 종료일) + 검색 / 초기화 버튼
+                - 휴가 이력 테이블 + 페이지네이션
+
+  History
+  2025/12/16 - 이지윤 최초 작성
+  </pre>
+
+  @author 이지윤
+  @version 1.0
+-->
+
 <template>
   <div class="vacation-history-wrapper">
     <div class="vacation-history-page">
@@ -45,7 +61,11 @@
             <div class="date-filter-group">
               <span class="date-label">기간(시작)</span>
               <div class="date-input-wrapper">
-                <input v-model="startDate" type="date" class="date-input" />
+                <input
+                  v-model="startDate"
+                  type="date"
+                  class="date-input"
+                />
                 <span class="date-icon">📅</span>
               </div>
             </div>
@@ -54,17 +74,31 @@
             <div class="date-filter-group">
               <span class="date-label">기간(종료)</span>
               <div class="date-input-wrapper">
-                <input v-model="endDate" type="date" class="date-input" />
+                <input
+                  v-model="endDate"
+                  type="date"
+                  class="date-input"
+                />
                 <span class="date-icon">📅</span>
               </div>
             </div>
 
             <!-- 검색 / 초기화 버튼 -->
             <div class="search-button-group">
-              <button class="btn-search" type="button" :disabled="loading" @click="onSearch">
+              <button
+                class="btn-search"
+                type="button"
+                :disabled="loading"
+                @click="onSearch"
+              >
                 검색
               </button>
-              <button class="btn-reset" type="button" :disabled="loading" @click="onReset">
+              <button
+                class="btn-reset"
+                type="button"
+                :disabled="loading"
+                @click="onReset"
+              >
                 초기화
               </button>
             </div>
@@ -89,16 +123,27 @@
                 :key="row.key"
                 :class="{ 'row-striped': index % 2 === 1 }"
               >
-                <td class="cell-period">{{ row.period }}</td>
-                <td class="cell-type">
-                  <span class="vacation-type-pill">{{ row.type }}</span>
+                <td class="cell-period">
+                  {{ row.period }}
                 </td>
-                <td class="cell-reason">{{ row.reason }}</td>
-                <td class="cell-status">{{ row.status }}</td>
+                <td class="cell-type">
+                  <span class="vacation-type-pill">
+                    {{ row.type }}
+                  </span>
+                </td>
+                <td class="cell-reason">
+                  {{ row.reason }}
+                </td>
+                <td class="cell-status">
+                  {{ row.status }}
+                </td>
               </tr>
 
               <tr v-if="!loading && uiRows.length === 0">
-                <td colspan="4" style="text-align: center; padding: 16px;">
+                <td
+                  colspan="4"
+                  style="text-align: center; padding: 16px;"
+                >
                   조회된 휴가 이력이 없습니다.
                 </td>
               </tr>
@@ -144,11 +189,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useVacationHistoryStore } from '@/stores/vacation/vacationHistory'
+import { computed, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
 
-const vacationStore = useVacationHistoryStore()
+import { useVacationHistoryStore } from '@/stores/vacation/vacationHistory';
+
+const vacationStore = useVacationHistoryStore();
 const {
   vacationList,
   currentPage,
@@ -156,35 +202,73 @@ const {
   startDate,
   endDate,
   loading,
-} = storeToRefs(vacationStore)
+} = storeToRefs(vacationStore);
 
 /**
- * 상단 요약 카드: 현재 vacationHistory.ts에 값이 없어서 임시 0 처리
- * (추후 store에 필드 생기면 storeToRefs로 교체하면 됨)
+ * 상단 요약 카드용 더미 데이터
+ * - 현재 vacationHistory.ts에 관련 필드가 없어 0으로 고정
+ * - 추후 스토어 필드가 추가되면 storeToRefs로 교체 예정
  */
-const totalAnnualLeave = computed(() => 0)
-const usedLeave = computed(() => 0)
-const remainingLeave = computed(() => 0)
-const expiringLeave = computed(() => 0)
+const totalAnnualLeave = computed<number>(() => 0);
+const usedLeave = computed<number>(() => 0);
+const remainingLeave = computed<number>(() => 0);
+const expiringLeave = computed<number>(() => 0);
 
-const safeTotalPages = computed(() => Math.max(1, totalPages.value || 0))
+/**
+ * 페이지네이션에서 사용할 안전한 totalPages
+ * - totalPages가 0이거나 falsy일 때도 최소 1 페이지는 유지
+ *
+ * @returns {number} 안전한 전체 페이지 수
+ */
+const safeTotalPages = computed<number>(() => {
+  return Math.max(1, totalPages.value || 0);
+});
 
-/** UI 표시용 period 포맷 */
-const formatPeriod = (from: string, to: string) => {
-  if (!from) return '-'
-  if (!to || from === to) return from
-  return `${from} ~ ${to}`
-}
+/**
+ * 휴가 기간 포맷
+ * - 시작일과 종료일이 같은 경우: 단일 날짜만 표시
+ * - 서로 다른 경우: "YYYY-MM-DD ~ YYYY-MM-DD" 형식
+ *
+ * @param {string} from - 시작일 (YYYY-MM-DD)
+ * @param {string} to - 종료일 (YYYY-MM-DD)
+ * @returns {string} 포맷된 기간 문자열
+ ****************************************
+ * @param → 함수의 인자(Parameter)
+ ****************************************
+ */
+const formatPeriod = (from: string, to: string): string => {
+  if (!from) {
+    return '-';
+  }
 
+  if (!to || from === to) {
+    return from;
+  }
+
+  return `${from} ~ ${to}`;
+};
+
+/**
+ * 테이블 바인딩용 UI Row 타입
+ * - key    : v-for용 고유 키
+ * - period : 화면에 표시할 휴가 기간 문자열
+ * - type   : 휴가 종류명
+ * - reason : 휴가 사유
+ * - status : 승인 상태
+ */
 interface UiRow {
-  key: string
-  period: string
-  type: string
-  reason: string
-  status: string
+  key: string;
+  period: string;
+  type: string;
+  reason: string;
+  status: string;
 }
 
-/** 테이블 바인딩용 가공 */
+/**
+ * 휴가 이력 리스트를 테이블 출력용 형식으로 가공
+ *
+ * @returns {UiRow[]} 화면에 렌더링될 테이블 행 배열
+ */
 const uiRows = computed<UiRow[]>(() => {
   return (vacationList.value ?? []).map((v, idx) => ({
     key: `${v.startDate}-${v.endDate}-${v.vacationTypeName}-${idx}`,
@@ -192,30 +276,54 @@ const uiRows = computed<UiRow[]>(() => {
     type: v.vacationTypeName,
     reason: v.reason,
     status: v.approvalStatus,
-  }))
-})
+  }));
+});
 
-/** 최초 로딩 */
+/**
+ * 컴포넌트 최초 마운트 시 1 페이지 휴가 이력을 조회합니다.
+ */
 onMounted(async () => {
-  await vacationStore.fetchVacationHistory(1)
-})
+  await vacationStore.fetchVacationHistory(1);
+});
 
-/** 검색: 현재 v-model로 store.startDate/endDate가 이미 갱신되므로 1페이지 재조회만 하면 됨 */
-const onSearch = async () => {
-  await vacationStore.fetchVacationHistory(1)
-}
+/**
+ * 검색 버튼 클릭 시 실행되는 핸들러입니다.
+ * - v-model로 이미 store.startDate / store.endDate가 갱신되므로
+ *   1 페이지부터 다시 조회만 수행합니다.
+ */
+const onSearch = async (): Promise<void> => {
+  await vacationStore.fetchVacationHistory(1);
+};
 
-/** 초기화: 스토어 액션 사용 */
-const onReset = async () => {
-  await vacationStore.resetFilters()
-}
+/**
+ * 초기화 버튼 클릭 시 실행되는 핸들러입니다.
+ * - 스토어의 resetFilters 액션을 호출하여
+ *   기간 필터값과 페이지를 초기 상태로 되돌립니다.
+ */
+const onReset = async (): Promise<void> => {
+  await vacationStore.resetFilters();
+};
 
-/** 페이지 이동 */
-const goPage = async (page: number) => {
-  if (page < 1 || page > safeTotalPages.value) return
-  await vacationStore.fetchVacationHistory(page)
-}
+/**
+ * 페이지 이동 핸들러입니다.
+ * - 1보다 작거나 전체 페이지 수를 초과하는 경우 이동하지 않습니다.
+ *
+ * @param {number} page - 이동할 페이지 번호
+ */
+const goPage = async (page: number): Promise<void> => {
+  if (page < 1 || page > safeTotalPages.value) {
+    return;
+  }
+
+  await vacationStore.fetchVacationHistory(page);
+};
 </script>
+
+<style scoped>
+/* TODO: vacation-history-wrapper / vacation-panel / vacation-table 등
+   BEM 네이밍 컨벤션에 맞춰 점진적 리팩터링 예정 */
+</style>
+
 
 
 <style scoped>
