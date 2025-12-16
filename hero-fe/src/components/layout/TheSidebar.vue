@@ -330,12 +330,12 @@
 
       <!-- 아래 유지 -->
       <div class="menu-list-bottom">
-        <div class="admin-link" v-if="!isCollapsed">
+        <!-- <div class="admin-link" v-if="!isCollapsed">
           <div class="icon-wrapper">
             <img class="config-icon sidebar-icon" src="/images/config.svg" />
           </div>
           <div class="menu-text">관리자 페이지</div>
-        </div>
+        </div> -->
 
         <div class="divider" v-if="!isCollapsed"></div>
 
