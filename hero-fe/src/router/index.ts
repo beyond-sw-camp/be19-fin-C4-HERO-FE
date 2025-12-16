@@ -20,6 +20,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 import Home from '@/views/Home.vue';
 import attendanceRoutes from './modules/attendance';
+import vacationRoutes from './modules/vacation';
 import electronicApprovalRoutes from './modules/electronicApproval';
 import payrollMeRoutes from './modules/payrollMe';
 import payrollAdminRoutes from "./modules/payrollAdmin";
@@ -45,6 +46,7 @@ const routes: RouteRecordRaw[] = [
     },
   },
   ...attendanceRoutes,
+  ...vacationRoutes,
   ...electronicApprovalRoutes,
   ...payrollMeRoutes,
   ...payrollAdminRoutes,

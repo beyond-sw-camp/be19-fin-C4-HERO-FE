@@ -30,13 +30,14 @@ export interface PersonalDTO {
  * 개인 근태 이력 페이지 응답 DTO
  */
 export interface PageResponse<T> {
-  items: PersonalDTO[];
+  content: T[];
   page: number;
   size: number;
-  totalCount: number;
+  totalElements: number;
   totalPages: number;
+  first: boolean;
+  last: boolean;
 }
-
 /**
  * Attendance 스토어 내부 상태 타입
  */
@@ -109,11 +110,10 @@ export const useAttendanceStore = defineStore('attendanceStore', {
 
         const data = response.data;
 
-        this.personalList = data.items;
-        this.currentPage = data.page;
-        this.pageSize = data.size;
-        this.totalCount = data.totalCount;
-        this.totalPages = data.totalPages;
+      this.personalList = data.content;
+      this.currentPage = data.page + 1; 
+      this.totalCount = data.totalElements;
+      this.totalPages = data.totalPages;
       } catch (error) {
         // TODO: 필요 시 에러 상태(errorMessage 등)를 추가로 두고 화면에 노출
         //       또는 공통 에러 핸들링 유틸과 연동

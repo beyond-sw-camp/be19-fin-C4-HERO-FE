@@ -29,11 +29,13 @@ export interface OvertimeDTO {
  * 공통 페이지 응답 DTO (백엔드 PageResponseDTO<T>와 매칭)
  */
 export interface PageResponse<T> {
-  items: T[];
-  page: number;
-  size: number;
-  totalCount: number;
-  totalPages: number;
+  content: T[]
+  page: number          // 0-based
+  size: number
+  totalElements: number
+  totalPages: number
+  first: boolean
+  last: boolean
 }
 
 /**
@@ -108,10 +110,10 @@ export const useOvertimeStore = defineStore('overtimeStore', {
 
         const data = response.data;
 
-        this.overtimeList = data.items;
-        this.currentPage = data.page;
+        this.overtimeList = data.content;
+        this.currentPage = data.page + 1;
         this.pageSize = data.size;
-        this.totalCount = data.totalCount;
+        this.totalCount = data.totalElements;
         this.totalPages = data.totalPages;
       } catch (error) {
         // TODO: 필요 시 에러 상태 필드(errorMessage 등)를 추가하여 UI와 연동

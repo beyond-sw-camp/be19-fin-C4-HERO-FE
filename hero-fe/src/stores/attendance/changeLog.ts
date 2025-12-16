@@ -29,12 +29,15 @@ export interface ChangeLogDTO {
  * 공통 페이지 응답 DTO (PageResponseDTO<T> 대응)
  */
 export interface PageResponse<T> {
-  items: T[]
-  page: number
+  content: T[]
+  page: number          // 0-based
   size: number
-  totalCount: number
+  totalElements: number
   totalPages: number
+  first: boolean
+  last: boolean
 }
+
 
 /**
  * ChangeLog 스토어 내부 상태 타입
@@ -108,10 +111,10 @@ export const useChangeLogStore = defineStore('changeLogStore', {
 
         const data = response.data
 
-        this.changeLogList = data.items
-        this.currentPage = data.page
+        this.changeLogList = data.content
+        this.currentPage = data.page + 1
         this.pageSize = data.size
-        this.totalCount = data.totalCount
+        this.totalCount = data.totalElements
         this.totalPages = data.totalPages
       } catch (error) {
         console.error('근무제 변경 이력 조회 실패:', error)

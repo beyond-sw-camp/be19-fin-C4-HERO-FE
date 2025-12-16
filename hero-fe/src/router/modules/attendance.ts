@@ -92,6 +92,18 @@ const attendanceRoutes: RouteRecordRaw[] = [
           ),
         meta: { title: '부서 근태 현황' },
       },
+
+      /**
+       * 6) 근태 대시 보드
+       *   - /attendance/attendanceDashBoard/index.vue
+       */
+      {
+        path: 'dashboard',
+        name: 'AttendanceDashboard',
+        component: () =>
+          import('@/views/attendance/attendanceDashBoard/index.vue'),
+        meta: {title: '근태 대시 보드'},
+      },
     ],
   },
 ];

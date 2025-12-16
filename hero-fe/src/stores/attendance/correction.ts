@@ -31,11 +31,13 @@ export interface CorrectionDTO {
  * 공통 페이지 응답 DTO (PageResponseDTO<T>)
  */
 export interface PageResponse<T> {
-  items: T[]
-  page: number
+  content: T[]
+  page: number          // 0-based
   size: number
-  totalCount: number
+  totalElements: number
   totalPages: number
+  first: boolean
+  last: boolean
 }
 
 /**
@@ -109,10 +111,10 @@ export const useCorrectionStore = defineStore('correctionStore', {
 
         const data = response.data
 
-        this.correctionList = data.items
-        this.currentPage = data.page
+        this.correctionList = data.content
+        this.currentPage = data.page + 1
         this.pageSize = data.size
-        this.totalCount = data.totalCount
+        this.totalCount = data.totalElements
         this.totalPages = data.totalPages
       } catch (error) {
         console.error('근태 수정 이력 조회 실패:', error)
