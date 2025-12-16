@@ -106,14 +106,10 @@ const props = defineProps<{
  * @event delete - 삭제 버튼 클릭 시 발생
  *                 부모 컴포넌트에서 소프트 삭제 처리
  *                 @param {number} id - 삭제할 알림 ID
- * 
- * @event action - 액션 버튼 클릭 시 발생 (현재는 미사용)
- *                 @param {Notification} notification - 액션 대상 알림 객체
  */
 const emit = defineEmits<{
   click: [notification: Notification];
   delete: [id: number];
-  action: [notification: Notification];
 }>();
 
 // 5. 이벤트 핸들러 
