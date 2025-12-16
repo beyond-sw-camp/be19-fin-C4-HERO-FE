@@ -12,6 +12,7 @@
  *
  * History
  * 2025/12/14 (혜원) 최초 작성
+ * 2025/12/16 (혜원) 필드 추가
  * </pre>
  *
  * @author 혜원
@@ -28,8 +29,10 @@
  * @property {string} message - 알림 내용
  * @property {string | null} link - 연결된 페이지 경로
  * @property {boolean} isRead - 읽음 여부
+ * @property {boolean} isDeleted - 소프트 삭제 여부
  * @property {string} createdAt - 생성 일시 
  * @property {string | null} readAt - 읽은 일시
+ * @property {string | null} deletedAt - 소프트 삭제 일시
  * @property {number} employeeId - 수신자 직원 ID
  * @property {number | null} attendanceId - 연관된 근태 ID
  * @property {number | null} payrollId - 연관된 급여 ID
@@ -43,8 +46,10 @@ export interface NotificationDTO {
   message: string;
   link: string | null;
   isRead: boolean;
+  isDeleted: boolean; 
   createdAt: string;
   readAt: string | null;
+  deletedAt: string | null;      
   employeeId: number;
   attendanceId: number | null;
   payrollId: number | null;
@@ -55,28 +60,52 @@ export interface NotificationDTO {
 /**
  * 프론트엔드 알림 객체
  * 
- * @description UI 렌더링용 알림 데이터 구조
- * @property {number} id - 알림 ID (notificationId 매핑)
+ * @description UI 렌더링용 알림 데이터 구조 (백엔드 NotificationDTO 기반)
+ * @property {number} notificationId - 알림 고유 ID
+ * @property {number} employeeId - 알림 수신자 직원 ID
  * @property {NotificationCategory} type - 알림 카테고리
  * @property {string} title - 알림 제목
- * @property {string} description - 알림 내용
- * @property {string} timeAgo - 상대 시간 ("방금 전", "1시간 전" 등)
- * @property {string} date - 생성 일시
- * @property {boolean} isNew - 읽지 않은 알림 여부
- * @property {string | null} action - 액션 버튼 텍스트
- * @property {string | null} link - 이동할 페이지 경로
+ * @property {string} message - 알림 내용
+ * @property {string | null} link - 이동할 페이지 경로 (없으면 null)
+ * @property {boolean} isRead - 읽음 여부
+ * @property {boolean} isDeleted - 삭제 여부
+ * @property {string} createdAt - 생성 일시 (ISO 8601 형식)
+ * @property {string | null} readAt - 읽은 일시 (읽지 않았으면 null)
+ * @property {string | null} deletedAt - 삭제 일시 (삭제 안 했으면 null)
+ * @property {number | null} attendanceId - 관련 근태 ID
+ * @property {number | null} payrollId - 관련 급여 ID
+ * @property {number | null} documentId - 관련 문서 ID
+ * @property {number | null} evaluationId - 관련 평가 ID
+ * @property {string} timeAgo - UI 표시용 상대 시간 (방금 전, 1시간 전 등)
  */
 export interface Notification {
-  id: number;
+  // 기본 정보
+  notificationId: number;
+  employeeId: number;
   type: NotificationCategory;
   title: string;
-  description: string;
-  timeAgo: string;
-  date: string;
-  isNew: boolean;
-  action: string | null;
+  message: string;
+  
+  // 링크 및 상태
   link: string | null;
+  isRead: boolean;
+  isDeleted: boolean;
+  
+  // 시간 정보
+  createdAt: string;
+  readAt: string | null;
+  deletedAt: string | null;
+  
+  // 연관 ID들
+  attendanceId: number | null;
+  payrollId: number | null;
+  documentId: number | null;
+  evaluationId: number | null;
+  
+  // UI 전용 필드
+  timeAgo: string;  // computed 값
 }
+
 /**
  * 백엔드 알림 타입
  * 
@@ -172,4 +201,30 @@ export interface StompFrame {
   command: string;
   headers: Record<string, string>;
   body: string;
+}
+
+/**
+ * 알림 설정
+ */
+export interface NotificationSettings {
+  attendanceEnabled: boolean;      // 근태 알림
+  payrollEnabled: boolean;         // 급여 알림
+  approvalEnabled: boolean;        // 결재 알림
+  leaveEnabled: boolean;           // 휴가 알림
+  evaluationEnabled: boolean;      // 평가 알림
+  systemEnabled: boolean;          // 시스템 알림
+    // 수신 방법
+  browserNotification: boolean;
+  emailNotification: boolean;
+  smsNotification: boolean; 
+}
+
+/**
+ * 알림 설정 항목
+ */
+export interface NotificationSettingItem {
+  id: keyof NotificationSettings;
+  label: string;
+  description: string;
+  icon: string;
 }
