@@ -49,6 +49,7 @@ export interface SettingsDepartmentResponseDTO {
 export interface SettingsPermissionsResponseDTO {
   employeeId: number;
   employeeName: string;
+  employeeNumber: string;
   department: string;
   grade: string;
   jobTitle: string;
@@ -68,5 +69,5 @@ export interface JobTitle {
 
 export interface Role {
   roleId: number;
-  roleName: string;
+  role: string;
 }

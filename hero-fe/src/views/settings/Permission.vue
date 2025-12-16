@@ -24,18 +24,24 @@
         </thead>
         <tbody>
           <tr v-for="emp in permissions" :key="emp.employeeId">
-            <td>{{ emp.employeeName }} ({{ emp.employeeId }})</td>
+            <td class="col-name">{{ emp.employeeName || '이름 없음' }} ({{ emp.employeeNumber || '사번 없음' }})</td>
             <td>{{ emp.department }}</td>
             <td>{{ emp.grade }} / {{ emp.jobTitle }}</td>
             <td>
               <div class="role-badges">
-                <span v-for="role in emp.role" :key="role" class="badge">
-                  {{ role }}
+                <span v-for="roleObj in getSortedRoles(emp.role)" :key="roleObj.name" :class="['badge', getBadgeClass(roleObj.name)]">
+                  {{ roleObj.name }}
                 </span>
               </div>
             </td>
             <td>
-              <button @click="openEditModal(emp)" class="btn-edit">수정</button>
+              <button 
+                @click="openEditModal(emp)" 
+                class="btn-edit"
+                :disabled="emp.role.includes('SYSTEM_ADMIN')"
+              >
+                수정
+              </button>
             </td>
           </tr>
           <tr v-if="permissions.length === 0">
@@ -74,15 +80,17 @@
               >
               <label for="role-all" class="label-bold">전체 선택</label>
             </div>
-            <div v-for="role in settingsStore.roles" :key="role.roleId" class="checkbox-group">
+            <div v-for="(role, index) in settingsStore.roles" :key="role.roleId || index" class="checkbox-group">
               <input 
                 type="checkbox" 
-                :id="'role-' + role.roleId" 
+                :id="'role-' + (role.roleId || index)" 
                 :value="role.roleId" 
                 v-model="selectedRoleIds"
                 class="checkbox-input"
+                :disabled="isRoleDisabled(role.role)"
+                @change="handleRoleChange($event, role)"
               >
-              <label :for="'role-' + role.roleId">{{ role.roleName }}</label>
+              <label :for="'role-' + (role.roleId || index)">{{ role.role }}</label>
             </div>
           </div>
           <div class="modal-footer">
@@ -98,8 +106,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useSettingsStore } from '@/stores/settings';
-import { getPermissions, updatePermissions } from '@/api/settings';
-import type { SettingsPermissionsResponseDTO } from '@/types/settings';
+import type { SettingsPermissionsResponseDTO, Role } from '@/types/settings';
 
 const settingsStore = useSettingsStore();
 const permissions = ref<SettingsPermissionsResponseDTO[]>([]);
@@ -110,23 +117,66 @@ const searchQuery = ref('');
 const editingEmployee = ref<SettingsPermissionsResponseDTO | null>(null);
 const selectedRoleIds = ref<number[]>([]);
 
+const isRoleDisabled = (roleName: string) => {
+  return ['EMPLOYEE', 'DEPT_MANAGER', 'SYSTEM_ADMIN'].includes(roleName);
+};
+
+const handleRoleChange = (event: Event, role: Role) => {
+  const isChecked = (event.target as HTMLInputElement).checked;
+  
+  if (role.role === 'HR_MANAGER' && isChecked) {
+    const hrRoles = settingsStore.roles.filter(r => r.role.startsWith('HR_') && r.role !== 'HR_MANAGER');
+    const hrRoleIds = hrRoles.map(r => r.roleId);
+    selectedRoleIds.value = [...new Set([...selectedRoleIds.value, ...hrRoleIds])];
+  }
+};
+
 const isAllSelected = computed({
-  get: () => settingsStore.roles.length > 0 && selectedRoleIds.value.length === settingsStore.roles.length,
+  get: () => {
+    const selectableRoles = settingsStore.roles.filter(r => !isRoleDisabled(r.role));
+    if (selectableRoles.length === 0) return false;
+    return selectableRoles.every(r => selectedRoleIds.value.includes(r.roleId));
+  },
   set: (val) => {
+    const disabledRoles = settingsStore.roles.filter(r => isRoleDisabled(r.role));
+    const preservedIds = selectedRoleIds.value.filter(id => disabledRoles.some(r => r.roleId === id));
+
     if (val) {
-      selectedRoleIds.value = settingsStore.roles.map(r => r.roleId);
+      const selectableIds = settingsStore.roles.filter(r => !isRoleDisabled(r.role)).map(r => r.roleId);
+      selectedRoleIds.value = [...new Set([...preservedIds, ...selectableIds])];
     } else {
-      selectedRoleIds.value = [];
+      selectedRoleIds.value = preservedIds;
     }
   }
 });
 
 const fetchData = async () => {
-  const res = await getPermissions(currentPage.value - 1, 10, searchQuery.value);
+  // 검색어가 비어있으면 undefined로 설정하여 쿼리 파라미터에서 제외 (백엔드 500 에러 방지)
+  const query = searchQuery.value.trim() ? searchQuery.value : undefined;
+  const res = await settingsStore.fetchPermissions(currentPage.value - 1, 10, query);
   if (res.success) {
+    console.log('Fetched Permissions (After Update):', res.data.content);
     permissions.value = res.data.content;
     totalPages.value = res.data.totalPages;
   }
+};
+
+const getSortedRoles = (roleNames: string[]) => {
+  if (!roleNames) return [];
+  
+  return roleNames.map(name => {
+    const roleInfo = settingsStore.roles.find(r => r.role === name);
+    return {
+      name: name,
+      id: roleInfo ? roleInfo.roleId : 9999 // 매칭되는 ID가 없으면 맨 뒤로
+    };
+  }).sort((a, b) => a.id - b.id);
+};
+
+const getBadgeClass = (roleName: string) => {
+  if (roleName === 'EMPLOYEE') return 'badge-employee';
+  if (roleName === 'DEPT_MANAGER') return 'badge-manager';
+  return 'badge-admin';
 };
 
 const changePage = (page: number) => {
@@ -135,22 +185,43 @@ const changePage = (page: number) => {
 };
 
 const openEditModal = (emp: SettingsPermissionsResponseDTO) => {
+  if (emp.role.includes('SYSTEM_ADMIN')) {
+    alert('시스템 관리자의 권한은 수정할 수 없습니다.');
+    return;
+  }
+
   editingEmployee.value = emp;
-  selectedRoleIds.value = settingsStore.roles
-    .filter(r => emp.role.includes(r.roleName))
-    .map(r => r.roleId);
+  console.log('Roles Data:', settingsStore.roles);
+  
+  // 매칭되는 권한 찾기
+  const matchedRoles = settingsStore.roles.filter(r => emp.role.includes(r.role));
+  
+  let roleIds = matchedRoles.map(r => r.roleId);
+
+  // EMPLOYEE 권한 강제 추가 (기본 권한)
+  const employeeRole = settingsStore.roles.find(r => r.role === 'EMPLOYEE');
+  if (employeeRole && !roleIds.includes(employeeRole.roleId)) {
+    roleIds.push(employeeRole.roleId);
+  }
+
+  selectedRoleIds.value = roleIds;
 };
 
 const savePermissions = async () => {
   if (!editingEmployee.value) return;
-  const res = await updatePermissions({
+
+  // Proxy 객체를 일반 배열로 변환하여 전송 (혹시 모를 직렬화 이슈 방지)
+  const plainRoleIds = [...selectedRoleIds.value];
+  console.log('Saving Permissions (Plain):', { employeeId: editingEmployee.value.employeeId, roleIds: plainRoleIds });
+
+  const res = await settingsStore.modifyPermissions({
     employeeId: editingEmployee.value.employeeId,
-    roleIds: selectedRoleIds.value
+    roleIds: plainRoleIds
   });
   if (res.success) {
     alert('권한이 수정되었습니다.');
     editingEmployee.value = null;
-    fetchData();
+    await fetchData();
   }
 };
 
@@ -186,6 +257,7 @@ onMounted(async () => {
   border-radius: 8px;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
+  color: #334155;
 }
 
 .btn-search {
@@ -214,6 +286,7 @@ onMounted(async () => {
 .data-table th, .data-table td {
   padding: 15px;
   border-bottom: 1px solid #e2e8f0;
+  color: #334155;
 }
 
 .data-table th {
@@ -221,6 +294,10 @@ onMounted(async () => {
   color: white;
   font-weight: 600;
   font-size: 14px;
+}
+
+.col-name {
+  white-space: nowrap;
 }
 
 .role-badges {
@@ -233,8 +310,22 @@ onMounted(async () => {
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-admin {
   background-color: #e0e7ff;
   color: #3730a3;
+}
+
+.badge-manager {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.badge-employee {
+  background-color: #f1f5f9;
+  color: #475569;
 }
 
 .btn-edit {
@@ -243,6 +334,11 @@ onMounted(async () => {
   cursor: pointer;
   background: none;
   border: none;
+}
+
+.btn-edit:disabled {
+  color: #cbd5e1;
+  cursor: not-allowed;
 }
 
 .pagination-container {
@@ -280,7 +376,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 50;
+  z-index: 1000;
 }
 
 .modal-content {
@@ -313,6 +409,12 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   margin-bottom: 8px;
+}
+
+.checkbox-group label {
+  color: #334155;
+  font-size: 0.95rem;
+  cursor: pointer;
 }
 
 .checkbox-input {

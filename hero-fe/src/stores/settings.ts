@@ -1,7 +1,13 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { getDepartments, getGrades, getJobTitles, getRoles } from '@/api/settings';
-import type { SettingsDepartmentResponseDTO, Grade, JobTitle, Role } from '@/types/settings';
+import { 
+  getDepartments, getGrades, getJobTitles, getRoles,
+  saveOrUpdateDepartments, getPermissions, updatePermissions 
+} from '@/api/settings';
+import type { 
+  SettingsDepartmentResponseDTO, Grade, JobTitle, Role,
+  SettingsDepartmentRequestDTO, SettingsPermissionsRequestDTO 
+} from '@/types/settings';
 
 export const useSettingsStore = defineStore('settings', () => {
   // State
@@ -45,6 +51,19 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   };
 
+  // API Wrapper Actions (컴포넌트에서 직접 API 호출 대신 사용)
+  const saveDepartments = async (data: SettingsDepartmentRequestDTO[]) => {
+    return await saveOrUpdateDepartments(data);
+  };
+
+  const fetchPermissions = async (page: number, size: number, query?: string) => {
+    return await getPermissions(page, size, query);
+  };
+
+  const modifyPermissions = async (dto: SettingsPermissionsRequestDTO) => {
+    return await updatePermissions(dto);
+  };
+
   const loadAllSettings = async () => {
     isLoading.value = true;
     await Promise.all([fetchDepartments(), fetchGrades(), fetchJobTitles(), fetchRoles()]);
@@ -61,6 +80,9 @@ export const useSettingsStore = defineStore('settings', () => {
     fetchGrades,
     fetchJobTitles,
     fetchRoles,
+    saveDepartments,
+    fetchPermissions,
+    modifyPermissions,
     loadAllSettings,
   };
 });

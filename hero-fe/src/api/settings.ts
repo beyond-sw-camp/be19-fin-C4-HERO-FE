@@ -39,6 +39,7 @@ export const getDepartments = async () => {
 
 export const saveOrUpdateDepartments = async (departments: SettingsDepartmentRequestDTO[]) => {
   const response = await apiClient.post<ApiResponse<string>>(`${BASE_URL}/departments/tree`, departments);
+  console.log('saveOrUpdateDepartments API Response:', response.data);
   return response.data;
 };
 

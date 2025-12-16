@@ -118,7 +118,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useSettingsStore } from '@/stores/settings';
-import { saveOrUpdateDepartments } from '@/api/settings';
 // 사원 검색 API (가정) - 실제 경로에 맞게 수정 필요
 import { fetchEmployees, fetchEmployeeSearchOptions } from '@/api/personnel'; 
 import type { SettingsDepartmentRequestDTO, SettingsDepartmentResponseDTO } from '@/types/settings';
@@ -140,16 +139,23 @@ const saveDepartments = async () => {
     // 스토어의 데이터를 Request DTO 형태로 변환
     const requestData = convertToRequestDTO(localDepartments.value);
     
-    const res = await saveOrUpdateDepartments(requestData);
+    const res = await settingsStore.saveDepartments(requestData);
+  
     if (res.success) {
       alert('부서 정보가 저장되었습니다.');
       await settingsStore.fetchDepartments(); // 최신 데이터 재조회
     } else {
       alert('저장 실패: ' + res.message);
     }
-  } catch (error) {
-    console.error(error);
-    alert('저장 중 오류가 발생했습니다.');
+  } catch (error: any) {
+    console.error('저장 중 에러 발생:', error);
+    if (error.response) console.log('Error Response:', error.response);
+
+    if (error.response && error.response.data && error.response.data.message) {
+      alert(`저장 실패: ${error.response.data.message}`);
+    } else {
+      alert('저장 중 오류가 발생했습니다.');
+    }
   }
 };
 
