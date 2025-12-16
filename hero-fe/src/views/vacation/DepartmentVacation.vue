@@ -7,7 +7,7 @@
                 - 월 이동(이전/다음) 기능 지원
 
   History
-  2025/12/16 - 이지윤 최초 작성
+  2025/12/16(이지윤) 최초 작성
   </pre>
 
   @author 이지윤
@@ -105,181 +105,128 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue'
+import { useDepartmentVacationStore } from '@/stores/vacation/departmentVacation'
 
 /**
- * 부서 휴가 이벤트 한 건에 대한 타입
- * - employeeName : 직원명
- * - type         : 휴가 유형 (연차 / 반차 / 병가 등)
- * - startDate    : 시작일 (YYYY-MM-DD)
- * - endDate      : 종료일 (YYYY-MM-DD)
- * - isSelf       : 본인 여부 (색상 구분용)
+ * 캘린더에 뿌릴 이벤트 타입
  */
 interface DeptVacationEvent {
-  id: number;
-  employeeName: string;
-  type: string;
-  startDate: string;
-  endDate: string;
-  isSelf: boolean;
+  id: number
+  employeeId: number
+  employeeName: string
+  type: string
+  startDate: string // YYYY-MM-DD
+  endDate: string   // YYYY-MM-DD
+  isSelf: boolean
 }
 
-/**
- * 캘린더 한 칸(셀)에 대한 타입
- * - isEmpty : 월 범위 바깥의 빈 셀 여부
- * - date    : 해당 셀의 실제 날짜 (빈 셀인 경우 null)
- * - events  : 해당 날짜에 포함된 휴가 이벤트 목록
- */
 interface CalendarCell {
-  isEmpty: boolean;
-  date: Date | null;
-  events: DeptVacationEvent[];
+  isEmpty: boolean
+  date: Date | null
+  events: DeptVacationEvent[]
 }
 
-/**
- * 부서 휴가 이벤트 더미 데이터
- * - 나중에 백엔드 연동 시 API 응답으로 대체 예정
- */
-const events = ref<DeptVacationEvent[]>([
-  {
-    id: 1,
-    employeeName: '김철수',
-    type: '연차',
-    startDate: '2025-12-05',
-    endDate: '2025-12-05',
-    isSelf: false,
-  },
-  {
-    id: 2,
-    employeeName: '이영희',
-    type: '반차',
-    startDate: '2025-12-12',
-    endDate: '2025-12-12',
-    isSelf: false,
-  },
-  {
-    id: 3,
-    employeeName: '홍길동',
-    type: '연차',
-    startDate: '2025-12-10',
-    endDate: '2025-12-12',
-    isSelf: false,
-  },
-  {
-    id: 4,
-    employeeName: '박민수',
-    type: '연차',
-    startDate: '2025-12-20',
-    endDate: '2025-12-20',
-    isSelf: false,
-  },
-  {
-    id: 5,
-    employeeName: '본인',
-    type: '연차',
-    startDate: '2025-12-25',
-    endDate: '2025-12-25',
-    isSelf: true,
-  },
-]);
+const store = useDepartmentVacationStore()
 
-/**
- * 현재 표시 중인 연/월
- * - 디자인에 맞춰 2025년 12월로 초기화
- */
-const currentYear = ref<number>(2025);
-const currentMonth = ref<number>(11); // 0: 1월, 11: 12월
+const now = new Date()
+const currentYear = ref(now.getFullYear())
+const currentMonth = ref(now.getMonth()) 
 
 /** 요일 라벨 (일 ~ 토) */
-const weekdayLabels: string[] = ['일', '월', '화', '수', '목', '금', '토'];
+const weekdayLabels: string[] = ['일', '월', '화', '수', '목', '금', '토']
 
 /**
- * 특정 날짜에 포함되는 휴가 이벤트 목록을 반환합니다.
- *
- * @param {Date} date - 기준 날짜
- * @returns {DeptVacationEvent[]} 해당 날짜에 시작일~종료일 범위가 포함된 이벤트 배열
- ****************************************
- * @param → 함수의 인자(Parameter)
- ****************************************
+ * 백엔드가 LocalDateTime을 내려줘도 캘린더에서는 날짜만 필요
+ * "2025-12-05T09:00:00" -> "2025-12-05"
+ */
+const toDateOnly = (value: string): string => value?.slice(0, 10)
+
+/**
+ * store.items(DepartmentVacationDTO[]) -> 캘린더 표시용 이벤트로 변환
+ */
+const events = computed<DeptVacationEvent[]>(() => {
+  const myId = store.myEmployeeId
+
+  return store.items.map((it) => ({
+    id: it.vacationLogId,
+    employeeId: it.employeeId,
+    employeeName: it.employeeName,
+    type: it.vacationTypeName,
+    startDate: toDateOnly(it.startDate),
+    endDate: toDateOnly(it.endDate),
+    isSelf: myId != null && it.employeeId === myId,
+  }))
+})
+
+/**
+ * 특정 날짜에 포함되는 이벤트 반환
  */
 const getEventsForDate = (date: Date): DeptVacationEvent[] => {
-  const toDateString = (d: Date): string => d.toISOString().slice(0, 10);
+  const target = date.toISOString().slice(0, 10)
 
   return events.value.filter((ev) => {
-    const start = new Date(ev.startDate);
-    const end = new Date(ev.endDate);
-
-    const target = toDateString(date);
-    const startStr = toDateString(start);
-    const endStr = toDateString(end);
-
-    // 날짜 범위 포함 여부
-    return target >= startStr && target <= endStr;
-  });
-};
+    return target >= ev.startDate && target <= ev.endDate
+  })
+}
 
 /**
- * 캘린더 셀 데이터
- * - 앞/뒤 빈 칸을 포함하여 7의 배수 길이로 구성
- *
- * @returns {CalendarCell[]} 캘린더 셀 배열
+ * 캘린더 셀 구성 (7의 배수로 앞/뒤 빈칸 채우기)
  */
 const calendarCells = computed<CalendarCell[]>(() => {
-  const first = new Date(currentYear.value, currentMonth.value, 1);
-  const last = new Date(currentYear.value, currentMonth.value + 1, 0);
+  const first = new Date(currentYear.value, currentMonth.value, 1)
+  const last = new Date(currentYear.value, currentMonth.value + 1, 0)
 
-  const firstWeekday = first.getDay(); // 0: 일요일
-  const totalDays = last.getDate();
+  const firstWeekday = first.getDay()
+  const totalDays = last.getDate()
 
-  const cells: CalendarCell[] = [];
+  const cells: CalendarCell[] = []
 
   // 앞쪽 빈 칸
   for (let i = 0; i < firstWeekday; i += 1) {
-    cells.push({
-      isEmpty: true,
-      date: null,
-      events: [],
-    });
+    cells.push({ isEmpty: true, date: null, events: [] })
   }
 
   // 실제 날짜 셀
   for (let day = 1; day <= totalDays; day += 1) {
-    const date = new Date(currentYear.value, currentMonth.value, day);
-
+    const d = new Date(currentYear.value, currentMonth.value, day)
     cells.push({
       isEmpty: false,
-      date,
-      events: getEventsForDate(date),
-    });
+      date: d,
+      events: getEventsForDate(d),
+    })
   }
 
-  // 뒤쪽 빈 칸 (행 맞추기)
+  // 뒤쪽 빈 칸
   while (cells.length % 7 !== 0) {
-    cells.push({
-      isEmpty: true,
-      date: null,
-      events: [],
-    });
+    cells.push({ isEmpty: true, date: null, events: [] })
   }
 
-  return cells;
-});
+  return cells
+})
 
 /**
- * 월 이동 (이전/다음)
- * - diff: -1 이면 이전 달, 1 이면 다음 달
- *
- * @param {number} diff - 이동할 개월 수 (보통 -1 또는 1)
+ * 월 이동 + 해당 월 데이터 재조회
  */
-const moveMonth = (diff: number): void => {
-  const year = currentYear.value;
-  const month = currentMonth.value + diff;
+const moveMonth = async (diff: number): Promise<void> => {
+  const newDate = new Date(currentYear.value, currentMonth.value + diff, 1)
+  currentYear.value = newDate.getFullYear()
+  currentMonth.value = newDate.getMonth()
 
-  const newDate = new Date(year, month, 1);
+  // API month는 1~12로 전달
+  await store.fetchCalendar(currentYear.value, currentMonth.value + 1)
+}
 
-  currentYear.value = newDate.getFullYear();
-  currentMonth.value = newDate.getMonth();
-};
+/**
+ * 초기 로딩
+ */
+onMounted(async () => {
+  // 로그인 전 임시 테스트용 (필요하면 켜서 사용)
+  // store.setDepartmentId(1)
+  // store.setMyEmployeeId(11)
+
+  await store.fetchCalendar(currentYear.value, currentMonth.value + 1)
+})
 </script>
 
 <style scoped>
