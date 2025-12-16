@@ -547,7 +547,7 @@ watch(() => route.path, syncDashboardOnly, { immediate: true });
 
 <style scoped>
 .sidebar-container {
-  height: 100%;
+  height: auto;
   max-width: 100%;
   width: 230px;
   background: white;

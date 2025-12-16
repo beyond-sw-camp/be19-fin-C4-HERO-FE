@@ -79,7 +79,7 @@ html {
 
 <style scoped>
 #app {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background-color: #f5f6fa;
