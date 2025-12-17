@@ -36,7 +36,7 @@ const payrollAdminRoutes: RouteRecordRaw[] = [
     {
         path: "/payroll/admin/batch",
         name: "PayrollAdminBatch",
-        component: () => import("@/views/payroll/admin/Batch.vue"),
+        component: () => import("@/views/payroll/admin/batch/BatchPage.vue"),
         meta: { title: "월별 급여 배치" },
     },
     {

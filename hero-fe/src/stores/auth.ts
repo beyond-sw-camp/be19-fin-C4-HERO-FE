@@ -9,6 +9,7 @@
     History
     2025/12/11 - 승건 최초 작성
     2025/12/12 - 동근 세션 스토어와 연동, 토큰 갱신 시 세션 타이머 리셋 기능 추가
+    2025/12/16 - 혜원 employeeId 게터 추가, 리턴 값에 포함, number 타입 지정
     </pre>
     
     @author 승건
@@ -24,13 +25,13 @@ import { useSessionStore } from '@/stores/session';
 interface JwtPayload {
     exp: number;             // 토큰 만료 시간
     iat: number;             // 토큰 발급 시간
-    employeeId: Number;      // DB 사원 정보 인조키
+    employeeId: number;      // DB 사원 정보 인조키
     employeeName: string;    // 사용자 이름
-    departmentId: Number;    // DB 부서 정보 인조키
+    departmentId: number;    // DB 부서 정보 인조키
     departmentName: string;  // 부서명
-    gradeId: Number;         // DB 직급 정보 인조키
+    gradeId: number;         // DB 직급 정보 인조키
     gradeName: string;       // 직급명
-    jobTitleId: Number;      // DB 직책 정보 인조키
+    jobTitleId: number;      // DB 직책 정보 인조키
     jobTitleName: string;    // 직책명
     auth: string;            // 권한
 }
@@ -48,6 +49,9 @@ export const useAuthStore = defineStore('auth', () => {
     const accessToken = ref<string | null>(null);
     const user = ref<JwtPayload | null>(null);
 
+    // employeeId getter 추가
+    const employeeId = computed(() => user.value?.employeeId ?? null);
+
     // 게터 (Getters): 인증 여부를 쉽게 확인할 수 있는 계산된 속성입니다.
     const isAuthenticated = computed(() =>
         !!accessToken.value && !!user.value);
@@ -62,8 +66,6 @@ export const useAuthStore = defineStore('auth', () => {
      */
     function login(token: string) {
         try {
-            // const decoded = jwtDecode<JwtPayload>(token);
-
             accessToken.value = token;
             user.value = jwtDecode<JwtPayload>(token);
 
@@ -130,5 +132,5 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
 
-    return { accessToken, user, isAuthenticated, login, logout, refresh };
+    return { accessToken, user, isAuthenticated, employeeId, login, logout, refresh };
 });

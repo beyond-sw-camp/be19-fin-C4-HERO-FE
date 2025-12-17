@@ -25,6 +25,7 @@ import electronicApprovalRoutes from './modules/electronicApproval';
 import payrollMeRoutes from './modules/payrollMe';
 import payrollAdminRoutes from "./modules/payrollAdmin";
 import evaluationRoutes from './modules/evaluation';
+import settingsRoutes from './modules/settings';
 import { setupAuthGuard } from './guard'; // guard.ts에서 setupAuthGuard 함수 임포트
 import personnelRoutes from './modules/personnel';
 import authRoutes from './modules/auth';
@@ -52,7 +53,8 @@ const routes: RouteRecordRaw[] = [
   ...payrollAdminRoutes,
   ...evaluationRoutes,
   ...personnelRoutes,
-  ...notificationRoutes
+  ...notificationRoutes,
+  ...settingsRoutes,
 ];
 
 const router = createRouter({
@@ -75,6 +77,6 @@ router.beforeEach((to, from, next) => {
 });
 
 // 라우터 인스턴스에 인증 가드 설정
-// setupAuthGuard(router);
+setupAuthGuard(router);
 
 export default router;

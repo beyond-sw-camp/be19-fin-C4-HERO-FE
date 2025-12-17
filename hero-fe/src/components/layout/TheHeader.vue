@@ -10,10 +10,11 @@
   2025/12/10 - 혜원 알림 페이지 라우팅 기능 추가
   2025/12/11 - 승건 프로필 드롭다운 및 로그아웃 기능 추가
   2025/12/11 - 동근 로고 클릭 시 대시보드 이동 기능 추가, 로그인 세션 남은 시간 표시 & JSDoc 추가
+  2025/12/16 - 동근 logo-area 스타일 수정(border 제거)
   </pre>
  
   @author 동근
-  @version 1.5
+  @version 1.6
  -->
 <template>
   <div class="header-container">
@@ -31,7 +32,7 @@
         <div class="icon-box" @click="goToNotifications">
           <div class="folder-wrap">
             <div class="folder-icon">
-              <img class="alarm" src="/images/alarm.png" />
+              <img class="alarm" src="/images/alarm.svg" />
             </div>
           </div>
         </div>
@@ -151,7 +152,6 @@ const handleLogout = async () => {
   width: 230px;
   align-self: stretch;
   padding: 7px 15px;
-  border-right: 2px #E2E8F0 solid;
   display: inline-flex;
   justify-content: center;
   align-items: center;
