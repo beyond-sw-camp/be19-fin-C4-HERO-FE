@@ -18,7 +18,7 @@
   <div class="empty-state">
     <!-- 알림 아이콘 -->
     <div class="empty-icon">
-      <img src="/images/alarm.png" alt="No Notifications" />
+      <img src="/images/alarm.svg" alt="No Notifications" />
     </div>
     
     <!-- 안내 제목 -->

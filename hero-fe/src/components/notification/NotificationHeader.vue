@@ -23,7 +23,7 @@
       <div class="header-left">
         <!-- 뒤로가기 버튼 -->
         <div class="back-button" @click="$emit('back')">
-          <img src="/images/backArrow.svg" alt="뒤로가기" />
+          <img src="/images/arrow.svg" alt="뒤로가기 아이콘" />
         </div>
         
         <!-- 페이지 제목 -->

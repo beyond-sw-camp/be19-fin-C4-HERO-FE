@@ -31,7 +31,7 @@
         <div class="icon-box" @click="goToNotifications">
           <div class="folder-wrap">
             <div class="folder-icon">
-              <img class="alarm" src="/images/alarm.png" />
+              <img class="alarm" src="/images/alarm.svg" />
             </div>
           </div>
         </div>

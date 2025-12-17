@@ -1,104 +1,105 @@
 /**
  * <pre>
- * TypeScript Name: notificationStore.ts
- * Description: 알림 상태 관리 Store
- *               - 알림 목록, 미읽은 개수 관리
- *               - WebSocket 연결 관리
- *               - 알림 CRUD 작업
- * 
+ * TypeScript Name: notificationStore
+ * Description: 알림 전역 상태 관리 (Pinia Store)
+ *
  * History
  * 2025/12/14 (혜원) 최초 작성
+ * 2025/12/16 (혜원) 삭제 관련 상태 및 액션 추가, WebSocket 연동
  * </pre>
- * 
+ *
  * @author 혜원
- * @version 2.0
+ * @version 2.2
  */
 
 import { defineStore } from 'pinia';
-import { ref, computed, Ref, ComputedRef } from 'vue';
+import { ref, computed } from 'vue';
 import { notificationApi } from '@/api/notification/notificationApi';
+import { useAuthStore } from '@/stores/auth';
 import { useNotificationSocket } from '@/composables/notification/useNotificationSocket';
-import { useAuthStore } from '@/stores/auth';  // authStore import
-import type {
-  Notification,
-  NotificationDTO,
-  NotificationType,
-  NotificationCategory,
+import type { 
+  Notification, 
+  NotificationDTO, 
+  NotificationCategory, 
+  NotificationType 
 } from '@/types/notification/notification.types';
 
-interface NotificationStore {
-  notifications: Ref<Notification[]>;
-  unreadCount: Ref<number>;
-  isLoading: Ref<boolean>;
-  employeeId: ComputedRef<number>;  // ComputedRef로 변경
-  isConnected: Ref<boolean>;
-  unreadNotifications: ComputedRef<Notification[]>;
-  notificationsByType: (type: NotificationCategory) => Notification[];
-  fetchNotifications: () => Promise<void>;
-  fetchUnreadCount: () => Promise<void>;
-  markAsRead: (notificationId: number) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
-  connectWebSocket: () => void;
-  disconnectWebSocket: () => void;
-}
-
-export const useNotificationStore = defineStore('notification', (): NotificationStore => {
-  // State
-  const notifications: Ref<Notification[]> = ref([]);
-  const unreadCount: Ref<number> = ref(0);
-  const isLoading: Ref<boolean> = ref(false);
-  
-  // authStore에서 employeeId 가져오기
+export const useNotificationStore = defineStore('notification', () => {
   const authStore = useAuthStore();
-  const employeeId: ComputedRef<number> = computed(() => {
-    // 로그인한 사용자의 employeeId, 없으면 1 (테스트용)
-    return Number(authStore.user?.employeeId) || 1;
-  });
-
   const { isConnected, connect, disconnect } = useNotificationSocket();
+  
+  // State 
+  const notifications = ref<Notification[]>([]);
+  const deletedNotifications = ref<Notification[]>([]);
+  const unreadCount = ref<number>(0);
+  const isLoading = ref<boolean>(false);
+  const error = ref<string | null>(null);
 
-  // Getters
-  const unreadNotifications: ComputedRef<Notification[]> = computed(() =>
-    notifications.value.filter((n) => n.isNew)
-  );
+  // Computed 
+  const employeeId = computed(() => authStore.employeeId);
 
-  const notificationsByType = (type: NotificationCategory): Notification[] =>
-    notifications.value.filter((n) => n.type === type);
+  // Actions - Query (조회) 
 
-  // Actions
   /**
    * 알림 목록 조회
    */
   const fetchNotifications = async (): Promise<void> => {
+    if (!employeeId.value) return;
+
     try {
       isLoading.value = true;
+      error.value = null;
       
-      // computed된 employeeId 사용
-      const data: NotificationDTO[] = await notificationApi.findNotifications(
-        employeeId.value  // .value 사용
-      );
-
-      notifications.value = data.map((n) => mapDTOToNotification(n));
-      await fetchUnreadCount();
-    } catch (error) {
-      console.error('알림 조회 실패:', error);
-      throw error;
+      const data = await notificationApi.findNotifications(employeeId.value);
+      
+      // 삭제되지 않은 알림만 필터링
+      notifications.value = data
+        .filter(dto => !dto.isDeleted)
+        .map(mapDTOToNotification);
+        
+    } catch (err) {
+      error.value = '알림을 불러오는데 실패했습니다';
+      console.error('알림 조회 실패:', err);
     } finally {
       isLoading.value = false;
     }
   };
 
   /**
-   * 미읽은 개수 조회
+   * 미읽은 알림 개수 조회
    */
   const fetchUnreadCount = async (): Promise<void> => {
+    if (!employeeId.value) return;
+
     try {
-      const count: number = await notificationApi.findUnreadCount(employeeId.value);
-      unreadCount.value = count;
-    } catch (error) {
-      console.error('미읽은 개수 조회 실패:', error);
+      unreadCount.value = await notificationApi.findUnreadCount(employeeId.value);
+    } catch (err) {
+      console.error('미읽은 알림 개수 조회 실패:', err);
     }
   };
+
+  /**
+   * 삭제된 알림 목록 조회
+   */
+  const fetchDeletedNotifications = async (): Promise<void> => {
+    if (!employeeId.value) return;
+
+    try {
+      isLoading.value = true;
+      error.value = null;
+      
+      const data = await notificationApi.findDeletedNotifications(employeeId.value);
+      deletedNotifications.value = data.map(mapDTOToNotification);
+      
+    } catch (err) {
+      error.value = '삭제된 알림을 불러오는데 실패했습니다';
+      console.error('삭제된 알림 조회 실패:', err);
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  // Actions - Command (변경)
 
   /**
    * 알림 읽음 처리
@@ -106,48 +107,229 @@ export const useNotificationStore = defineStore('notification', (): Notification
   const markAsRead = async (notificationId: number): Promise<void> => {
     try {
       await notificationApi.modifyIsRead(notificationId);
-
-      const notification = notifications.value.find((n) => n.id === notificationId);
-      if (notification && notification.isNew) {
-        notification.isNew = false;
+      
+      // 로컬 상태 업데이트
+      const notification = notifications.value.find(n => n.notificationId === notificationId);
+      if (notification && !notification.isRead) {
+        notification.isRead = true;
+        notification.readAt = new Date().toISOString();
         unreadCount.value = Math.max(0, unreadCount.value - 1);
       }
-    } catch (error) {
-      console.error('읽음 처리 실패:', error);
-      throw error;
+    } catch (err) {
+      console.error('알림 읽음 처리 실패:', err);
+      throw err;
     }
   };
 
   /**
-   * 전체 알림 읽음 처리
+   * 모든 알림 읽음 처리
    */
   const markAllAsRead = async (): Promise<void> => {
+    if (!employeeId.value) return;
+
     try {
       await notificationApi.modifyAllIsRead(employeeId.value);
-
-      notifications.value.forEach((n) => {
-        n.isNew = false;
+      
+      // 로컬 상태 업데이트
+      const now = new Date().toISOString();
+      notifications.value.forEach(notification => {
+        if (!notification.isRead) {
+          notification.isRead = true;
+          notification.readAt = now;
+        }
       });
       unreadCount.value = 0;
-    } catch (error) {
-      console.error('전체 읽음 처리 실패:', error);
-      throw error;
+      
+    } catch (err) {
+      console.error('전체 읽음 처리 실패:', err);
+      throw err;
     }
   };
+
+  /**
+   * 알림 소프트 삭제
+   */
+  const softDeleteNotification = async (notificationId: number): Promise<void> => {
+    try {
+      await notificationApi.softRemove(notificationId);
+      
+      // 일반 목록에서 제거
+      const index = notifications.value.findIndex(n => n.notificationId === notificationId);
+      if (index !== -1) {
+        const notification = notifications.value[index];
+        
+        // 삭제 상태 업데이트
+        notification.isDeleted = true;
+        notification.deletedAt = new Date().toISOString();
+        
+        // 삭제된 목록으로 이동
+        deletedNotifications.value.unshift(notification);
+        notifications.value.splice(index, 1);
+        
+        // 미읽은 알림이었다면 카운트 감소
+        if (!notification.isRead) {
+          unreadCount.value = Math.max(0, unreadCount.value - 1);
+        }
+      }
+    } catch (err) {
+      error.value = '알림 삭제에 실패했습니다';
+      console.error('알림 삭제 실패:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * 알림 복구
+   */
+  const restoreNotification = async (notificationId: number): Promise<void> => {
+    try {
+      await notificationApi.modifyRestore(notificationId);
+      
+      // 삭제된 목록에서 제거
+      const index = deletedNotifications.value.findIndex(n => n.notificationId === notificationId);
+      if (index !== -1) {
+        const notification = deletedNotifications.value[index];
+        
+        // 복구 상태 업데이트
+        notification.isDeleted = false;
+        notification.deletedAt = null;
+        
+        // 일반 목록으로 복구
+        notifications.value.unshift(notification);
+        deletedNotifications.value.splice(index, 1);
+        
+        // 미읽은 알림이면 카운트 증가
+        if (!notification.isRead) {
+          unreadCount.value += 1;
+        }
+      }
+    } catch (err) {
+      error.value = '알림 복구에 실패했습니다';
+      console.error('알림 복구 실패:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * 알림 영구 삭제
+   */
+  const hardDeleteNotification = async (notificationId: number): Promise<void> => {
+    try {
+      await notificationApi.removeNotification(notificationId);
+      
+      // 삭제된 목록에서 완전히 제거
+      const index = deletedNotifications.value.findIndex(n => n.notificationId === notificationId);
+      if (index !== -1) {
+        deletedNotifications.value.splice(index, 1);
+      }
+    } catch (err) {
+      error.value = '알림 영구 삭제에 실패했습니다';
+      console.error('알림 영구 삭제 실패:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * 새 알림 추가 (WebSocket 수신 시)
+   */
+  const addNotification = (notification: Notification): void => {
+    notifications.value.unshift(notification);
+    if (!notification.isRead) {
+      unreadCount.value += 1;
+    }
+  };
+
+  // Helper Functions
+
+  /**
+   * DTO → UI 모델 변환
+   */
+  const mapDTOToNotification = (dto: NotificationDTO): Notification => {
+    return {
+      notificationId: dto.notificationId,
+      employeeId: dto.employeeId,
+      type: mapTypeToCategory(dto.type),
+      title: dto.title,
+      message: dto.message,
+      link: dto.link,
+      isRead: dto.isRead,
+      isDeleted: dto.isDeleted,
+      createdAt: dto.createdAt,
+      readAt: dto.readAt,
+      deletedAt: dto.deletedAt,
+      attendanceId: dto.attendanceId,
+      payrollId: dto.payrollId,
+      documentId: dto.documentId,
+      evaluationId: dto.evaluationId,
+      timeAgo: getTimeAgo(dto.createdAt),
+    };
+  };
+
+  /**
+   * 백엔드 타입 → 프론트 카테고리 매핑
+   */
+  const mapTypeToCategory = (type: NotificationType): NotificationCategory => {
+    const typeMap: Record<NotificationType, NotificationCategory> = {
+      'ATTENDANCE_CHECK_IN': 'attendance',
+      'DOCUMENT_APPROVED': 'approval',
+      'DOCUMENT_PENDING': 'approval',
+      'DOCUMENT_REJECTED': 'approval',
+      'PAYROLL_PAID': 'payroll',
+      'PAYSLIP_GENERATED': 'payroll',
+      'EVALUATION_COMPLETED': 'evaluation',
+      'EVALUATION_STARTED': 'evaluation',
+      'LEAVE_APPROVED': 'leave',
+      'TRAINING_NOTICE': 'system',
+      'SYSTEM_NOTICE': 'system',
+    };
+    return typeMap[type] || 'system';
+  };
+
+  /**
+   * 상대 시간 계산
+   */
+  const getTimeAgo = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 1) return '방금 전';
+    if (minutes < 60) return `${minutes}분 전`;
+    if (hours < 24) return `${hours}시간 전`;
+    if (days < 7) return `${days}일 전`;
+    
+    return date.toLocaleDateString('ko-KR');
+  };
+
+  // WebSocket 관련
 
   /**
    * WebSocket 연결
    */
   const connectWebSocket = (): void => {
-    // computed된 employeeId 사용
+    if (!employeeId.value) {
+      console.warn('[WebSocket] employeeId가 없어서 연결할 수 없습니다');
+      return;
+    }
+
+    console.log('[WebSocket] 연결 시작:', employeeId.value);
+    
     connect(employeeId.value, (newNotification: NotificationDTO) => {
+      console.log('[WebSocket] 새 알림 수신:', newNotification);
+      
       const formattedNotification = mapDTOToNotification(newNotification);
       formattedNotification.timeAgo = '방금 전';
 
+      // 알림 목록에 추가
       notifications.value.unshift(formattedNotification);
       unreadCount.value++;
 
-      showToast(formattedNotification);
+      // 브라우저 알림 표시
+      showBrowserNotification(formattedNotification);
     });
   };
 
@@ -155,102 +337,46 @@ export const useNotificationStore = defineStore('notification', (): Notification
    * WebSocket 연결 해제
    */
   const disconnectWebSocket = (): void => {
+    console.log('[WebSocket] 연결 해제');
     disconnect();
   };
 
-  // Helper Functions
   /**
-   * DTO를 Notification으로 변환
+   * 브라우저 알림 표시
    */
-  const mapDTOToNotification = (dto: NotificationDTO): Notification => {
-    return {
-      id: dto.notificationId,
-      type: mapNotificationType(dto.type),
-      title: dto.title,
-      description: dto.message,
-      timeAgo: getTimeAgo(dto.createdAt),
-      date: dto.createdAt,
-      isNew: !dto.isRead,
-      action: getActionByType(dto.type),
-      link: dto.link,
-    };
-  };
-
-  /**
-   * 백엔드 타입을 프론트 카테고리로 변환
-   */
-  const mapNotificationType = (type: NotificationType): NotificationCategory => {
-    const typeMap: Record<NotificationType, NotificationCategory> = {
-      ATTENDANCE_CHECK_IN: 'attendance',
-      DOCUMENT_APPROVED: 'approval',
-      DOCUMENT_PENDING: 'approval',
-      DOCUMENT_REJECTED: 'approval',
-      PAYROLL_PAID: 'payroll',
-      PAYSLIP_GENERATED: 'payroll',
-      EVALUATION_COMPLETED: 'evaluation',
-      EVALUATION_STARTED: 'evaluation',
-      LEAVE_APPROVED: 'leave',
-      TRAINING_NOTICE: 'system',
-      SYSTEM_NOTICE: 'system',
-    };
-    return typeMap[type];
-  };
-
-  /**
-   * 타입별 액션 버튼 텍스트
-   */
-  const getActionByType = (type: NotificationType): string | null => {
-    const actionMap: Partial<Record<NotificationType, string>> = {
-      DOCUMENT_APPROVED: '결재 확인',
-      DOCUMENT_PENDING: '결재 처리',
-      PAYROLL_PAID: '명세서 보기',
-      EVALUATION_STARTED: '평가 작성',
-      LEAVE_APPROVED: '상세 보기',
-    };
-    return actionMap[type] ?? null;
-  };
-
-  /**
-   * 상대 시간 계산
-   */
-  const getTimeAgo = (dateString: string): string => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (seconds < 60) return '방금 전';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}분 전`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}시간 전`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}일 전`;
-
-    return date.toLocaleDateString('ko-KR');
-  };
-
-  /**
-   * 토스트 알림 표시
-   */
-  const showToast = (notification: Notification): void => {
-    console.log('🔔 새 알림:', notification.title);
-    // TODO: vue-toastification 또는 커스텀 토스트
+  const showBrowserNotification = (notification: Notification): void => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(notification.title, {
+        body: notification.message,
+        icon: '/favicon.ico',
+        tag: `notification-${notification.notificationId}`,
+      });
+    }
   };
 
   return {
     // State
     notifications,
+    deletedNotifications,
     unreadCount,
     isLoading,
-    employeeId,  // computed 반환
+    error,
     isConnected,
-
-    // Getters
-    unreadNotifications,
-    notificationsByType,
-
-    // Actions
+    
+    // Actions - Query
     fetchNotifications,
     fetchUnreadCount,
+    fetchDeletedNotifications,
+    
+    // Actions - Command
     markAsRead,
     markAllAsRead,
+    softDeleteNotification,
+    restoreNotification,
+    hardDeleteNotification,
+    addNotification,
+    
+    // WebSocket
     connectWebSocket,
     disconnectWebSocket,
   };
