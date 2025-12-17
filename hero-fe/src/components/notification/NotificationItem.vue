@@ -52,16 +52,16 @@
       >
         ✕
       </button>
-    </div>
-    
-    <!-- 링크 버튼 영역 (link가 있을 때만 표시) -->
-    <div v-if="notification.link" class="notification-footer">
-      <button 
-        class="link-btn"
-        @click.stop="handleLinkClick"
-      >
+      
+      <!-- 링크 버튼 영역 (link가 있을 때만 표시) -->
+      <div v-if="notification.link" class="notification-footer">
+        <button 
+          class="link-btn"
+          @click.stop="handleLinkClick"
+        >
         {{ getLinkText(notification.type) }}
       </button>
+    </div>
     </div>
   </div>
 </template>

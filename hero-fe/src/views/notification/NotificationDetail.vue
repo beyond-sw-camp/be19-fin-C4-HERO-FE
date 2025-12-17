@@ -16,13 +16,12 @@
       <div class="header-content">
         <!-- 뒤로가기 버튼 -->
         <button class="back-button" @click="goBack">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <img src="@/images/arrow.svg" alt="뒤로가기 아이콘" />
           <span>알림 목록</span>
         </button>
 
         <!-- 더보기 메뉴 -->
+        <!-- 추후 수정 -->
         <button class="icon-button" @click="toggleMenu">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="12" r="1" fill="currentColor"/>
