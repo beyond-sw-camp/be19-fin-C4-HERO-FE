@@ -571,13 +571,6 @@ tbody tr.row-striped {
   background: #f8fafc;
 }
 
-.panel-search-inner {
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
-  gap: 16px;
-}
-
 .search-button-group {
   display: flex;
   align-items: center;
