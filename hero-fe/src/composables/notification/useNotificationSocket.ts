@@ -3,12 +3,10 @@
  * TypeScript Name: useNotificationSocket
  * Description: WebSocket 알림 연결 Composable
  *              STOMP 프로토콜을 사용한 실시간 알림 수신
- *
- * 주요 기능:
- * - WebSocket 서버 연결 및 해제
- * - 알림 토픽 구독 관리
- * - 자동 재연결 (5초 간격)
- * - Heartbeat를 통한 연결 유지
+ *              - WebSocket 서버 연결 및 해제
+ *              - 알림 토픽 구독 관리
+ *              - 자동 재연결 (5초 간격)
+ *              - Heartbeat를 통한 연결 유지
  *
  * History
  * 2025/12/14 (혜원) 최초 작성

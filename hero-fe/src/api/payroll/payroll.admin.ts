@@ -12,15 +12,63 @@
  *               - 급여 설정
  * History
  * 2025/12/12 - 동근 최초 작성
+ * 2025/12/15 - 동근 배치 API 연동 추가
  * </pre>
  *
  * @author 동근
- * @version 1.0
+ * @version 1.1
  */
 import client from '@/api/apiClient';
 
-// import type {
+import type {
+    PayrollBatchDetailResponse,
+    PayrollBatchListResponse,
+    PayrollEmployeeResultResponse,
+    PayrollBatchStatus,
+    PayrollBatchTargetEmployee
+} from '@/types/payroll/payroll.admin';
 
-// } from '@/types/payroll/payroll.admin';
+const BASE = '/admin/payroll/batches';
 
-/* ------- 관리자용 급여 API ------- */
+export const payrollAdminApi = {
+    // GET /api/admin/payroll/batches?month=&status=
+    async listBatches(params?: { month?: string; status?: PayrollBatchStatus | '' }) {
+        const res = await client.get<PayrollBatchListResponse[]>(BASE, { params });
+        return res.data;
+    },
+
+    // GET /api/admin/payroll/batches/{batchId}
+    async getBatchDetail(batchId: number) {
+        const res = await client.get<PayrollBatchDetailResponse>(`${BASE}/${batchId}`);
+        return res.data;
+    },
+
+    // GET /api/admin/payroll/batches/{batchId}/employees
+    async getBatchEmployees(batchId: number) {
+        const res = await client.get<PayrollEmployeeResultResponse[]>(`${BASE}/${batchId}/employees`);
+        return res.data;
+    },
+
+    // POST /api/admin/payroll/batches?month=YYYY-MM
+    async createBatch(month: string) {
+        const res = await client.post<number>(BASE, null, { params: { month } });
+        return res.data; // batchId
+    },
+
+    // POST /api/admin/payroll/batches/{batchId}/calculate  body: [employeeIds]
+    async calculateBatch(batchId: number, employeeIds: number[]) {
+        await client.post<void>(`${BASE}/${batchId}/calculate`, employeeIds);
+    },
+
+    // POST /api/admin/payroll/batches/{batchId}/confirm
+    async confirmBatch(batchId: number) {
+        await client.post<void>(`${BASE}/${batchId}/confirm`);
+    },
+
+    async listBatchTargets() {
+        const res = await client.get<PayrollBatchTargetEmployee[]>(
+            '/admin/payroll/batches/targets'
+        );
+        return res.data;
+    }
+};
