@@ -114,8 +114,8 @@
 
             <!-- 평가 완료 -->
             <button
-              v-else-if="emp.evaluateeStatus === 2"
-              class="btn-action gray"
+              v-else-if="emp.evaluateeStatus === 2 && (authEmployeeId === emp.evaluateeEmployeeId || authEmployeeId === evaluationDetail?.evaluationEmployeeId)"
+              class="btn-action primary"
               @click="goView(emp)"
             >
               평가 확인
@@ -232,8 +232,16 @@ const goEdit = (emp: any) => {
  * 설명: 평가서 확인
  */
 const goView = (emp: any) => {
-  console.log("평가서 확인", emp);
-  // router.push(`/evaluation/form/view/${emp.evaluateeEmployeeId}`)
+  const evaluationId = evaluationDetail.value?.evaluationEvaluationId;
+  if (!evaluationId) return;
+
+  router.push({
+    path: `/evaluation/form/${evaluationId}`,
+    query: {
+      employeeId: emp.evaluateeEmployeeId,
+      departmentId: departmentId.value,
+    }
+  })
 };
 
 /**
