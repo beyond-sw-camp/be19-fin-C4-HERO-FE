@@ -52,6 +52,14 @@
             <span class="summary-unit">회</span>
           </div>
         </div>
+
+        <div class="summary-card">
+          <div class="summary-title">이번 달 조퇴</div>
+          <div class="summary-value-wrapper">
+            <span class="summary-value">{{ earlyCount }}</span>
+            <span class="summary-unit">회</span>
+          </div>
+        </div>
       </div>
   
       <!-- 메인 패널 -->
@@ -162,7 +170,8 @@
                       :class="{
                         'status-normal': row.state === '정상',
                         'status-late': row.state === '지각',
-                        'status-absent': row.state === '결근'
+                        'status-absent': row.state === '결근',
+                        'status-early': row.state === '조퇴'
                       }"
                     >
                       {{ row.state }}
@@ -246,7 +255,8 @@ const {
   workDays,
   todayWorkSystemName,
   lateCount,
-  absentCount
+  absentCount,
+  earlyCount
 } = storeToRefs(attendanceStore);
 
 /**
@@ -336,7 +346,7 @@ onMounted(() => {
 .summary-cards {
   display: flex;
   align-items: stretch;
-  gap: 20px;
+  gap: 10px;
 }
 
 .summary-card {
@@ -533,6 +543,10 @@ tbody tr.row-striped {
 .status-absent  { 
   color: #16a34a;; 
 } 
+
+.status-early{
+  color: rgb(187, 187, 30);
+}
 
 /* 링크 스타일 버튼 */
 .link-button {

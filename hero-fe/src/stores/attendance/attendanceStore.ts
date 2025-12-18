@@ -33,6 +33,7 @@ export interface PersonalSummaryDTO {
   todayWorkSystemName: string
   lateCount: number
   absentCount: number
+  earlyCount: number
 }
 
 /**
@@ -70,6 +71,7 @@ interface AttendanceState {
   todayWorkSystemName: string
   lateCount: number
   absentCount: number
+  earlyCount: number
 }
 
 /**
@@ -95,6 +97,7 @@ export const useAttendanceStore = defineStore('attendanceStore', {
     todayWorkSystemName: '',
     lateCount: 0,
     absentCount: 0,
+    earlyCount: 0,
   }),
 
   actions: {
@@ -165,6 +168,7 @@ export const useAttendanceStore = defineStore('attendanceStore', {
         this.todayWorkSystemName = data.todayWorkSystemName ?? ''
         this.lateCount = data.lateCount ?? 0
         this.absentCount = data.absentCount ?? 0
+        this.earlyCount = data.earlyCount ?? 0
       } catch (error) {
         console.error('개인 근태 요약 조회 실패:', error)
       }
