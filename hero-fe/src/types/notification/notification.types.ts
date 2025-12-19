@@ -9,15 +9,17 @@
  * - Notification: 프론트엔드 UI용 데이터 구조
  * - NotificationType: 백엔드 알림 타입 (11종)
  * - NotificationCategory: 프론트엔드 카테고리 (6종)
- * - NotificationSettings: 알림 설정 타입
+ * - NotificationSettingsDTO: 백엔드 알림 설정 응답 데이터 구조
+ * - NotificationSettingItem: 설정 페이지 UI용 타입
  *
  * History
  * 2025/12/14 (혜원) 최초 작성
  * 2025/12/16 (혜원) 필드 추가, 설정 타입 추가
+ * 2025/12/17 (혜원) NotificationSettings 제거, DTO로 통일
  * </pre>
  *
  * @author 혜원
- * @version 2.0
+ * @version 2.1
  */
 
 /**
@@ -31,7 +33,7 @@
  * @property {string | null} link - 연결된 페이지 경로
  * @property {boolean} isRead - 읽음 여부
  * @property {boolean} isDeleted - 소프트 삭제 여부
- * @property {string} createdAt - 생성 일시
+ * @property {string} createdAt - 생성 일시 
  * @property {string | null} readAt - 읽은 일시
  * @property {string | null} deletedAt - 소프트 삭제 일시
  * @property {number} employeeId - 수신자 직원 ID
@@ -70,7 +72,7 @@ export interface NotificationDTO {
  * @property {string | null} link - 이동할 페이지 경로 (없으면 null)
  * @property {boolean} isRead - 읽음 여부
  * @property {boolean} isDeleted - 삭제 여부
- * @property {string} createdAt - 생성 일시
+ * @property {string} createdAt - 생성 일시 
  * @property {string | null} readAt - 읽은 일시 (읽지 않았으면 null)
  * @property {string | null} deletedAt - 삭제 일시 (삭제 안 했으면 null)
  * @property {number | null} attendanceId - 관련 근태 ID
@@ -196,20 +198,26 @@ export interface StompFrame {
 }
 
 /**
- * 알림 설정
+ * 알림 설정 DTO (백엔드 응답)
  * 
- * @description 사용자의 알림 수신 설정 정보
+ * @description 백엔드 API 응답 형식 및 프론트엔드 상태 관리용 타입
+ * @property {number} settingId - 설정 ID 
+ * @property {number} employeeId - 직원 ID
  * @property {boolean} attendanceEnabled - 근태 알림 활성화 여부
  * @property {boolean} payrollEnabled - 급여 알림 활성화 여부
  * @property {boolean} approvalEnabled - 결재 알림 활성화 여부
  * @property {boolean} leaveEnabled - 휴가 알림 활성화 여부
  * @property {boolean} evaluationEnabled - 평가 알림 활성화 여부
  * @property {boolean} systemEnabled - 시스템 알림 활성화 여부
- * @property {boolean} browserNotification - 브라우저 알림 활성화 여부
+ * @property {boolean} browserNotification - 브라우저 푸시 알림 활성화 여부
  * @property {boolean} emailNotification - 이메일 알림 활성화 여부
  * @property {boolean} smsNotification - SMS 문자 알림 활성화 여부
+ * @property {string} createdAt - 설정 생성 일시 
+ * @property {string} updatedAt - 설정 수정 일시 
  */
-export interface NotificationSettings {
+export interface NotificationSettingsDTO {
+  settingId?: number;
+  employeeId: number;
   attendanceEnabled: boolean;
   payrollEnabled: boolean;
   approvalEnabled: boolean;
@@ -219,19 +227,21 @@ export interface NotificationSettings {
   browserNotification: boolean;
   emailNotification: boolean;
   smsNotification: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**
- * 알림 설정 항목
+ * 알림 설정 항목 (UI용)
  * 
  * @description 설정 페이지에서 표시할 개별 설정 항목 정보
- * @property {keyof NotificationSettings} id - 설정 키 (NotificationSettings의 속성명)
- * @property {string} label - 설정 항목 라벨
- * @property {string} description - 설정 항목 설명
- * @property {string} icon - 아이콘 경로
+ * @property {keyof NotificationSettingsDTO} id - 설정 키 (NotificationSettingsDTO의 속성명)
+ * @property {string} label - 설정 항목 라벨 
+ * @property {string} description - 설정 항목 설명 
+ * @property {string} icon - 아이콘 이미지 경로
  */
 export interface NotificationSettingItem {
-  id: keyof NotificationSettings;
+  id: keyof NotificationSettingsDTO;
   label: string;
   description: string;
   icon: string;

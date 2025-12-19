@@ -1,13 +1,14 @@
 <!-- 
   <pre>
-  (File => TypeScript / Vue) Name   : AttendanceScoreDashboard.vue
-  Description : 근태 점수 대시보드 페이지
-                - 상단 요약 카드(전체 직원 / 우수 직원 / 위험 직원 / 점수 계산식)
-                - 검색(이름 / 부서 / 사번) + 페이지네이션
-                - 근태 점수: 100 - (지각 × 1) - (결근 × 2)
+  (File => TypeScript / Vue) Name   : AttendanceDashboard.vue
+  Description : 근태 점수 대시보드 화면
+                - 기간 필터(시작/종료일) + 검색/초기화
+                - 직원별 지각/결근/점수 테이블
+                - 상단 요약 카드(전체 직원, 우수/위험 직원 수, 점수 계산식)
+                - 서버 페이지네이션 기반 조회
 
   History
-  2025/12/16(이지윤) 최초 작성
+  2025/12/17(이지윤) 최초 작성
   </pre>
 
   @author 이지윤
@@ -21,7 +22,7 @@
       <!-- 전체 직원 -->
       <div class="summary-card">
         <div class="summary-title">전체 직원</div>
-        <div class="summary-value-row">
+        <div class="summary-value-wrapper">
           <span class="summary-value">{{ totalEmployees }}</span>
           <span class="summary-unit">명</span>
         </div>
@@ -30,7 +31,7 @@
       <!-- 우수 직원 -->
       <div class="summary-card">
         <div class="summary-title">우수 직원(95점 이상)</div>
-        <div class="summary-value-row">
+        <div class="summary-value-wrapper">
           <span class="summary-value">{{ excellentEmployees }}</span>
           <span class="summary-unit">명</span>
         </div>
@@ -39,7 +40,7 @@
       <!-- 위험 직원 -->
       <div class="summary-card">
         <div class="summary-title">위험 직원(85점 이하)</div>
-        <div class="summary-value-row">
+        <div class="summary-value-wrapper">
           <span class="summary-value">{{ riskyEmployees }}</span>
           <span class="summary-unit">명</span>
         </div>
@@ -54,27 +55,54 @@
       </div>
     </div>
 
-    <!-- 하단 패널 (테이블 + 검색 + 페이지네이션) -->
+    <!-- 하단 패널 (필터 + 테이블 + 페이지네이션) -->
     <div class="dashboard-panel">
-      <!-- 패널 헤더 (검색 영역) -->
-      <div class="panel-header">
-        <div class="panel-title">근태 점수 현황</div>
+      <!-- Personal.vue 과 동일한 구조의 기간 필터 영역 -->
+      <div class="panel-search">
+        <div class="panel-search-inner">
+          <!-- 기간(시작) -->
+          <div class="date-filter-group">
+            <span class="date-label">기간(시작)</span>
+            <div class="date-input-wrapper">
+              <input
+                v-model="startDate"
+                type="date"
+                class="date-input"
+              />
+              <span class="date-icon">📅</span>
+            </div>
+          </div>
 
-        <div class="panel-search">
-          <input
-            v-model="searchKeyword"
-            type="text"
-            class="search-input"
-            placeholder="이름 / 부서 / 사번 검색"
-            @keyup.enter="onSearch"
-          />
-          <button
-            type="button"
-            class="btn-search"
-            @click="onSearch"
-          >
-            검색
-          </button>
+          <!-- 기간(종료) -->
+          <div class="date-filter-group">
+            <span class="date-label">기간(종료)</span>
+            <div class="date-input-wrapper">
+              <input
+                v-model="endDate"
+                type="date"
+                class="date-input"
+              />
+              <span class="date-icon">📅</span>
+            </div>
+          </div>
+
+          <!-- 검색 / 초기화 버튼 -->
+          <div class="search-button-group">
+            <button
+              type="button"
+              class="btn-search"
+              @click="onSearch"
+            >
+              검색
+            </button>
+            <button
+              type="button"
+              class="btn-reset"
+              @click="onReset"
+            >
+              초기화
+            </button>
+          </div>
         </div>
       </div>
 
@@ -94,17 +122,17 @@
           <tbody>
             <tr
               v-for="(row, index) in pagedEmployees"
-              :key="row.empNo"
+              :key="row.employeeId"
               :class="{ 'row-striped': index % 2 === 1 }"
             >
               <!-- 사번 -->
-              <td>{{ row.empNo }}</td>
+              <td>{{ row.employeeNumber }}</td>
 
               <!-- 이름 -->
-              <td>{{ row.name }}</td>
+              <td>{{ row.employeeName }}</td>
 
               <!-- 부서 -->
-              <td>{{ row.department }}</td>
+              <td>{{ row.departmentName }}</td>
 
               <!-- 지각 -->
               <td :class="{ 'danger-text': row.tardyCount > 0 }">
@@ -169,175 +197,111 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted } from 'vue';
+import { storeToRefs } from 'pinia';
+
+import {
+  useAttendanceDashboardStore,
+  type AttendanceDashboardDTO,
+} from '@/stores/attendance/dashboard';
+
+/** 근태 대시보드 Pinia 스토어 인스턴스 */
+const dashboardStore = useAttendanceDashboardStore();
 
 /**
- * 근태 점수 행 데이터 타입
- * - empNo        : 사번
- * - name         : 이름
- * - department   : 부서
- * - tardyCount   : 지각 횟수
- * - absenceCount : 결근 횟수
- * - score        : 근태 점수
+ * storeToRefs 로 state를 추출하여 템플릿에 바인딩
  */
-interface EmployeeScoreRow {
-  empNo: string;
-  name: string;
-  department: string;
-  tardyCount: number;
-  absenceCount: number;
-  score: number;
-}
-
-/**
- * 더미 데이터 (추후 백엔드 연동 예정)
- * 점수 계산: 100 - (지각 × 1) - (결근 × 2)
- */
-const employees = ref<EmployeeScoreRow[]>([
-  {
-    empNo: '1',
-    name: '김철수',
-    department: '개발팀',
-    tardyCount: 3,
-    absenceCount: 1,
-    score: 100 - 3 * 1 - 1 * 2, // 95
-  },
-  {
-    empNo: '2',
-    name: '이영희',
-    department: '디자인팀',
-    tardyCount: 1,
-    absenceCount: 2,
-    score: 100 - 1 * 1 - 2 * 2, // 95
-  },
-  {
-    empNo: '3',
-    name: '박수민',
-    department: '영업팀',
-    tardyCount: 0,
-    absenceCount: 3,
-    score: 100 - 0 * 1 - 3 * 2, // 94
-  },
-  {
-    empNo: '4',
-    name: '정수진',
-    department: '인사팀',
-    tardyCount: 2,
-    absenceCount: 0,
-    score: 100 - 2 * 1 - 0 * 2, // 98
-  },
-  {
-    empNo: '5',
-    name: '최동욱',
-    department: '마케팅팀',
-    tardyCount: 5,
-    absenceCount: 4,
-    score: 100 - 5 * 1 - 4 * 2, // 87
-  },
-]);
-
-/** 검색 키워드 */
-const searchKeyword = ref<string>('');
-
-/** 페이지네이션 상태 */
-const currentPage = ref<number>(1);
-const pageSize = ref<number>(5);
+const {
+  dashboardList,   // 현재 페이지 직원 목록
+  currentPage,     // 현재 페이지 번호(프론트 기준)
+  totalPages,      // 전체 페이지 수
+  totalCount,      // 전체 직원 수
+  startDate,       // 기간(시작) - YYYY-MM-DD
+  endDate,         // 기간(종료) - YYYY-MM-DD
+} = storeToRefs(dashboardStore);
 
 /**
  * 상단 카드용 집계 - 전체 직원 수
- *
- * @returns {number} 전체 직원 수
+ * - 전체 데이터 개수는 PageResponse.totalCount/totalElements를 사용
  */
-const totalEmployees = computed<number>(() => employees.value.length);
+const totalEmployees = computed<number>(() => totalCount.value);
 
 /**
  * 상단 카드용 집계 - 우수 직원 수 (95점 이상)
- *
- * @returns {number} 우수 직원 수
+ * - 현재는 "현재 페이지 기준"으로 계산
+ *   (TODO: 필요하면 백엔드에서 전체 집계값을 내려주도록 확장)
  */
 const excellentEmployees = computed<number>(() => {
-  return employees.value.filter((emp) => emp.score >= 95).length;
+  return dashboardList.value.filter((emp) => emp.score >= 95).length;
 });
 
 /**
  * 상단 카드용 집계 - 위험 직원 수 (85점 이하)
- *
- * @returns {number} 위험 직원 수
+ * - 현재는 "현재 페이지 기준"으로 계산
  */
 const riskyEmployees = computed<number>(() => {
-  return employees.value.filter((emp) => emp.score <= 85).length;
+  return dashboardList.value.filter((emp) => emp.score <= 85).length;
 });
 
 /**
- * 검색 키워드를 적용한 직원 목록
- * - 사번 / 이름 / 부서에 대해 부분 일치 검색
- *
- * @returns {EmployeeScoreRow[]} 필터링된 직원 목록
+ * 현재 페이지에 표시할 직원 목록
+ * - 서버 페이징을 사용하므로, PageResponse.content를 그대로 사용
  */
-const filteredEmployees = computed<EmployeeScoreRow[]>(() => {
-  const keyword = searchKeyword.value.trim();
-
-  if (!keyword) {
-    return employees.value;
-  }
-
-  return employees.value.filter((emp) => {
-    return (
-      emp.empNo.includes(keyword) ||
-      emp.name.includes(keyword) ||
-      emp.department.includes(keyword)
-    );
-  });
+const pagedEmployees = computed<AttendanceDashboardDTO[]>(() => {
+  return dashboardList.value;
 });
 
 /**
- * 전체 페이지 수
- *
- * @returns {number} 전체 페이지 수 (최소 1)
- */
-const totalPages = computed<number>(() => {
-  return Math.max(1, Math.ceil(filteredEmployees.value.length / pageSize.value));
-});
-
-/**
- * 현재 페이지에 해당하는 직원 목록
- *
- * @returns {EmployeeScoreRow[]} 현재 페이지 직원 목록
- */
-const pagedEmployees = computed<EmployeeScoreRow[]>(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-
-  return filteredEmployees.value.slice(start, end);
-});
-
-/**
- * 검색 버튼 / Enter 입력 시 호출되는 핸들러
- * - 페이지를 1 페이지로 초기화하여 첫 페이지부터 다시 조회
+ * 검색 버튼 클릭 핸들러
+ * - 기간 필터(startDate, endDate)를 스토어에 반영하고 1페이지부터 재조회
  */
 const onSearch = (): void => {
-  currentPage.value = 1;
+  dashboardStore.setFilterDates(startDate.value, endDate.value);
+  dashboardStore.fetchDashboard(1);
 };
 
 /**
- * 페이지 이동 핸들러
- * - 1보다 작거나 전체 페이지 수를 초과하는 경우 무시
+ * 초기화 버튼 클릭 핸들러
+ * - 기간 필터와 페이지를 초기화하고 전체 기준으로 다시 조회
+ * - Personal.vue와 동일하게 인풋은 빈 문자열로 두어 placeholder 유지
+ */
+const onReset = (): void => {
+  startDate.value = '';
+  endDate.value = '';
+  dashboardStore.setFilterDates('', '');
+  dashboardStore.fetchDashboard(1);
+};
+
+/**
+ * 페이지 이동
+ * - 서버에 해당 페이지를 다시 요청
  *
  * @param {number} page - 이동할 페이지 번호
+ ****************************************
+ * @param → 함수의 인자(Parameter)
+ ****************************************
  */
 const goPage = (page: number): void => {
   if (page < 1 || page > totalPages.value) {
     return;
   }
-
-  currentPage.value = page;
+  dashboardStore.fetchDashboard(page);
 };
+
+/**
+ * 화면 진입 시 기본 조회
+ * - 기간 필터가 비어 있는 상태로 전체 기준 1페이지 조회
+ */
+onMounted(() => {
+  dashboardStore.fetchDashboard(1);
+});
 </script>
 
 <style scoped>
-/* TODO: attendance-dashboard-wrapper / summary-cards / dashboard-panel 등
+/* TODO: attendance-dashboard-wrapper / dashboard-panel / dashboard-table 등
    BEM 네이밍 컨벤션에 맞춰 점진적 리팩터링 예정 */
 </style>
+
 
 
 <style scoped>
@@ -395,6 +359,11 @@ const goPage = (page: number): void => {
   color: #64748b;
 }
 
+.summary-formula {
+  font-size: 13px;
+  color: #1f2933;
+}
+
 /* 하단 패널 */
 .dashboard-panel {
   width: 100%;
@@ -406,51 +375,117 @@ const goPage = (page: number): void => {
   flex-direction: column;
 }
 
-/* 패널 헤더 */
-.panel-header {
-  height: 74px;
-  padding: 16px 24px;
-  border-bottom: 2px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.panel-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #1a1f36;
-}
-
+/* === Personal.vue 와 동일하게 맞춘 기간 필터 영역 === */
 .panel-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  border-bottom: 2px solid #e2e8f0;
+  padding: 14px 18px;
 }
 
-.search-input {
+.panel-search-inner {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+/* 날짜 필터 그룹 */
+.date-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.date-label {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* input + 캘린더 아이콘 */
+.date-input-wrapper {
+  display: flex;
+  align-items: center;
   width: 260px;
   height: 40px;
   border-radius: 10px;
   border: 2px solid #cad5e2;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.date-input {
+  flex: 1;
+  border: none;
+  height: 100%;
   padding: 0 12px;
   font-size: 14px;
   color: #1f2933;
 }
 
-.search-input::placeholder {
-  color: #9ca3af;
+.date-input:focus {
+  outline: none;
+}
+
+.date-icon {
+  width: 40px;
+  height: 100%;
+  border-left: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #94a3b8;
+}
+
+/* 버튼 영역 */
+.search-button-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 2px;
+}
+
+.btn-search,
+.btn-reset {
+  min-width: 70px;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 12px;
+  border-width: 2px;
+  border-style: solid;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.1s ease,
+    transform 0.05s ease;
 }
 
 .btn-search {
-  width: 60px;
-  height: 40px;
-  border-radius: 10px;
-  border: 2px solid #155dfc;
   background: #155dfc;
-  font-size: 14px;
+  border-color: #155dfc;
   color: #ffffff;
-  cursor: pointer;
+}
+
+.btn-reset {
+  background: #ffffff;
+  border-color: #cad5e2;
+  color: #62748e;
+}
+
+.btn-search:hover {
+  background: #2b6bff;
+  border-color: #2b6bff;
+}
+
+.btn-reset:hover {
+  background: #e5edff;
+}
+
+.btn-search:active,
+.btn-reset:active {
+  transform: translateY(1px);
+  box-shadow: none;
 }
 
 /* 테이블 */
@@ -545,3 +580,4 @@ const goPage = (page: number): void => {
   border-color: #155dfc;
 }
 </style>
+

@@ -9,10 +9,11 @@
  * 2025/11/28 - 승건 최초 작성
  * 2025/12/09 - 동근 JSDoc 추가
  * 2025/12/12 - 동근 급여 관련 도메인 분리 & 라우터 전역 가드에 세션 갱신 로직 추가 및 인증 라우트(/auth/*) 제외 처리
+ * 2025/12/17 - 민철 로그인 가드 풀기
  * </pre>
  *
  * @author 동근
- * @version 1.2
+ * @version 1.3
  */
 
 
@@ -77,6 +78,6 @@ router.beforeEach((to, from, next) => {
 });
 
 // 라우터 인스턴스에 인증 가드 설정
-setupAuthGuard(router);
+// setupAuthGuard(router);
 
 export default router;

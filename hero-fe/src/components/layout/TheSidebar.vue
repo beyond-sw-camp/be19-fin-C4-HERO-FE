@@ -605,6 +605,18 @@ const syncActiveByRoute = (path: string) => {
     return;
   }
 
+    if (path.startsWith('/vacation')) {
+    activeParent.value = 'vacation';
+    if (!isCollapsed.value) isVacationOpen.value = true;
+
+    if (path.startsWith('/vacation/history')) {
+      activeSubMenu.value = 'vacationHistory';
+    } else if (path.startsWith('/vacation/department')) {
+      activeSubMenu.value = 'vacationDept';
+    }
+    return;
+  }
+
   // 전자결재
   if (path.startsWith('/approval')) {
     activeParent.value = 'approval';

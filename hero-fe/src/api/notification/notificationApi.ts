@@ -9,10 +9,12 @@
  * - 알림 읽음 처리 (개별/전체)
  * - 알림 삭제 (소프트/하드)
  * - 알림 복구
+ * - 알림 설정 조회 및 수정
  *
  * History
  * 2025/12/12 (혜원) 최초 작성
  * 2025/12/16 (혜원) 삭제 관련 API 추가, 경로 수정
+ * 2025/12/17 (혜원) 설정 관련 API 추가
  * </pre>
  *
  * @author 혜원
@@ -21,7 +23,7 @@
 
 import apiClient from '@/api/apiClient';
 import type { NotificationDTO } from '@/types/notification/notification.types';
-
+import type { NotificationSettingsDTO } from '@/types/notification/notification.types';
 /**
  * 알림 관련 API 요청 모음
  */
@@ -98,6 +100,27 @@ export const notificationApi = {
    */
   findDeletedNotifications: async (employeeId: number): Promise<NotificationDTO[]> => {
     const response = await apiClient.get(`/notifications/${employeeId}/deleted`);
+    return response.data;
+  },
+
+  /**
+   * 알림 설정 조회
+   * @param {number} employeeId - 조회할 직원 ID
+   * @returns {Promise<NotificationSettingsDTO>} 알림 설정
+   */
+  findSettings: async (employeeId: number): Promise<NotificationSettingsDTO> => {
+    const response = await apiClient.get(`/notification-settings/${employeeId}`);
+    return response.data;
+  },
+
+  /**
+   * 알림 설정 수정
+   * @param {number} employeeId - 대상 직원 ID
+   * @param {NotificationSettingsDTO} settings - 수정할 설정
+   * @returns {Promise<NotificationSettingsDTO>} 수정된 설정
+   */
+  modifySettings: async (employeeId: number, settings: NotificationSettingsDTO): Promise<NotificationSettingsDTO> => {
+    const response = await apiClient.put(`/notification-settings/${employeeId}`, settings);
     return response.data;
   },
 };
