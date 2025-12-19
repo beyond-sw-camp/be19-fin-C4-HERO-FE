@@ -22,22 +22,24 @@
         <div class="summary-card">
           <div class="summary-title">이번 달 근무일</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">15</span>
-            <span class="summary-unit">시간</span>
+            <span class="summary-value">{{ workDays }}</span>
+            <span class="summary-unit">일</span>
           </div>
         </div>
 
         <div class="summary-card">
           <div class="summary-title">오늘 근무</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">기본근무제</span>
+            <span class="summary-value">
+              {{ todayWorkSystemName || '근무 정보 없음' }}
+            </span>
           </div>
         </div>
 
         <div class="summary-card">
           <div class="summary-title">이번 달 지각</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">2</span>
+            <span class="summary-value">{{ lateCount }}</span>
             <span class="summary-unit">회</span>
           </div>
         </div>
@@ -45,7 +47,15 @@
         <div class="summary-card">
           <div class="summary-title">이번 달 결근</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">0</span>
+            <span class="summary-value">{{ absentCount }}</span>
+            <span class="summary-unit">회</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-title">이번 달 조퇴</div>
+          <div class="summary-value-wrapper">
+            <span class="summary-value">{{ earlyCount }}</span>
             <span class="summary-unit">회</span>
           </div>
         </div>
@@ -99,6 +109,7 @@
                   v-model="startDate"
                   type="date"
                   class="date-input"
+                  :max="today"
                 />
               </div>
             </div>
@@ -111,6 +122,7 @@
                   v-model="endDate"
                   type="date"
                   class="date-input"
+                  :max="today"
                 />
               </div>
             </div>
@@ -192,45 +204,63 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
+import { storeToRefs } from 'pinia';
 
-import { useOvertimeStore } from '@/stores/attendance/overtime';
+import { useAttendanceStore } from '@/stores/attendance/attendanceStore'; // 상단 요약
+import { useOvertimeStore } from '@/stores/attendance/overtime';         // 초과 근무 목록
 
 const route = useRoute();
+const attendanceStore = useAttendanceStore();
 const overtimeStore = useOvertimeStore();
+
+// 오늘 날짜 (YYYY-MM-DD) – date input max에 사용
+const today = new Date().toISOString().slice(0, 10);
 
 /**
  * 현재 활성화된 탭인지 확인합니다.
  *
  * @param {string} name - 라우트 이름 (예: 'AttendanceOvertime')
  * @returns {boolean} 활성 탭 여부
- ****************************************
- * @param → 함수의 인자(Parameter)
- ****************************************
  */
 const isActiveTab = (name: string): boolean => {
   return route.name === name;
 };
 
-// 기간 필터용 날짜 (프론트 입력 값)
-const startDate = ref<string>('');
-const endDate = ref<string>('');
+// =======================
+// 1) 상단 요약 카드 상태 (AttendanceStore)
+// =======================
+const {
+  workDays,
+  todayWorkSystemName,
+  lateCount,
+  absentCount,
+  earlyCount,
+} = storeToRefs(attendanceStore);
+
+// =======================
+// 2) 초과 근무 목록/필터/페이지네이션 상태 (OvertimeStore)
+// =======================
+const {
+  overtimeList,
+  startDate,
+  endDate,
+  currentPage,
+  totalPages,
+} = storeToRefs(overtimeStore);
 
 // TODO: 키워드 검색 입력 UI 추가 예정 (사유/날짜 등 검색)
-// 키워드 검색 (사유, 날짜 등)
 const keyword = ref<string>('');
-
-// 서버에서 받아온 원본 리스트
-const overtimeList = computed(() => overtimeStore.overtimeList);
 
 // 키워드 필터 (현재 페이지 데이터에 대해 추가 필터링)
 const displayList = computed(() => {
   const k = keyword.value.trim();
+  const base = overtimeList.value;
 
   if (!k) {
-    return overtimeList.value;
+    return base;
   }
 
-  return overtimeList.value.filter((row) => {
+  return base.filter((row) => {
     return (
       row.date.includes(k) ||
       row.startTime.includes(k) ||
@@ -240,10 +270,6 @@ const displayList = computed(() => {
     );
   });
 });
-
-// 페이지네이션 정보는 전부 store에서 사용
-const currentPage = computed(() => overtimeStore.currentPage);
-const totalPages = computed(() => overtimeStore.totalPages);
 
 /**
  * 페이지를 이동합니다.
@@ -263,11 +289,10 @@ const goPage = (page: number): void => {
 
 /**
  * 검색 버튼 클릭 시 실행되는 핸들러입니다.
- * - 기간 필터(startDate, endDate)를 스토어에 반영한 뒤
- *   1 페이지부터 다시 초과 근무 이력을 조회합니다.
+ * - startDate / endDate는 v-model로 이미 store와 묶여 있으므로
+ *   그대로 1페이지부터 조회만 하면 됩니다.
  */
 const onSearch = (): void => {
-  overtimeStore.setFilterDates(startDate.value, endDate.value);
   overtimeStore.fetchOvertime(1);
 };
 
@@ -309,11 +334,13 @@ const formatOvertime = (hours?: number | null): string => {
   return `${hours}시간`;
 };
 
-// 최초 진입 시 1페이지 로딩
+// 최초 진입 시: 상단 요약 + 1페이지 데이터 조회
 onMounted(() => {
+  attendanceStore.fetchPersonalSummary();  // personal.vue에서 사용하던 요약 API
   overtimeStore.fetchOvertime(1);
 });
 </script>
+
 
 
 <style scoped>
@@ -338,7 +365,7 @@ onMounted(() => {
 .summary-cards {
   display: flex;
   align-items: stretch;
-  gap: 20px;
+  gap: 10px;
 }
 
 .summary-card {

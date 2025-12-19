@@ -24,7 +24,7 @@
           <div class="summary-title">이번 달 근무일</div>
           <div class="summary-value-wrapper">
             <span class="summary-value">{{ workDays }}</span>
-            <span class="summary-unit">시간</span>
+            <span class="summary-unit">일</span>
           </div>
         </div>
   
