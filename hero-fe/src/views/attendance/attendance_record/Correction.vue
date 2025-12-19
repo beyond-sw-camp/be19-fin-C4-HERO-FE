@@ -491,7 +491,7 @@ const formatTime = (time?: string | null): string => {
 .date-input-wrapper {
   display: flex;
   align-items: center;
-  width: 260px;
+  width: 220px;
   height: 40px;
   border-radius: 10px;
   border: 2px solid #cad5e2;

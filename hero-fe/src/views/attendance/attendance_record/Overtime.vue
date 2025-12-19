@@ -142,10 +142,10 @@
               <thead>
                 <tr>
                   <th>날짜</th>
-                  <th>시작시간</th>
-                  <th>종료시간</th>
-                  <th>초과 근무 시간</th>
-                  <th>사유</th>
+                  <th class="col-time">시작시간</th>
+                  <th class="col-time">종료시간</th>
+                  <th class="col-overtime">초과 근무 시간</th>
+                  <th class="col-reason">사유</th>
                 </tr>
               </thead>
               <tbody>
@@ -155,12 +155,18 @@
                   :class="{ 'row-striped': index % 2 === 1 }"
                 >
                   <td>{{ row.date }}</td>
-                  <td>{{ formatTime(row.startTime) }}</td>
-                  <td>{{ formatTime(row.endTime) }}</td>
+                  <td class="time-cell">
+                    {{ formatTime(row.startTime) }}
+                  </td>
+                  <td class="time-cell">
+                    {{ formatTime(row.endTime) }}
+                  </td>
                   <td class="overtime-time">
                     {{ formatOvertime(row.overtimeHours) }}
                   </td>
-                  <td>{{ row.reason }}</td>
+                  <td class="reason-cell">
+                    {{ row.reason }}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -541,6 +547,37 @@ onMounted(() => {
 
 .attendance-table tbody tr.row-striped {
   background: #f8fafc;
+}
+
+/* 헤더쪽 정렬 */
+.attendance-table th.col-time {
+  text-align: center;
+  padding-left: 24px;
+}
+
+.attendance-table th.col-overtime {
+  text-align: center;
+  padding-left: 24px;
+}
+
+.attendance-table th.col-reason {
+  padding-left: 24px;
+}
+
+/* 바디쪽 정렬 */
+.attendance-table td.time-cell {
+  text-align: center;
+  padding-left: 24px;
+}
+
+.attendance-table td.overtime-time {
+  text-align: center;
+  padding-left: 24px;
+  color: #e7000b; /* 이미 있다면 색상 설정은 기존 코드 그대로 사용 */
+}
+
+.attendance-table td.reason-cell {
+  padding-left: 24px;
 }
 
 /* 초과 근무 시간 강조 색상 */

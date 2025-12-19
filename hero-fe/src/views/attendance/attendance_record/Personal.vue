@@ -147,9 +147,9 @@
                 <tr>
                   <th>날짜</th>
                   <th>상태</th>
-                  <th>출근시간</th>
-                  <th>퇴근시간</th>
-                  <th>근무시간</th>
+                  <th class="col-time">출근시간</th>
+                  <th class="col-time">퇴근시간</th>
+                  <th class="col-personal">근무시간</th>
                   <th>근무제</th>
                   <th>결재양식 작성</th>
                 </tr>
@@ -177,10 +177,16 @@
                     </span>
                   </td>
   
-                  <td>{{ formatTime(row.startTime) }}</td>
-                  <td>{{ formatTime(row.endTime) }}</td>
+                  <td class="time-cell">
+                    {{ formatTime(row.startTime) }}
+                  </td>
+                  <td class="time-cell">
+                    {{ formatTime(row.endTime) }}
+                  </td>
   
-                  <td>{{ row.workDuration }}분</td>
+                  <td class="col-personal">
+                    {{ row.workDuration }}분
+                  </td>
   
                   <td>{{ row.workSystemName }}</td>
   
@@ -605,6 +611,20 @@ tbody tr.row-striped {
 
 .attendance-table tbody tr.row-striped {
   background: #f8fafc;
+}
+
+/* 헤더 위치 조정 */
+.attendance-table th.col-time,
+.attendance-table th.col-personal {
+  text-align: center;    /* 가운데 정렬 */
+  padding-left: 24px;    /* 살짝 오른쪽으로 밀기 */
+}
+
+/* 바디 셀 위치 조정 */
+.attendance-table td.time-cell,
+.attendance-table td.col-personal {
+  text-align: center;    /* 가운데 정렬 */
+  padding-left: 24px;    /* 헤더와 같은 만큼 밀기 */
 }
 
 .search-button-group {
