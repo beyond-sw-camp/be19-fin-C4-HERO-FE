@@ -73,14 +73,6 @@
 
             <div class="td actions">
                 <button
-                  class="btn primary"
-                  :disabled="item.evaluationStatus !== 1"
-                  @click.stop
-                >
-                  결과 확인
-                </button>
-
-                <button
                   class="btn info"
                   @click.stop="openProgressModal(item)"
                 >

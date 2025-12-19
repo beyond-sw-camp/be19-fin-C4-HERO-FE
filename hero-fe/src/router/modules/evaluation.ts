@@ -153,6 +153,15 @@ const evaluationRoutes: RouteRecordRaw[] = [
       title: '평가 결과 확인 페이지',
     },
     children: [],
+  },
+  {
+    path: '/evaluation/team/dashboard',
+    name: 'teamdashboard',
+    component: () => import('@/views/evaluation/TeamDashBoard.vue'),
+    meta: {
+      title: '팀 대시보드',
+    },
+    children: [],
   }
 ];
 

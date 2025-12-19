@@ -470,6 +470,8 @@ const handleSubMenuClick = (key: string) => {
     router.push('/evaluation/guide/list');
   } else if (key === "list") {
     router.push('/evaluation/list')
+  } else if (key == 'teamDash') {
+    router.push('/evaluation/team/dashboard')
   } else if (key === 'document-templates') {
     router.push('/approval/document-templates');
   } else if (key === 'inbox') {
