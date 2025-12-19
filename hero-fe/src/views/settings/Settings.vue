@@ -97,34 +97,39 @@ onMounted(() => {
 }
 
 .tabs-container {
-  display: flex;
-  padding: 0 20px;
-  background: white;
+  display: inline-flex;
   border-bottom: 1px solid #e2e8f0;
-  border-radius: 14px 14px 0 0;
-  padding-top: 12px;
 }
 
 .tab-button {
-  padding: 10px 24px;
-  margin-right: 8px;
-  font-weight: 500;
-  color: #64748b;
-  background: none;
-  border: none;
-  border-radius: 8px 8px 0 0;
+  width: 146px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border-top: 2px solid #e2e8f0;
+  border-bottom: 2px solid #e2e8f0;
+  border-right: 2px solid #e2e8f0;
+  border-left: none;
+  font-size: 14px;
+  color: #62748e;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
-.tab-button:hover {
-  color: #1c398e;
-  background-color: #f8fafc;
+.tab-button:first-child {
+  border-left: 2px solid #e2e8f0;
+  border-top-left-radius: 14px;
+}
+
+.tab-button:last-child {
+  border-top-right-radius: 14px;
 }
 
 .tab-button.active {
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
+  font-weight: 700;
 }
 
 .content-container {
