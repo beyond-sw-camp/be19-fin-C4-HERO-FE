@@ -509,6 +509,7 @@ const formatTime = (time?: string | null): string => {
   color: #64748b;
 }
 
+
 .date-input:focus {
   outline: none;
 }

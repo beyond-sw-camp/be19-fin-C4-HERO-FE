@@ -69,6 +69,7 @@
                 type="date"
                 class="date-input"
               />
+              <span class="date-icon">📅</span>
             </div>
           </div>
 
@@ -81,6 +82,7 @@
                 type="date"
                 class="date-input"
               />
+              <span class="date-icon">📅</span>
             </div>
           </div>
 

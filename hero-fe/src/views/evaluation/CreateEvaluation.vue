@@ -243,7 +243,7 @@ const loadTemplate = async () => {
   template.value = res.data;
   templateItems.value = res.data.templateItems;
 
-  await loadEmployees(res.data.evaluationTemplateDepartmentId);
+  await loadEmployees(authDepartmentId.value);
 };
 
 /** 

@@ -518,6 +518,10 @@ const goPage = async (page: number): Promise<void> => {
   border: none;
   height: 100%;
   padding: 0 12px;
+<<<<<<< HEAD
+=======
+  font-size: 14px;
+>>>>>>> develop
   color: #1f2933;
 }
 
