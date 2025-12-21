@@ -123,7 +123,7 @@ export const useChangeLogStore = defineStore('changeLogStore', {
 
       try {
         const response = await apiClient.get<PageResponse<ChangeLogDTO>>(
-          '/attendance/changeLog',
+          '/attendance/changelog',
           {
             params: {
               page,

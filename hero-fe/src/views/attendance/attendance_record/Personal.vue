@@ -325,6 +325,11 @@ onMounted(() => {
 
 
 <style scoped>
+* {
+  font-size: 14px;
+  font-family: "Inter-Regular", sans-serif;
+}
+
 .attendance-wrapper {
   display: flex;
   flex-direction: column;
@@ -411,10 +416,9 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   background: #ffffff;
-  border-top: 2px solid #e2e8f0;
-  border-bottom: 2px solid #e2e8f0;
-  border-right: 2px solid #e2e8f0;
-  font-size: 14px;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
   color: #62748e;
   text-decoration: none;
 }
@@ -422,7 +426,7 @@ onMounted(() => {
 
 
 .tab-left {
-  border-left: 2px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
   border-top-left-radius: 14px;
 }
 
@@ -445,8 +449,8 @@ onMounted(() => {
 .panel-search {
   /* border-top: 2px solid #e2e8f0;
   border-bottom: 2px solid #e2e8f0; */
-  border-left: 2px solid #e2e8f0;
-  border-right: 2px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
   padding: 14px 18px;
 }
 
@@ -467,7 +471,6 @@ onMounted(() => {
 
 /* "조회기간" 텍스트 */
 .filter-label {
-  font-size: 13px;
   color: #64748b;
 }
 
@@ -479,7 +482,6 @@ onMounted(() => {
   border: 2px solid #cad5e2;
   background: #ffffff;
   padding: 0 12px;
-  font-size: 14px;
   color: #1f2933;
 }
 
@@ -489,7 +491,6 @@ onMounted(() => {
 
 /* ~ 구분자 */
 .filter-separator {
-  font-size: 14px;
   color: #64748b;
 }
 
@@ -501,10 +502,12 @@ onMounted(() => {
   flex-direction: column;
   padding: 0px 0 18px;
   gap: 20px;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
 }
 
 .panel-table {
-  border: 2px solid #e2e8f0;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -522,14 +525,12 @@ thead tr {
 th {
   padding: 11px 16px;
   text-align: left;
-  font-size: 14px;
   font-weight: 700;
   color: #ffffff;
 }
 
 td {
   padding: 16px;
-  font-size: 14px;
   color: #62748e;
   border-top: 0.67px solid #e2e8f0;
 }
@@ -550,7 +551,6 @@ tbody tr.row-striped {
   min-width: auto;
   height: auto;
   border-radius: 999px;
-  font-size: 12px;
   padding: 0;
   background: none;
 }
@@ -575,7 +575,6 @@ tbody tr.row-striped {
   background: none;
   border: none;
   padding: 0;
-  font-size: 14px;
   color: #0069ff;
   cursor: pointer;
   text-align: left;
@@ -595,7 +594,6 @@ tbody tr.row-striped {
   height: 28px;
   border-radius: 4px;
   border: 0.67px solid #cad5e2;
-  font-size: 14px;
   color: #62748e;
   background: #ffffff;
   cursor: pointer;
@@ -613,7 +611,6 @@ tbody tr.row-striped {
 
 .attendance-table th {
   color: white;
-  font-size: 13px;
   font-weight: 700;
   padding: 16px;
   text-align: left;
@@ -621,7 +618,6 @@ tbody tr.row-striped {
 
 .attendance-table td {
   padding: 16px;
-  font-size: 13px;
   color: #62748e;
   border-top: 0.67px solid #e2e8f0;
 }

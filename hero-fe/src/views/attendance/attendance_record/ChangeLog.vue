@@ -210,7 +210,7 @@ import { RouterLink, useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 
 import { useAttendanceStore } from '@/stores/attendance/attendanceStore'; // 상단 요약 카드용
-import { useChangeLogStore } from '@/stores/attendance/changeLog';        // 근무제 변경 이력 리스트용
+import { useChangeLogStore } from '@/stores/attendance/changelog';        // 근무제 변경 이력 리스트용
 
 const route = useRoute();
 const attendanceStore = useAttendanceStore();
@@ -328,10 +328,10 @@ const formatTime = (time?: string | null): string => {
 
 
 <style scoped>
-/* TODO: attendance-wrapper / attendance-page / panel 등
-  BEM 네이밍 컨벤션에 맞춰 점진적 리팩터링 예정 */
-  
-/* ===== 레이아웃 / 공통 스타일 (Personal / Overtime과 동일) ===== */
+* {
+  font-size: 14px;
+  font-family: "Inter-Regular", sans-serif;
+}
 
 .attendance-wrapper {
   display: flex;
@@ -432,16 +432,15 @@ const formatTime = (time?: string | null): string => {
   align-items: center;
   justify-content: center;
   background: #ffffff;
-  border-top: 2px solid #e2e8f0;
-  border-bottom: 2px solid #e2e8f0;
-  border-right: 2px solid #e2e8f0;
-  font-size: 14px;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
   color: #62748e;
   text-decoration: none;
 }
 
 .tab-left {
-  border-left: 2px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
   border-top-left-radius: 14px;
 }
 
@@ -462,8 +461,8 @@ const formatTime = (time?: string | null): string => {
 
 /* 검색 영역 */
 .panel-search {
-  border-left: 2px solid #e2e8f0;
-  border-right: 2px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
   padding: 14px 18px;
 }
 
@@ -483,7 +482,6 @@ const formatTime = (time?: string | null): string => {
 
 /* 날짜 필터 그룹 */
 .filter-label {
-  font-size: 13px;
   color: #64748b;
 }
 
@@ -495,7 +493,6 @@ const formatTime = (time?: string | null): string => {
   border: 2px solid #cad5e2;
   background: #ffffff;
   padding: 0 12px;
-  font-size: 14px;
   color: #1f2933;
 }
 
@@ -509,7 +506,6 @@ const formatTime = (time?: string | null): string => {
 
 /* ~ 구분자 */
 .filter-separator {
-  font-size: 14px;
   color: #64748b;
 }
 
@@ -524,7 +520,6 @@ const formatTime = (time?: string | null): string => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
   color: #94a3b8;
 }
 
@@ -534,7 +529,6 @@ const formatTime = (time?: string | null): string => {
   min-width: 70px;
   height: 40px;
   border-radius: 10px;
-  font-size: 14px;
   cursor: pointer;
   padding: 0 12px;
   border-width: 2px;
@@ -582,7 +576,7 @@ const formatTime = (time?: string | null): string => {
 }
 
 .panel-table {
-  border: 2px solid #e2e8f0;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -599,7 +593,6 @@ const formatTime = (time?: string | null): string => {
 
 .attendance-table th {
   color: #ffffff;
-  font-size: 14px;
   font-weight: 700;
   padding: 16px;
   text-align: left;
@@ -607,7 +600,6 @@ const formatTime = (time?: string | null): string => {
 
 .attendance-table td {
   padding: 16px;
-  font-size: 14px;
   color: #62748e;
   border-top: 0.67px solid #e2e8f0;
 }
@@ -640,7 +632,6 @@ const formatTime = (time?: string | null): string => {
   height: 28px;
   border-radius: 4px;
   border: 0.67px solid #cad5e2;
-  font-size: 14px;
   color: #62748e;
   background: #ffffff;
   cursor: pointer;

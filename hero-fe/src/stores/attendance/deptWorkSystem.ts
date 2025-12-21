@@ -7,9 +7,10 @@
  *
  * History
  * 2025/12/17(이지윤) 최초 작성
+ * 2025/12/19(이지윤) workDate 필드 추가 및 기본 날짜 처리 로직 보강
  *
  * @author 이지윤
- * @version 1.0
+ * @version 1.1
  */
 
 import { defineStore } from 'pinia';
@@ -18,8 +19,9 @@ import apiClient from '@/api/apiClient';
 
 /**
  * 부서 근태 현황 한 행(row)에 대한 DTO
- * - 백엔드 DeptWorkSystemRowDTO와 필드명을 맞춰둡니다.
+ * - 백엔드 DeptWorkSystemDTO와 필드명을 맞춰둡니다.
  *
+ * - workDate       : 근무일자 (yyyy-MM-dd)
  * - employeeId     : 사원 ID
  * - departmentId   : 부서 ID
  * - employeeName   : 사원명
@@ -30,6 +32,7 @@ import apiClient from '@/api/apiClient';
  * - endTime        : 퇴근 시간 (HH:mm:ss)
  */
 export interface DeptWorkSystemRowDTO {
+  workDate: string;
   employeeId: number;
   departmentId: number;
   employeeName: string;
@@ -42,14 +45,7 @@ export interface DeptWorkSystemRowDTO {
 
 /**
  * Spring Data Page 응답 형태
- * - 현재 /api/attendance/DeptWorkSystem가 반환하는 JSON 구조에 맞춤
- *
- * - content       : 실제 데이터 리스트
- * - page          : 현재 페이지(백엔드 기준)
- * - size          : 페이지당 건수
- * - totalElements : 전체 데이터 수
- * - totalPages    : 전체 페이지 수
- * - first/last    : 첫 페이지 여부 / 마지막 페이지 여부
+ * - 현재 /api/attendance/DeptWorkSystem 가 반환하는 JSON 구조에 맞춤
  */
 export interface SpringPage<T> {
   content: T[];
@@ -97,7 +93,7 @@ export const useDeptWorkSystemStore = defineStore('deptWorkSystem', {
     totalElements: 0,
 
     departmentId: null,
-    workDate: '',
+    workDate: '', // 실제 조회 전까지는 비워두고, 첫 조회 시 today로 보정
 
     loading: false,
   }),
@@ -107,10 +103,7 @@ export const useDeptWorkSystemStore = defineStore('deptWorkSystem', {
      * 필터 설정 (부서 + 날짜)
      *
      * @param {number | null} departmentId - 부서 ID, null이면 부서 필터 미적용
-     * @param {string} workDate            - 근태 조회 날짜(yyyy-MM-dd), 빈 문자열이면 필터 미적용
-     ****************************************
-     * @param → 함수의 인자(Parameter)
-     ****************************************
+     * @param {string} workDate            - 근태 조회 날짜(yyyy-MM-dd)
      */
     setFilters(departmentId: number | null, workDate: string): void {
       this.departmentId = departmentId;
@@ -139,23 +132,25 @@ export const useDeptWorkSystemStore = defineStore('deptWorkSystem', {
       this.loading = true;
 
       try {
+        // workDate가 비어 있다면 오늘 날짜로 기본값 세팅
+        if (!this.workDate) {
+          const today = new Date();
+          this.workDate = today.toISOString().slice(0, 10); // yyyy-MM-dd
+        }
+
         const params: Record<string, unknown> = {
           page,
           size: this.pageSize,
+          workDate: this.workDate,
         };
 
-        // 필터 값이 있으면 쿼리 스트링에 포함
+        // 부서 ID는 FE에서 authStore.user?.departmentId 를 세팅해 줄 예정
         if (this.departmentId != null) {
           params.departmentId = this.departmentId;
         }
-        if (this.workDate) {
-          // 예: '2025-12-15' 형식
-          params.workDate = this.workDate;
-        }
 
-        // 백엔드 URL은 Postman에서 테스트한 것과 동일하게 사용
         const { data } = await apiClient.get<SpringPage<DeptWorkSystemRowDTO>>(
-          '/attendance/DeptWorkSystem',
+          '/attendance/deptworksystem',
           { params },
         );
 
@@ -165,7 +160,6 @@ export const useDeptWorkSystemStore = defineStore('deptWorkSystem', {
         this.totalPages = data.totalPages;
         this.totalElements = data.totalElements;
       } catch (error) {
-        // TODO: 필요 시 별도의 에러 상태 필드 추가 및 UI 노출
         console.error('부서 근태 현황 조회 실패:', error);
       } finally {
         this.loading = false;
@@ -174,12 +168,19 @@ export const useDeptWorkSystemStore = defineStore('deptWorkSystem', {
 
     /**
      * 필터 초기화 + 1페이지 재조회
+     * - departmentId는 그대로 두고, workDate만 오늘 날짜로 리셋하는 용도도 가능
      *
-     * @returns {Promise<void>} 초기화 및 재조회 완료 시 resolve
+     * @param {boolean} resetDepartmentId true면 부서도 함께 초기화
      */
-    async resetFilters(): Promise<void> {
-      this.departmentId = null;
-      this.workDate = '';
+    async resetFilters(resetDepartmentId = false): Promise<void> {
+      if (resetDepartmentId) {
+        this.departmentId = null;
+      }
+
+      // workDate 기본값: 오늘
+      const today = new Date();
+      this.workDate = today.toISOString().slice(0, 10);
+
       await this.fetchDeptWorkSystem(1);
     },
   },

@@ -311,6 +311,12 @@ const goPage = async (page: number): Promise<void> => {
 
 
 <style scoped>
+
+* {
+  font-size: 14px;
+  font-family: "Inter-Regular", sans-serif;
+}
+
 .vacation-history-wrapper {
   display: flex;
   flex-direction: column;
@@ -405,7 +411,6 @@ const goPage = async (page: number): Promise<void> => {
 .vacation-table th {
   padding: 11px 16px;
   text-align: left;
-  font-size: 14px;
   font-weight: 700;
   color: #ffffff;
 }
@@ -420,7 +425,6 @@ const goPage = async (page: number): Promise<void> => {
 /* 바디 */
 .vacation-table td {
   padding: 16px;
-  font-size: 14px;
   color: #62748e;
   border-top: 0.67px solid #e2e8f0;
 }
@@ -438,7 +442,6 @@ const goPage = async (page: number): Promise<void> => {
   height: 24px;
   padding: 0 8px;
   border-radius: 999px;
-  font-size: 12px;
   color: #030213;
   background-color: #ffffff;
 }
@@ -461,7 +464,6 @@ const goPage = async (page: number): Promise<void> => {
   border-radius: 4px;
   border: 0.67px solid #cad5e2;
   background: #ffffff;
-  font-size: 14px;
   color: #62748e;
   cursor: pointer;
 }
@@ -478,8 +480,8 @@ const goPage = async (page: number): Promise<void> => {
 }
 
 .panel-search {
-  border-top: 2px solid #e2e8f0;
-  border-bottom: 2px solid #e2e8f0;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
   padding: 14px 18px;
 }
 
@@ -497,7 +499,6 @@ const goPage = async (page: number): Promise<void> => {
 }
 
 .date-label {
-  font-size: 12px;
   color: #64748b;
 }
 
@@ -517,7 +518,6 @@ const goPage = async (page: number): Promise<void> => {
   border: none;
   height: 100%;
   padding: 0 12px;
-  font-size: 14px;
   color: #1f2933;
 }
 
@@ -525,9 +525,6 @@ const goPage = async (page: number): Promise<void> => {
   cursor: pointer;
 }
 
-.date-icon {
-  font-size: 16px;
-}
 
 .search-button-group {
   display: flex;
@@ -543,7 +540,6 @@ const goPage = async (page: number): Promise<void> => {
   border-radius: 10px;
   border: 2px solid #155dfc;
   background: #155dfc;
-  font-size: 14px;
   color: #ffffff;
   cursor: pointer;
 }
@@ -554,7 +550,6 @@ const goPage = async (page: number): Promise<void> => {
   border-radius: 10px;
   border: 2px solid #e2e8f0;
   background: #ffffff;
-  font-size: 14px;
   color: #64748b;
   cursor: pointer;
 }
