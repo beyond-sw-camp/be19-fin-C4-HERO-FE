@@ -193,10 +193,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-container {
-  background-color: #f8fafc;
-}
-
 .header-container {
   width: 100%;
   height: 50px;

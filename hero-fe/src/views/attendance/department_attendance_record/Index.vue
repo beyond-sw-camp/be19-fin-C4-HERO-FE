@@ -298,7 +298,6 @@ const goPage = (page: number): void => {
   width: 100%;
   height: 100%;
   padding: 36px;
-  background-color: #f8fafc;
   box-sizing: border-box;
 }
 
