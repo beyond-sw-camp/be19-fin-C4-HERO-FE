@@ -1,5 +1,5 @@
 /**
- * (File => TypeScript) Name   : deptWorkSystem.ts
+ * TypeScript Name   : deptWorkSystem.ts
  * Description : 부서 근태 현황(DeptWorkSystem) 도메인 Pinia 스토어
  *               - 부서별 근태 현황 리스트 관리
  *               - 페이지네이션 및 날짜/부서 필터링

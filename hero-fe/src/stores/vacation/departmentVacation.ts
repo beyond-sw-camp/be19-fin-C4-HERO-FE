@@ -1,5 +1,5 @@
 /**
- * (File => TypeScript) Name   : departmentVacation.ts
+ * TypeScript Name   : departmentVacation.ts
  * Description : 부서 휴가 캘린더 도메인 Pinia 스토어
  *               - 부서별 휴가 일정 조회
  *               - 현재 로그인한 직원(myEmployeeId) 정보 보관

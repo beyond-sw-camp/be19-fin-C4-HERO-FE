@@ -1,6 +1,6 @@
 <!-- 
   <pre>
-  (File => TypeScript / Vue) Name   : VacationHistory.vue
+  TypeScript Name   : VacationHistory.vue
   Description : 개인 휴가 이력 조회 페이지
                 - 상단 요약 카드(총 연차 / 사용 연차 / 남은 연차 / 소멸 예정)
                 - 기간 필터(시작일 / 종료일) + 검색 / 초기화 버튼
@@ -11,7 +11,7 @@
   </pre>
 
   @author 이지윤
-  @version 1.0
+  @version 1.1
 -->
 
 <template>
@@ -173,6 +173,7 @@
 import { computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useVacationHistoryStore } from '@/stores/vacation/vacationHistory';
+import { useVacationSummaryStore } from '@/stores/vacation/vacationSummary';
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -186,15 +187,21 @@ const {
   loading,
 } = storeToRefs(vacationStore);
 
+
 /**
  * 상단 요약 카드용 더미 데이터
  * - 현재 vacationHistory.ts에 관련 필드가 없어 0으로 고정
  * - 추후 스토어 필드가 추가되면 storeToRefs로 교체 예정
  */
-const totalAnnualLeave = computed<number>(() => 0);
-const usedLeave = computed<number>(() => 0);
-const remainingLeave = computed<number>(() => 0);
-const expiringLeave = computed<number>(() => 0);
+const vacationSummaryStore = useVacationSummaryStore();
+const {
+  totalAnnualLeave,
+  usedLeave,
+  remainingLeave,
+  expiringLeave,
+} = storeToRefs(vacationSummaryStore)
+
+
 
 /**
  * 페이지네이션에서 사용할 안전한 totalPages
@@ -265,7 +272,10 @@ const uiRows = computed<UiRow[]>(() => {
  * 컴포넌트 최초 마운트 시 1 페이지 휴가 이력을 조회합니다.
  */
 onMounted(async () => {
-  await vacationStore.fetchVacationHistory(1);
+  await Promise.all([
+    vacationSummaryStore.fetchVacationSummary(),
+    vacationStore.fetchVacationHistory(1)
+  ])
 });
 
 /**
@@ -574,6 +584,16 @@ const goPage = async (page: number): Promise<void> => {
 
 .attendance-table tbody tr:last-child td {
   border-bottom: 1px solid #e2e8f0;
+}
+
+.filter-input {
+  width: 220px;
+  height: 40px;
+  border-radius: 10px;
+  border: 2px solid #cad5e2;
+  background: #ffffff;
+  padding: 0 12px;
+  color: #1f2933;
 }
 </style>
 

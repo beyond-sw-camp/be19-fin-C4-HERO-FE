@@ -1,5 +1,5 @@
 /**
- * (File => TypeScript) Name   : attendanceDashboardStore.ts
+ * TypeScript Name   : attendanceDashboardStore.ts
  * Description : 근태 점수 대시보드 관련 Pinia 스토어
  *               - 직원별 근태 점수 목록 / 페이지네이션 / 기간(및 부서) 필터 상태 관리
  *

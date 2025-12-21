@@ -1,5 +1,5 @@
 /**
- * (File => TypeScript) Name   : vacationHistory.ts
+ * TypeScript Name   : vacationHistory.ts
  * Description : 휴가 이력(VacationHistory) 도메인 Pinia 스토어
  *               - 개인 휴가 이력 리스트 관리
  *               - 페이지네이션 및 기간(시작/종료일) 필터링
