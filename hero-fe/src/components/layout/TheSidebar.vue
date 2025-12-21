@@ -11,12 +11,13 @@
   2025/12/11 - 동근 급여 부분 추가 & JSDoc 추가
   2025/12/12 - 동근 급여 관리 부분 추가
   2025/12/14 - 동근 헤더 메인로고 클릭 시 대시보드 경로 일 때 사이드바 상태 동기화
+  2025/12/15 - 승건 설정 부분 추가, 라우팅 부분 하나의 if문으로 변경
   2025/12/16 - 민철 사이드바 스타일 높이 수정
   2025/12/16 - 동근 사이드바 관련 버그 수정(새로고침 시 active 상태 유지 & 접고 펼칠 때 active 상태 유지)
   </pre>
  
   @author 승건
-  @version 1.8
+  @version 2.0
  -->
 <template>
   <div :class="['sidebar-container', { collapsed: isCollapsed }]">
@@ -170,7 +171,7 @@
           </div>
         </div>
 
-          <!-- 급여 -->
+        <!-- 급여 -->
         <div
           class="menu-item has-dropdown"
           :class="{ 'active-parent': activeParent === 'payroll' }"
@@ -272,47 +273,47 @@
       </div>
     </div>
 
-        <!-- 인사 관리 -->
-        <div class="menu-item has-dropdown"
-            :class="{ 'active-parent': activeParent === 'personnel' }"
-            @click="handleParentClick('personnel')">
-          <div class="menu-content">
-            <div class="icon-wrapper">
-              <img class="personnel-icon sidebar-icon" :src="getMenuIcon('personnel')" />
-            </div>
-            <div class="menu-text">사원 관리</div>
+      <!-- 인사 관리 -->
+      <div class="menu-item has-dropdown"
+          :class="{ 'active-parent': activeParent === 'personnel' }"
+          @click="handleParentClick('personnel')">
+        <div class="menu-content">
+          <div class="icon-wrapper">
+            <img class="personnel-icon sidebar-icon" :src="getMenuIcon('personnel')" />
           </div>
-          <div class="dropdown-arrow" :class="{ rotate: isPersonnelOpen }">
-            <img class="personnel-dropdown-arrow" src="/images/dropdownArrow.png" />
-          </div>
+          <div class="menu-text">사원 관리</div>
         </div>
+        <div class="dropdown-arrow" :class="{ rotate: isPersonnelOpen }">
+          <img class="personnel-dropdown-arrow" src="/images/dropdownArrow.png" />
+        </div>
+      </div>
 
-        <div v-if="isPersonnelOpen && !isCollapsed" class="sub-menu-list">
-          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'employeeList' }"
-              @click="handleSubMenuClick('employeeList')">
-            <div class="sub-menu-text">사원</div>
-          </div>
-          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'turnover' }"
-              @click="handleSubMenuClick('turnover')">
-            <div class="sub-menu-text">이직률</div>
-          </div>
-          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'plan' }"
-              @click="handleSubMenuClick('plan')">
-            <div class="sub-menu-text">승진 계획 등록</div>
-          </div>
-          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'recommend' }"
-              @click="handleSubMenuClick('recommend')">
-            <div class="sub-menu-text">승진 추천</div>
-          </div>
-          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'review' }"
-              @click="handleSubMenuClick('review')">
-            <div class="sub-menu-text">승진 심사</div>
-          </div>
-          <div class="sub-menu-item" :class="{ active: activeSubMenu === 'special' }"
-              @click="handleSubMenuClick('special')">
-            <div class="sub-menu-text">특별 승진</div>
-          </div>
+      <div v-if="isPersonnelOpen && !isCollapsed" class="sub-menu-list">
+        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'employeeList' }"
+            @click="handleSubMenuClick('employeeList')">
+          <div class="sub-menu-text">사원</div>
         </div>
+        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'turnover' }"
+            @click="handleSubMenuClick('turnover')">
+          <div class="sub-menu-text">이직률</div>
+        </div>
+        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'plan' }"
+            @click="handleSubMenuClick('plan')">
+          <div class="sub-menu-text">승진 계획 등록</div>
+        </div>
+        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'recommend' }"
+            @click="handleSubMenuClick('recommend')">
+          <div class="sub-menu-text">승진 추천</div>
+        </div>
+        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'review' }"
+            @click="handleSubMenuClick('review')">
+          <div class="sub-menu-text">승진 심사</div>
+        </div>
+        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'special' }"
+            @click="handleSubMenuClick('special')">
+          <div class="sub-menu-text">특별 승진</div>
+        </div>
+      </div>
 
         <!-- 조직도 -->
         <div class="menu-item"
@@ -325,6 +326,29 @@
             <div class="menu-text">조직도</div>
           </div>
         </div>
+
+      <!-- 설정 관리 -->
+      <div class="menu-item has-dropdown"
+          :class="{ 'active-parent': activeParent === 'settings' }"
+          @click="handleParentClick('settings')">
+        <div class="menu-content">
+          <div class="icon-wrapper">
+            <img class="settings-icon sidebar-icon" :src="getMenuIcon('settings')" />
+          </div>
+          <div class="menu-text">설정</div>
+        </div>
+        <div class="dropdown-arrow" :class="{ rotate: isSettingsOpen }">
+          <img class="personnel-dropdown-arrow" src="/images/dropdownArrow.png" />
+        </div>
+      </div>
+      
+      <div v-if="isSettingsOpen && !isCollapsed" class="sub-menu-list">
+        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'department' }"
+            @click="handleSubMenuClick('department')">
+          <div class="sub-menu-text">시스템 설정</div>
+        </div>
+      </div>
+
 
       </div>
 
@@ -375,6 +399,8 @@ const isAttendanceOpen = ref<boolean>(false);
 const isVacationOpen = ref<boolean>(false);
 const isPayrollOpen = ref<boolean>(false);
 const isPayrollAdminOpen = ref<boolean>(false);
+const isSettingsOpen = ref<boolean>(false);
+
 
 //Sidebar 접힘 여부
 const isCollapsed = ref<boolean>(false);
@@ -390,6 +416,7 @@ const menuIcons = {
   payroll: { default: '/images/payroll.svg', active: '/images/payroll-white.svg' },
   payrollAdmin: { default: '/images/payroll-admin.svg', active: '/images/payroll-admin-white.svg' },
   organization: { default: '/images/organization.svg', active: '/images/organization-white.svg' },
+  settings: { default: '/images/config.svg', active: '/images/config.svg' },
 };
 
 /**
@@ -427,6 +454,8 @@ const handleParentClick = (key: string) => {
   isVacationOpen.value = key === 'vacation' ? !isVacationOpen.value : false;
   isPayrollOpen.value = key === 'payroll' ? !isPayrollOpen.value : false;
   isPayrollAdminOpen.value = key === 'payrollAdmin' ? !isPayrollAdminOpen.value : false;
+  isSettingsOpen.value = key === 'settings' ? !isSettingsOpen.value : false;
+
 };
 
 /**
@@ -441,6 +470,8 @@ const handleSubMenuClick = (key: string) => {
     router.push('/evaluation/guide/list');
   } else if (key === "list") {
     router.push('/evaluation/list')
+  } else if (key == 'teamDash') {
+    router.push('/evaluation/team/dashboard')
   } else if (key === 'document-templates') {
     router.push('/approval/document-templates');
   } else if (key === 'inbox') {
@@ -476,9 +507,9 @@ const handleSubMenuClick = (key: string) => {
   // 급여(사원)
   if (key === 'myPayroll') {
     router.push('/payroll');              // 내 급여
-    }else if (key === 'myPayrollHistory') {
-      router.push('/payroll/history');    // 내 급여 이력
-    }
+  }else if (key === 'myPayrollHistory') {
+    router.push('/payroll/history');    // 내 급여 이력
+  }
       
   // 급여관리(관리자)
   if (key === 'payrollAdminDash') {
@@ -500,11 +531,16 @@ const handleSubMenuClick = (key: string) => {
   }
 
   // 휴가/연차
-  if (key === 'vacationHistory') {
+  else if (key === 'vacationHistory') {
     router.push('/vacation/history');
   } else if (key === 'vacationDept') {
     router.push('/vacation/department');
-}
+  }
+
+  // 설정 관리 하위 메뉴 라우팅
+  if(key === 'department'){
+    router.push ('/settings/department');
+  }
 };
 
 // 사이드바 접기/펼치기 토글
@@ -520,6 +556,7 @@ const handleCollapse = () => {
     isVacationOpen.value = false;
     isPayrollOpen.value = false;
     isPayrollAdminOpen.value = false;
+    isSettingsOpen.value = false;
   } else {
     syncActiveByRoute(route.path);
   }
@@ -565,6 +602,18 @@ const syncActiveByRoute = (path: string) => {
     if (path.includes('attendance_record')) activeSubMenu.value = 'attendanceRecord';
     else if (path.includes('/department')) activeSubMenu.value = 'attendanceDept';
     else if (path.includes('/dashboard')) activeSubMenu.value = 'attendanceDashboard';
+    return;
+  }
+
+    if (path.startsWith('/vacation')) {
+    activeParent.value = 'vacation';
+    if (!isCollapsed.value) isVacationOpen.value = true;
+
+    if (path.startsWith('/vacation/history')) {
+      activeSubMenu.value = 'vacationHistory';
+    } else if (path.startsWith('/vacation/department')) {
+      activeSubMenu.value = 'vacationDept';
+    }
     return;
   }
 

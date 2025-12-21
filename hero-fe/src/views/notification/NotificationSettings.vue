@@ -10,10 +10,11 @@
   
   History
   2025/12/16 (혜원) 최초 작성
+  2025/12/17 (혜원) 알림 마운트 수정
   </pre>
 
   @author 혜원
-  @version 1.0
+  @version 1.2
 -->
 <template>
   <div class="notification-settings-page">
@@ -247,28 +248,28 @@ const goBack = () => {
  * 브라우저 알림 설정 변경을 처리
  * 알림이 ON 상태로 변경될 경우 브라우저 권한을 요청
  */
+/**
+ * 브라우저 알림 토글 변경 시
+ */
 const handleBrowserNotificationChange = async () => {
-  // 알림을 켜려고 시도하는 경우에만 권한 요청
   if (settingsStore.settings.browserNotification) {
-    try {
-      if ('Notification' in window) {
-        const permission = await Notification.requestPermission();
-        
-        // 권한 요청 결과에 따라 Pinia 상태 업데이트
-        settingsStore.settings.browserNotification = permission === 'granted';
-
-        if (permission !== 'granted') {
-          alert(
-            '브라우저 알림 권한이 거부되었습니다. 브라우저 설정에서 알림을 허용해주세요.'
-          );
-        }
+    // 켜려고 시도할 때만 권한 요청
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      
+      if (permission === 'granted') {
+        // 권한 받음 → DB에 true 저장
+        console.log('브라우저 알림 권한 허용됨');
+      } else {
+        // 권한 거부 → 토글 다시 OFF
+        settingsStore.settings.browserNotification = false;
+        alert('브라우저 알림 권한이 거부되었습니다. 브라우저 설정에서 알림을 허용해주세요.');
       }
-    } catch (err) {
-      console.error('브라우저 알림 권한 요청 실패:', err);
-      // 오류 발생 시 토글을 다시 OFF로 되돌림
-      settingsStore.settings.browserNotification = false;
-      alert('알림 권한 요청 중 오류가 발생했습니다.');
     }
+  } else {
+    // 권한 체크 안 함, 그냥 DB에 false 저장
+    console.log('브라우저 알림 OFF');
+    // 브라우저 권한은 그대로 두고, DB만 false로 저장
   }
 };
 
@@ -303,8 +304,8 @@ const handleResetSettings = () => {
 /**
  * 컴포넌트 마운트 시 Pinia Store에서 기존 설정 값을 불러옴
  */
-onMounted(() => {
-  settingsStore.loadSettings();
+onMounted(async () => {
+  await settingsStore.loadSettings();
 });
 </script>
 

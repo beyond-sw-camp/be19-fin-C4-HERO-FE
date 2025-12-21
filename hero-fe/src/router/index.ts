@@ -9,10 +9,11 @@
  * 2025/11/28 - 승건 최초 작성
  * 2025/12/09 - 동근 JSDoc 추가
  * 2025/12/12 - 동근 급여 관련 도메인 분리 & 라우터 전역 가드에 세션 갱신 로직 추가 및 인증 라우트(/auth/*) 제외 처리
+ * 2025/12/17 - 민철 로그인 가드 풀기
  * </pre>
  *
  * @author 동근
- * @version 1.2
+ * @version 1.3
  */
 
 
@@ -25,6 +26,7 @@ import electronicApprovalRoutes from './modules/electronicApproval';
 import payrollMeRoutes from './modules/payrollMe';
 import payrollAdminRoutes from "./modules/payrollAdmin";
 import evaluationRoutes from './modules/evaluation';
+import settingsRoutes from './modules/settings';
 import { setupAuthGuard } from './guard'; // guard.ts에서 setupAuthGuard 함수 임포트
 import personnelRoutes from './modules/personnel';
 import authRoutes from './modules/auth';
@@ -52,7 +54,8 @@ const routes: RouteRecordRaw[] = [
   ...payrollAdminRoutes,
   ...evaluationRoutes,
   ...personnelRoutes,
-  ...notificationRoutes
+  ...notificationRoutes,
+  ...settingsRoutes,
 ];
 
 const router = createRouter({

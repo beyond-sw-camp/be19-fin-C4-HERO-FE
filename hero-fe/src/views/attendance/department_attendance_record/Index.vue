@@ -18,27 +18,56 @@
   <div class="worksystem-wrapper">
     <div class="worksystem-page">
       <div class="panel">
-        <!-- 검색 영역 -->
+        <!-- 검색 영역 : 기간(시작) / 기간(종료) -->
         <div class="panel-search">
           <div class="panel-search-inner">
-            <input
-              v-model="keyword"
-              type="text"
-              class="search-input"
-              placeholder="이름·근무제·직급으로 검색"
-            />
-            <button
-              class="btn-search"
-              @click="onSearch"
-            >
-              검색
-            </button>
-            <button
-              class="btn-reset"
-              @click="onReset"
-            >
-              초기화
-            </button>
+            <!-- 기간(시작) -->
+            <div class="date-filter-group">
+              <span class="date-label">기간(시작)</span>
+              <div class="date-input-wrapper">
+                <input
+                  v-model="startDate"
+                  type="date"
+                  class="date-input"
+                />
+<<<<<<< HEAD
+=======
+                <span class="date-icon">📅</span>
+>>>>>>> develop
+              </div>
+            </div>
+
+            <!-- 기간(종료) -->
+            <div class="date-filter-group">
+              <span class="date-label">기간(종료)</span>
+              <div class="date-input-wrapper">
+                <input
+                  v-model="endDate"
+                  type="date"
+                  class="date-input"
+                />
+<<<<<<< HEAD
+=======
+                <span class="date-icon">📅</span>
+>>>>>>> develop
+              </div>
+            </div>
+
+            <!-- 검색 / 초기화 버튼 -->
+            <div class="search-button-group">
+              <button
+                class="btn-search"
+                @click="onSearch"
+              >
+                검색
+              </button>
+              <button
+                class="btn-reset"
+                @click="onReset"
+              >
+                초기화
+              </button>
+            </div>
           </div>
         </div>
 
@@ -133,164 +162,153 @@
   </div>
 </template>
 
+
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import {
+  useDeptWorkSystemStore,
+  type DeptWorkSystemRowDTO,
+} from '@/stores/attendance/deptWorkSystem'
 
 /**
- * 근무제 현황 테이블 한 행에 대한 타입
- * - id        : 행 고유 ID (프론트 전용)
- * - name      : 직원명
- * - status    : 출근 상태 (예: 정상출근)
- * - position  : 직급
- * - workSystem: 근무제 이름
- * - workTime  : 근무 시간대 (예: 09:00 - 18:00)
+ * 화면에서 사용하는 테이블 한 행 타입
+ * - 백엔드 DTO(DeptWorkSystemRowDTO)를 화면용 필드로 변환한 형태
  */
 interface EmployeeWorkSystemRow {
-  id: number;
-  name: string;
-  status: string;
-  position: string;
-  workSystem: string;
-  workTime: string;
+  id: number
+  name: string
+  status: string
+  position: string
+  workSystem: string
+  workTime: string
+}
+
+/** 부서 근태 현황 Pinia 스토어 */
+const deptWorkStore = useDeptWorkSystemStore()
+const { workDate } = storeToRefs(deptWorkStore)
+
+/** 기간 필터 (화면용) – 인풋 디폴트는 비어 있도록 유지 */
+const startDate = ref<string>('')   // → input에 '연도-월-일' 플레이스홀더 표시
+const endDate = ref<string>('')
+
+/** 페이지네이션 상태 (프론트 전용) */
+const currentPage = ref<number>(1)
+const pageSize = ref<number>(5)
+
+/**
+ * 스토어의 DTO 목록을 화면용 행 데이터로 변환
+ * - name/status/position/workSystem/workTime 으로 매핑
+ */
+const allList = computed<EmployeeWorkSystemRow[]>(() => {
+  return deptWorkStore.rows.map((row: DeptWorkSystemRowDTO, index) => ({
+    id: row.employeeId ?? index, // employeeId를 키로 사용, 없으면 index
+    name: row.employeeName,
+    status: row.state,
+    position: row.jobTitle,
+    workSystem: row.workSystemName,
+    workTime: `${row.startTime} - ${row.endTime}`,
+  }))
+})
+
+/**
+ * 현재는 백엔드가 workDate(단일 날짜)만 받기 때문에
+ * - 우선 startDate를 기준으로 workDate를 맞춰서 조회
+ * - startDate가 비어 있고 endDate만 있으면 endDate를 사용
+ * - 둘 다 없으면 오늘 날짜를 workDate로 사용
+ * (화면 인풋 값은 건드리지 않음)
+ */
+const syncWorkDateFromRange = () => {
+  if (startDate.value) {
+    workDate.value = startDate.value
+    return
+  }
+
+  if (endDate.value) {
+    workDate.value = endDate.value
+    return
+  }
+
+  const today = new Date()
+  workDate.value = today.toISOString().slice(0, 10)
+}
+
+/** 전체 페이지 수 (프론트 기준) */
+const totalPages = computed<number>(() => {
+  return Math.max(1, Math.ceil(allList.value.length / pageSize.value))
+})
+
+/** 현재 페이지에 보여줄 데이터 */
+const pagedList = computed<EmployeeWorkSystemRow[]>(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+
+  return allList.value.slice(start, end)
+})
+
+/**
+ * 검색 버튼 클릭
+ * - 기간 필터 → workDate 동기화
+ * - 1페이지부터 다시 조회
+ */
+const onSearch = async (): Promise<void> => {
+  currentPage.value = 1
+  syncWorkDateFromRange()
+
+  // TODO: departmentId는 추후 로그인/부서선택과 연동
+  const departmentId = 1
+  deptWorkStore.setFilters(departmentId, workDate.value)
+  await deptWorkStore.fetchDeptWorkSystem(1)
 }
 
 /**
- * 더미 데이터 (Figma 예시 기준)
- * - 추후 백엔드 연동 시 API 응답으로 교체 예정
+ * 초기화 버튼 클릭
+ * - 기간 인풋은 비우고(연도-월-일 플레이스홀더로 복귀)
+ * - workDate만 오늘 날짜로 돌려서 조회
  */
-const allList = ref<EmployeeWorkSystemRow[]>([
-  {
-    id: 1,
-    name: '김철수',
-    status: '정상출근',
-    position: '선임',
-    workSystem: '기본 근무제',
-    workTime: '09:00 - 18:00',
-  },
-  {
-    id: 2,
-    name: '이영희',
-    status: '정상출근',
-    position: '주임',
-    workSystem: '선택 근무제',
-    workTime: '10:00 - 19:00',
-  },
-  {
-    id: 3,
-    name: '박민수',
-    status: '정상출근',
-    position: '사원',
-    workSystem: '기본 근무제',
-    workTime: '09:00 - 18:00',
-  },
-  {
-    id: 4,
-    name: '최수진',
-    status: '정상출근',
-    position: '대리',
-    workSystem: '시차 출퇴근제',
-    workTime: '08:00 - 17:00',
-  },
-  {
-    id: 5,
-    name: '정현우',
-    status: '정상출근',
-    position: '사원',
-    workSystem: '기본 근무제',
-    workTime: '09:00 - 18:00',
-  },
-  // TODO: 필요 시 더미 데이터를 추가하여 페이지네이션 테스트
-]);
+const onReset = async (): Promise<void> => {
+  // 인풋은 비우기
+  startDate.value = ''
+  endDate.value = ''
+  currentPage.value = 1
 
-/** 검색 키워드 */
-const keyword = ref<string>('');
+  // 조회 기준 날짜는 오늘로
+  const today = new Date()
+  const iso = today.toISOString().slice(0, 10)
 
-/** 페이지네이션 상태 (프론트 전용) */
-const currentPage = ref<number>(1);
-const pageSize = ref<number>(5);
+  workDate.value = iso
+  const departmentId = 1
+  deptWorkStore.setFilters(departmentId, iso)
+  await deptWorkStore.fetchDeptWorkSystem(1)
+}
 
 /**
- * 검색 키워드를 적용한 근무제 현황 리스트
- * - 이름 / 직급 / 근무제 필드에 대해 부분 일치 검색 수행
- *
- * @returns {EmployeeWorkSystemRow[]} 필터링된 리스트
- */
-const filteredList = computed<EmployeeWorkSystemRow[]>(() => {
-  const rawKeyword = keyword.value.trim();
-
-  if (!rawKeyword) {
-    return allList.value;
-  }
-
-  const lower = rawKeyword.toLowerCase();
-
-  return allList.value.filter((row) => {
-    return (
-      row.name.toLowerCase().includes(lower) ||
-      row.position.toLowerCase().includes(lower) ||
-      row.workSystem.toLowerCase().includes(lower)
-    );
-  });
-});
-
-/**
- * 전체 페이지 수
- *
- * @returns {number} 전체 페이지 수 (최소 1)
- */
-const totalPages = computed<number>(() => {
-  return Math.max(1, Math.ceil(filteredList.value.length / pageSize.value));
-});
-
-/**
- * 현재 페이지에 보여줄 데이터
- *
- * @returns {EmployeeWorkSystemRow[]} 현재 페이지 리스트
- */
-const pagedList = computed<EmployeeWorkSystemRow[]>(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-
-  return filteredList.value.slice(start, end);
-});
-
-/**
- * 검색 버튼 클릭 시 실행되는 핸들러
- * - 검색 키워드를 기준으로 필터링이 적용되며,
- *   페이지는 항상 1 페이지로 초기화합니다.
- */
-const onSearch = (): void => {
-  currentPage.value = 1;
-};
-
-/**
- * 초기화 버튼 클릭 시 실행되는 핸들러
- * - 검색 키워드를 비우고 1 페이지로 이동합니다.
- */
-const onReset = (): void => {
-  keyword.value = '';
-  currentPage.value = 1;
-};
-
-/**
- * 페이지 이동 핸들러
- * - 1보다 작거나 전체 페이지 수를 초과하는 경우 이동하지 않습니다.
- *
- * @param {number} page - 이동할 페이지 번호
+ * 페이지 이동 (프론트 페이지네이션)
  */
 const goPage = (page: number): void => {
   if (page < 1 || page > totalPages.value) {
-    return;
+    return
   }
 
-  currentPage.value = page;
-};
-</script>
+  currentPage.value = page
+}
 
-<style scoped>
-/* TODO: worksystem-wrapper / worksystem-page / panel 등
-   BEM 네이밍 컨벤션에 맞춰 점진적 리팩터링 예정 */
-</style>
+/**
+ * 화면 진입 시 기본 조회
+ * - workDate만 오늘 날짜로 설정해서 데이터 조회
+ * - startDate/endDate는 건드리지 않아서 인풋에는 '연도-월-일' 그대로 보임
+ */
+onMounted(async () => {
+  const today = new Date()
+  const iso = today.toISOString().slice(0, 10)
+
+  workDate.value = iso
+
+  const departmentId = 1
+  deptWorkStore.setFilters(departmentId, iso)
+  await deptWorkStore.fetchDeptWorkSystem(1)
+})
+</script>
 
 
 <style scoped>
@@ -315,33 +333,6 @@ const goPage = (page: number): void => {
   border: 2px solid #e2e8f0;
   display: flex;
   flex-direction: column;
-}
-
-/* 검색 영역 */
-.panel-search {
-  border-bottom: 2px solid #e2e8f0;
-  padding: 16px 18px;
-}
-
-.panel-search-inner {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 8px;
-}
-
-.search-input {
-  width: 320px;
-  height: 40px;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: 2px solid #cad5e2;
-  font-size: 14px;
-  outline: none;
-}
-
-.search-input:focus {
-  border-color: #155dfc;
 }
 
 /* 버튼 */
@@ -499,4 +490,118 @@ const goPage = (page: number): void => {
 .employee-table tbody tr:last-child td {
   border-bottom: 1px solid #e2e8f0;
 }
+
+.panel-search {
+  border-bottom: 2px solid #e2e8f0;
+  padding: 14px 18px;
+}
+
+.panel-search-inner {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* 날짜 필터 그룹 */
+.date-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+
+.date-label {
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* 인풋 + 캘린더 아이콘 */
+.date-input-wrapper {
+  display: flex;
+  align-items: center;
+  width: 260px;
+  height: 40px;
+  border-radius: 10px;
+  border: 2px solid #cad5e2;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.date-input {
+  flex: 1;
+  border: none;
+  height: 100%;
+  padding: 0 12px;
+  font-size: 14px;
+  color: #1f2933;
+}
+
+.date-input:focus {
+  outline: none;
+}
+
+.date-icon {
+  width: 40px;
+  height: 100%;
+  border-left: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #94a3b8;
+}
+
+/* 버튼 영역 */
+.search-button-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 2px;
+}
+
+.btn-search,
+.btn-reset {
+  min-width: 70px;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 12px;
+  border-width: 2px;
+  border-style: solid;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.1s ease,
+    transform 0.05s ease;
+}
+
+.btn-search {
+  background: #155dfc;
+  border-color: #155dfc;
+  color: #ffffff;
+}
+
+.btn-reset {
+  background: #ffffff;
+  border-color: #cad5e2;
+  color: #62748e;
+}
+
+.btn-search:hover {
+  background: #2b6bff;
+  border-color: #2b6bff;
+}
+
+.btn-reset:hover {
+  background: #e5edff;
+}
+
+.btn-search:active,
+.btn-reset:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
 </style>

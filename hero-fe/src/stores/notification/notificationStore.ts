@@ -23,6 +23,7 @@ import type {
   NotificationCategory, 
   NotificationType 
 } from '@/types/notification/notification.types';
+import { useNotificationSettingsStore } from './notificationSettingsStore';
 
 export const useNotificationStore = defineStore('notification', () => {
   const authStore = useAuthStore();
@@ -229,6 +230,39 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   };
 
+/**
+ * 브라우저 알림 표시
+ * DB 설정과 브라우저 권한 모두 확인
+ */
+const showBrowserNotification = async (notification: Notification): Promise<void> => {
+  // 1. DB 설정 확인
+  const settingsStore = useNotificationSettingsStore();
+  await settingsStore.loadSettings();
+  
+  if (!settingsStore.settings.browserNotification) {
+    console.log('사용자가 브라우저 알림을 OFF로 설정함. 알림 표시 안 함');
+    return;
+  }
+  
+  // 2. 브라우저 권한 확인
+  if (!('Notification' in window)) {
+    console.log('브라우저가 알림을 지원하지 않음');
+    return;
+  }
+  
+  if (Notification.permission !== 'granted') {
+    console.log('브라우저 알림 권한이 없음. 알림 표시 안 함');
+    return;
+  }
+
+  // 3. 둘 다 OK면 알림 표시
+  new Notification(notification.title, {
+    body: notification.message,
+    icon: '/favicon.ico',
+    tag: `notification-${notification.notificationId}`,
+  });
+};
+
   /**
    * 새 알림 추가 (WebSocket 수신 시)
    */
@@ -339,19 +373,6 @@ export const useNotificationStore = defineStore('notification', () => {
   const disconnectWebSocket = (): void => {
     console.log('[WebSocket] 연결 해제');
     disconnect();
-  };
-
-  /**
-   * 브라우저 알림 표시
-   */
-  const showBrowserNotification = (notification: Notification): void => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(notification.title, {
-        body: notification.message,
-        icon: '/favicon.ico',
-        tag: `notification-${notification.notificationId}`,
-      });
-    }
   };
 
   return {

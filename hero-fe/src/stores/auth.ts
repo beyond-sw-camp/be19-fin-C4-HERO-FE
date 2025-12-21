@@ -26,6 +26,7 @@ interface JwtPayload {
     exp: number;             // 토큰 만료 시간
     iat: number;             // 토큰 발급 시간
     employeeId: number;      // DB 사원 정보 인조키
+    employeeNumber: string;  // 사원 번호
     employeeName: string;    // 사용자 이름
     departmentId: number;    // DB 부서 정보 인조키
     departmentName: string;  // 부서명
@@ -34,14 +35,6 @@ interface JwtPayload {
     jobTitleId: number;      // DB 직책 정보 인조키
     jobTitleName: string;    // 직책명
     auth: string;            // 권한
-}
-
-// 사용자 정보 타입을 정의합니다.
-interface User {
-    name: string;
-    grade: string;
-    department: string;
-    jobTitle: string;
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -66,8 +59,6 @@ export const useAuthStore = defineStore('auth', () => {
      */
     function login(token: string) {
         try {
-            // const decoded = jwtDecode<JwtPayload>(token);
-
             accessToken.value = token;
             user.value = jwtDecode<JwtPayload>(token);
 

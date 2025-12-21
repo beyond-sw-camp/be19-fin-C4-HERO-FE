@@ -41,7 +41,7 @@
         </div>
 
         <div class="summary-card blue">
-          <span class="label">평가 완료</span>
+          <span class="label">제출 완료</span>
           <strong>{{ summary.done }}</strong>
           <span class="unit">{{ summary.doneRate }}%</span>
         </div>
@@ -114,8 +114,8 @@
 
             <!-- 평가 완료 -->
             <button
-              v-else-if="emp.evaluateeStatus === 2"
-              class="btn-action gray"
+              v-else-if="emp.evaluateeStatus === 2 && (authEmployeeId === emp.evaluateeEmployeeId || authEmployeeId === evaluationDetail?.evaluationEmployeeId)"
+              class="btn-action primary"
               @click="goView(emp)"
             >
               평가 확인
@@ -232,8 +232,16 @@ const goEdit = (emp: any) => {
  * 설명: 평가서 확인
  */
 const goView = (emp: any) => {
-  console.log("평가서 확인", emp);
-  // router.push(`/evaluation/form/view/${emp.evaluateeEmployeeId}`)
+  const evaluationId = evaluationDetail.value?.evaluationEvaluationId;
+  if (!evaluationId) return;
+
+  router.push({
+    path: `/evaluation/form/${evaluationId}`,
+    query: {
+      employeeId: emp.evaluateeEmployeeId,
+      departmentId: departmentId.value,
+    }
+  })
 };
 
 /**
@@ -263,7 +271,7 @@ onMounted(fetchEvaluationDetail);
  */
 const summary = computed(() => {
   const total = evaluatees.value.length;
-  const done = evaluatees.value.filter(e => e.evaluateeStatus === 1).length;
+  const done = evaluatees.value.filter(e => e.evaluateeStatus === 1 || e.evaluateeStatus === 2).length;
   const progress = evaluatees.value.filter(e => e.evaluateeStatus === 0).length;
 
   const rate = (v: number) =>
