@@ -38,12 +38,15 @@ export interface VacationHistoryDTO {
  * - 백엔드 PageResponse<T>와 매칭 (Overtime 스토어와 동일 구조)
  */
 export interface PageResponse<T> {
-  items: T[];
+  content: T[];
   page: number;
   size: number;
-  totalCount: number;
+  totalElements: number;
   totalPages: number;
+  first: boolean;
+  last: boolean;
 }
+
 
 /**
  * VacationHistory 스토어 상태 타입
@@ -168,10 +171,10 @@ export const useVacationHistoryStore = defineStore('vacationHistory', {
 
         const data = response.data;
 
-        this.vacationList = data.items;
+        this.vacationList = data.content;
         this.currentPage = data.page;
         this.pageSize = data.size;
-        this.totalCount = data.totalCount;
+        this.totalCount = data.totalElements;
         this.totalPages = data.totalPages;
       } catch (error) {
         // TODO: 필요 시 에러 상태 필드(errorMessage 등)를 두고 UI와 연동

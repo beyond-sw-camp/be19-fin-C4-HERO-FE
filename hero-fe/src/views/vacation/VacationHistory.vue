@@ -59,27 +59,24 @@
           <div class="panel-search-inner">
             <!-- 기간(시작) -->
             <div class="date-filter-group">
-              <span class="date-label">기간(시작)</span>
-              <div class="date-input-wrapper">
-                <input
-                  v-model="startDate"
-                  type="date"
-                  class="date-input"
-                />
-              </div>
+              <span class="date-label">조회기간</span>
+              <input
+                v-model="startDate"
+                type="date"
+                class="filter-input"
+                :max="today"
+              />
+
+              <span class="filter-separator">~</span>
+
+              <input
+                v-model="endDate"
+                type="date"
+                class="filter-input"
+                :max="today"
+              />
             </div>
 
-            <!-- 기간(종료) -->
-            <div class="date-filter-group">
-              <span class="date-label">기간(종료)</span>
-              <div class="date-input-wrapper">
-                <input
-                  v-model="endDate"
-                  type="date"
-                  class="date-input"
-                />
-              </div>
-            </div>
 
             <!-- 버튼 -->
             <div class="search-button-group">
@@ -90,83 +87,83 @@
         </div>
 
         <!-- 테이블 영역 -->
-        <div class="vacation-table-wrapper">
-          <table class="vacation-table">
-            <thead>
-              <tr>
-                <th class="col-period">휴가 기간</th>
-                <th class="col-type">휴가 종류</th>
-                <th class="col-reason">휴가 사유</th>
-                <th class="col-status">승인 현황</th>
-              </tr>
-            </thead>
+        <div class="panel-table-wrapper">
+          <div class="panel-table">
+            <table class="attendance-table vacation-table">
+              <thead>
+                <tr>
+                  <th class="col-period">휴가 기간</th>
+                  <th class="col-type">휴가 종류</th>
+                  <th class="col-reason">휴가 사유</th>
+                  <th class="col-status">승인 현황</th>
+                </tr>
+              </thead>
 
-            <tbody>
-              <tr
-                v-for="(row, index) in uiRows"
-                :key="row.key"
-                :class="{ 'row-striped': index % 2 === 1 }"
-              >
-                <td class="cell-period">
-                  {{ row.period }}
-                </td>
-                <td class="cell-type">
-                  <span class="vacation-type-pill">
-                    {{ row.type }}
-                  </span>
-                </td>
-                <td class="cell-reason">
-                  {{ row.reason }}
-                </td>
-                <td class="cell-status">
-                  {{ row.status }}
-                </td>
-              </tr>
-
-              <tr v-if="!loading && uiRows.length === 0">
-                <td
-                  colspan="4"
-                  style="text-align: center; padding: 16px;"
+              <tbody>
+                <tr
+                  v-for="(row, index) in uiRows"
+                  :key="row.key"
+                  :class="{ 'row-striped': index % 2 === 1 }"
                 >
-                  조회된 휴가 이력이 없습니다.
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  <td class="cell-period">
+                    {{ row.period }}
+                  </td>
+                  <td class="cell-type">
+                    <span class="vacation-type-pill">
+                      {{ row.type }}
+                    </span>
+                  </td>
+                  <td class="cell-reason">
+                    {{ row.reason }}
+                  </td>
+                  <td class="cell-status">
+                    {{ row.status }}
+                  </td>
+                </tr>
+
+                <tr v-if="!loading && uiRows.length === 0">
+                  <td colspan="4" class="empty-row">
+                    조회된 휴가 이력이 없습니다.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 페이지네이션 -->
+          <div class="pagination">
+            <!-- 이전 -->
+            <button
+              class="page-button"
+              :disabled="loading || currentPage === 1"
+              @click="goPage(currentPage - 1)"
+            >
+              이전
+            </button>
+
+            <!-- 숫자 버튼 -->
+            <button
+              v-for="p in safeTotalPages"
+              :key="p"
+              class="page-button"
+              :class="{ 'page-active': p === currentPage }"
+              :disabled="loading"
+              @click="goPage(p)"
+            >
+              {{ p }}
+            </button>
+
+            <!-- 다음 -->
+            <button
+              class="page-button"
+              :disabled="loading || currentPage === safeTotalPages"
+              @click="goPage(currentPage + 1)"
+            >
+              다음
+            </button>
+          </div>
         </div>
 
-        <!-- 페이지네이션 -->
-        <div class="vacation-pagination">
-          <button
-            type="button"
-            class="page-button"
-            :disabled="loading || currentPage === 1"
-            @click="goPage(currentPage - 1)"
-          >
-            이전
-          </button>
-
-          <button
-            v-for="p in safeTotalPages"
-            :key="p"
-            type="button"
-            class="page-button"
-            :class="{ 'page-button--active': p === currentPage }"
-            :disabled="loading"
-            @click="goPage(p)"
-          >
-            {{ p }}
-          </button>
-
-          <button
-            type="button"
-            class="page-button"
-            :disabled="loading || currentPage === safeTotalPages"
-            @click="goPage(currentPage + 1)"
-          >
-            다음
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -175,8 +172,9 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
-
 import { useVacationHistoryStore } from '@/stores/vacation/vacationHistory';
+
+const today = new Date().toISOString().slice(0, 10);
 
 const vacationStore = useVacationHistoryStore();
 const {
@@ -304,35 +302,27 @@ const goPage = async (page: number): Promise<void> => {
 </script>
 
 <style scoped>
-/* TODO: vacation-history-wrapper / vacation-panel / vacation-table 등
-   BEM 네이밍 컨벤션에 맞춰 점진적 리팩터링 예정 */
-</style>
-
-
-
-<style scoped>
-
 * {
   font-size: 14px;
   font-family: "Inter-Regular", sans-serif;
 }
 
+/* 전체 래퍼 – Personal.vue 구조와 맞춤 */
 .vacation-history-wrapper {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow-y: auto;
 }
 
 .vacation-history-page {
   width: 100%;
-  height: 85%;              
+  height: 85%;
   padding: 24px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 36px;
-  overflow-y: auto; 
+  overflow-y: auto;
 }
 
 /* 상단 요약 카드 */
@@ -379,109 +369,19 @@ const goPage = async (page: number): Promise<void> => {
   color: #64748b;
 }
 
-
-/* 하단 패널 */
+/* 하단 패널(검색 + 테이블 + 페이징) */
 .vacation-panel {
   width: 100%;
   background: #ffffff;
   border-radius: 14px;
-  outline: 2px solid #e2e8f0;
-  outline-offset: -2px;
-  overflow: hidden;
+  border: 2px solid #e2e8f0;
   display: flex;
   flex-direction: column;
 }
 
-/* 테이블 */
-.vacation-table-wrapper {
-  width: 100%;
-}
-
-.vacation-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-/* 헤더 */
-.vacation-table thead tr {
-  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
-}
-
-.vacation-table th {
-  padding: 11px 16px;
-  text-align: left;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.col-period,
-.col-type,
-.col-reason,
-.col-status {
-  width: 25%;
-}
-
-/* 바디 */
-.vacation-table td {
-  padding: 16px;
-  color: #62748e;
-  border-top: 0.67px solid #e2e8f0;
-}
-
-.row-striped {
-  background-color: #f8fafc;
-}
-
-/* 휴가 종류 Pill */
-.vacation-type-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 47px;
-  height: 24px;
-  padding: 0 8px;
-  border-radius: 999px;
-  color: #030213;
-  background-color: #ffffff;
-}
-
-/* 페이지네이션 */
-.vacation-pagination {
-  display: flex;                      
-  justify-content: center;             
-  align-items: center;
-  gap: 10px;
-  padding: 16px 0 16px 0;            
-  border-top: 2px solid #e2e8f0;
-  background: #f8fafc;
-}
-
-.page-button {
-  min-width: 34px;
-  height: 29px;
-  padding: 4px 10px;
-  border-radius: 4px;
-  border: 0.67px solid #cad5e2;
-  background: #ffffff;
-  color: #62748e;
-  cursor: pointer;
-}
-
-.page-button--active {
-  background: #155dfc;
-  color: #ffffff;
-  border-color: #155dfc;
-}
-
-.page-button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
+/* 검색 영역 */
 .panel-search {
-  border-top: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 2px solid #e2e8f0;
   padding: 14px 18px;
 }
 
@@ -494,8 +394,9 @@ const goPage = async (page: number): Promise<void> => {
 
 .date-filter-group {
   display: flex;
-  flex-direction: column;   
-  gap: 6px;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
 }
 
 .date-label {
@@ -518,10 +419,6 @@ const goPage = async (page: number): Promise<void> => {
   border: none;
   height: 100%;
   padding: 0 12px;
-<<<<<<< HEAD
-=======
-  font-size: 14px;
->>>>>>> develop
   color: #1f2933;
 }
 
@@ -529,14 +426,12 @@ const goPage = async (page: number): Promise<void> => {
   cursor: pointer;
 }
 
-
 .search-button-group {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-bottom: 0px;
+  padding-bottom: 0;
 }
-
 
 .btn-search {
   width: 60px;
@@ -558,5 +453,127 @@ const goPage = async (page: number): Promise<void> => {
   cursor: pointer;
 }
 
+/* 테이블 영역 – Personal.vue 구조와 동일 */
+.panel-table-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 18px;
+  gap: 20px;
+}
 
+.panel-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* 헤더 */
+.attendance-table thead tr {
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
+}
+
+.attendance-table th {
+  padding: 11px 16px;
+  text-align: left;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* 휴가 이력 전용 컬럼 폭 */
+.vacation-table th.col-period,
+.vacation-table td.cell-period {
+  width: 26%;
+}
+
+.vacation-table th.col-type,
+.vacation-table td.cell-type {
+  width: 14%;
+}
+
+.vacation-table th.col-reason,
+.vacation-table td.cell-reason {
+  width: 40%;
+}
+
+.vacation-table th.col-status,
+.vacation-table td.cell-status {
+  width: 20%;
+}
+
+/* 바디 */
+.attendance-table td {
+  padding: 16px;
+  color: #62748e;
+  border-top: 0.67px solid #e2e8f0;
+}
+
+.attendance-table tbody tr {
+  background-color: #ffffff;
+}
+
+.attendance-table tbody tr.row-striped {
+  background-color: #f8fafc;
+}
+
+/* 휴가 종류 Pill */
+.vacation-type-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 47px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: #030213;
+  background-color: #ffffff;
+  border: 1px solid #cad5e2;
+}
+
+/* 빈 데이터 행 */
+.empty-row {
+  text-align: center;
+  padding: 24px 0;
+  color: #94a3b8;
+}
+
+/* 페이지네이션 – Personal.vue와 동일 느낌 */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 0;
+  gap: 10px;
+}
+
+.page-button {
+  min-width: 32px;
+  height: 28px;
+  border-radius: 4px;
+  border: 0.67px solid #cad5e2;
+  font-size: 14px;
+  color: #62748e;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.page-active {
+  background: #155dfc;
+  color: #ffffff;
+  border-color: #155dfc;
+}
+
+.page-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.attendance-table tbody tr:last-child td {
+  border-bottom: 1px solid #e2e8f0;
+}
 </style>
+
