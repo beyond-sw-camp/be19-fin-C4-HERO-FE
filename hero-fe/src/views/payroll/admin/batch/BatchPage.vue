@@ -15,48 +15,56 @@
  -->
 <template>
   <div class="batch-page">
-    <div class="tab-bar">
-      <button class="tab" :class="{ active: activeTab === 'batch' }" @click="activeTab = 'batch'">
-        급여 배치
-      </button>
+    <div class="panel">
+      <div class="panel-tabs">
+        <button
+          class="tab tab-left"
+          :class="{ 'tab-active': activeTab === 'batch' }"
+          @click="activeTab = 'batch'"
+        >
+          급여 배치
+        </button>
 
-      <button
-        class="tab"
-        :class="{ active: activeTab === 'calculate' }"
-        :disabled="!store.selectedBatchId"
-        title="배치를 먼저 선택하세요"
-        @click="activeTab = 'calculate'"
-      >
-        급여 계산
-      </button>
+        <button
+          class="tab"
+          :class="{ 'tab-active': activeTab === 'calculate' }"
+          :disabled="!store.selectedBatchId"
+          title="배치를 먼저 선택하세요"
+          @click="activeTab = 'calculate'"
+        >
+          급여 계산
+        </button>
 
-      <button
-        class="tab"
-        :class="{ active: activeTab === 'confirm' }"
-        :disabled="!store.selectedBatchId"
-        title="배치를 먼저 선택하세요"
-        @click="activeTab = 'confirm'"
-      >
-        급여 승인
-      </button>
+        <button
+          class="tab tab-right"
+          :class="{ 'tab-active': activeTab === 'confirm' }"
+          :disabled="!store.selectedBatchId"
+          title="배치를 먼저 선택하세요"
+          @click="activeTab = 'confirm'"
+        >
+          급여 승인
+        </button>
+      </div>
+
+      <div class="panel-body">
+        <PayrollBatchTab
+          v-if="activeTab === 'batch'"
+          @select="onSelectBatch"
+          @next="goToCalculate"
+        />
+
+        <PayrollCalculateTab
+          v-else-if="activeTab === 'calculate'"
+          @back="activeTab = 'batch'"
+          @next="activeTab = 'confirm'"
+        />
+
+        <PayrollConfirmTab
+          v-else
+          @back="activeTab = 'calculate'"
+        />
+      </div>
     </div>
-
-    <PayrollBatchTab
-      v-if="activeTab === 'batch'"
-      @select="onSelectBatch"
-      @next="goToCalculate"
-    />
-
-    <PayrollCalculateTab
-      v-else-if="activeTab === 'calculate'"
-      @back="activeTab = 'batch'"
-      @next="activeTab = 'confirm'"
-    />
-
-    <PayrollConfirmTab
-      v-else
-      @back="activeTab = 'calculate'"
-    />
   </div>
 </template>
 
@@ -87,43 +95,61 @@ const goToCalculate = () => {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
   flex: 1;
   min-height: 0;
-  overflow-y: hidden;
-   position: relative;
-  isolation: isolate;
 }
 
-.tab-bar {
-  display: inline-flex;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  overflow: hidden;
-  width: fit-content;
+.panel {
+  width: 100%;
   background: #ffffff;
-  position : sticky;
-  top:0;
-  z-index:9999;
+  border-radius: 14px;
+  border: 2px solid #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-tabs {
+  display: inline-flex;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .tab {
-  border: none;
-  background: transparent;
-  padding: 10px 14px;
-  font-size: 13px;
+  width: 146px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border-top: 2px solid #e2e8f0;
+  border-bottom: 2px solid #e2e8f0;
+  border-right: 2px solid #e2e8f0;
+  font-size: 14px;
+  color: #62748e;
   cursor: pointer;
-  color: #334155;
+  padding: 0;
 }
 
-.tab.active {
-  background: #162456;
+.tab-left {
+  border-left: 2px solid #e2e8f0;
+  border-top-left-radius: 14px;
+}
+
+.tab-right {
+  border-top-right-radius: 14px;
+}
+
+.tab-active {
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: #ffffff;
+  font-weight: 700;
 }
 
 .tab:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
+  opacity: 0.5;
+}
+
+.panel-body {
+  padding: 20px 0px 24px;
 }
 </style>
-

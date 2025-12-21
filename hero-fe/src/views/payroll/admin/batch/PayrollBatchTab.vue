@@ -73,7 +73,6 @@
               <span :class="['badge', badgeClass(b.status)]">{{ statusLabel(b.status) }}</span>
             </td>
 
-            <!-- detail에만 카운트가 있으니, 선택된 행만 표시 -->
             <td>
               {{
                 store.selectedBatchId === b.batchId && store.batchDetail
@@ -82,13 +81,11 @@
               }}
             </td>
 
-            <!-- 총 급여액은 현재 DTO에 없어서 '-' (추후 totalPaySum 같은 필드 추가되면 표시) -->
             <td>-</td>
 
             <td>{{ formatDateTime(b.createdAt) }}</td>
             <td>{{ formatDateTime(b.closedAt) }}</td>
 
-            <!-- 작업 버튼은 행 클릭과 분리 -->
             <td @click.stop>
               <button
                 class="mini-btn"
@@ -201,7 +198,7 @@ const badgeClass = (s: PayrollBatchStatus) => {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
-  padding: 16px;
+  /* padding: 16px; */
   overflow-y: auto;
 }
 
@@ -211,6 +208,7 @@ const badgeClass = (s: PayrollBatchStatus) => {
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+  padding: 0px 10px 0px;
 }
 
 .left {

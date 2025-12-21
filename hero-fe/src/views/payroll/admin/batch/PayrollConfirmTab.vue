@@ -4,16 +4,17 @@
  * Description     : 관리자 - 월별 급여 배치 승인/확정 탭 컴포넌트
  *
  * 컴포넌트 연계
- *  - PayrollAdminStore : 배치 목록/선택/상태 전이(확정) 상태 관리
+ *  - PayrollAdminStore : 배치 목록/선택/상태 전이(확정/지급) 상태 관리
  *  - BatchPage.vue : 탭 전환 및 상위 플로우 제어
  *
  * History
  *   2025/12/15 - 동근 최초 작성
+ *   2025/12/21 - 지급(PAID) 처리 버튼 및 UI 추가
  * </pre>
  *
  * @module payroll-admin-batch-confirm-tab
  * @author 동근
- * @version 1.0
+ * @version 1.1
  -->
 <template>
   <section class="panel">
@@ -23,6 +24,7 @@
           <option value="">전체 상태</option>
           <option value="CALCULATED">승인 대기(계산완료)</option>
           <option value="CONFIRMED">승인 완료(확정)</option>
+          <option value="PAID">지급 완료</option>
         </select>
       </div>
     </header>
@@ -38,7 +40,7 @@
             <th>총 급여액</th>
             <th>상태</th>
             <th>승인자</th>
-            <th>승인일시</th>
+            <th>지급/승인일시</th>
             <th>작업</th>
           </tr>
         </thead>
@@ -64,7 +66,11 @@
             <td>{{ formatDateTime(b.createdAt) }}</td>
 
             <td>
-              {{ store.selectedBatchId === b.batchId && store.batchDetail ? store.batchDetail.totalEmployeeCount : '-' }}
+              {{
+                store.selectedBatchId === b.batchId && store.batchDetail
+                  ? store.batchDetail.totalEmployeeCount
+                  : '-'
+              }}
             </td>
             <td>-</td>
 
@@ -76,13 +82,36 @@
             <td>{{ formatDateTime(b.closedAt) }}</td>
 
             <td @click.stop>
+              <!-- ✅ 확정 -->
               <button
                 class="btn-primary small"
-                :disabled="b.status !== 'CALCULATED' || store.loading"
-                title="계산완료(CALCULATED) 상태만 확정 가능합니다"
+                :disabled="store.selectedBatchId !== b.batchId || !canConfirm"
+                :title="
+                  b.status !== 'CALCULATED'
+                    ? '계산완료(CALCULATED) 상태만 확정 가능합니다'
+                    : hasFailed
+                      ? 'FAILED 인원이 있어 확정할 수 없습니다'
+                      : '확정'
+                "
                 @click="confirm(b.batchId)"
               >
                 확정
+              </button>
+
+              <!-- 지급 처리 (CONFIRMED -> PAID) -->
+              <button
+                class="btn-primary small"
+                :disabled="store.selectedBatchId !== b.batchId || !canPay(b)"
+                :title="
+                  b.status === 'PAID'
+                    ? '이미 지급 완료된 배치입니다'
+                    : b.status !== 'CONFIRMED'
+                      ? '확정(CONFIRMED) 상태만 지급 처리 가능합니다'
+                      : '지급 처리'
+                "
+                @click="pay(b.batchId)"
+              >
+                지급 처리
               </button>
 
               <button class="btn-secondary small" disabled title="추후 API 예정">
@@ -94,6 +123,10 @@
       </table>
     </div>
 
+    <p v-if="hasFailed" class="warn">
+      FAILED 인원이 있어 급여 배치를 확정할 수 없습니다.
+      실패 사유 확인 후 재계산해주세요.
+    </p>
     <p v-if="store.errorMessage" class="error">{{ store.errorMessage }}</p>
 
     <div class="pager">
@@ -106,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { usePayrollAdminStore } from '@/stores/payroll/payrollAdminStore';
 import type { PayrollBatchStatus } from '@/types/payroll/payroll.admin';
 
@@ -136,6 +169,14 @@ const confirm = async (batchId: number) => {
   await reload();
 };
 
+const pay = async (batchId: number) => {
+  if (store.selectedBatchId !== batchId) {
+    await store.selectBatch(batchId);
+  }
+  await store.paySelectedBatch();
+  await reload();
+};
+
 const formatDateTime = (v: string | null) => {
   if (!v) return '-';
   return v.replace('T', ' ').slice(0, 16);
@@ -148,6 +189,25 @@ const batchBadge = (s: PayrollBatchStatus) => {
     case 'PAID': return 'paid';
     default: return 'wait';
   }
+};
+
+const hasFailed = computed(() => {
+  return (store.batchDetail?.failedCount ?? 0) > 0;
+});
+
+const canConfirm = computed(() => {
+  const b = store.selectedBatch;
+  if (!b) return false;
+  if (b.status !== 'CALCULATED') return false;
+  if (hasFailed.value) return false;
+  if (store.loading) return false;
+  return true;
+});
+
+const canPay = (b: { status: PayrollBatchStatus }) => {
+  if (store.loading) return false;
+  if (b.status === 'PAID') return false;
+  return b.status === 'CONFIRMED';
 };
 </script>
 
@@ -318,6 +378,12 @@ th, td {
 .error {
   margin-top: 10px;
   color: #dc2626;
+  font-size: 13px;
+}
+
+.warn {
+  margin-top: 10px;
+  color: #b45309;
   font-size: 13px;
 }
 </style>

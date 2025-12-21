@@ -73,10 +73,14 @@ export const usePayrollStore = defineStore('payroll', {
             try {
                 this.loading = true;
                 this.error = null;
+                this.summary = null;
+                this.payslip = null;
                 const { data } = await fetchMyPayroll(month);
                 this.summary = data;
                 this.currentMonth = data.salaryMonth;
             } catch (e: any) {
+                this.summary = null;
+                this.payslip = null;
                 this.error = e?.response?.data?.message ?? '급여 정보를 불러오지 못했습니다.';
             } finally {
                 this.loading = false;
