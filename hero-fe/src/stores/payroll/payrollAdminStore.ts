@@ -160,7 +160,7 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
         resetError();
         try {
             await payrollAdminApi.calculateBatchAll(selectedBatchId.value);
-            await selectBatch(selectedBatchId.value); // ✅ 재조회 타이밍 고정
+            await selectBatch(selectedBatchId.value); // 재조회 타이밍 고정
             await loadBatches(); // 목록 상태 뱃지/정렬 갱신용(선택)
         } catch (e: any) {
             errorMessage.value = e?.response?.data?.message ?? e?.message ?? '급여 전체 계산 실패';
@@ -192,7 +192,7 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
             }
 
             await payrollAdminApi.calculateBatchSelected(selectedBatchId.value, ids);
-            await selectBatch(selectedBatchId.value); // ✅ 재조회 타이밍 고정
+            await selectBatch(selectedBatchId.value); // 재조회 타이밍 고정
             await loadBatches(); // 목록 상태 뱃지/정렬 갱신용(선택)
         } catch (e: any) {
             errorMessage.value = e?.response?.data?.message ?? e?.message ?? '급여 선택 계산 실패';
