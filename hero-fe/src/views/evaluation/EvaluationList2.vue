@@ -16,16 +16,20 @@
 
       <!-- ================= 상단 탭 ================= -->
       <div class="tabs">
-        <div class="tab-group">
+        <div class="inbox-tabs">
+          <button
+            class="tab tab-start"
+            @click="goTemplateList"
+          >
+            평가 템플릿 목록
+          </button>
 
-          <div class="tab-inactive" @click="goTemplateList">
-            <span class="tab-inactive-text">평가 템플릿 목록</span>
-          </div>
-
-          <div class="tab-active" @click="goEvaluationList">
-            <span class="tab-active-text">생성된 평가</span>
-          </div>
-
+          <button
+            class="tab tab-end active"
+            @click="goEvaluationList"
+          >
+            생성된 평가
+          </button>
         </div>
       </div>
 
@@ -348,39 +352,44 @@ onMounted(() => {
   display: flex;
 }
 
-.tab-group {
-  display: flex;
+.inbox-tabs {
+  display: inline-flex;
+  flex-direction: row;
 }
 
-.tab-active,
-.tab-inactive {
-  width: 145px;
-  height: 52px;
+/* 탭 공통 */
+.tab {
+  padding: 10px 18px;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  border-top: 1px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+
+  background-color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  border-radius: 14px 14px 0 0;
-  outline: 2px solid #e2e8f0;
-  outline-offset: -2px;
+
+  white-space: nowrap;
 }
 
-.tab-active {
+/* 활성 탭 */
+.tab.active {
+  color: #ffffff;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
 }
 
-.tab-active-text {
-  color: white;
-  font-size: 14px;
+/* 탭 라운드 */
+.tab-start {
+  border-top-left-radius: 14px;
 }
 
-.tab-inactive {
-  background: white;
-}
-
-.tab-inactive-text {
-  color: #62748e;
-  font-size: 14px;
+.tab-end {
+  border-top-right-radius: 14px;
 }
 
 /* ===== List Box ===== */
