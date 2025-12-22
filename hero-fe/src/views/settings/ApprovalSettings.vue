@@ -169,10 +169,10 @@ const selectedDoc = ref<any>(null);
 const lines = ref<SettingsDefaultLineDTO[]>([
   {
     seq: 1,
-    targetType: 'DRAFTER',
+    targetType: 'DRAFTER_DEPT',
     departmentId: 0,
     approverId: 0
-  },   
+  },
 ]); 
 
 const references = ref<SettingsDefaultRefDTO[]>([]);
@@ -182,7 +182,7 @@ const selectDoc = async (doc: any) => {
   lines.value = [
     {
       seq: 1,
-      targetType: 'DRAFTER',
+      targetType: 'DRAFTER_DEPT',
       departmentId: 0,
       approverId: 0
     },
