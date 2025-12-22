@@ -152,11 +152,11 @@
                 <span class="label">평가점수</span>
                 <span class="val">{{ candidate.evaluationPoint }}점</span>
               </div>
-              <div class="stat-row" v-if="candidate.isNominated && candidate.nominatorName">
+              <div class="stat-row" v-if="candidate.nominatorName">
                 <span class="label">추천자</span>
                 <span class="val">{{ candidate.nominatorName }}</span>
               </div>
-              <div class="stat-row" v-if="candidate.isNominated && candidate.nominationReason">
+              <div class="stat-row" v-if="candidate.nominationReason">
                 <span class="label">추천사유</span>
                 <span class="val">{{ candidate.nominationReason }}</span>
               </div>
@@ -173,7 +173,7 @@
 
             <div class="member-action">
               <button 
-                v-if="!candidate.isNominated"
+                v-if="!candidate.nominatorName && !candidate.nominationReason"
                 class="btn-recommend"
                 @click.stop="startNomination(candidate)"
               >
@@ -280,11 +280,10 @@ const confirmNomination = async (candidate: any) => {
   });
   
   if (success) {
-    candidate.isNominated = true;
     // API가 추천자 이름과 사유를 바로 반환하지 않는 경우를 대비하여 프론트에서 채워줌
     candidate.nominationReason = nominationReasonInput.value;
     // 추천자 이름은 현재 로그인한 사용자 정보로 채워야 하지만, 해당 정보가 없으므로 임시 처리
-    // candidate.nominatorName = '나'; 
+    candidate.nominatorName = '나(임시)'; 
     alert(`${candidate.employeeName || '후보자'} 님을 추천하였습니다.`);
     cancelActiveNomination(); // 입력 폼 닫기
   } else {
@@ -300,7 +299,6 @@ const cancelCandidateNomination = async (candidate: any) => {
   
   const success = await store.requestCancelNomination(candidate.candidateId);
   if (success) {
-    candidate.isNominated = false;
     // 추천 취소 시 관련 정보 초기화
     candidate.nominationReason = null;
     candidate.nominatorName = null;
@@ -654,7 +652,7 @@ onMounted(() => {
 }
 
 .member-card.nominated {
-  border-color: #3b82f6;
+  border-color: #1c398e;
   background: #eff6ff;
 }
 
@@ -677,7 +675,7 @@ onMounted(() => {
 }
 
 .member-card.nominated .avatar {
-  background: #3b82f6;
+  background: #1c398e;
   color: white;
 }
 

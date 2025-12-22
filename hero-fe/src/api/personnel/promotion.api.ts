@@ -84,7 +84,7 @@ export const registerPromotionPlan = (data: PromotionPlanRequestDTO) => {
  * 현재 로그인한 사람의 부서를 이용해 관련된 승진 계획 조회
  */
 export const fetchRecommendPromotionPlans = () => {
-    return client.get<ApiResponse<PromotionPlanResponseDTO[]>>('/promotion/plan/recommend');
+    return client.get<ApiResponse<PromotionPlanResponseDTO[]>>('/promotion/nominations');
 }
 
 /**
@@ -92,7 +92,7 @@ export const fetchRecommendPromotionPlans = () => {
  * @param promotionId 
  */
 export const fetchRecommendPromotionPlanDetail = (promotionId: number) => {
-    return client.get<ApiResponse<PromotionPlanDetailResponseDTO>>(`/promotion/plan/recommend/${promotionId}`);
+    return client.get<ApiResponse<PromotionPlanDetailResponseDTO>>(`/promotion/nominations/${promotionId}`);
 }
 
 /**
@@ -100,7 +100,7 @@ export const fetchRecommendPromotionPlanDetail = (promotionId: number) => {
  * @param data 
  */
 export const nominateCandidate = (data: PromotionNominationRequestDTO) => {
-    return client.post<ApiResponse<void>>('/promotion/nominate', data);
+    return client.post<ApiResponse<void>>('/promotion/nominations', data);
 }
 
 /**
@@ -108,5 +108,5 @@ export const nominateCandidate = (data: PromotionNominationRequestDTO) => {
  * @param candidateId 
  */
 export const cancelNomination = (candidateId: number) => {
-    return client.delete<ApiResponse<void>>(`/promotion/nominate/${candidateId}`);
+    return client.delete<ApiResponse<void>>(`/promotion/nominations/${candidateId}`);
 }
