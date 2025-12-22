@@ -251,7 +251,7 @@ const addReference = () => {
 };
 
 const removeReference = (index: number) => {
-  references.value.splice(index, 2);
+  references.value.splice(index, 1);
 };
 
 const onTypeChange = (item: any) => {
