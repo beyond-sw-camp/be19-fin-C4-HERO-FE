@@ -4,11 +4,12 @@
  *               
  *
  * History
- * 2025/12/20 - 민철 기본결재선/참조목록 저장/수정 요청 데이터 타입 정의
+ * 2025/12/20 (민철) 기본결재선/참조목록 저장/수정 요청 데이터 타입 정의
+ * 2025/12/22 (민철)
  *
  * @module settings
  * @author 민철
- * @version 1.0
+ * @version 1.1
  */
 
 /**
@@ -71,7 +72,7 @@ export interface SettingsDefaultLineDTO {
 export interface SettingsDefaultRefDTO {
     targetType: string;
     departmentId: number | null;
-    referenceId: number | null;
+    // referenceId: number | null;
 }
 
 /**
@@ -81,6 +82,14 @@ export interface SettingsDefaultRefDTO {
  * @property {SettingsDefaultRefDTO} references 기본참조목록
  */
 export interface SettingsApprovalResponseDTO {
+    lines: SettingsDefaultLineDTO[];
+    references: SettingsDefaultRefDTO[];
+}
+
+/**
+ * 서식별 설정값 저장 데이터
+ */
+export interface SettingsApprovalRequestDTO {
     lines: SettingsDefaultLineDTO[];
     references: SettingsDefaultRefDTO[];
 }

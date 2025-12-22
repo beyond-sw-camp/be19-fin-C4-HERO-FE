@@ -1,6 +1,6 @@
 <!-- 
   File Name   : DepartmentDashBoard2.vue
-  Description : 팀 평가 대시보드: 부서 등급 분포 페이지
+  Description : 팀 평가 대시보드: 부서별 점수 비교 페이지
  
   History
   2025/12/19 - 승민 최초 작성
@@ -17,14 +17,14 @@
       <div class="tabs">
         <div class="inbox-tabs">
           <button
-            class="tab tab-start active"
+            class="tab tab-start"
             @click="goRank"
           >
             부서 등급 분포
           </button>
 
           <button
-            class="tab"
+            class="tab active"
             @click="goAvgScore"
           >
             부서별 점수 비교
@@ -49,7 +49,7 @@
       <!-- 리스트 박스 -->
       <div class="list-box">
 
-        <!-- 필터 영역 -->
+        <!-- 필터 -->
         <div class="filter-row">
           <label>평가 템플릿</label>
           <select v-model="selectedTemplateId" @change="updateChart">
@@ -63,7 +63,7 @@
           </select>
         </div>
 
-        <!-- 차트 영역 -->
+        <!-- 차트 -->
         <div class="chart-wrapper">
           <canvas ref="chartCanvas"></canvas>
         </div>
@@ -80,11 +80,9 @@ import { ref, onMounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import Chart from "chart.js/auto";
 import apiClient from "@/api/apiClient";
-import { useAuthStore } from "@/stores/auth";
 
 //외부 로직
 const router = useRouter();
-const authStore = useAuthStore();
 
 //Reactive 데이터
 const dashboardData = ref<any[]>([]);
@@ -98,15 +96,12 @@ let chartInstance: Chart | null = null;
  * 설명: 대시보드 데이터 조회 메소드
  */
 const loadDashboard = async () => {
-  const departmentId = authStore.user?.departmentId;
-
   const { data } = await apiClient.get(
-    `/evaluation/dashboard/${departmentId}`
+    "/evaluation/dashboard/all"
   );
 
   if (!data || data.length === 0) {
-    alert("해당 부서에 대한 평가 데이터가 존재하지 않습니다.");
-    goBack();
+    alert("평가 데이터가 존재하지 않습니다.");
     return;
   }
 
@@ -118,56 +113,24 @@ const loadDashboard = async () => {
 };
 
 /**
- * 설명: 등급 추출 메소드
- * @param {any} template - 평가 템플릿 데이터
+ * 설명: 평균 점수 비교 데이터 계산 메소드
  */
-const extractRanks = (template: any) => {
-  const set = new Set<string>();
-
-  template.evaluations.forEach((e: any) =>
-    e.evaluationItems.forEach((i: any) =>
-      i.criterias.forEach((c: any) => {
-        if (c.criteriaRank) set.add(c.criteriaRank);
-      })
-    )
-  );
-
-  const order = ["S", "A", "B", "C", "D"];
-
-  return [...set].sort((a, b) => {
-    const aIdx = order.indexOf(a);
-    const bIdx = order.indexOf(b);
-
-    return (aIdx === -1 ? 99 : aIdx) - (bIdx === -1 ? 99 : bIdx);
-  });
-};
-
-/**
- * 설명: 분포 데이터 계산 메소드
- */
-const calculateDistribution = () => {
+const calculateAvgScoreByDepartment = () => {
   const template = dashboardData.value.find(
     t => t.evaluationTemplateId === selectedTemplateId.value
   );
 
   if (!template) return { labels: [], values: [] };
 
-  const labels = extractRanks(template);
-  const map: Record<string, number> = {};
-  labels.forEach(l => (map[l] = 0));
+  const labels: string[] = [];
+  const values: number[] = [];
 
-  template.evaluations.forEach((e: any) =>
-    e.evaluatees.forEach((ev: any) => {
-      if (map[ev.evaluationEvaluateeTotalRank] !== undefined) {
-        map[ev.evaluationEvaluateeTotalRank]++;
-      }
-    })
-  );
+  template.evaluations.forEach((evaluation: any) => {
+    labels.push(evaluation.evaluationDepartmentName);
+    values.push(Number(evaluation.evaluationTotalScore.toFixed(1)));
+  });
 
-  return {
-    labels,
-    values: labels.map(l => map[l]),
-  };
+  return { labels, values };
 };
 
 /**
@@ -176,7 +139,7 @@ const calculateDistribution = () => {
 const renderChart = () => {
   if (!chartCanvas.value) return;
 
-  const { labels, values } = calculateDistribution();
+  const { labels, values } = calculateAvgScoreByDepartment();
 
   if (chartInstance) chartInstance.destroy();
 
@@ -186,6 +149,7 @@ const renderChart = () => {
       labels,
       datasets: [
         {
+          label: "부서 평균 점수",
           data: values,
           backgroundColor: "#1c398e",
           borderRadius: 6,
@@ -194,13 +158,26 @@ const renderChart = () => {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.raw} 점`,
+          },
+        },
       },
       scales: {
         y: {
           beginAtZero: true,
-          ticks: { stepSize: 1 },
+          max: 100,
+          ticks: {
+            stepSize: 10,
+          },
+          title: {
+            display: true,
+            text: "평균 점수",
+          },
         },
       },
     },
@@ -219,8 +196,8 @@ const updateChart = async () => {
  * 설명: 부서 등급 분포 페이지로 이동하는 메서드
  */
 const goRank = () => {
-    router.push("/evaluation/team/dashboard")
-}
+  router.push("/evaluation/team/dashboard");
+};
 
 /**
  * 설명: 부서별 점수 비교 페이지로 이동하는 메서드
@@ -243,17 +220,12 @@ const goScoreTrend = () => {
   router.push("/evaluation/team/dashboard4");
 };
 
-/**
- * 설명: 이전 페이지로 이동하는 메서드
- */
-const goBack = () => router.back();
-
 onMounted(loadDashboard);
 </script>
 
 <!--style-->
 <style scoped>
-/* ===== 공통 페이지 ===== */
+/* 공통 */
 .page {
   width: 100%;
   height: 100%;
@@ -264,7 +236,7 @@ onMounted(loadDashboard);
   padding: 36px;
 }
 
-/* ===== Tabs ===== */
+/* Tabs */
 .tabs {
   display: flex;
 }
@@ -311,12 +283,11 @@ onMounted(loadDashboard);
   border-top-right-radius: 14px;
 }
 
-/* ===== List Box ===== */
+/* List Box */
 .list-box {
   background: white;
   border: 2px solid #e2e8f0;
   border-radius: 0 14px 14px 14px;
-
   padding: 24px 32px 32px;
 }
 
@@ -334,23 +305,20 @@ select {
   border: 1px solid #cad5e2;
 }
 
-/* ===== Chart ===== */
+/* Chart */
 .chart-wrapper {
   height: 420px;
   background: #f8fafc;
   border-radius: 14px;
   padding: 24px;
   display: flex;
-  align-items: center;     
+  align-items: center;
   justify-content: center;
-
-  margin-top: 0;
 }
 
 .chart-wrapper canvas {
   width: 100% !important;
   height: 100% !important;
-  max-width: 900px;     
-  max-height: 360px;
+  max-width: 900px;
 }
 </style>

@@ -184,7 +184,7 @@ const selectEvaluationTemplateList = async (): Promise<void> => {
     loading.value = true
 
     const res = await apiClient.get<PageResponse<EvaluationTemplateResponseDTO>>(
-      '/evaluation/evaluation-template/selectall',
+      '/evaluation/evaluation-template/all',
       {
         params: {
           page: currentPage.value,
