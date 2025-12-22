@@ -15,36 +15,46 @@
  * 2025/12/12 (혜원) 최초 작성
  * 2025/12/16 (혜원) 삭제 관련 API 추가, 경로 수정
  * 2025/12/17 (혜원) 설정 관련 API 추가
+ * 2025/12/21 (혜원) JWT 토큰 기반 인증으로 변경, employeeId 파라미터 제거
  * </pre>
  *
  * @author 혜원
- * @version 2.2
+ * @version 3.0
  */
 
 import apiClient from '@/api/apiClient';
 import type { NotificationDTO } from '@/types/notification/notification.types';
 import type { NotificationSettingsDTO } from '@/types/notification/notification.types';
+
 /**
  * 알림 관련 API 요청 모음
  */
 export const notificationApi = {
+  
   /**
-   * 알림 목록 조회
-   * @param {number} employeeId - 조회할 직원 ID
+   * 일반 알림 목록 조회 (삭제되지 않은 알림)
    * @returns {Promise<NotificationDTO[]>} 알림 목록
    */
-  findNotifications: async (employeeId: number): Promise<NotificationDTO[]> => {
-    const response = await apiClient.get(`/notifications/${employeeId}`);
+  findNotifications: async (): Promise<NotificationDTO[]> => {
+    const response = await apiClient.get('/notifications');
+    return response.data;
+  },
+
+  /**
+   * 삭제된 알림 목록 조회 (휴지통)
+   * @returns {Promise<NotificationDTO[]>} 삭제된 알림 목록
+   */
+  findDeletedNotifications: async (): Promise<NotificationDTO[]> => {
+    const response = await apiClient.get('/notifications/deleted');
     return response.data;
   },
 
   /**
    * 미읽은 알림 개수 조회
-   * @param {number} employeeId - 조회할 직원 ID
    * @returns {Promise<number>} 미읽은 알림 개수
    */
-  findUnreadCount: async (employeeId: number): Promise<number> => {
-    const response = await apiClient.get(`/notifications/${employeeId}/unread-count`);
+  findUnreadCount: async (): Promise<number> => {
+    const response = await apiClient.get('/notifications/unread-count');
     return response.data;
   },
 
@@ -59,11 +69,10 @@ export const notificationApi = {
 
   /**
    * 모든 알림 읽음 처리
-   * @param {number} employeeId - 대상 직원 ID
    * @returns {Promise<void>}
    */
-  modifyAllIsRead: async (employeeId: number): Promise<void> => {
-    await apiClient.patch(`/notifications/${employeeId}/read-all`);
+  modifyAllIsRead: async (): Promise<void> => {
+    await apiClient.patch('/notifications/read-all');
   },
 
   /**
@@ -72,7 +81,7 @@ export const notificationApi = {
    * @returns {Promise<void>}
    */
   softRemove: async (notificationId: number): Promise<void> => {
-    await apiClient.patch(`/notifications/${notificationId}/delete`);
+    await apiClient.delete(`/notifications/${notificationId}`);
   },
 
   /**
@@ -90,37 +99,25 @@ export const notificationApi = {
    * @returns {Promise<void>}
    */
   removeNotification: async (notificationId: number): Promise<void> => {
-    await apiClient.delete(`/notifications/${notificationId}`);
-  },
-
-  /**
-   * 삭제된 알림 목록 조회
-   * @param {number} employeeId - 조회할 직원 ID
-   * @returns {Promise<NotificationDTO[]>} 삭제된 알림 목록
-   */
-  findDeletedNotifications: async (employeeId: number): Promise<NotificationDTO[]> => {
-    const response = await apiClient.get(`/notifications/${employeeId}/deleted`);
-    return response.data;
+    await apiClient.delete(`/notifications/${notificationId}/permanent`);
   },
 
   /**
    * 알림 설정 조회
-   * @param {number} employeeId - 조회할 직원 ID
    * @returns {Promise<NotificationSettingsDTO>} 알림 설정
    */
-  findSettings: async (employeeId: number): Promise<NotificationSettingsDTO> => {
-    const response = await apiClient.get(`/notification-settings/${employeeId}`);
+  findSettings: async (): Promise<NotificationSettingsDTO> => {
+    const response = await apiClient.get('/notifications/settings');
     return response.data;
   },
 
   /**
    * 알림 설정 수정
-   * @param {number} employeeId - 대상 직원 ID
    * @param {NotificationSettingsDTO} settings - 수정할 설정
    * @returns {Promise<NotificationSettingsDTO>} 수정된 설정
    */
-  modifySettings: async (employeeId: number, settings: NotificationSettingsDTO): Promise<NotificationSettingsDTO> => {
-    const response = await apiClient.put(`/notification-settings/${employeeId}`, settings);
+  modifySettings: async (settings: NotificationSettingsDTO): Promise<NotificationSettingsDTO> => {
+    const response = await apiClient.put('/notifications/settings', settings);
     return response.data;
   },
 };
