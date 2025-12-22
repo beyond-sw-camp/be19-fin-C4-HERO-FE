@@ -1,3 +1,14 @@
+<!-- 
+  File Name   : DepartmentDashBoard.vue
+  Description : 부서별 역량 대시보드: 부서별 평균 점수 페이지
+ 
+  History
+  2025/12/22 - 승민 최초 작성
+ 
+  @author 승민
+-->
+
+<!--template-->
 <template>
   <div class="page">
     <div class="content-wrapper">
@@ -71,47 +82,72 @@
   </div>
 </template>
 
+<!--script-->
 <script setup lang="ts">
+//Import 구문
 import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import Chart from "chart.js/auto";
 import apiClient from "@/api/apiClient";
+import { useAuthStore } from "@/stores/auth";
 
+
+//외부 로직
 const router = useRouter();
+const authStore = useAuthStore();
 
+//Reactive 데이터
 const activeTab = ref("deptAvg");
+const dashboardData = ref<any[]>([]);
+const selectedTemplateId = ref<number | null>(null);
 
-/* ===== Chart ===== */
+//차트 객체
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
 let chartInstance: Chart | null = null;
 
-/* ===== Data ===== */
-const dashboardData = ref<any[]>([]);
-
-/* 선택된 평가 템플릿 ID (UI 없음, 내부 상태) */
-const selectedTemplateId = ref<number | null>(null);
-
+/**
+ * 설명: 부서별 평균 점수 페이지로 이동하는 메소드
+ */
 const goAvgScore = () => {
     router.push('/evaluation/department/dashboard')
 }
 
+/**
+ * 설명: 직급별 점수 편차 페이지로 이동하는 메소드
+ */
 const goDeviation = () => {
     router.push('/evaluation/department/dashboard2')
 }
 
+/**
+ * 설명: 부서별 전분기 페이지로 이동하는 메소드
+ */
 const goComparison = () => {
     router.push('/evaluation/department/dashboard3')
 }
 
+/**
+ * 설명: 평가 가이드라인 위반 페이지로 이동하는 메소드
+ */
 const goViolation = () => {
     router.push('/evaluation/department/dashboard4')
 }
 
+/**
+ * 설명: 승진 대상자 추천 페이지로 이동하는 메소드
+ */
 const goRecommendation = () => {
     router.push('/evaluation/department/dashboard5')
 }
 
-/* ===== API ===== */
+/**
+ * 설명: 이전 페이지로 이동하는 메소드
+ */
+const goBack = () => router.back();
+
+/**
+ * 설명: 대시보드 데이터 조회 메소드
+ */
 const loadDashboard = async () => {
   const { data } = await apiClient.get("/evaluation/dashboard/all");
   dashboardData.value = data;
@@ -122,7 +158,10 @@ const loadDashboard = async () => {
   renderDepartmentChart();
 };
 
-/* ===== 계산 로직 (템플릿별) ===== */
+/**
+ * 설명: 선택된 평가 데이터를 그래프에 맞게 가공하는 메소드 
+ * @param {any[]} data - 선택된 평가 데이터  
+ */
 const calculateDepartmentStats = (data: any[]) => {
   if (!selectedTemplateId.value) {
     return { companyAvg: 0, stats: [] };
@@ -165,7 +204,9 @@ const calculateDepartmentStats = (data: any[]) => {
   };
 };
 
-/* ===== Chart Render ===== */
+/**
+ * 설명: 그래프를 그리는 메소드
+ */
 const renderDepartmentChart = () => {
   if (!chartCanvas.value) return;
 
@@ -269,17 +310,29 @@ const renderDepartmentChart = () => {
   });
 };
 
-/* ===== Watch ===== */
+/**
+ * 설명: 평가 템플릿 값을 감지하는 훅
+ */
 watch(activeTab, tab => {
   if (tab === "deptAvg") {
     setTimeout(renderDepartmentChart, 0);
   }
 });
 
-/* ===== Init ===== */
-onMounted(loadDashboard);
+
+onMounted(() => {
+    const departmentId = authStore.user?.departmentId;
+
+    if(departmentId != 2){
+        alert("인사팀이 아닙니다.");
+        goBack();
+    }
+
+    loadDashboard();
+});
 </script>
 
+<!--style-->
 <style scoped>
 .page {
   background: #f5f6fa;

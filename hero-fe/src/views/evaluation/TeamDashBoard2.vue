@@ -1,3 +1,14 @@
+<!-- 
+  File Name   : DepartmentDashBoard2.vue
+  Description : 팀 평가 대시보드: 부서별 점수 비교 페이지
+ 
+  History
+  2025/12/19 - 승민 최초 작성
+ 
+  @author 승민
+-->
+
+<!--template-->
 <template>
   <div class="page">
     <div class="content-wrapper">
@@ -62,26 +73,28 @@
   </div>
 </template>
 
+<!--script-->
 <script setup lang="ts">
+//Import 구문
 import { ref, onMounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import Chart from "chart.js/auto";
 import apiClient from "@/api/apiClient";
 
-/* =====================
-   상태
-===================== */
+//외부 로직
 const router = useRouter();
 
+//Reactive 데이터
 const dashboardData = ref<any[]>([]);
 const selectedTemplateId = ref<number | null>(null);
 
+//차트 객체
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
 let chartInstance: Chart | null = null;
 
-/* =====================
-   API 호출 (전체 템플릿)
-===================== */
+/**
+ * 설명: 대시보드 데이터 조회 메소드
+ */
 const loadDashboard = async () => {
   const { data } = await apiClient.get(
     "/evaluation/dashboard/all"
@@ -99,9 +112,9 @@ const loadDashboard = async () => {
   renderChart();
 };
 
-/* =====================
-   평균 점수 계산
-===================== */
+/**
+ * 설명: 평균 점수 비교 데이터 계산 메소드
+ */
 const calculateAvgScoreByDepartment = () => {
   const template = dashboardData.value.find(
     t => t.evaluationTemplateId === selectedTemplateId.value
@@ -120,9 +133,9 @@ const calculateAvgScoreByDepartment = () => {
   return { labels, values };
 };
 
-/* =====================
-   차트 렌더링
-===================== */
+/**
+ * 설명: 차트 그리는 메소드
+ */
 const renderChart = () => {
   if (!chartCanvas.value) return;
 
@@ -171,26 +184,38 @@ const renderChart = () => {
   });
 };
 
-/* =====================
-   이벤트
-===================== */
+/**
+ * 설명: 차트 최신화 메서드
+ */
 const updateChart = async () => {
   await nextTick();
   renderChart();
 };
 
+/**
+ * 설명: 부서 등급 분포 페이지로 이동하는 메서드
+ */
 const goRank = () => {
   router.push("/evaluation/team/dashboard");
 };
 
+/**
+ * 설명: 부서별 점수 비교 페이지로 이동하는 메서드
+ */
 const goAvgScore = () => {
   router.push("/evaluation/team/dashboard2");
 };
 
+/**
+ * 설명: 팀원별 역량 상세 분석 페이지로 이동하는 메서드
+ */
 const goMemberSkill = () => {
   router.push("/evaluation/team/dashboard3");
 };
 
+/**
+ * 설명: 팀원별 평가 점수 트렌드 페이지로 이동하는 메서드
+ */
 const goScoreTrend = () => {
   router.push("/evaluation/team/dashboard4");
 };
@@ -198,6 +223,7 @@ const goScoreTrend = () => {
 onMounted(loadDashboard);
 </script>
 
+<!--style-->
 <style scoped>
 /* 공통 */
 .page {
