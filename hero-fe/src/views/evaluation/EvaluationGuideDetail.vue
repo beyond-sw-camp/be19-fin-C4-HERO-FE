@@ -128,7 +128,7 @@ const deleteGuide = async (): Promise<void> => {
 
   try {
     await apiClient.delete(
-      `/evaluation/evaluation-guide/delete/${guideId.value}`
+      `/evaluation/evaluation-guide/${guideId.value}`
     )
 
     alert("평가 가이드가 삭제되었습니다.")
@@ -156,7 +156,7 @@ onMounted(async (): Promise<void> => {
     guideId.value = Number(paramId)
 
     const response = await apiClient.get(
-      `/evaluation/evaluation-guide/select/${guideId.value}`
+      `/evaluation/evaluation-guide/${guideId.value}`
     )
 
     const data = response.data

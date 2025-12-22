@@ -184,7 +184,7 @@ const fetchEvaluationDetail = async () => {
 
   try {
     const res = await apiClient.get(
-      `/evaluation/evaluation/select/${props.evaluation.evaluationEvaluationId}`
+      `/evaluation/evaluation/${props.evaluation.evaluationEvaluationId}`
     );
 
     evaluationDetail.value = res.data;

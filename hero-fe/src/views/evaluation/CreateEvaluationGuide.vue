@@ -145,7 +145,7 @@ const saveGuide = async () => {
     }
 
     const response = await apiClient.post(
-        "/evaluation/evaluation-guide/create",
+        "/evaluation/evaluation-guide",
         payload
     )
 

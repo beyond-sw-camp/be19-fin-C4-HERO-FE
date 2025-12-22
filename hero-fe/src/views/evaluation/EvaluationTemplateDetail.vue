@@ -171,7 +171,7 @@ authGradeName.value = authStore.user?.gradeName
  */
 const getTemplateDetail = async () => {
   const res = await apiClient.get(
-    `/evaluation/evaluation-template/select/${templateId}`
+    `/evaluation/evaluation-template/${templateId}`
   );
   template.value = res.data;
 };
@@ -211,7 +211,7 @@ const deleteTemplate = async () => {
 
   try {
     await apiClient.delete(
-      `/evaluation/evaluation-template/delete/${templateId}`
+      `/evaluation/evaluation-template/${templateId}`
     );
 
     alert("평가 템플릿이 삭제되었습니다.");
