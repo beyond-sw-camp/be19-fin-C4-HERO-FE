@@ -69,10 +69,7 @@
                 type="date"
                 class="date-input"
               />
-<<<<<<< HEAD
-=======
               <span class="date-icon">📅</span>
->>>>>>> develop
             </div>
           </div>
 
@@ -85,10 +82,7 @@
                 type="date"
                 class="date-input"
               />
-<<<<<<< HEAD
-=======
               <span class="date-icon">📅</span>
->>>>>>> develop
             </div>
           </div>
 
@@ -586,4 +580,3 @@ onMounted(() => {
   border-color: #155dfc;
 }
 </style>
-
