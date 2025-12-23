@@ -1,5 +1,24 @@
+<!--
+ * <pre>
+ * Vue Name        : ApprovalCreate.vue
+ * Description     : 작성화면
+ *
+ * 컴포넌트 연계
+ * - 문서 상세 조회
+ * - ApprovalTemplates.vue: 새 결재 작성 버튼 클릭 시 결재문서서식페이지로 라우팅
+ *
+ * History
+ *   2025/12/14 - 민철 공통 컴포넌트화
+ *   2025/12/23 - 민철 파일명 변경 
+ * </pre>
+ *
+ * @module approval
+ * @author 민철
+ * @version 2.0
+ -->
 <template>
   <div class="page-wrapper">
+
     <!-- 헤더 영역 -->
     <div class="page-header">
       <div class="header-inner">
@@ -31,7 +50,7 @@
     <div class="page-body">
       <div class="form-wrapper">
         <div class="form-container">
-          <CommonForm
+          <ApprovalCreateCommonForm
             ref="commonFormRef"
             :title="title"
             :category="category"
@@ -49,7 +68,7 @@
                 v-model="sectionData"
               />
             </template>
-          </CommonForm>
+          </ApprovalCreateCommonForm>
         </div>
       </div>
     </div>
@@ -60,18 +79,18 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import apiClient from '@/api/apiClient';
-import CommonForm from './CommonForm.vue';
+import ApprovalCreateCommonForm from './ApprovalCreateCommonForm.vue';
 import { 
-  VacationSection,
-  OvertimeSection,
-  ChangeWorkSection,
-  ModifyWorkRecordSection,
-  PersonnelAppointmentSection,
-  PromotionPlanSection,
-  ResignSection,
-  RaisePayrollSection,
-  ModifyPayrollSection,
-} from './formSections';
+  ApprovalVacationForm,
+  ApprovalOvertimeForm,
+  ApprovalWorkChangeForm,
+  ApprovalAttendanceFixForm,
+  ApprovalAppointmentForm,
+  ApprovalPromotionForm,
+  ApprovalResignForm,
+  ApprovalPayrollRaiseForm,
+  ApprovalPayrollAdjustForm,
+} from './forms';
 import { useTemplateStore } from '@/stores/approval/approval.store';
 import { useAuthStore } from '@/stores/auth';
 
@@ -84,19 +103,19 @@ const props = defineProps<{
 }>();
 
 // CommonForm 참조
-const commonFormRef = ref<InstanceType<typeof CommonForm>>();
+const commonFormRef = ref<InstanceType<typeof ApprovalCreateCommonForm>>();
 
 // 섹션 컴포넌트 매핑
 const sectionMap: Record<string, any> = {
-  vacation: VacationSection,
-  changework: ChangeWorkSection,
-  overtime: OvertimeSection,
-  modifyworkrecord: ModifyWorkRecordSection,
-  personnelappointment: PersonnelAppointmentSection,
-  promotionplan: PromotionPlanSection,
-  resign: ResignSection,
-  raisepayroll: RaisePayrollSection,
-  modifypayroll: ModifyPayrollSection,
+  vacation: ApprovalVacationForm,
+  changework: ApprovalWorkChangeForm,
+  overtime: ApprovalOvertimeForm,
+  modifyworkrecord: ApprovalAttendanceFixForm,
+  personnelappointment: ApprovalAppointmentForm,
+  promotionplan: ApprovalPromotionForm,
+  resign: ApprovalResignForm,
+  raisepayroll: ApprovalPayrollRaiseForm,
+  modifypayroll: ApprovalPayrollAdjustForm,
 };
 
 const currentDetailSection = computed(() => {

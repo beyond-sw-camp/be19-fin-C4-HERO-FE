@@ -1,6 +1,6 @@
 /**
  * <pre>
- * File Name: settings-approval.api.ts
+ * TypeScript Name: settings-approval.api.ts
  * Description 
  * :결재(Approval) 관리와 관련된 서버 API 호출을 담당하는 모듈
  *

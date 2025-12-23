@@ -1,6 +1,6 @@
 /**
  * <pre>
- * File Name: settings-approval.store.ts
+ * TypeScript Name: settings-approval.store.ts
  * Description: 결재 관리 스토어 모음
  *
  * 주요 composable 객체:

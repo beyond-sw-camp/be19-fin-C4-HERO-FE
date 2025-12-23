@@ -1,6 +1,6 @@
 /**
  * <pre>
- * File Name: approval.store.ts
+ * TypeScript Name: approval.store.ts
  * Description: 결재관련 스토어 모음
  *
  * 주요 composable 객체:
