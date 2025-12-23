@@ -153,6 +153,69 @@ const evaluationRoutes: RouteRecordRaw[] = [
       title: '평가 결과 확인 페이지',
     },
     children: [],
+  },
+  {
+    path: '/evaluation/team/dashboard',
+    name: 'teamdashboard',
+    component: () => import('@/views/evaluation/TeamDashBoard.vue'),
+    meta: {
+      title: '팀 대시보드',
+    },
+    children: [],
+  },
+  {
+    path: '/evaluation/team/dashboard2',
+    name: 'teamdashboard2',
+    component: () => import('@/views/evaluation/TeamDashBoard2.vue'),
+    meta: {
+      title: '팀 대시보드2',
+    },
+    children: [],
+  },
+  {
+    path: '/evaluation/team/dashboard3',
+    name: 'teamdashboard3',
+    component: () => import('@/views/evaluation/TeamDashBoard3.vue'),
+    meta: {
+      title: '팀 대시보드3',
+    },
+    children: [],
+  },
+  {
+    path: '/evaluation/team/dashboard4',
+    name: 'teamdashboard4',
+    component: () => import('@/views/evaluation/TeamDashBoard4.vue'),
+    meta: {
+      title: '팀 대시보드4',
+    },
+    children: [],
+  },
+  {
+    path: '/evaluation/department/dashboard',
+    name: 'departmentdashboard',
+    component: () => import('@/views/evaluation/DepartmentDashBoard.vue'),
+    meta: {
+      title: '부서별 대시보드',
+    },
+    children: [],
+  },
+  {
+    path: '/evaluation/department/dashboard2',
+    name: 'departmentdashboard2',
+    component: () => import('@/views/evaluation/DepartmentDashBoard2.vue'),
+    meta: {
+      title: '부서별 대시보드2',
+    },
+    children: [],
+  },
+  {
+    path: '/evaluation/department/dashboard3',
+    name: 'departmentdashboard3',
+    component: () => import('@/views/evaluation/DepartmentDashBoard3.vue'),
+    meta: {
+      title: '부서별 대시보드3',
+    },
+    children: [],
   }
 ];
 

@@ -91,7 +91,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useTemplateStore } from '@/stores/approval/approval';
+import { useTemplateStore } from '@/stores/approval/approval.store';
 import apiClient from '@/api/apiClient';
 
 // ✅ 프론트엔드 템플릿 사용을 위해 title로 통일

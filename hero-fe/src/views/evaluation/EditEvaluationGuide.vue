@@ -119,7 +119,7 @@ const updateGuide = async () => {
 
   try {
     await apiClient.put(
-      "/evaluation/evaluation-guide/update",
+      "/evaluation/evaluation-guide",
       payload
     )
 
@@ -148,7 +148,7 @@ onMounted(async () => {
 
   try {
     const res = await apiClient.get(
-      `/evaluation/evaluation-guide/select/${guideId.value}`
+      `/evaluation/evaluation-guide/${guideId.value}`
     )
 
     const data = res.data

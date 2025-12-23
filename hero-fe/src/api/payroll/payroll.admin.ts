@@ -55,8 +55,21 @@ export const payrollAdminApi = {
         return res.data; // batchId
     },
 
-    // POST /api/admin/payroll/batches/{batchId}/calculate  body: [employeeIds]
-    async calculateBatch(batchId: number, employeeIds: number[]) {
+    /**
+     *  전체 계산
+     * - body 없이 호출하면 서버가 targets(재직자) 기준으로 전체 계산
+     * POST /api/admin/payroll/batches/{batchId}/calculate
+     */
+    async calculateBatchAll(batchId: number) {
+        await client.post<void>(`${BASE}/${batchId}/calculate`);
+    },
+
+    /**
+     * 선택 계산
+     * - employeeIds만 계산
+     * POST /api/admin/payroll/batches/{batchId}/calculate  body: [employeeIds]
+     */
+    async calculateBatchSelected(batchId: number, employeeIds: number[]) {
         await client.post<void>(`${BASE}/${batchId}/calculate`, employeeIds);
     },
 
@@ -70,5 +83,10 @@ export const payrollAdminApi = {
             '/admin/payroll/batches/targets'
         );
         return res.data;
+    },
+
+    // POST /api/admin/payroll/batches/{batchId}/pay
+    async payBatch(batchId: number) {
+        await client.post<void>(`${BASE}/${batchId}/pay`);
     }
 };

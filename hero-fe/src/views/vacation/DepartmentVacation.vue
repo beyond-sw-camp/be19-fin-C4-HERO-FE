@@ -237,24 +237,24 @@ onMounted(async () => {
 
 <style scoped>
 .dept-vacation-wrapper {
-  width: 100%;
-  height: 100%;
-  padding: 20px 36px 20px 30px;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
-  overflow-y: auto; 
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .dept-vacation-page {
-  width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;             
+  padding: 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  overflow-y: auto; 
 }
 
 .dept-vacation-panel {
   width: 100%;
-  height: 100%;
   padding: 2px;
   background: #ffffff;
   border-radius: 14px;

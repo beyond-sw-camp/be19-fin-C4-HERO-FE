@@ -46,6 +46,17 @@
       </div>
     </header>
 
+    <!-- 급여 데이터 없음 / 에러 상태 -->
+    <section
+      v-if="!summary && !store.loading"
+      class="empty-state"
+    >
+      <p class="empty-title">해당 월 급여 데이터가 없습니다.</p>
+      <p class="empty-desc">
+        선택하신 월에는 급여 내역이 존재하지 않습니다.
+      </p>
+    </section>
+
     <!-- 지급 / 공제 내역 -->
     <section v-if="summary" class="pay-detail">
       <!-- 지급 내역 -->

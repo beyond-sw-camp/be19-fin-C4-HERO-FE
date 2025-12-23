@@ -6,22 +6,22 @@
  * History
  * 2025/12/14 (혜원) 최초 작성
  * 2025/12/16 (혜원) 삭제 관련 상태 및 액션 추가, WebSocket 연동
+ * 2025/12/21 (혜원) JWT 토큰 기반으로 변경, employeeId 파라미터 제거
  * </pre>
  *
  * @author 혜원
- * @version 2.2
+ * @version 3.0
  */
 
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { notificationApi } from '@/api/notification/notificationApi';
+import { notificationApi } from '@/api/notification/notification.api';
 import { useAuthStore } from '@/stores/auth';
 import { useNotificationSocket } from '@/composables/notification/useNotificationSocket';
 import type { 
   Notification, 
   NotificationDTO, 
-  NotificationCategory, 
-  NotificationType 
+  NotificationCategory 
 } from '@/types/notification/notification.types';
 import { useNotificationSettingsStore } from './notificationSettingsStore';
 
@@ -51,12 +51,8 @@ export const useNotificationStore = defineStore('notification', () => {
       isLoading.value = true;
       error.value = null;
       
-      const data = await notificationApi.findNotifications(employeeId.value);
-      
-      // 삭제되지 않은 알림만 필터링
-      notifications.value = data
-        .filter(dto => !dto.isDeleted)
-        .map(mapDTOToNotification);
+      const data = await notificationApi.findNotifications(false);
+      notifications.value = data.map(mapDTOToNotification);
         
     } catch (err) {
       error.value = '알림을 불러오는데 실패했습니다';
@@ -73,7 +69,7 @@ export const useNotificationStore = defineStore('notification', () => {
     if (!employeeId.value) return;
 
     try {
-      unreadCount.value = await notificationApi.findUnreadCount(employeeId.value);
+      unreadCount.value = await notificationApi.findUnreadCount();
     } catch (err) {
       console.error('미읽은 알림 개수 조회 실패:', err);
     }
@@ -89,7 +85,7 @@ export const useNotificationStore = defineStore('notification', () => {
       isLoading.value = true;
       error.value = null;
       
-      const data = await notificationApi.findDeletedNotifications(employeeId.value);
+      const data = await notificationApi.findDeletedNotifications();
       deletedNotifications.value = data.map(mapDTOToNotification);
       
     } catch (err) {
@@ -129,7 +125,7 @@ export const useNotificationStore = defineStore('notification', () => {
     if (!employeeId.value) return;
 
     try {
-      await notificationApi.modifyAllIsRead(employeeId.value);
+      await notificationApi.modifyAllIsRead();
       
       // 로컬 상태 업데이트
       const now = new Date().toISOString();
@@ -264,6 +260,39 @@ const showBrowserNotification = async (notification: Notification): Promise<void
 };
 
   /**
+   * 브라우저 알림 표시
+   * DB 설정과 브라우저 권한 모두 확인
+   */
+  const showBrowserNotification = async (notification: Notification): Promise<void> => {
+    // 1. DB 설정 확인
+    const settingsStore = useNotificationSettingsStore();
+    await settingsStore.loadSettings();
+    
+    if (!settingsStore.settings.browserNotification) {
+      console.log('사용자가 브라우저 알림을 OFF로 설정함. 알림 표시 안 함');
+      return;
+    }
+    
+    // 2. 브라우저 권한 확인
+    if (!('Notification' in window)) {
+      console.log('브라우저가 알림을 지원하지 않음');
+      return;
+    }
+    
+    if (Notification.permission !== 'granted') {
+      console.log('브라우저 알림 권한이 없음. 알림 표시 안 함');
+      return;
+    }
+
+    // 3. 둘 다 OK면 알림 표시
+    new Notification(notification.title, {
+      body: notification.message,
+      icon: '/favicon.ico',
+      tag: `notification-${notification.notificationId}`,
+    });
+  };
+
+  /**
    * 새 알림 추가 (WebSocket 수신 시)
    */
   const addNotification = (notification: Notification): void => {
@@ -282,7 +311,7 @@ const showBrowserNotification = async (notification: Notification): Promise<void
     return {
       notificationId: dto.notificationId,
       employeeId: dto.employeeId,
-      type: mapTypeToCategory(dto.type),
+      type: dto.type as NotificationCategory, // 백엔드에서 이미 category로 전송됨
       title: dto.title,
       message: dto.message,
       link: dto.link,
@@ -297,26 +326,6 @@ const showBrowserNotification = async (notification: Notification): Promise<void
       evaluationId: dto.evaluationId,
       timeAgo: getTimeAgo(dto.createdAt),
     };
-  };
-
-  /**
-   * 백엔드 타입 → 프론트 카테고리 매핑
-   */
-  const mapTypeToCategory = (type: NotificationType): NotificationCategory => {
-    const typeMap: Record<NotificationType, NotificationCategory> = {
-      'ATTENDANCE_CHECK_IN': 'attendance',
-      'DOCUMENT_APPROVED': 'approval',
-      'DOCUMENT_PENDING': 'approval',
-      'DOCUMENT_REJECTED': 'approval',
-      'PAYROLL_PAID': 'payroll',
-      'PAYSLIP_GENERATED': 'payroll',
-      'EVALUATION_COMPLETED': 'evaluation',
-      'EVALUATION_STARTED': 'evaluation',
-      'LEAVE_APPROVED': 'leave',
-      'TRAINING_NOTICE': 'system',
-      'SYSTEM_NOTICE': 'system',
-    };
-    return typeMap[type] || 'system';
   };
 
   /**

@@ -11,7 +11,7 @@
   </pre>
 
   @author 이지윤
-  @version 1.0
+  @version 1.1
 -->
 
 <template>
@@ -22,30 +22,40 @@
         <div class="summary-card">
           <div class="summary-title">이번 달 근무일</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">15</span>
-            <span class="summary-unit">시간</span>
+            <span class="summary-value">{{ workDays }}</span>
+            <span class="summary-unit">일</span>
           </div>
         </div>
-
+  
         <div class="summary-card">
           <div class="summary-title">오늘 근무</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">기본근무제</span>
+            <span class="summary-value">
+              {{ todayWorkSystemName || '근무 정보 없음' }}
+            </span>
           </div>
         </div>
-
+  
         <div class="summary-card">
           <div class="summary-title">이번 달 지각</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">2</span>
+            <span class="summary-value">{{ lateCount }}</span>
+            <span class="summary-unit">회</span>
+          </div>
+        </div>
+  
+        <div class="summary-card">
+          <div class="summary-title">이번 달 결근</div>
+          <div class="summary-value-wrapper">
+            <span class="summary-value">{{ absentCount }}</span>
             <span class="summary-unit">회</span>
           </div>
         </div>
 
         <div class="summary-card">
-          <div class="summary-title">이번 달 결근</div>
+          <div class="summary-title">이번 달 조퇴</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">0</span>
+            <span class="summary-value">{{ earlyCount }}</span>
             <span class="summary-unit">회</span>
           </div>
         </div>
@@ -88,36 +98,30 @@
           </RouterLink>
         </div>
 
-        <!-- 검색 영역 -->
+        <div class="panel-body">
+                  <!-- 검색 영역 -->
         <div class="panel-search">
           <div class="panel-search-inner">
-            <!-- 기간(시작) -->
-            <div class="date-filter-group">
-              <span class="date-label">기간(시작)</span>
-              <div class="date-input-wrapper">
-                <input
-                  v-model="startDate"
-                  type="date"
-                  class="date-input"
-                />
-                <span class="date-icon">📅</span>
-              </div>
-            </div>
+            <!-- 왼쪽: 조회기간 + 날짜 범위 (전자결재와 동일한 형태) -->
+            <div class="filter-row">
+              <span class="filter-label">조회기간</span>
+              <input
+                v-model="startDate"
+                type="date"
+                class="filter-input"
+                :max="today"
+              />
 
-            <!-- 기간(종료) -->
-            <div class="date-filter-group">
-              <span class="date-label">기간(종료)</span>
-              <div class="date-input-wrapper">
-                <input
-                  v-model="endDate"
-                  type="date"
-                  class="date-input"
-                />
-                <span class="date-icon">📅</span>
-              </div>
-            </div>
+              <span class="filter-separator">~</span>
 
-            <!-- 버튼 -->
+              <input
+                v-model="endDate"
+                type="date"
+                class="filter-input"
+                :max="today"
+              />
+            </div>
+            <!-- 오른쪽: 검색 / 초기화 버튼 -->
             <div class="search-button-group">
               <button class="btn-search" @click="onSearch">검색</button>
               <button class="btn-reset" @click="onReset">초기화</button>
@@ -196,6 +200,7 @@
             </button>
           </div>
         </div>
+        </div>
       </div>
     </div>
   </div>
@@ -204,11 +209,21 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
+import { storeToRefs } from 'pinia';
 
+import { useAttendanceStore } from '@/stores/attendance/attendanceStore'; // 상단 요약
 import { useCorrectionStore } from '@/stores/attendance/correction';
 
+
 const route = useRoute();
+const attendanceStore = useAttendanceStore();
 const correctionStore = useCorrectionStore();
+
+/**
+ * 오늘 날짜 (date input 최대값 제한용)
+ * 예: '2025-12-18'
+ */
+const today = new Date().toISOString().slice(0, 10);
 
 /**
  * 현재 활성화된 탭인지 확인합니다.
@@ -223,13 +238,27 @@ const isActiveTab = (name: string): boolean => {
   return route.name === name;
 };
 
-// 기간 인풋 (조회 조건)
-const startDate = ref<string>('');
-const endDate = ref<string>('');
+/**
+ * store 상태를 반응형으로 꺼냅니다.
+ * - attendanceStore: 상단 요약 카드
+ * - correctionStore: 수정 이력 리스트 + 필터 + 페이지네이션
+ */
+const {
+  workDays,
+  todayWorkSystemName,
+  lateCount,
+  absentCount,
+  earlyCount,
+} = storeToRefs(attendanceStore);
 
-// 페이지네이션 바인딩용 (store 값 그대로 사용)
-const currentPage = computed(() => correctionStore.currentPage);
-const totalPages = computed(() => correctionStore.totalPages);
+const {
+  correctionList,
+  startDate,
+  endDate,
+  currentPage,
+  totalPages,
+} = storeToRefs(correctionStore);
+
 
 /**
  * 근태 기록 수정 이력 페이지 진입 시 초기화 로직입니다.
@@ -328,7 +357,7 @@ const formatTime = (time?: string | null): string => {
 .summary-cards {
   display: flex;
   align-items: stretch;
-  gap: 20px;
+  gap: 10px;
 }
 
 .summary-card {
@@ -371,17 +400,17 @@ const formatTime = (time?: string | null): string => {
 /* 메인 패널 */
 .panel {
   width: 100%;
-  background: #ffffff;
+  /* background: #ffffff; */
   border-radius: 14px;
-  border: 2px solid #e2e8f0;
+  /* border: 2px solid #e2e8f0; */
   display: flex;
   flex-direction: column;
 }
 
 /* 탭 영역 */
 .panel-tabs {
-  display: inline-flex;
-  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: row;
 }
 
 .tab {
@@ -414,10 +443,15 @@ const formatTime = (time?: string | null): string => {
   font-weight: 700;
 }
 
+.panel-body{
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+}
+
 /* 검색 영역 */
 .panel-search {
-  border-top: 2px solid #e2e8f0;
-  border-bottom: 2px solid #e2e8f0;
+  border-left: 2px solid #e2e8f0;
+  border-right: 2px solid #e2e8f0;
   padding: 14px 18px;
 }
 
@@ -425,46 +459,46 @@ const formatTime = (time?: string | null): string => {
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
-  gap: 16px;
+  gap: 8px;
 }
 
 .search-button-group {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-bottom: 2px;
+  padding-bottom: 0px;
 }
 
 /* 날짜 필터 그룹 */
-.date-filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.date-label {
+.filter-label {
   font-size: 13px;
   color: #64748b;
 }
 
-.date-input-wrapper {
-  display: flex;
-  align-items: center;
-  width: 260px;
+/* 날짜 인풋 (전자결재 페이지와 비슷한 스타일) */
+.filter-input {
+  width: 220px;
   height: 40px;
   border-radius: 10px;
   border: 2px solid #cad5e2;
   background: #ffffff;
-  overflow: hidden;
-}
-
-.date-input {
-  flex: 1;
-  border: none;
-  height: 100%;
   padding: 0 12px;
   font-size: 14px;
   color: #1f2933;
+}
+
+/* 조회기간 + 날짜 범위 한 줄 정렬 */
+.filter-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ~ 구분자 */
+.filter-separator {
+  font-size: 14px;
+  color: #64748b;
 }
 
 .date-input:focus {
@@ -531,7 +565,7 @@ const formatTime = (time?: string | null): string => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 18px 0 18px;
+  padding: 0px 0 18px;
   gap: 20px;
 }
 
@@ -608,7 +642,7 @@ const formatTime = (time?: string | null): string => {
 }
 
 /* 수정 후 시간 강조 */
-.changed-time {
+.attendance-table td.changed-time {
   color: #e7000b;
 }
 

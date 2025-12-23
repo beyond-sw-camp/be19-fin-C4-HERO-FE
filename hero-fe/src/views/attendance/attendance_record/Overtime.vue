@@ -22,22 +22,24 @@
         <div class="summary-card">
           <div class="summary-title">이번 달 근무일</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">15</span>
-            <span class="summary-unit">시간</span>
+            <span class="summary-value">{{ workDays }}</span>
+            <span class="summary-unit">일</span>
           </div>
         </div>
 
         <div class="summary-card">
           <div class="summary-title">오늘 근무</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">기본근무제</span>
+            <span class="summary-value">
+              {{ todayWorkSystemName || '근무 정보 없음' }}
+            </span>
           </div>
         </div>
 
         <div class="summary-card">
           <div class="summary-title">이번 달 지각</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">2</span>
+            <span class="summary-value">{{ lateCount }}</span>
             <span class="summary-unit">회</span>
           </div>
         </div>
@@ -45,7 +47,15 @@
         <div class="summary-card">
           <div class="summary-title">이번 달 결근</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">0</span>
+            <span class="summary-value">{{ absentCount }}</span>
+            <span class="summary-unit">회</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-title">이번 달 조퇴</div>
+          <div class="summary-value-wrapper">
+            <span class="summary-value">{{ earlyCount }}</span>
             <span class="summary-unit">회</span>
           </div>
         </div>
@@ -87,37 +97,30 @@
             근무제 변경 이력
           </RouterLink>
         </div>
-
-        <!-- 검색 영역(기간 필터) -->
+      <div class="panel-body">
+                <!-- 검색 영역(기간 필터) -->
         <div class="panel-search">
           <div class="panel-search-inner">
-            <!-- 기간(시작) -->
-            <div class="date-filter-group">
-              <span class="date-label">기간(시작)</span>
-              <div class="date-input-wrapper">
-                <input
-                  v-model="startDate"
-                  type="date"
-                  class="date-input"
-                />
-                <span class="date-icon">📅</span>
-              </div>
-            </div>
+            <!-- 왼쪽: 조회기간 + 날짜 범위 (전자결재와 동일한 형태) -->
+            <div class="filter-row">
+              <span class="filter-label">조회기간</span>
+              <input
+                v-model="startDate"
+                type="date"
+                class="filter-input"
+                :max="today"
+              />
 
-            <!-- 기간(종료) -->
-            <div class="date-filter-group">
-              <span class="date-label">기간(종료)</span>
-              <div class="date-input-wrapper">
-                <input
-                  v-model="endDate"
-                  type="date"
-                  class="date-input"
-                />
-                <span class="date-icon">📅</span>
-              </div>
-            </div>
+              <span class="filter-separator">~</span>
 
-            <!-- 검색 / 초기화 버튼 -->
+              <input
+                v-model="endDate"
+                type="date"
+                class="filter-input"
+                :max="today"
+              />
+            </div>
+            <!-- 오른쪽: 검색 / 초기화 버튼 -->
             <div class="search-button-group">
               <button class="btn-search" @click="onSearch">검색</button>
               <button class="btn-reset" @click="onReset">초기화</button>
@@ -132,10 +135,10 @@
               <thead>
                 <tr>
                   <th>날짜</th>
-                  <th>시작시간</th>
-                  <th>종료시간</th>
-                  <th>초과 근무 시간</th>
-                  <th>사유</th>
+                  <th class="col-time">시작시간</th>
+                  <th class="col-time">종료시간</th>
+                  <th class="col-overtime">초과 근무 시간</th>
+                  <th class="col-reason">사유</th>
                 </tr>
               </thead>
               <tbody>
@@ -145,12 +148,18 @@
                   :class="{ 'row-striped': index % 2 === 1 }"
                 >
                   <td>{{ row.date }}</td>
-                  <td>{{ formatTime(row.startTime) }}</td>
-                  <td>{{ formatTime(row.endTime) }}</td>
+                  <td class="time-cell">
+                    {{ formatTime(row.startTime) }}
+                  </td>
+                  <td class="time-cell">
+                    {{ formatTime(row.endTime) }}
+                  </td>
                   <td class="overtime-time">
                     {{ formatOvertime(row.overtimeHours) }}
                   </td>
-                  <td>{{ row.reason }}</td>
+                  <td class="reason-cell">
+                    {{ row.reason }}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -186,6 +195,7 @@
           </div>
         </div>
       </div>
+      </div>
     </div>
   </div>
 </template>
@@ -193,45 +203,63 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
+import { storeToRefs } from 'pinia';
 
-import { useOvertimeStore } from '@/stores/attendance/overtime';
+import { useAttendanceStore } from '@/stores/attendance/attendanceStore'; // 상단 요약
+import { useOvertimeStore } from '@/stores/attendance/overtime';         // 초과 근무 목록
 
 const route = useRoute();
+const attendanceStore = useAttendanceStore();
 const overtimeStore = useOvertimeStore();
+
+// 오늘 날짜 (YYYY-MM-DD) – date input max에 사용
+const today = new Date().toISOString().slice(0, 10);
 
 /**
  * 현재 활성화된 탭인지 확인합니다.
  *
  * @param {string} name - 라우트 이름 (예: 'AttendanceOvertime')
  * @returns {boolean} 활성 탭 여부
- ****************************************
- * @param → 함수의 인자(Parameter)
- ****************************************
  */
 const isActiveTab = (name: string): boolean => {
   return route.name === name;
 };
 
-// 기간 필터용 날짜 (프론트 입력 값)
-const startDate = ref<string>('');
-const endDate = ref<string>('');
+// =======================
+// 1) 상단 요약 카드 상태 (AttendanceStore)
+// =======================
+const {
+  workDays,
+  todayWorkSystemName,
+  lateCount,
+  absentCount,
+  earlyCount,
+} = storeToRefs(attendanceStore);
+
+// =======================
+// 2) 초과 근무 목록/필터/페이지네이션 상태 (OvertimeStore)
+// =======================
+const {
+  overtimeList,
+  startDate,
+  endDate,
+  currentPage,
+  totalPages,
+} = storeToRefs(overtimeStore);
 
 // TODO: 키워드 검색 입력 UI 추가 예정 (사유/날짜 등 검색)
-// 키워드 검색 (사유, 날짜 등)
 const keyword = ref<string>('');
-
-// 서버에서 받아온 원본 리스트
-const overtimeList = computed(() => overtimeStore.overtimeList);
 
 // 키워드 필터 (현재 페이지 데이터에 대해 추가 필터링)
 const displayList = computed(() => {
   const k = keyword.value.trim();
+  const base = overtimeList.value;
 
   if (!k) {
-    return overtimeList.value;
+    return base;
   }
 
-  return overtimeList.value.filter((row) => {
+  return base.filter((row) => {
     return (
       row.date.includes(k) ||
       row.startTime.includes(k) ||
@@ -241,10 +269,6 @@ const displayList = computed(() => {
     );
   });
 });
-
-// 페이지네이션 정보는 전부 store에서 사용
-const currentPage = computed(() => overtimeStore.currentPage);
-const totalPages = computed(() => overtimeStore.totalPages);
 
 /**
  * 페이지를 이동합니다.
@@ -264,11 +288,10 @@ const goPage = (page: number): void => {
 
 /**
  * 검색 버튼 클릭 시 실행되는 핸들러입니다.
- * - 기간 필터(startDate, endDate)를 스토어에 반영한 뒤
- *   1 페이지부터 다시 초과 근무 이력을 조회합니다.
+ * - startDate / endDate는 v-model로 이미 store와 묶여 있으므로
+ *   그대로 1페이지부터 조회만 하면 됩니다.
  */
 const onSearch = (): void => {
-  overtimeStore.setFilterDates(startDate.value, endDate.value);
   overtimeStore.fetchOvertime(1);
 };
 
@@ -310,16 +333,13 @@ const formatOvertime = (hours?: number | null): string => {
   return `${hours}시간`;
 };
 
-// 최초 진입 시 1페이지 로딩
+// 최초 진입 시: 상단 요약 + 1페이지 데이터 조회
 onMounted(() => {
+  attendanceStore.fetchPersonalSummary();  // personal.vue에서 사용하던 요약 API
   overtimeStore.fetchOvertime(1);
 });
 </script>
 
-<style scoped>
-/* TODO: attendance-wrapper / attendance-page / panel 등
-   BEM 네이밍으로 점진적 리팩터링 예정 */
-</style>
 
 
 <style scoped>
@@ -327,7 +347,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow-y: auto;
 }
 
 .attendance-page {
@@ -345,7 +364,7 @@ onMounted(() => {
 .summary-cards {
   display: flex;
   align-items: stretch;
-  gap: 20px;
+  gap: 10px;
 }
 
 .summary-card {
@@ -388,17 +407,17 @@ onMounted(() => {
 /* 메인 패널 */
 .panel {
   width: 100%;
-  background: #ffffff;
+  /* background: #ffffff; */
   border-radius: 14px;
-  border: 2px solid #e2e8f0;
+  /* border: 2px solid #e2e8f0; */
   display: flex;
   flex-direction: column;
 }
 
 /* 탭 영역 */
 .panel-tabs {
-  display: inline-flex;
-  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: row;
 }
 
 .tab {
@@ -431,10 +450,15 @@ onMounted(() => {
   font-weight: 700;
 }
 
+.panel-body{
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+}
+
 /* 검색 영역 */
 .panel-search {
-  border-top: 2px solid #e2e8f0;
-  border-bottom: 2px solid #e2e8f0;
+  border-left: 2px solid #e2e8f0;
+  border-right: 2px solid #e2e8f0;
   padding: 14px 18px;
 }
 
@@ -442,7 +466,7 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
-  gap: 16px;
+  gap: 8px;
 }
 
 .search-input {
@@ -475,7 +499,7 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 18px 0 18px;
+  padding: 0px 0 18px;
   gap: 20px;
 }
 
@@ -518,8 +542,39 @@ onMounted(() => {
   background: #f8fafc;
 }
 
+/* 헤더쪽 정렬 */
+.attendance-table th.col-time {
+  text-align: center;
+  padding-left: 24px;
+}
+
+.attendance-table th.col-overtime {
+  text-align: center;
+  padding-left: 24px;
+}
+
+.attendance-table th.col-reason {
+  padding-left: 24px;
+}
+
+/* 바디쪽 정렬 */
+.attendance-table td.time-cell {
+  text-align: center;
+  padding-left: 24px;
+}
+
+.attendance-table td.overtime-time {
+  text-align: center;
+  padding-left: 24px;
+  color: #e7000b; /* 이미 있다면 색상 설정은 기존 코드 그대로 사용 */
+}
+
+.attendance-table td.reason-cell {
+  padding-left: 24px;
+}
+
 /* 초과 근무 시간 강조 색상 */
-.overtime-time {
+.attendance-table td.overtime-time {
   color: #e7000b;
 }
 
@@ -550,36 +605,36 @@ onMounted(() => {
 }
 
 /* 날짜 필터 묶음 */
-.date-filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.date-label {
+/* "조회기간" 텍스트 */
+.filter-label {
   font-size: 13px;
   color: #64748b;
 }
 
-/* 인풋 + 캘린더 아이콘 박스 */
-.date-input-wrapper {
-  display: flex;
-  align-items: center;
-  width: 260px;
+/* 날짜 인풋 (전자결재 페이지와 비슷한 스타일) */
+.filter-input {
+  width: 220px;
   height: 40px;
   border-radius: 10px;
   border: 2px solid #cad5e2;
   background: #ffffff;
-  overflow: hidden;
-}
-
-.date-input {
-  flex: 1;
-  border: none;
-  height: 100%;
   padding: 0 12px;
   font-size: 14px;
   color: #1f2933;
+}
+
+/* 조회기간 + 날짜 범위 한 줄 정렬 */
+.filter-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ~ 구분자 */
+.filter-separator {
+  font-size: 14px;
+  color: #64748b;
 }
 
 .date-input:focus {
@@ -602,7 +657,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-bottom: 2px;
+  padding-bottom: 0px;
 }
 
 .btn-search,

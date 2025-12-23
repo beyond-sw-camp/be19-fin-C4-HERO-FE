@@ -80,8 +80,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { fetchEmployees as apiFetchEmployees, fetchEmployeeSearchOptions } from '@/api/personnel';
-import type { EmployeeListResponse, EmployeeSearchParams } from '@/types/personnel';
+import { fetchEmployees as apiFetchEmployees, fetchEmployeeSearchOptions } from '@/api/personnel/personnel';
+import type { EmployeeListResponse, EmployeeSearchParams } from '@/types/personnel/personnel';
 import EmployeeDetailModal from './EmployeeDetailModal.vue';
 
 // --- 상태(State) ---
@@ -193,10 +193,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-container {
-  background-color: #f8fafc;
-}
-
 .header-container {
   width: 100%;
   height: 50px;

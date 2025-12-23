@@ -61,11 +61,27 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
 
     async function selectBatch(batchId: number) {
         selectedBatchId.value = batchId;
-        await Promise.all([
-            loadBatchDetail(batchId),
-            loadBatchEmployees(batchId),
-        ]);
+        loading.value = true;
+        resetError();
+
+        try {
+            const [detail, emps] = await Promise.all([
+                payrollAdminApi.getBatchDetail(batchId),
+                payrollAdminApi.getBatchEmployees(batchId),
+            ]);
+            batchDetail.value = detail;
+            employees.value = emps;
+        } catch (e: any) {
+            errorMessage.value =
+                e?.response?.data?.message ??
+                e?.message ??
+                '배치 선택 실패';
+            throw e;
+        } finally {
+            loading.value = false;
+        }
     }
+
 
     async function loadBatchDetail(batchId: number) {
         loading.value = true;
@@ -132,6 +148,31 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
     /* =========================
      * 급여 계산
      * ========================= */
+
+    /**
+     * 전체 계산
+     * @returns 
+     */
+    async function calculateAllBatch() {
+        if (!selectedBatchId.value) return;
+
+        loading.value = true;
+        resetError();
+        try {
+            await payrollAdminApi.calculateBatchAll(selectedBatchId.value);
+            await selectBatch(selectedBatchId.value); // 재조회 타이밍 고정
+            await loadBatches(); // 목록 상태 뱃지/정렬 갱신용(선택)
+        } catch (e: any) {
+            errorMessage.value = e?.response?.data?.message ?? e?.message ?? '급여 전체 계산 실패';
+            throw e;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+    /**
+     * 선택 계산
+     */
     async function calculateSelectedBatch(employeeIds?: number[]) {
         if (!selectedBatchId.value) return;
 
@@ -140,35 +181,26 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
         try {
             let ids = employeeIds ?? [];
 
-            // 화면에 결과가 있으면 우선 사용
+            // 호출자가 ids를 안 넘기면, 화면에 보이는 목록 기준으로 선택 계산
             if (ids.length === 0 && employees.value.length > 0) {
                 ids = employees.value.map(e => e.employeeId);
             }
 
-            // 그래도 없으면 → 전체 대상자 조회
             if (ids.length === 0) {
-                if (targets.value.length === 0) {
-                    await loadTargets();
-                }
-                ids = targets.value.map(t => t.employeeId);
-            }
-
-            if (ids.length === 0) {
+                // 서버가 INVALID_INPUT 던지게 둘 수도 있지만, UX상 프론트에서 1차 차단
                 throw new Error('계산 대상 사원이 없습니다.');
             }
 
-            await payrollAdminApi.calculateBatch(selectedBatchId.value, ids);
-            await selectBatch(selectedBatchId.value);
-
+            await payrollAdminApi.calculateBatchSelected(selectedBatchId.value, ids);
+            await selectBatch(selectedBatchId.value); // 재조회 타이밍 고정
+            await loadBatches(); // 목록 상태 뱃지/정렬 갱신용(선택)
         } catch (e: any) {
-            errorMessage.value =
-                e?.response?.data?.message ?? e?.message ?? '급여 계산 실패';
+            errorMessage.value = e?.response?.data?.message ?? e?.message ?? '급여 선택 계산 실패';
             throw e;
         } finally {
             loading.value = false;
         }
     }
-
     async function confirmSelectedBatch() {
         if (!selectedBatchId.value) return;
         loading.value = true;
@@ -184,6 +216,24 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
             loading.value = false;
         }
     }
+    async function paySelectedBatch() {
+        if (!selectedBatchId.value) return;
+
+        loading.value = true;
+        resetError();
+        try {
+            await payrollAdminApi.payBatch(selectedBatchId.value);
+            await selectBatch(selectedBatchId.value);
+            await loadBatches();
+        } catch (e: any) {
+            errorMessage.value = e?.response?.data?.message ?? e?.message ?? '지급 처리 실패';
+            throw e;
+        } finally {
+            loading.value = false;
+        }
+    }
+
+
 
     /* =========================
      * 
@@ -203,9 +253,11 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
         loadBatches,
         selectBatch,
         loadTargets,
-
         createBatch,
+        calculateAllBatch,
         calculateSelectedBatch,
         confirmSelectedBatch,
+        paySelectedBatch
     };
+
 });

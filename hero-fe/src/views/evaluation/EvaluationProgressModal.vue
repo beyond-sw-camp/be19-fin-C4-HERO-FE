@@ -41,7 +41,7 @@
         </div>
 
         <div class="summary-card blue">
-          <span class="label">평가 완료</span>
+          <span class="label">제출 완료</span>
           <strong>{{ summary.done }}</strong>
           <span class="unit">{{ summary.doneRate }}%</span>
         </div>
@@ -184,7 +184,7 @@ const fetchEvaluationDetail = async () => {
 
   try {
     const res = await apiClient.get(
-      `/evaluation/evaluation/select/${props.evaluation.evaluationEvaluationId}`
+      `/evaluation/evaluation/${props.evaluation.evaluationEvaluationId}`
     );
 
     evaluationDetail.value = res.data;
@@ -271,7 +271,7 @@ onMounted(fetchEvaluationDetail);
  */
 const summary = computed(() => {
   const total = evaluatees.value.length;
-  const done = evaluatees.value.filter(e => e.evaluateeStatus === 1).length;
+  const done = evaluatees.value.filter(e => e.evaluateeStatus === 1 || e.evaluateeStatus === 2).length;
   const progress = evaluatees.value.filter(e => e.evaluateeStatus === 0).length;
 
   const rate = (v: number) =>

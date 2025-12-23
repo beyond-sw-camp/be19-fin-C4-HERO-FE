@@ -119,7 +119,7 @@
 import { ref, onMounted, watch } from 'vue';
 import { useSettingsStore } from '@/stores/settings';
 // 사원 검색 API (가정) - 실제 경로에 맞게 수정 필요
-import { fetchEmployees, fetchEmployeeSearchOptions } from '@/api/personnel'; 
+import { fetchEmployees, fetchEmployeeSearchOptions } from '@/api/personnel/personnel'; 
 import type { SettingsDepartmentRequestDTO, SettingsDepartmentResponseDTO } from '@/types/settings';
 import DepartmentTreeItem from '@/views/settings/DepartmentTreeItem.vue';
 

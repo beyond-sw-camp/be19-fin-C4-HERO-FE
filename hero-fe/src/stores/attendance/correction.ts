@@ -28,6 +28,17 @@ export interface CorrectionDTO {
 }
 
 /**
+ * 상단 요약 카드 DTO (백엔드 PersonalSummaryDTO와 매칭)
+ */
+export interface PersonalSummaryDTO {
+  workDays: number
+  todayWorkSystemName: string
+  lateCount: number
+  absentCount: number
+  earlyCount: number
+}
+
+/**
  * 공통 페이지 응답 DTO (PageResponseDTO<T>)
  */
 export interface PageResponse<T> {
@@ -50,8 +61,15 @@ interface CorrectionState {
   totalPages: number
   totalCount: number
   loading: boolean
-  startDate: string   // yyyy-MM-dd
-  endDate: string     // yyyy-MM-dd
+  startDate: string   
+  endDate: string     
+
+  // 상단 요약 카드
+  workDays: number
+  todayWorkSystemName: string
+  lateCount: number
+  absentCount: number
+  earlyCount: number
 }
 
 /**
@@ -67,6 +85,13 @@ export const useCorrectionStore = defineStore('correctionStore', {
     loading: false,
     startDate: '',
     endDate: '',
+
+    // 상단 요약 카드 (초기값)
+    workDays: 0,
+    todayWorkSystemName: '',
+    lateCount: 0,
+    absentCount: 0,
+    earlyCount: 0,
   }),
 
   actions: {
@@ -120,6 +145,30 @@ export const useCorrectionStore = defineStore('correctionStore', {
         console.error('근태 수정 이력 조회 실패:', error)
       } finally {
         this.loading = false
+      }
+    },
+    
+    /**
+     * 개인 근태 상단 요약 카드를 조회합니다.
+     * - 기간 필터(startDate, endDate)가 설정되어 있으면 동일하게 적용
+     *
+     * @returns {Promise<void>}
+     */
+    async fetchPersonalSummary(): Promise<void> {
+      try {
+        const response = await apiClient.get<PersonalSummaryDTO>(
+          '/attendance/personal/summary',
+        );
+
+        const data = response.data
+
+        this.workDays = data.workDays ?? 0
+        this.todayWorkSystemName = data.todayWorkSystemName ?? ''
+        this.lateCount = data.lateCount ?? 0
+        this.absentCount = data.absentCount ?? 0
+        this.earlyCount = data.earlyCount ?? 0
+      } catch (error) {
+        console.error('개인 근태 요약 조회 실패:', error)
       }
     },
   },

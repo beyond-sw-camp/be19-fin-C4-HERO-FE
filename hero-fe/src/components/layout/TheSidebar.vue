@@ -17,7 +17,7 @@
   </pre>
  
   @author 승건
-  @version 1.8
+  @version 2.0
  -->
 <template>
   <div :class="['sidebar-container', { collapsed: isCollapsed }]">
@@ -470,6 +470,10 @@ const handleSubMenuClick = (key: string) => {
     router.push('/evaluation/guide/list');
   } else if (key === "list") {
     router.push('/evaluation/list')
+  } else if (key == 'teamDash') {
+    router.push('/evaluation/team/dashboard')
+  } else if (key == 'deptDash') {
+    router.push('/evaluation/department/dashboard')
   } else if (key === 'document-templates') {
     router.push('/approval/document-templates');
   } else if (key === 'inbox') {
@@ -490,15 +494,15 @@ const handleSubMenuClick = (key: string) => {
   if (key === 'employeeList') {
     router.push('/personnel/list');
   } else if (key === 'turnover') {
-    router.push('/personnel/turnover');
+    router.push('/personnel/turnover'); // 이직률
   } else if (key === 'plan') {
-    router.push('/personnel/plan');
+    router.push('/personnel/promotion/plan');
   } else if (key === 'recommend') {
-    router.push('/personnel/recommend');
+    router.push('/personnel/promotion/recommend');
   } else if (key === 'review') {
-    router.push('/personnel/review');
+    router.push('/personnel/promotion/review');
   } else if (key === 'special') {
-    router.push('/personnel/special');
+    router.push('/personnel/promotion/special');
   }
 
 
@@ -603,6 +607,18 @@ const syncActiveByRoute = (path: string) => {
     return;
   }
 
+    if (path.startsWith('/vacation')) {
+    activeParent.value = 'vacation';
+    if (!isCollapsed.value) isVacationOpen.value = true;
+
+    if (path.startsWith('/vacation/history')) {
+      activeSubMenu.value = 'vacationHistory';
+    } else if (path.startsWith('/vacation/department')) {
+      activeSubMenu.value = 'vacationDept';
+    }
+    return;
+  }
+
   // 전자결재
   if (path.startsWith('/approval')) {
     activeParent.value = 'approval';
@@ -652,10 +668,10 @@ const syncActiveByRoute = (path: string) => {
     if (!isCollapsed.value) isPersonnelOpen.value = true;
     if (path.startsWith('/personnel/list')) activeSubMenu.value = 'employeeList';
     else if (path.startsWith('/personnel/turnover')) activeSubMenu.value = 'turnover';
-    else if (path.startsWith('/personnel/plan')) activeSubMenu.value = 'plan';
-    else if (path.startsWith('/personnel/recommend')) activeSubMenu.value = 'recommend';
-    else if (path.startsWith('/personnel/review')) activeSubMenu.value = 'review';
-    else if (path.startsWith('/personnel/special')) activeSubMenu.value = 'special';
+    else if (path.startsWith('/personnel/promotion/plan')) activeSubMenu.value = 'plan';
+    else if (path.startsWith('/personnel/promotion/recommend')) activeSubMenu.value = 'recommend';
+    else if (path.startsWith('/personnel/promotion/review')) activeSubMenu.value = 'review';
+    else if (path.startsWith('/personnel/promotion/special')) activeSubMenu.value = 'special';
     return;
   }
 

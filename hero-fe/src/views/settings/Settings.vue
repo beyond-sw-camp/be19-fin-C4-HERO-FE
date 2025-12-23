@@ -5,19 +5,19 @@
     </div>
 
     <div class="content-wrapper">
-      <div class="main-card">
-        <!-- 탭 메뉴 -->
-        <div class="tabs-container">
-          <button
-            v-for="tab in tabs"
-            :key="tab.id"
-            @click="changeTab(tab)"
-            :class="['tab-button', isActive(tab) ? 'active' : '']"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
+      <!-- 탭 메뉴 -->
+      <div class="tabs-container">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          @click="changeTab(tab)"
+          :class="['tab-button', isActive(tab) ? 'active' : '']"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
 
+      <div class="main-card">
         <!-- 탭 컨텐츠 -->
         <div class="content-container">
           <router-view />
@@ -41,6 +41,7 @@ const tabs = [
   { id: 'grade', label: '직급 관리', path: '/settings/grade' },
   { id: 'jobTitle', label: '직책 관리', path: '/settings/jobTitle' },
   { id: 'permission', label: '권한 관리', path: '/settings/permission' },
+  { id: 'approval', label: '결재 관리', path: '/settings/approval' },
 ];
 
 const changeTab = (tab: any) => {
@@ -60,7 +61,7 @@ onMounted(() => {
 <style scoped>
 .page-container {
   background-color: #f8fafc;
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -92,34 +93,38 @@ onMounted(() => {
 .main-card {
   background: white;
   border-radius: 14px;
+  border-top-left-radius: 0;
   border: 1px solid #e2e8f0;
   min-height: 600px;
 }
 
 .tabs-container {
   display: flex;
-  padding: 0 20px;
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
-  border-radius: 14px 14px 0 0;
-  padding-top: 12px;
+  margin-bottom: -1px;
+  z-index: 1;
 }
 
 .tab-button {
-  padding: 10px 24px;
-  margin-right: 8px;
-  font-weight: 500;
-  color: #64748b;
-  background: none;
-  border: none;
-  border-radius: 8px 8px 0 0;
+  width: 146px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  color: #0f172b;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
-.tab-button:hover {
-  color: #1c398e;
-  background-color: #f8fafc;
+.tab-button:first-child {
+  border-left: 1px solid #e2e8f0;
+  border-top-left-radius: 14px;
+}
+
+.tab-button:last-child {
+  border-top-right-radius: 14px;
+  border-right: 1px solid #e2e8f0;
 }
 
 .tab-button.active {
@@ -129,5 +134,6 @@ onMounted(() => {
 
 .content-container {
   padding: 24px;
+  height: 570px;
 }
 </style>

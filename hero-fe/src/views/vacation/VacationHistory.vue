@@ -54,7 +54,7 @@
 
       <!-- 하단 패널 (테이블 + 페이징) -->
       <div class="vacation-panel">
-        <!-- 검색 영역 (기간 필터) -->
+       <!-- 검색 영역 (기간 필터 UI) -->
         <div class="panel-search">
           <div class="panel-search-inner">
             <!-- 기간(시작) -->
@@ -66,7 +66,6 @@
                   type="date"
                   class="date-input"
                 />
-                <span class="date-icon">📅</span>
               </div>
             </div>
 
@@ -79,28 +78,13 @@
                   type="date"
                   class="date-input"
                 />
-                <span class="date-icon">📅</span>
               </div>
             </div>
 
-            <!-- 검색 / 초기화 버튼 -->
+            <!-- 버튼 -->
             <div class="search-button-group">
-              <button
-                class="btn-search"
-                type="button"
-                :disabled="loading"
-                @click="onSearch"
-              >
-                검색
-              </button>
-              <button
-                class="btn-reset"
-                type="button"
-                :disabled="loading"
-                @click="onReset"
-              >
-                초기화
-              </button>
+              <button class="btn-search" @click="onSearch">검색</button>
+              <button class="btn-reset" @click="onReset">초기화</button>
             </div>
           </div>
         </div>
@@ -328,20 +312,21 @@ const goPage = async (page: number): Promise<void> => {
 
 <style scoped>
 .vacation-history-wrapper {
-  width: 100%;
-  height: 100%;
-  padding: 20px 36px 20px 30px;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  overflow-y: auto;
 }
 
 .vacation-history-page {
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+  height: 85%;              
+  padding: 24px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 36px;
+  overflow-y: auto; 
 }
 
 /* 상단 요약 카드 */
@@ -502,7 +487,7 @@ const goPage = async (page: number): Promise<void> => {
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
-  gap: 16px;
+  gap: 8px;
 }
 
 .date-filter-group {
@@ -519,18 +504,21 @@ const goPage = async (page: number): Promise<void> => {
 .date-input-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
+  width: 220px;
+  height: 40px;
+  border-radius: 10px;
+  border: 2px solid #cad5e2;
   background: #ffffff;
+  overflow: hidden;
 }
 
 .date-input {
+  flex: 1;
   border: none;
-  outline: none;
+  height: 100%;
+  padding: 0 12px;
   font-size: 14px;
-  color: #0f172a;
+  color: #1f2933;
 }
 
 .date-input::-webkit-calendar-picker-indicator {
@@ -545,7 +533,7 @@ const goPage = async (page: number): Promise<void> => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-bottom: 2px;
+  padding-bottom: 0px;
 }
 
 

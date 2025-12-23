@@ -72,7 +72,7 @@ import {
   RaisePayrollSection,
   ModifyPayrollSection,
 } from './formSections';
-import { useTemplateStore } from '@/stores/approval/approval';
+import { useTemplateStore } from '@/stores/approval/approval.store';
 import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();

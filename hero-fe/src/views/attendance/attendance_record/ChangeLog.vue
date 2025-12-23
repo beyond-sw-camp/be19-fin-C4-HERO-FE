@@ -22,30 +22,40 @@
         <div class="summary-card">
           <div class="summary-title">이번 달 근무일</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">15</span>
-            <span class="summary-unit">시간</span>
+            <span class="summary-value">{{ workDays }}</span>
+            <span class="summary-unit">일</span>
           </div>
         </div>
-
+  
         <div class="summary-card">
           <div class="summary-title">오늘 근무</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">기본근무제</span>
+            <span class="summary-value">
+              {{ todayWorkSystemName || '근무 정보 없음' }}
+            </span>
           </div>
         </div>
-
+  
         <div class="summary-card">
           <div class="summary-title">이번 달 지각</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">2</span>
+            <span class="summary-value">{{ lateCount }}</span>
+            <span class="summary-unit">회</span>
+          </div>
+        </div>
+  
+        <div class="summary-card">
+          <div class="summary-title">이번 달 결근</div>
+          <div class="summary-value-wrapper">
+            <span class="summary-value">{{ absentCount }}</span>
             <span class="summary-unit">회</span>
           </div>
         </div>
 
         <div class="summary-card">
-          <div class="summary-title">이번 달 결근</div>
+          <div class="summary-title">이번 달 조퇴</div>
           <div class="summary-value-wrapper">
-            <span class="summary-value">0</span>
+            <span class="summary-value">{{ earlyCount }}</span>
             <span class="summary-unit">회</span>
           </div>
         </div>
@@ -88,36 +98,30 @@
           </RouterLink>
         </div>
 
-        <!-- 검색 영역 (기간 필터 UI) -->
+      <div class="panel-body">
+                  <!-- 검색 영역 (기간 필터 UI) -->
         <div class="panel-search">
           <div class="panel-search-inner">
-            <!-- 기간(시작) -->
-            <div class="date-filter-group">
-              <span class="date-label">기간(시작)</span>
-              <div class="date-input-wrapper">
-                <input
-                  v-model="startDate"
-                  type="date"
-                  class="date-input"
-                />
-                <span class="date-icon">📅</span>
-              </div>
-            </div>
+            <!-- 왼쪽: 조회기간 + 날짜 범위 (전자결재와 동일한 형태) -->
+            <div class="filter-row">
+              <span class="filter-label">조회기간</span>
+              <input
+                v-model="startDate"
+                type="date"
+                class="filter-input"
+                :max="today"
+              />
 
-            <!-- 기간(종료) -->
-            <div class="date-filter-group">
-              <span class="date-label">기간(종료)</span>
-              <div class="date-input-wrapper">
-                <input
-                  v-model="endDate"
-                  type="date"
-                  class="date-input"
-                />
-                <span class="date-icon">📅</span>
-              </div>
-            </div>
+              <span class="filter-separator">~</span>
 
-            <!-- 버튼 -->
+              <input
+                v-model="endDate"
+                type="date"
+                class="filter-input"
+                :max="today"
+              />
+            </div>
+            <!-- 오른쪽: 검색 / 초기화 버튼 -->
             <div class="search-button-group">
               <button class="btn-search" @click="onSearch">검색</button>
               <button class="btn-reset" @click="onReset">초기화</button>
@@ -132,10 +136,10 @@
               <thead>
                 <tr>
                   <th>날짜</th>
-                  <th>근무제 이름</th>
-                  <th>출근시간</th>
-                  <th>퇴근시간</th>
-                  <th>사유</th>
+                  <th class="col-worksystem">근무제 이름</th>
+                  <th class="col-time">출근시간</th>
+                  <th class="col-time">퇴근시간</th>
+                  <th class="col-reason">사유</th>
                 </tr>
               </thead>
               <tbody>
@@ -154,7 +158,9 @@
                   <td class="time-cell">
                     {{ formatTime(row.endTime) }}
                   </td>
-                  <td>{{ row.changeReason }}</td>
+                  <td class="reason-cell">
+                    {{ row.changeReason }}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -192,6 +198,7 @@
             </button>
           </div>
         </div>
+        </div>
       </div>
     </div>
   </div>
@@ -200,10 +207,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
+import { storeToRefs } from 'pinia';
 
-import { useChangeLogStore } from '@/stores/attendance/changeLog';
+import { useAttendanceStore } from '@/stores/attendance/attendanceStore'; // 상단 요약 카드용
+import { useChangeLogStore } from '@/stores/attendance/changeLog';        // 근무제 변경 이력 리스트용
 
 const route = useRoute();
+const attendanceStore = useAttendanceStore();
 const changeLogStore = useChangeLogStore();
 
 /**
@@ -219,23 +229,42 @@ const isActiveTab = (name: string): boolean => {
   return route.name === name;
 };
 
-// 기간 필터 인풋
+// 오늘 날짜 (date input max 제한용: 오늘 이후 선택 불가)
+const today = new Date().toISOString().slice(0, 10);
+
+// --- 상단 요약 카드 상태 (AttendanceStore에서 가져옴) ---
+const {
+  workDays,
+  todayWorkSystemName,
+  lateCount,
+  absentCount,
+  earlyCount,
+} = storeToRefs(attendanceStore);
+
+// --- 기간 필터 인풋 (근무제 변경 이력용) ---
 const startDate = ref<string>('');
 const endDate = ref<string>('');
 
-// 페이지네이션 바인딩용 (store 값 그대로)
+// --- 페이지네이션 (ChangeLogStore 값 그대로 사용) ---
 const currentPage = computed(() => changeLogStore.currentPage);
 const totalPages = computed(() => changeLogStore.totalPages);
 
 /**
  * 근무제 변경 이력 페이지 진입 시 초기화 로직입니다.
- * - 기존에 store에 저장된 필터 값이 있다면 인풋과 동기화
+ * - 상단 요약 카드는 이번 달 기준으로 한 번 조회
+ * - 변경 이력 필터(startDate, endDate)는 store 값과 동기화
  * - 1 페이지 데이터를 조회합니다.
  */
-onMounted(() => {
-  startDate.value = changeLogStore.startDate;
-  endDate.value = changeLogStore.endDate;
+onMounted(async () => {
+  // 상단 요약 카드: 이번 달 기준(검색/필터와 무관)
+  // 이미 다른 페이지에서 불러왔다면 다시 호출해도 문제 없음
+  await attendanceStore.fetchPersonalSummary?.(); // 메서드 이름이 다르면 여기를 맞춰주세요
 
+  // 변경 이력 필터 인풋 초기값 세팅
+  startDate.value = changeLogStore.startDate || '';
+  endDate.value = changeLogStore.endDate || '';
+
+  // 1페이지 데이터 조회 (기간 필터는 store에 들어있는 값 기준)
   changeLogStore.fetchChangeLogs(1);
 });
 
@@ -243,6 +272,7 @@ onMounted(() => {
  * 검색 버튼 클릭 시 실행되는 핸들러입니다.
  * - 기간 필터(startDate, endDate)를 스토어에 반영하고
  *   1 페이지부터 근무제 변경 이력을 다시 조회합니다.
+ * - 상단 요약 카드는 '이번 달 기준'으로 고정이므로 갱신하지 않습니다.
  */
 const onSearch = (): void => {
   changeLogStore.setFilterDates(startDate.value, endDate.value);
@@ -253,6 +283,7 @@ const onSearch = (): void => {
  * 초기화 버튼 클릭 시 실행되는 핸들러입니다.
  * - 기간 필터를 초기화하고
  *   1 페이지부터 근무제 변경 이력을 다시 조회합니다.
+ * - 상단 요약 카드는 여전히 이번 달 기준으로 유지됩니다.
  */
 const onReset = (): void => {
   startDate.value = '';
@@ -295,6 +326,7 @@ const formatTime = (time?: string | null): string => {
 };
 </script>
 
+
 <style scoped>
 /* TODO: attendance-wrapper / attendance-page / panel 등
   BEM 네이밍 컨벤션에 맞춰 점진적 리팩터링 예정 */
@@ -318,11 +350,26 @@ const formatTime = (time?: string | null): string => {
   overflow-y: auto;
 }
 
+/* 헤더(근무제/시간/사유)도 바디와 간격 맞추기 */
+.attendance-table th.col-worksystem {
+  padding-left: 100px; /* td.worksystem-name 과 동일 */
+}
+
+.attendance-table th.col-time {
+  text-align: center;
+  padding-left: 10px; /* td.time-cell 과 동일 */
+}
+
+.attendance-table th.col-reason {
+  padding-left: 48px; /* td.reason-cell 과 동일 */
+}
+
+
 /* 상단 요약 카드 */
 .summary-cards {
   display: flex;
   align-items: stretch;
-  gap: 20px;
+  gap: 10px;
 }
 
 .summary-card {
@@ -365,17 +412,17 @@ const formatTime = (time?: string | null): string => {
 /* 메인 패널 */
 .panel {
   width: 100%;
-  background: #ffffff;
+  /* background: #ffffff; */
   border-radius: 14px;
-  border: 2px solid #e2e8f0;
+  /* border: 2px solid #e2e8f0; */
   display: flex;
   flex-direction: column;
 }
 
 /* 탭 영역 */
 .panel-tabs {
-  display: inline-flex;
-  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: row;
 }
 
 .tab {
@@ -408,10 +455,15 @@ const formatTime = (time?: string | null): string => {
   font-weight: 700;
 }
 
+.panel-body{
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+}
+
 /* 검색 영역 */
 .panel-search {
-  border-top: 2px solid #e2e8f0;
-  border-bottom: 2px solid #e2e8f0;
+  border-left: 2px solid #e2e8f0;
+  border-right: 2px solid #e2e8f0;
   padding: 14px 18px;
 }
 
@@ -419,46 +471,46 @@ const formatTime = (time?: string | null): string => {
   display: flex;
   justify-content: flex-end;
   align-items: flex-end;
-  gap: 16px;
+  gap: 8px;
 }
 
 .search-button-group {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding-bottom: 2px;
+  padding-bottom: 0px;
 }
 
 /* 날짜 필터 그룹 */
-.date-filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.date-label {
+.filter-label {
   font-size: 13px;
   color: #64748b;
 }
 
-.date-input-wrapper {
-  display: flex;
-  align-items: center;
-  width: 260px;
+/* 날짜 인풋 (전자결재 페이지와 비슷한 스타일) */
+.filter-input {
+  width: 220px;
   height: 40px;
   border-radius: 10px;
   border: 2px solid #cad5e2;
   background: #ffffff;
-  overflow: hidden;
-}
-
-.date-input {
-  flex: 1;
-  border: none;
-  height: 100%;
   padding: 0 12px;
   font-size: 14px;
   color: #1f2933;
+}
+
+/* 조회기간 + 날짜 범위 한 줄 정렬 */
+.filter-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ~ 구분자 */
+.filter-separator {
+  font-size: 14px;
+  color: #64748b;
 }
 
 .date-input:focus {
@@ -525,7 +577,7 @@ const formatTime = (time?: string | null): string => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 18px 0 18px;
+  padding: 0px 0 18px;
   gap: 20px;
 }
 
@@ -562,8 +614,8 @@ const formatTime = (time?: string | null): string => {
 
 /* 시간 칸 전용 */
 .attendance-table td.time-cell {
-  text-align: left; 
-  padding-left: 26px;    
+  text-align: center; 
+  padding-left: 10px;    
 }
 
 .attendance-table tbody tr {
@@ -603,6 +655,16 @@ const formatTime = (time?: string | null): string => {
 /* 수정 후 시간 강조 */
 .changed-time {
   color: #e7000b;
+}
+
+.attendance-table td.worksystem-name{
+   color: #e7000b;
+   padding-left: 100px;
+}
+
+/* 사유 컬럼도 살짝 오른쪽으로 밀고 싶다면 */
+.attendance-table td.reason-cell {
+  padding-left: 48px;
 }
 
 
