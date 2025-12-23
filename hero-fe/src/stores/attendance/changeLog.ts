@@ -1,7 +1,7 @@
 // src/stores/attendance/changeLog.ts
 
 /**
- * (File => TypeScript) Name   : changeLog.ts
+ * TypeScript Name   : changeLog.ts
  * Description : 근무제 변경 이력(ChangeLog) 관련 Pinia 스토어
  *               - 변경 이력 목록 / 페이지네이션 / 기간 필터 상태 관리
  *
@@ -123,7 +123,7 @@ export const useChangeLogStore = defineStore('changeLogStore', {
 
       try {
         const response = await apiClient.get<PageResponse<ChangeLogDTO>>(
-          '/attendance/changeLog',
+          '/attendance/changelog',
           {
             params: {
               page,

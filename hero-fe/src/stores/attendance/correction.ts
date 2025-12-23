@@ -1,7 +1,7 @@
 // src/stores/attendance/correction.ts
 
 /**
- * (File => TypeScript) Name   : correction.ts
+ * TypeScriptName   : correction.ts
  * Description : 근태 기록 수정 이력(Correction) 관련 Pinia 스토어
  *               - 수정 이력 목록 / 페이지네이션 / 기간 필터 상태 관리
  *

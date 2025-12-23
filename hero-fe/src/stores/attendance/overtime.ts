@@ -1,5 +1,5 @@
 /**
- * (File => TypeScript) Name   : overtime.ts
+ * TypeScript Name   : overtime.ts
  * Description : 초과 근무(Overtime) 도메인 Pinia 스토어
  *               - 초과 근무 이력 리스트 + 페이지네이션 + 기간 필터 상태 관리
  *
