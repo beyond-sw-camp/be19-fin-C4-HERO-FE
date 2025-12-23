@@ -472,6 +472,8 @@ const handleSubMenuClick = (key: string) => {
     router.push('/evaluation/list')
   } else if (key == 'teamDash') {
     router.push('/evaluation/team/dashboard')
+  } else if (key == 'deptDash') {
+    router.push('/evaluation/department/dashboard')
   } else if (key === 'document-templates') {
     router.push('/approval/document-templates');
   } else if (key === 'inbox') {

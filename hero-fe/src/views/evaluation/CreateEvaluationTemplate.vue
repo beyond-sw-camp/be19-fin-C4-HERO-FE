@@ -346,7 +346,7 @@ const saveTemplate = async () => {
     };
 
     const response = await apiClient.post(
-      "/evaluation/evaluation-template/create",
+      "/evaluation/evaluation-template",
       payload
     );
 

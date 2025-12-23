@@ -1,6 +1,6 @@
 /**
  * <pre>
- * File Name: settings-approval.api.ts
+ * TypeScript Name: settings-approval.api.ts
  * Description 
  * :결재(Approval) 관리와 관련된 서버 API 호출을 담당하는 모듈
  *
@@ -9,10 +9,11 @@
  *
  * History
  * 2025/12/21 (민철) 결재 관리 설정 api (목록조회/서식별설정조회/서식별설정저장)
+ * 2025/12/22 (민철) 결재 설정 저장 api 추가
  * </pre>
  *
  * @author 민철
- * @version 1.0
+ * @version 1.1
  */
 
 import apiClient from '@/api/apiClient';
@@ -20,6 +21,7 @@ import {
     SettingsApprovalResponseDTO,
     SettingsDocumentTemplateResponseDTO,
     DepartmentResponseDTO,
+    SettingsApprovalRequestDTO,
 } from '@/types/settings/settings-approval.types';
 
 /**
@@ -46,4 +48,10 @@ export const settingsApprovalApi = {
         console.log('기본설정',response.data);
         return response.data;
     },
+    
+    saveSettings: async (templateId: number, data: SettingsApprovalRequestDTO) => {
+        const response = await apiClient.put<SettingsApprovalResponseDTO>(`/settings/approvals/templates/${templateId}`, data);
+        console.log('저장',response.data);
+        return response.data;
+    }
 };

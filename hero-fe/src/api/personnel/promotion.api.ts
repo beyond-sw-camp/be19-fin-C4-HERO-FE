@@ -22,6 +22,7 @@ import type {
     PromotionDetailPlanDTO,
     //request
     PromotionPlanRequestDTO,
+    PromotionNominationRequestDTO,
     //response
     PromotionOptionsDTO,
     PromotionPlanResponseDTO,
@@ -77,4 +78,35 @@ export const fetchPromotionPlanDetail = (promotionId: number) => {
  */
 export const registerPromotionPlan = (data: PromotionPlanRequestDTO) => {
     return client.post<ApiResponse<void>>('/promotion/plan', data);
+}
+
+/**
+ * 현재 로그인한 사람의 부서를 이용해 관련된 승진 계획 조회
+ */
+export const fetchRecommendPromotionPlans = () => {
+    return client.get<ApiResponse<PromotionPlanResponseDTO[]>>('/promotion/nominations');
+}
+
+/**
+ * 현재 로그인한 사람의 부서를 이용해 관련된 승진 계획의 상세 정보를 조회 (본인 부서 및 하위 부서원만 포함)
+ * @param promotionId 
+ */
+export const fetchRecommendPromotionPlanDetail = (promotionId: number) => {
+    return client.get<ApiResponse<PromotionPlanDetailResponseDTO>>(`/promotion/nominations/${promotionId}`);
+}
+
+/**
+ * 승진 후보자 추천
+ * @param data 
+ */
+export const nominateCandidate = (data: PromotionNominationRequestDTO) => {
+    return client.post<ApiResponse<void>>('/promotion/nominations', data);
+}
+
+/**
+ * 승진 후보자 추천 취소
+ * @param candidateId 
+ */
+export const cancelNomination = (candidateId: number) => {
+    return client.delete<ApiResponse<void>>(`/promotion/nominations/${candidateId}`);
 }

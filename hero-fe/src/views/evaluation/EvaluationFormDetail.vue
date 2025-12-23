@@ -293,7 +293,7 @@ const renderChart = async () => {
  */
 const loadDetail = async () => {
   const { data } = await apiClient.get(
-    `/evaluation/evaluation-form/select/${evaluationId}/${employeeId}`
+    `/evaluation/evaluation-form/${evaluationId}/${employeeId}`
   );
 
   evaluation.value = {

@@ -204,7 +204,7 @@ interface TemplateItem {
  */
 onMounted(async () => {
   const res = await apiClient.get(
-    `/evaluation/evaluation-template/select/${templateId}`
+    `/evaluation/evaluation-template/${templateId}`
   );
 
   const data = res.data;
@@ -348,7 +348,7 @@ const updateTemplate = async () => {
     };
 
     await apiClient.put(
-      "/evaluation/evaluation-template/update",
+      "/evaluation/evaluation-template",
       payload
     );
 

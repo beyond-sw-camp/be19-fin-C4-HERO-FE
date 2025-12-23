@@ -179,7 +179,7 @@ const formId = ref<number>();
  */
 const loadForm = async () => {
   const { data } = await apiClient.get(
-    `/evaluation/evaluation-form/select/${evaluationId}/${employeeId}`
+    `/evaluation/evaluation-form/${evaluationId}/${employeeId}`
   );
 
   formId.value = data.evaluationFormFormId;

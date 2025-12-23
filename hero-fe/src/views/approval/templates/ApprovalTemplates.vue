@@ -1,3 +1,20 @@
+<!--
+  * <pre>
+  * Vue Name        : ApprovalTemplates.vue
+  * Description     : 결재 서식 목록
+  *
+  * 컴포넌트 연계
+  * - ApprovalCreate.vue: 서식 선택 시 작성화면으로 라우팅
+  *
+  * History
+  *   2025/12/10 - 민철 최초 작성
+  *   2025/12/23 - 민철 파일명 변경 
+  * </pre>
+  *
+  * @module approval
+  * @author 민철
+  * @version 2.0
+-->
 <template>
   <div class="formtpl-container">
     <div class="formtpl-page">
@@ -198,7 +215,7 @@ const handleCardClick = (form: FormItem) => {
     category: form.category
   });
   router.push({
-    name: 'WriteDocument',
+    name: 'ApprovalCreate',
     params: { formName: form.templateKey }
   });
 };

@@ -1,6 +1,6 @@
 /**
  * <pre>
- * File Name: inbox.ts
+ * TypeScript Name: inbox.ts
  * Description: 알림 시스템 타입 정의
  *              백엔드 DTO, 프론트엔드 모델, WebSocket 관련 타입 정의
  *

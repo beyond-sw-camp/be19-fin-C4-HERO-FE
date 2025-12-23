@@ -239,7 +239,7 @@ const goBack = () => router.back();
  * 설명: 평가 테플릿을 조회하는 메소드
  */
 const loadTemplate = async () => {
-  const res = await apiClient.get(`/evaluation/evaluation-template/select/${templateId}`);
+  const res = await apiClient.get(`/evaluation/evaluation-template/${templateId}`);
   template.value = res.data;
   templateItems.value = res.data.templateItems;
 
@@ -250,7 +250,7 @@ const loadTemplate = async () => {
  * 설명: 평가 가이드 조회하는 메소드  
  */
 const loadGuides = async () => {
-  const res = await apiClient.get(`/evaluation/evaluation-guide/selectall2`);
+  const res = await apiClient.get(`/evaluation/evaluation-guide/all2`);
   guideList.value = res.data;
 };
 
@@ -259,7 +259,7 @@ const loadGuides = async () => {
  * @param {number} deptId - 부서 번호
  */
 const loadEmployees = async (deptId: number) => {
-  const res = await apiClient.get(`/evaluation/evaluation/select/employee/${deptId}`);
+  const res = await apiClient.get(`/evaluation/evaluation/employee/${deptId}`);
   employees.value = res.data;
 
   selectedEmployeeIds.value = res.data.map(
@@ -308,7 +308,7 @@ const saveEvaluation = async () => {
     }))
   };
 
-  await apiClient.post("/evaluation/evaluation/create", payload);
+  await apiClient.post("/evaluation/evaluation", payload);
   alert("평가가 생성되었습니다.");
   router.back();
 };

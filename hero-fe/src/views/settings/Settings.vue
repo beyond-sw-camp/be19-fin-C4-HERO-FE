@@ -61,7 +61,7 @@ onMounted(() => {
 <style scoped>
 .page-container {
   background-color: #f8fafc;
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -134,5 +134,6 @@ onMounted(() => {
 
 .content-container {
   padding: 24px;
+  height: 570px;
 }
 </style>

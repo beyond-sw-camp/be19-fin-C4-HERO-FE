@@ -115,7 +115,7 @@ const goToPage = (page: number) => {
 
 const goToCreate = () => {
   // 승진 계획은 전자결재를 통해 생성되므로 결재 양식함으로 이동합니다.
-  router.push('/approval/write/promotionplan');
+  router.push('/approval/create/promotionplan');
 };
 
 const goToDetail = (id: number) => {

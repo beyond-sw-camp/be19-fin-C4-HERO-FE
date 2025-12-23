@@ -1,3 +1,20 @@
+<!--
+  * <pre>
+  * Vue Name        : ApprovalSettings.vue
+  * Description     : 결재 관리 탭
+  *
+  * 컴포넌트 연계
+  *  - 부모 컴포넌트: Settings.vue
+  *
+  * History
+  *   2025/12/18 - 민철 결재 관리 탭 UI 구현
+  *   2025/12/22 - 민철 설정 API 연동
+  * </pre>
+  *
+  * @module settings
+  * @author 민철
+  * @version 2.0
+-->
 <template>
   <div class="approval-page-container">
     <aside class="side-panel">
@@ -19,7 +36,7 @@
             <span class="col-category">{{ doc.category }}</span>
             <span class="col-name">{{ doc.templateName }}</span>
             <div class="col-step">
-              <span class="step-badge">{{ doc.steps }}단계</span>
+              <span class="step-badge">{{ doc.steps != 0 ? doc.steps : 1}}단계</span>
             </div>
           </li>
         </ul>
@@ -106,8 +123,8 @@
                     v-if="refItem.targetType === 'SPECIFIC_DEPT'" 
                     v-model="refItem.departmentId" 
                     class="dept-select"
+                    placeholder="부서선택"
                   >
-                    <option :value="null" disabled>부서 선택</option>
                     <option v-for="dept in departmentList" :key="dept.departmentId" :value="dept.departmentId">
                       {{ dept.departmentName }}
                     </option>
@@ -138,9 +155,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { SettingsDefaultLineDTO } from '@/types/settings/settings-approval.types';
 import { storeToRefs } from 'pinia';
 import { useTemplateStore } from '@/stores/settings/settings-approval.store';
+import {
+  SettingsApprovalRequestDTO,
+  SettingsDefaultLineDTO,
+  SettingsDefaultRefDTO,
+} from '@/types/settings/settings-approval.types';
 
 const templateStore = useTemplateStore();
 
@@ -153,19 +174,37 @@ onMounted(async () => {
   ]);
 });
 
+const drafterLine = ref<SettingsDefaultLineDTO>({
+  seq: 1,
+  targetType: 'DRAFTER',
+  departmentId: 0,
+  approverId: 0
+});
 
 const selectedDoc = ref<any>(null);
 
 const lines = ref<SettingsDefaultLineDTO[]>([
-  { seq: 0, targetType: 'DRAFTER', departmentId: 0, approverId: 0}
+  {
+    seq: 1,
+    targetType: 'DRAFTER_DEPT',
+    departmentId: 0,
+    approverId: 0
+  },
 ]); 
 
-const references = ref<any[]>([]);
+const references = ref<SettingsDefaultRefDTO[]>([]);
 
 const selectDoc = async (doc: any) => {
   selectedDoc.value = doc;
+  lines.value = [
+    {
+      seq: 1,
+      targetType: 'DRAFTER_DEPT',
+      departmentId: 0,
+      approverId: 0
+    },
 
-  lines.value = [{ seq: 0, targetType: 'DRAFTER', departmentId: 0, approverId: 0 }];
+  ];  
   references.value = [];
 
   try {
@@ -186,24 +225,29 @@ const selectDoc = async (doc: any) => {
 };
 
 const resetSelection = () => {
-  selectedDoc.value = null;
-  lines.value = [{ seq: 0, targetType: 'DRAFTER', departmentId: 0, approverId: 0}];
+  selectedDoc.value = 0;
+
+  lines.value = [{
+    seq: 1,
+    targetType: 'DRAFTER_DEPT',
+    departmentId: 0,
+    approverId: 0
+  }];
+
   references.value = [];
 };
 
 const addStep = () => {
   if (lines.value.length < 3) {
 
-    const nextSeq = lines.value[lines.value.length - 1].seq + 1;
-    
+    const nextSeq = lines.value[lines.value.length - 1].seq;
     lines.value.push({ 
-      seq: nextSeq, 
+      seq: nextSeq + 1, 
       targetType: 'DRAFTER_DEPT', 
       departmentId: 0, 
       approverId: 0
     });
 
-    console.log('추가된 결재선', lines.value);
   }
 };
 
@@ -216,7 +260,11 @@ const removeStep = (index: number) => {
 };
 
 const addReference = () => {
-  references.value.push({ targetType: 'DRAFTER_DEPT', departmentId: 0 });
+  references.value.push({
+    targetType: 'DRAFTER_DEPT',
+    departmentId: 0 ,
+    // referenceId: 0,
+  });
 };
 
 const removeReference = (index: number) => {
@@ -224,17 +272,20 @@ const removeReference = (index: number) => {
 };
 
 const onTypeChange = (item: any) => {
-  item.departmentId = item.targetType === 'DRAFTER_DEPT' ? 0 : null;
+  item.departmentId = item.targetType === 'DRAFTER_DEPT' ? null : 0;
 };
 
 const handleSave = () => {
-  const payload = {
-    templateId: selectedDoc.value.templateId,
+
+  const data = ref<SettingsApprovalRequestDTO>({
     lines: lines.value,
     references: references.value
-  };
-  console.log('서버 전송 데이터:', payload);
-  alert(`${selectedDoc.value.templateName} 설정이 저장되었습니다.`);
+  });
+
+  const message = templateStore.setDefaultSettings(selectedDoc.value.templateId, data.value);
+  
+  console.log('저장', data.value);
+  alert(`${selectedDoc.value.templateName} ${message}`);
 };
 </script>
 

@@ -1,3 +1,22 @@
+<!--
+ * <pre>
+ * Vue Name        : ApprovalCreateCommonForm.vue
+ * Description     : 공통 서식
+ *
+ * 컴포넌트 연계
+ * - 부모 컴포넌트: ApprovalCreate.vue
+ *
+ * History
+ *   2025/12/10 - 민철 최초작성
+ *   2025/12/11 - props 데이터 및 동적컴포넌트 추가
+ *   2025/12/14 - 공통 컴포넌트화
+ *   2025/12/23 - 민철 파일명 변경 
+ * </pre>
+ *
+ * @module approval
+ * @author 민철
+ * @version 2.0
+ -->
 <template>
     <div class="form-wrapper">
         <div class="paper-sheet">
@@ -397,7 +416,7 @@ const formatFileSize = (bytes: number) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-// ✅ 공통 데이터를 WriteDocument에 전달하는 메서드
+// ✅ 공통 데이터를 ApprovalCreate에 전달하는 메서드
 const getCommonData = () => {
   return {
     title: commonData.title,
@@ -416,40 +435,31 @@ defineExpose({
 <style scoped>
 @import "@/assets/styles/commonform.css";
 
-/* ✅ 파일 첨부 영역 레이아웃 수정 */
-
-/* 1. 전체 컨테이너를 Flex로 설정하여 좌우 배치 */
 .file-content {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  gap: 16px; /* 좌측 버튼과 우측 리스트 사이 간격 */
+  gap: 16px;
   width: 100%;
 }
 
-/* 2. 좌측 업로드 버튼 영역 */
 .upload-left-section {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  flex-shrink: 0; /* 너비 줄어들지 않게 고정 */
+  flex-shrink: 0;
 }
 
-/* 3. 우측 파일 리스트 박스 */
 .uploaded-file-list {
-  flex-grow: 1; /* 남은 공간 차지 */
+  flex-grow: 1;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background-color: #f8fafc;
   padding: 8px;
-  
-  /* 핵심: 스크롤 및 높이 제한 설정 */
-  /* 파일 하나 높이 약 36px * 5개 + 패딩 고려하여 약 190px 설정 */
   max-height: 72px; 
-  overflow-y: auto; /* 넘치면 스크롤 생성 */
+  overflow-y: auto;
 }
 
-/* 스크롤바 커스텀 (선택사항 - 깔끔하게 보이도록) */
 .uploaded-file-list::-webkit-scrollbar {
   width: 6px;
 }
@@ -458,7 +468,6 @@ defineExpose({
   border-radius: 3px;
 }
 
-/* 개별 파일 아이템 스타일 */
 .file-item {
   display: flex;
   align-items: center;
@@ -494,7 +503,7 @@ defineExpose({
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px; /* 이름이 너무 길면 ... 처리 */
+  max-width: 200px;
 }
 
 .file-size {

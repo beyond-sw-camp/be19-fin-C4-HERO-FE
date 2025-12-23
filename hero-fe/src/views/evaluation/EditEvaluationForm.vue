@@ -181,7 +181,7 @@ authGradeName.value = authStore.user?.gradeName
  */
 const loadForm = async () => {
   const res = await apiClient.get(
-    `/evaluation/evaluation-form/select/${evaluationId}/${employeeId}`
+    `/evaluation/evaluation-form/${evaluationId}/${employeeId}`
   );
   const data = res.data;
 
@@ -243,7 +243,7 @@ const submitUpdate = async () => {
     return;
   }
 
-  await apiClient.put("/evaluation/evaluation-form/update", {
+  await apiClient.put("/evaluation/evaluation-form", {
     evaluationFormFormId: formId.value,
     evaluationFormCreatedAt: new Date(),
     formItems: formItems.value.map(item => ({

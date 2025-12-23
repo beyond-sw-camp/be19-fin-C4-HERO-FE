@@ -53,6 +53,14 @@ const personnelRoutes: RouteRecordRaw[] = [
           title: '승진 계획 상세',
         }
       },
+      {
+        path: 'recommend',
+        name: 'promotionRecommend',
+        component: () => import('@/views/personnel/recommend/Recommend.vue'),
+        meta: {
+          title: '승진 추천',
+        }
+      }
     ],
   }
 ];

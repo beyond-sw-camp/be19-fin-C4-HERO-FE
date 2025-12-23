@@ -1,3 +1,21 @@
+<!--
+  * <pre>
+  * Vue Name        : ApprovalWorkChangeForm.vue
+  * Description     : 근무변경신청서
+  *
+  * 컴포넌트 연계
+  *  - 부모 컴포넌트: ApprovalCreateCommonForm.vue
+  *
+  * History
+  *   2025/12/10 - 민철 최초 작성
+  *   2025/12/14 - 민철 공통 컴포넌트화
+  *   2025/12/23 - 민철 파일명 변경 
+  * </pre>
+  *
+  * @module approval
+  * @author 민철
+  * @version 2.0
+-->
 <template>
   <div class="detail-form-section">
     <div 
@@ -359,7 +377,6 @@ watch(
   min-width: 200px;
 }
 
-/* 드롭다운 */
 .dropdown-box {
   height: 46px;
   padding: 0 12px;
@@ -438,7 +455,6 @@ watch(
   background-color: #f1f5f9;
 }
 
-/* 날짜/시간 입력 */
 .date-input-box {
   height: 46px;
   border: 1px solid #e2e8f0;
@@ -539,7 +555,6 @@ watch(
   z-index: 40;
 }
 
-/* 사유 입력 */
 .reason-content {
   flex-direction: column;
   padding: 16px 20px;

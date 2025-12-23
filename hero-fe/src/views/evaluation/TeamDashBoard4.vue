@@ -1,6 +1,6 @@
 <!-- 
   File Name   : DepartmentDashBoard2.vue
-  Description : 팀 평가 대시보드: 부서 등급 분포 페이지
+  Description : 팀 평가 대시보드: 팀원별 평가 점수 트렌드 페이지
  
   History
   2025/12/19 - 승민 최초 작성
@@ -17,7 +17,7 @@
       <div class="tabs">
         <div class="inbox-tabs">
           <button
-            class="tab tab-start active"
+            class="tab tab-start"
             @click="goRank"
           >
             부서 등급 분포
@@ -38,7 +38,7 @@
           </button>
 
           <button
-            class="tab tab-end"
+            class="tab tab-end active"
             @click="goScoreTrend"
           >
             팀원별 평가 점수 트렌드
@@ -49,21 +49,24 @@
       <!-- 리스트 박스 -->
       <div class="list-box">
 
-        <!-- 필터 영역 -->
+        <!-- 필터 -->
         <div class="filter-row">
-          <label>평가 템플릿</label>
-          <select v-model="selectedTemplateId" @change="updateChart">
-            <option
-              v-for="t in dashboardData"
-              :key="t.evaluationTemplateId"
+          <label
+            v-for="t in dashboardData"
+            :key="t.evaluationTemplateId"
+            class="checkbox"
+          >
+            <input
+              type="checkbox"
               :value="t.evaluationTemplateId"
-            >
-              {{ t.evaluationTemplateName }}
-            </option>
-          </select>
+              v-model="checkedTemplateIds"
+              @change="updateChart"
+            />
+            {{ t.evaluationTemplateName }}
+          </label>
         </div>
 
-        <!-- 차트 영역 -->
+        <!-- 차트 -->
         <div class="chart-wrapper">
           <canvas ref="chartCanvas"></canvas>
         </div>
@@ -88,7 +91,7 @@ const authStore = useAuthStore();
 
 //Reactive 데이터
 const dashboardData = ref<any[]>([]);
-const selectedTemplateId = ref<number | null>(null);
+const checkedTemplateIds = ref<number[]>([]);
 
 //차트 객체
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
@@ -100,74 +103,69 @@ let chartInstance: Chart | null = null;
 const loadDashboard = async () => {
   const departmentId = authStore.user?.departmentId;
 
-  const { data } = await apiClient.get(
-    `/evaluation/dashboard/${departmentId}`
-  );
-
-  if (!data || data.length === 0) {
-    alert("해당 부서에 대한 평가 데이터가 존재하지 않습니다.");
-    goBack();
-    return;
-  }
+  const { data } = await apiClient.get(`/evaluation/dashboard/${departmentId}`);
 
   dashboardData.value = data;
-  selectedTemplateId.value = data[0].evaluationTemplateId;
+  checkedTemplateIds.value = data.map(
+    (t: any) => t.evaluationTemplateId
+  );
 
   await nextTick();
   renderChart();
 };
 
 /**
- * 설명: 등급 추출 메소드
- * @param {any} template - 평가 템플릿 데이터
+ * 설명: 평가 점수 트렌드 계산 메소드
  */
-const extractRanks = (template: any) => {
-  const set = new Set<string>();
-
-  template.evaluations.forEach((e: any) =>
-    e.evaluationItems.forEach((i: any) =>
-      i.criterias.forEach((c: any) => {
-        if (c.criteriaRank) set.add(c.criteriaRank);
-      })
-    )
+const buildTrendData = () => {
+  const templates = dashboardData.value.filter(t =>
+    checkedTemplateIds.value.includes(t.evaluationTemplateId)
   );
 
-  const order = ["S", "A", "B", "C", "D"];
+  // 사원 목록 수집
+  const memberSet = new Set<string>();
 
-  return [...set].sort((a, b) => {
-    const aIdx = order.indexOf(a);
-    const bIdx = order.indexOf(b);
-
-    return (aIdx === -1 ? 99 : aIdx) - (bIdx === -1 ? 99 : bIdx);
+  templates.forEach(template => {
+    template.evaluations.forEach((evaluation: any) => {
+      evaluation.evaluatees.forEach((e: any) => {
+        memberSet.add(e.evaluationEvaluateeName);
+      });
+    });
   });
-};
 
-/**
- * 설명: 분포 데이터 계산 메소드
- */
-const calculateDistribution = () => {
-  const template = dashboardData.value.find(
-    t => t.evaluationTemplateId === selectedTemplateId.value
-  );
+  const labels = Array.from(memberSet); // X축: 사원
 
-  if (!template) return { labels: [], values: [] };
+  const colors = [
+    "#1c398e",
+    "#10b981",
+    "#f59e0b",
+    "#ef4444",
+    "#6366f1",
+  ];
 
-  const labels = extractRanks(template);
-  const map: Record<string, number> = {};
-  labels.forEach(l => (map[l] = 0));
+  const datasets = templates.map((template, idx) => {
+    const scoreMap: Record<string, number | null> = {};
 
-  template.evaluations.forEach((e: any) =>
-    e.evaluatees.forEach((ev: any) => {
-      if (map[ev.evaluationEvaluateeTotalRank] !== undefined) {
-        map[ev.evaluationEvaluateeTotalRank]++;
-      }
-    })
-  );
+    labels.forEach(name => (scoreMap[name] = null));
 
-  return {
-    labels,
-    values: labels.map(l => map[l]),
-  };
+    template.evaluations.forEach((evaluation: any) => {
+      evaluation.evaluatees.forEach((e: any) => {
+        scoreMap[e.evaluationEvaluateeName] =
+          e.evaluationEvaluateeTotalScore;
+      });
+    });
+
+    return {
+      label: template.evaluationTemplateName,
+      data: labels.map(name => scoreMap[name]),
+      backgroundColor: colors[idx % colors.length],
+      borderRadius: 6,
+      barPercentage: 0.7,
+      categoryPercentage: 0.7,
+    };
+  });
+
+  return { labels, datasets };
 };
 
 /**
@@ -176,31 +174,39 @@ const calculateDistribution = () => {
 const renderChart = () => {
   if (!chartCanvas.value) return;
 
-  const { labels, values } = calculateDistribution();
+  const { labels, datasets } = buildTrendData();
 
   if (chartInstance) chartInstance.destroy();
 
   chartInstance = new Chart(chartCanvas.value, {
     type: "bar",
-    data: {
-      labels,
-      datasets: [
-        {
-          data: values,
-          backgroundColor: "#1c398e",
-          borderRadius: 6,
-        },
-      ],
-    },
+    data: { labels, datasets },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { position: "bottom" },
+        tooltip: {
+          callbacks: {
+            label: ctx =>
+              `${ctx.dataset.label}: ${ctx.raw} 점`,
+          },
+        },
       },
       scales: {
+        x: {
+          grid: { display: false },
+        },
         y: {
           beginAtZero: true,
-          ticks: { stepSize: 1 },
+          max: 100,
+          ticks: {
+            stepSize: 20,
+          },
+          title: {
+            display: true,
+            text: "최종 평가 점수",
+          },
         },
       },
     },
@@ -219,8 +225,8 @@ const updateChart = async () => {
  * 설명: 부서 등급 분포 페이지로 이동하는 메서드
  */
 const goRank = () => {
-    router.push("/evaluation/team/dashboard")
-}
+  router.push("/evaluation/team/dashboard");
+};
 
 /**
  * 설명: 부서별 점수 비교 페이지로 이동하는 메서드
@@ -243,17 +249,11 @@ const goScoreTrend = () => {
   router.push("/evaluation/team/dashboard4");
 };
 
-/**
- * 설명: 이전 페이지로 이동하는 메서드
- */
-const goBack = () => router.back();
-
 onMounted(loadDashboard);
 </script>
 
 <!--style-->
 <style scoped>
-/* ===== 공통 페이지 ===== */
 .page {
   width: 100%;
   height: 100%;
@@ -264,7 +264,7 @@ onMounted(loadDashboard);
   padding: 36px;
 }
 
-/* ===== Tabs ===== */
+/* Tabs */
 .tabs {
   display: flex;
 }
@@ -311,46 +311,43 @@ onMounted(loadDashboard);
   border-top-right-radius: 14px;
 }
 
-/* ===== List Box ===== */
+/* List Box */
 .list-box {
   background: white;
   border: 2px solid #e2e8f0;
   border-radius: 0 14px 14px 14px;
-
   padding: 24px 32px 32px;
 }
 
-/* ===== Filter ===== */
+/* Filter */
 .filter-row {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
   margin-bottom: 16px;
 }
 
-select {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #cad5e2;
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
 }
 
-/* ===== Chart ===== */
+/* Chart */
 .chart-wrapper {
   height: 420px;
   background: #f8fafc;
   border-radius: 14px;
   padding: 24px;
   display: flex;
-  align-items: center;     
+  align-items: center;
   justify-content: center;
-
-  margin-top: 0;
 }
 
 .chart-wrapper canvas {
   width: 100% !important;
   height: 100% !important;
-  max-width: 900px;     
-  max-height: 360px;
+  max-width: 900px;
 }
 </style>
