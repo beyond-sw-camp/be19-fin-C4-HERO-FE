@@ -37,3 +37,7 @@ __screenshots__/
 
 # TypeDoc
 docs/
+
+# Env files
+.env
+.env.*
