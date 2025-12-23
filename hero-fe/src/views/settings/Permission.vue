@@ -49,18 +49,31 @@
           </tr>
         </tbody>
       </table>
-    </div>
-
-    <!-- 페이지네이션 -->
-    <div class="pagination-container">
-      <button 
-        v-for="p in totalPages" 
-        :key="p" 
-        @click="changePage(p)"
-        :class="['page-btn', currentPage === p ? 'active' : '']"
-      >
-        {{ p }}
-      </button>
+      <!-- 페이지네이션 -->
+      <div class="pagination">
+        <button
+          class="page-button"
+          :disabled="currentPage === 1"
+          @click="changePage(currentPage - 1)"
+        >
+          이전
+        </button>
+        <button
+          v-for="p in totalPages"
+          :key="p"
+          @click="changePage(p)"
+          :class="['page-button', { 'page-active': currentPage === p }]"
+        >
+          {{ p }}
+        </button>
+        <button
+          class="page-button"
+          :disabled="currentPage === totalPages"
+          @click="changePage(currentPage + 1)"
+        >
+          다음
+        </button>
+      </div>
     </div>
 
     <!-- 권한 수정 모달 -->
@@ -180,6 +193,7 @@ const getBadgeClass = (roleName: string) => {
 };
 
 const changePage = (page: number) => {
+  if (page < 1 || page > totalPages.value) return;
   currentPage.value = page;
   fetchData();
 };
@@ -270,6 +284,10 @@ onMounted(async () => {
   font-weight: 600;
 }
 
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 .table-container {
   overflow-x: auto;
   border: 1px solid #e2e8f0;
@@ -341,25 +359,36 @@ onMounted(async () => {
   cursor: not-allowed;
 }
 
-.pagination-container {
+.pagination {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  margin-top: 20px;
+  align-items: center;
+  padding: 16px;
+  gap: 10px;
+  background: #f8fafc;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
 }
 
-.page-btn {
-  padding: 6px 12px;
-  border: 1px solid #e2e8f0;
+.page-button {
+  padding: 5px 12px;
+  border: 1px solid #cad5e2;
   background: white;
-  border-radius: 6px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #62748e;
   cursor: pointer;
 }
 
-.page-btn.active {
-  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
+.page-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.page-button.page-active {
+  background: #155dfc;
+  border-color: #155dfc;
   color: white;
-  border: none;
 }
 
 .no-data {

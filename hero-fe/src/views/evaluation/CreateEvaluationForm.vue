@@ -202,7 +202,7 @@ const goBack = () => router.back();
  */
 const loadData = async () => {
   const res = await apiClient.get(
-    `/evaluation/evaluation/select/${evaluationId}`
+    `/evaluation/evaluation/${evaluationId}`
   );
   const data = res.data;
 
@@ -255,7 +255,7 @@ const submitForm = async () => {
     return;
   }
 
-  await apiClient.post("/evaluation/evaluation-form/create", {
+  await apiClient.post("/evaluation/evaluation-form", {
     evaluationFormEvaluationId: evaluationId,
     evaluationFormEmployeeId: employeeId,
     evaluationFormDepartmentId: departmentId,

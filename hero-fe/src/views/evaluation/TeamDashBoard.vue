@@ -1,25 +1,48 @@
+<!-- 
+  File Name   : DepartmentDashBoard2.vue
+  Description : 팀 평가 대시보드: 부서 등급 분포 페이지
+ 
+  History
+  2025/12/19 - 승민 최초 작성
+ 
+  @author 승민
+-->
+
+<!--template-->
 <template>
   <div class="page">
     <div class="content-wrapper">
 
       <!-- 상단 탭 -->
       <div class="tabs">
-        <div class="tab-group">
-          <div class="tab-active">
-            <div class="tab-active-text">부서 등급 분포</div>
-          </div>
+        <div class="inbox-tabs">
+          <button
+            class="tab tab-start active"
+            @click="goRank"
+          >
+            부서 등급 분포
+          </button>
 
-          <div class="tab-inactive" @click="goAvgScore">
-            <div class="tab-inactive-text">부서별 평균 점수 비교</div>
-          </div>
+          <button
+            class="tab"
+            @click="goAvgScore"
+          >
+            부서별 점수 비교
+          </button>
 
-          <div class="tab-inactive" @click="goMemberSkill">
-            <div class="tab-inactive-text">팀원별 역량 상세 분석</div>
-          </div>
+          <button
+            class="tab"
+            @click="goMemberSkill"
+          >
+            팀원별 역량 상세 분석
+          </button>
 
-          <div class="tab-inactive" @click="goScoreTrend">
-            <div class="tab-inactive-text">팀원별 평가 점수 트렌드</div>
-          </div>
+          <button
+            class="tab tab-end"
+            @click="goScoreTrend"
+          >
+            팀원별 평가 점수 트렌드
+          </button>
         </div>
       </div>
 
@@ -50,33 +73,35 @@
   </div>
 </template>
 
+<!--script-->
 <script setup lang="ts">
+//Import 구문
 import { ref, onMounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import Chart from "chart.js/auto";
 import apiClient from "@/api/apiClient";
 import { useAuthStore } from "@/stores/auth";
 
+//외부 로직
 const router = useRouter();
 const authStore = useAuthStore();
 
-/* =====================
-   상태
-===================== */
+//Reactive 데이터
 const dashboardData = ref<any[]>([]);
 const selectedTemplateId = ref<number | null>(null);
 
+//차트 객체
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
 let chartInstance: Chart | null = null;
 
-/* =====================
-   API 호출
-===================== */
+/**
+ * 설명: 대시보드 데이터 조회 메소드
+ */
 const loadDashboard = async () => {
   const departmentId = authStore.user?.departmentId;
 
   const { data } = await apiClient.get(
-    `/evaluation/dashboard/select/${departmentId}`
+    `/evaluation/dashboard/${departmentId}`
   );
 
   if (!data || data.length === 0) {
@@ -92,9 +117,10 @@ const loadDashboard = async () => {
   renderChart();
 };
 
-/* =====================
-   등급 추출
-===================== */
+/**
+ * 설명: 등급 추출 메소드
+ * @param {any} template - 평가 템플릿 데이터
+ */
 const extractRanks = (template: any) => {
   const set = new Set<string>();
 
@@ -116,9 +142,9 @@ const extractRanks = (template: any) => {
   });
 };
 
-/* =====================
-   분포 계산
-===================== */
+/**
+ * 설명: 분포 데이터 계산 메소드
+ */
 const calculateDistribution = () => {
   const template = dashboardData.value.find(
     t => t.evaluationTemplateId === selectedTemplateId.value
@@ -144,9 +170,9 @@ const calculateDistribution = () => {
   };
 };
 
-/* =====================
-   차트 렌더
-===================== */
+/**
+ * 설명: 차트 그리는 메소드
+ */
 const renderChart = () => {
   if (!chartCanvas.value) return;
 
@@ -181,28 +207,51 @@ const renderChart = () => {
   });
 };
 
+/**
+ * 설명: 차트 최신화 메서드
+ */
 const updateChart = async () => {
   await nextTick();
   renderChart();
 };
 
+/**
+ * 설명: 부서 등급 분포 페이지로 이동하는 메서드
+ */
+const goRank = () => {
+    router.push("/evaluation/team/dashboard")
+}
+
+/**
+ * 설명: 부서별 점수 비교 페이지로 이동하는 메서드
+ */
 const goAvgScore = () => {
-  //router.push("/evaluation/dashboard/avg-score");
+  router.push("/evaluation/team/dashboard2");
 };
 
+/**
+ * 설명: 팀원별 역량 상세 분석 페이지로 이동하는 메서드
+ */
 const goMemberSkill = () => {
-  //router.push("/evaluation/dashboard/member-skill");
+  router.push("/evaluation/team/dashboard3");
 };
 
+/**
+ * 설명: 팀원별 평가 점수 트렌드 페이지로 이동하는 메서드
+ */
 const goScoreTrend = () => {
-  //router.push("/evaluation/dashboard/score-trend");
+  router.push("/evaluation/team/dashboard4");
 };
 
+/**
+ * 설명: 이전 페이지로 이동하는 메서드
+ */
 const goBack = () => router.back();
 
 onMounted(loadDashboard);
 </script>
 
+<!--style-->
 <style scoped>
 /* ===== 공통 페이지 ===== */
 .page {
@@ -220,68 +269,52 @@ onMounted(loadDashboard);
   display: flex;
 }
 
-.tab-group {
-  display: flex;
+.inbox-tabs {
+  display: inline-flex;
+  flex-direction: row;
 }
 
-/* 공통 탭 */
-.tab-active,
-.tab-inactive {
+/* 탭 공통 */
+.tab {
+  padding: 10px 18px;           /* 좌우 여백 */
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 52px;
 
-  padding: 0 24px;                
-  border-radius: 14px 14px 0 0;
-  outline: 2px solid #e2e8f0;
-  outline-offset: -2px;
+  border-top: 1px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
 
-  white-space: nowrap;            
+  background-color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  white-space: nowrap;          
+  width: auto;                  
+
+  border-bottom: 1px solid #e2e8f0;
 }
 
 /* 활성 탭 */
-.tab-active {
+.tab.active {
+  color: #ffffff;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
 }
 
-/* 비활성 탭 */
-.tab-inactive {
-  background: white;
-  cursor: pointer;
+/* 탭 라운드 */
+.tab-start {
+  border-top-left-radius: 14px;
 }
 
-/* 탭 텍스트 공통 */
-.tab-active-text,
-.tab-inactive-text {
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;            
-}
-
-/* 색상 */
-.tab-active-text {
-  color: white;
-}
-
-.tab-inactive-text {
-  color: #62748e;
-}
-
-/* 색상 */
-.tab-active-text {
-  color: white;
-}
-
-.tab-inactive-text {
-  color: #62748e;
+.tab-end {
+  border-top-right-radius: 14px;
 }
 
 /* ===== List Box ===== */
 .list-box {
   background: white;
   border: 2px solid #e2e8f0;
-  border-top: none;
   border-radius: 0 14px 14px 14px;
 
   padding: 24px 32px 32px;

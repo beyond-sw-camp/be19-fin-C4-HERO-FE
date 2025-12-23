@@ -149,7 +149,7 @@ const selectEvaluationGuideList = async () => {
     loading.value = true
 
     const res = await apiClient.get<PageResponse<EvaluationGuideResponseDTO>>(
-      "/evaluation/evaluation-guide/selectall",
+      "/evaluation/evaluation-guide/all",
       {
         params: {
           page: currentPage.value,

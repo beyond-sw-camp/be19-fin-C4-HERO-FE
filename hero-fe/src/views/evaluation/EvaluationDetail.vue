@@ -273,7 +273,7 @@ const evaluateeStatusClass = (status: number) => {
  * 설명: 평가 조회 메소드
  */
 const loadEvaluation = async () => {
-  const res = await apiClient.get(`/evaluation/evaluation/select/${evaluationId}`);
+  const res = await apiClient.get(`/evaluation/evaluation/${evaluationId}`);
   evaluation.value = res.data;
 
   // 기본: 모두 접힘
@@ -298,7 +298,7 @@ const reload = async () => {
 const deleteEvaluation = async () => {
   if (!confirm("정말 이 평가를 삭제할까요? (되돌릴 수 없습니다)")) return;
 
-  await apiClient.delete(`/evaluation/evaluation/delete/${evaluationId}`);
+  await apiClient.delete(`/evaluation/evaluation/${evaluationId}`);
   alert("평가가 삭제되었습니다.");
   router.back();
 };

@@ -123,8 +123,8 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { createEmployee, fetchEmployeeSearchOptions } from '@/api/personnel';
-import type { EmployeeRegisterParams } from '@/types/personnel';
+import { createEmployee, fetchEmployeeSearchOptions } from '@/api/personnel/personnel';
+import type { EmployeeRegisterParams } from '@/types/personnel/personnel';
 
 const router = useRouter();
 

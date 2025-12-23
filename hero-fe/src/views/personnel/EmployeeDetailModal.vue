@@ -91,8 +91,8 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { fetchEmployeeDetail } from '@/api/personnel';
-import type { EmployeeDetailResponse } from '@/types/personnel';
+import { fetchEmployeeDetail } from '@/api/personnel/personnel';
+import type { EmployeeDetailResponse } from '@/types/personnel/personnel';
 
 const props = defineProps<{
   modelValue: boolean;

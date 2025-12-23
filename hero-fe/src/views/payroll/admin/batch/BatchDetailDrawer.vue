@@ -88,7 +88,7 @@
               </div>
 
               <p class="hint">
-                ※ “다음 단계로”는 BatchPage에서 계산 탭으로 전환됩니다.
+                “다음 단계로”는 BatchPage에서 계산 탭으로 전환됩니다.
               </p>
             </div>
 

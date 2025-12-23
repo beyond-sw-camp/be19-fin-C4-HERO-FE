@@ -3,10 +3,6 @@
  * Vue Name        : PayrollCalculateTab.vue
  * Description     : 관리자 - 월별 급여 배치 계산 탭 컴포넌트
  *
- * 제약 / MVP 범위
- *  - 개별 사원 재계산 기능은 비활성(MVP 이후 확장 예정)
- *  - 페이지네이션은 UI만 제공하며 실제 페이징 로직은 추후 구현 예정입니다.
- *
  * 컴포넌트 연계
  *  - PayrollAdminStore : 선택된 배치, 사원 급여 결과, 계산 실행 상태 관리
  *  - BatchPage.vue : 탭 전환 및 상위 플로우 제어
@@ -37,7 +33,7 @@
           title="선택된 사원만 계산"
           @click="runSelectedCalculate"
         >
-          ▶ 선택 사원 계산
+          선택 사원 계산
         </button>
 
         <button
@@ -47,9 +43,27 @@
           :title="calculateDisabledReason"
           @click="runAllCalculate"
         >
-          ▶ 전체 계산
+          전체 계산
         </button>
+        <button
+  class="btn-secondary"
+  type="button"
+  :disabled="!store.selectedBatchId || !hasFailed || isConfirmed || store.loading"
+  :title="!hasFailed ? 'FAILED 인원이 없습니다' : 'FAILED 인원만 재계산'"
+  @click="runFailedRecalculate"
+>
+  실패자 재계산
+</button>
 
+<button
+  class="btn-secondary"
+  type="button"
+  :disabled="!store.selectedBatchId || store.employees.length === 0"
+  :title="showFailedOnly ? '전체 보기로 전환' : 'FAILED만 보기'"
+  @click="showFailedOnly = !showFailedOnly"
+>
+  {{ showFailedOnly ? '전체 보기' : 'FAILED만 보기' }}
+</button>
         <span v-if="isConfirmed" class="lock-hint">
           확정된 배치는 재계산할 수 없습니다.
         </span>
@@ -67,7 +81,7 @@
             <th>
               <input
                 type="checkbox"
-                :disabled="isConfirmed || store.employees.length === 0"
+                :disabled="isConfirmed || filteredEmployees.length === 0"
                 :checked="isAllChecked"
                 @change="toggleAll"
               />
@@ -92,13 +106,13 @@
             <td colspan="9">로딩 중…</td>
           </tr>
 
-          <tr v-else-if="store.employees.length === 0" class="empty">
+          <tr v-else-if="filteredEmployees.length === 0" class="empty">
             <td colspan="9">대상 사원이 없습니다.</td>
           </tr>
 
           <tr
             v-else
-            v-for="e in store.employees"
+            v-for="e in filteredEmployees"
             :key="e.payrollId"
           >
             <td>
@@ -161,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { usePayrollAdminStore } from '@/stores/payroll/payrollAdminStore';
 import type { PayrollEmployeeResultResponse, PayrollStatus } from '@/types/payroll/payroll.admin';
 import PayrollErrorModal from './PayrollErrorModal.vue';
@@ -172,14 +186,44 @@ const errorOpen = ref(false);
 const errorTarget = ref<PayrollEmployeeResultResponse | null>(null);
 
 const isConfirmed = computed(() => store.batchDetail?.status === 'CONFIRMED');
+const showFailedOnly = ref(false);
+
+const filteredEmployees = computed(() => {
+  const list = store.employees ?? [];
+  if (!showFailedOnly.value) return list;
+  return list.filter(e => e.status === 'FAILED');
+});
+
+const failedEmployeeIds = computed(() =>
+  (store.employees ?? [])
+    .filter(e => e.status === 'FAILED')
+    .map(e => e.employeeId)
+);
+
+const hasFailed = computed(() => failedEmployeeIds.value.length > 0);
+
+const runFailedRecalculate = async () => {
+  if (isConfirmed.value) return;
+  if (store.loading) return;
+  if (!hasFailed.value) return;
+
+  await store.calculateSelectedBatch(failedEmployeeIds.value);
+  await store.selectBatch(store.selectedBatchId!);
+  if (showFailedOnly.value) {
+    const stillFailed = (store.employees ?? []).some(e => e.status === 'FAILED');
+    if (!stillFailed) showFailedOnly.value = false;
+  }
+
+  selectedIds.value = [];
+};
 
 const isAllChecked = computed(() =>
-  store.employees.length > 0 &&
+  selectableEmployeeIds.value.length > 0 &&
   selectedIds.value.length === selectableEmployeeIds.value.length
 );
 
 const selectableEmployeeIds = computed(() =>
-  store.employees
+  filteredEmployees.value
     .filter(e => e.status !== 'CONFIRMED')
     .map(e => e.employeeId)
 );
@@ -220,7 +264,8 @@ const runSelectedCalculate = async () => {
 
 const runAllCalculate = async () => {
   if (!canCalculateAll.value) return;
-  await store.calculateSelectedBatch();
+  await store.calculateAllBatch();
+  selectedIds.value = [];
 };
 
 const openError = (e: PayrollEmployeeResultResponse) => {
@@ -248,6 +293,14 @@ const badgeClass = (s: PayrollStatus) => {
     default: return 'wait';
   }
 };
+
+watch(
+  () => store.selectedBatchId,
+  () => {
+    showFailedOnly.value = false;
+    selectedIds.value = [];
+  }
+);
 </script>
 
 <style scoped>
@@ -255,7 +308,6 @@ const badgeClass = (s: PayrollStatus) => {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
-  padding: 16px;
 }
 
 .panel-head {
@@ -264,6 +316,7 @@ const badgeClass = (s: PayrollStatus) => {
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+  padding: 0px 20px 0px;
 }
 
 .left {

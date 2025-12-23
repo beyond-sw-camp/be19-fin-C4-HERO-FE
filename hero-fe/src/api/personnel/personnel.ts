@@ -21,7 +21,7 @@ import type {
   EmployeeSelfUpdateParams,
   MyInfoResponse,
   EmployeeSearchOptionsResponse
-} from '@/types/personnel';
+} from '@/types/personnel/personnel';
 
 // API 공통 응답 타입 정의
 export interface ApiResponse<T> {

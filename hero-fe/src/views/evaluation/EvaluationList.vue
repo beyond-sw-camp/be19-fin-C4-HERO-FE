@@ -17,14 +17,20 @@
 
       <!-- 상단 탭 -->
       <div class="tabs">
-        <div class="tab-group">
-          <div class="tab-active" @click="goTemplateList">
-            <div class="tab-active-text">평가 템플릿 목록</div>
-          </div>
+        <div class="inbox-tabs">
+          <button
+            class="tab tab-start active"
+            @click="goTemplateList"
+          >
+            평가 템플릿 목록
+          </button>
 
-          <div class="tab-inactive" @click="goEvaluationList">
-            <div class="tab-inactive-text">생성된 평가</div>
-          </div>
+          <button
+            class="tab tab-end"
+            @click="goEvaluationList"
+          >
+            생성된 평가
+          </button>
         </div>
       </div>
 
@@ -187,7 +193,7 @@ const selectEvaluationTemplateList = async () => {
     loading.value = true
 
     const res = await apiClient.get<PageResponse<EvaluationTemplateResponseDTO>>(
-      "/evaluation/evaluation-template/selectall",
+      "/evaluation/evaluation-template/all",
       {
         params: {
           page: currentPage.value,
@@ -281,44 +287,44 @@ onMounted(async () => {
   display: flex;
 }
 
-.tab-group {
+.inbox-tabs {
+  display: inline-flex;
+  flex-direction: row;
+}
+
+/* 탭 공통 */
+.tab {
+  padding: 10px 18px;
   display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-top: 1px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+
+  background-color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  white-space: nowrap;
 }
 
-.tab-active {
-  width: 144px;
-  height: 52px;
+/* 활성 탭 */
+.tab.active {
+  color: #ffffff;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
-  border-radius: 14px 14px 0 0;
-  outline: 2px #e2e8f0 solid;
-  outline-offset: -2px;
-  position: relative;
 }
 
-.tab-active-text {
-  position: absolute;
-  left: 19px;
-  top: 17px;
-  color: white;
-  font-size: 14px;
+/* 탭 라운드 */
+.tab-start {
+  border-top-left-radius: 14px;
 }
 
-.tab-inactive {
-  width: 145.88px;
-  height: 52px;
-  background: white;
-  border-radius: 14px 14px 0 0;
-  outline: 2px #e2e8f0 solid;
-  outline-offset: -2px;
-  position: relative;
-}
-
-.tab-inactive-text {
-  position: absolute;
-  left: 36px;
-  top: 17px;
-  color: #62748e;
-  font-size: 14px;
+.tab-end {
+  border-top-right-radius: 14px;
 }
 
 /* ========== List Box (표 전체) ========== */

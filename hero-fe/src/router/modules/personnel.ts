@@ -28,6 +28,41 @@ const personnelRoutes: RouteRecordRaw[] = [
       },
     ],
   },
+  {
+    path: '/personnel/promotion',
+    name: 'Promotion',
+    component: () => import('@/views/personnel/promotion/Promotion.vue'),
+    meta: {
+      title: '승진',
+    },
+    redirect: '/personnel/promotion/plan',
+    children: [
+      {
+        path: 'plan',
+        name: 'promotionPlan',
+        component: () => import('@/views/personnel/promotion/PromotionPlan.vue'),
+        meta: {
+          title: '승진 계획',
+        }
+      },
+      {
+        path: 'plan/:id',
+        name: 'promotionPlanDetail',
+        component: () => import('@/views/personnel/promotion/PromotionPlanDetail.vue'),
+        meta: {
+          title: '승진 계획 상세',
+        }
+      },
+      {
+        path: 'recommend',
+        name: 'promotionRecommend',
+        component: () => import('@/views/personnel/recommend/Recommend.vue'),
+        meta: {
+          title: '승진 추천',
+        }
+      }
+    ],
+  }
 ];
 
 export default personnelRoutes;
