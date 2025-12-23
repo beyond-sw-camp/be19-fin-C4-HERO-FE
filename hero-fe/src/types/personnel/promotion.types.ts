@@ -36,6 +36,7 @@ export interface PromotionDepartmentDTO {
  * 승진 후보자를 알기 위한 DTO
  */
 export interface PromotionCandidateDTO {
+    candidateId?: number,
     employeeId?: number,
     employeeName?: string,
     employeeNumber?: string,
@@ -53,6 +54,7 @@ export interface PromotionCandidateDTO {
  * 승진의 상세 계획을 담기 위한 DTO
  */
 export interface PromotionDetailPlanDTO {
+    promotionDetailId?: number,
     departmentId?: number,
     department?: string,
     gradeId?: number,
@@ -72,6 +74,15 @@ export interface PromotionPlanRequestDTO {
     appointmentAt?: string,
     detailPlan?: PromotionDetailPlanDTO[],
     planContent?: string
+}
+
+/**
+ * 승진 후보자 추천 요청 DTO
+ */
+export interface PromotionNominationRequestDTO {
+    promotionId: number;
+    candidateId: number;
+    nominationReason: string;
 }
 
 // --- Response DTOs (응답 데이터) ---
