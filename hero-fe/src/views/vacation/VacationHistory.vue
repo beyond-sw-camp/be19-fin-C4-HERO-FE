@@ -351,6 +351,7 @@ const goPage = async (page: number): Promise<void> => {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  font-size: 18px;
 }
 
 .summary-title {
@@ -594,6 +595,20 @@ const goPage = async (page: number): Promise<void> => {
   background: #ffffff;
   padding: 0 12px;
   color: #1f2933;
+}
+
+.summary-card-header {
+  color: #64748b;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.summary-card-body{
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 </style>
 

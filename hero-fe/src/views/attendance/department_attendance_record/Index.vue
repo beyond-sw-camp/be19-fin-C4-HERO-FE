@@ -156,7 +156,7 @@ import { storeToRefs } from 'pinia'
 import {
   useDeptWorkSystemStore,
   type DeptWorkSystemRowDTO,
-} from '@/stores/attendance/deptworksystem'
+} from '@/stores/attendance/deptWorkSystem'
 import { useAuthStore } from '@/stores/auth'
 
 /**

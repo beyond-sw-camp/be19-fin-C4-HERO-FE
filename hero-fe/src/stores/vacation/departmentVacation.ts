@@ -1,30 +1,10 @@
-/**
- * TypeScript Name   : departmentVacation.ts
- * Description : 부서 휴가 캘린더 도메인 Pinia 스토어
- *               - 부서별 휴가 일정 조회
- *               - 현재 로그인한 직원(myEmployeeId) 정보 보관
- *               - 캘린더에서 사용할 휴가 이벤트 리스트 관리
- *
- * History
- * 2025/12/16(이지윤)  최초 작성
- *
- * @author 이지윤
- * @version 1.0
- */
-
 import { defineStore } from 'pinia';
 
 import apiClient from '@/api/apiClient';
+import { useAuthStore } from '@/stores/auth';
 
 /**
  * 백엔드 DepartmentVacationDTO와 필드명 매칭
- *
- * - vacationLogId     : 휴가 로그 PK
- * - employeeId        : 사원 ID
- * - employeeName      : 사원명
- * - vacationTypeName  : 휴가 유형명 (연차 / 반차 / 병가 등)
- * - startDate         : 시작일 (YYYY-MM-DD)
- * - endDate           : 종료일 (YYYY-MM-DD)
  */
 export interface DepartmentVacationDTO {
   vacationLogId: number;
@@ -35,74 +15,111 @@ export interface DepartmentVacationDTO {
   endDate: string;
 }
 
-/**
- * 부서 휴가 캘린더 스토어 상태 타입
- *
- * - items         : 조회된 부서 휴가 일정 목록
- * - loading       : 조회 중 여부
- * - departmentId  : 현재 선택된 부서 ID (null이면 전체 / 기본 부서 기준)
- * - myEmployeeId  : 현재 사용자(본인)의 사원 ID
- */
 interface DepartmentVacationState {
   items: DepartmentVacationDTO[];
   loading: boolean;
+  errorMessage: string | null;
 
   departmentId: number | null;
   myEmployeeId: number | null;
 }
 
+/* =========================
+   JWT → employeeId 추출 유틸
+   ========================= */
+type JwtPayload = Record<string, unknown>;
+
+function decodeJwtPayload(token: string): JwtPayload | null {
+  try {
+    const payloadBase64Url = token.split('.')[1];
+    if (!payloadBase64Url) return null;
+
+    const payloadBase64 = payloadBase64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(
+      atob(payloadBase64)
+        .split('')
+        .map((c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
+        .join(''),
+    );
+
+    return JSON.parse(json) as JwtPayload;
+  } catch {
+    return null;
+  }
+}
+
+function extractEmployeeIdFromToken(token: string): number | null {
+  const payload = decodeJwtPayload(token);
+  if (!payload) return null;
+
+  // 프로젝트마다 claim 키가 다를 수 있어 후보를 여러 개 둠
+  const candidates = ['employeeId', 'employee_id', 'empId', 'id', 'sub'];
+
+  for (const key of candidates) {
+    const v = payload[key];
+    const num = typeof v === 'number' ? v : Number(v);
+    if (Number.isFinite(num)) return num;
+  }
+
+  return null;
+}
+
 /**
  * 부서 휴가 캘린더 Pinia 스토어
- * - 부서별 휴가 일정 조회 및 상태 관리
+ * - 부서 휴가 일정 조회 및 상태 관리
  * - 현재 로그인한 직원 ID 보관 (본인/팀원 구분용)
  */
 export const useDepartmentVacationStore = defineStore('departmentVacation', {
   state: (): DepartmentVacationState => ({
     items: [],
     loading: false,
+    errorMessage: null,
     departmentId: null,
     myEmployeeId: null,
   }),
 
   actions: {
-    /**
-     * 현재 선택된 부서 ID를 설정합니다.
-     *
-     * @param {number | null} departmentId - 부서 ID, null이면 필터 미적용
-     ****************************************
-     * @param → 함수의 인자(Parameter)
-     ****************************************
-     */
     setDepartmentId(departmentId: number | null): void {
       this.departmentId = departmentId;
     },
 
-    /**
-     * 현재 로그인한 사용자의 사원 ID를 설정합니다.
-     * - 캘린더에서 본인 휴가 여부(isSelf) 판단 시 사용 예정
-     *
-     * @param {number | null} employeeId - 본인 사원 ID
-     */
     setMyEmployeeId(employeeId: number | null): void {
       this.myEmployeeId = employeeId;
     },
 
     /**
+     * authStore.accessToken(JWT)에서 employeeId를 추출해 myEmployeeId에 반영합니다.
+     * - 토큰이 없거나 payload에 값이 없으면 null 처리
+     */
+    syncMyEmployeeIdFromToken(): void {
+      const authStore = useAuthStore();
+      const token = authStore.accessToken;
+
+      if (!token) {
+        this.myEmployeeId = null;
+        return;
+      }
+
+      this.myEmployeeId = extractEmployeeIdFromToken(token);
+    },
+
+    /**
      * 부서 휴가 캘린더 데이터를 조회합니다.
-     *
-     * @param {number} year  - 조회 연도 (예: 2025)
-     * @param {number} month - 조회 월 (1~12 기준으로 백엔드와 합의)
-     * @returns {Promise<void>} API 호출 완료 후 상태를 갱신
      */
     async fetchCalendar(year: number, month: number): Promise<void> {
+      // 본인 식별값을 토큰에서 자동 동기화 (페이지에서 따로 setMyEmployeeId 호출 불필요)
+      if (this.myEmployeeId == null) {
+        this.syncMyEmployeeIdFromToken();
+      }
+
       this.loading = true;
+      this.errorMessage = null;
 
       try {
         const params: Record<string, unknown> = { year, month };
 
-        if (this.departmentId != null) {
-          params.departmentId = this.departmentId;
-        }
+        // (현재 정책상 사용 안 함) 필요하면 다시 활성화
+        // if (this.departmentId != null) params.departmentId = this.departmentId;
 
         const response = await apiClient.get<DepartmentVacationDTO[]>(
           '/vacation/department/calendar',
@@ -111,7 +128,8 @@ export const useDepartmentVacationStore = defineStore('departmentVacation', {
 
         this.items = response.data;
       } catch (error) {
-        // TODO: 필요 시 별도 에러 상태 필드(errorMessage 등)를 두고 UI에 노출
+        this.errorMessage =
+          error instanceof Error ? error.message : 'Failed to load department vacation calendar.';
         console.error('부서 휴가 캘린더 조회 실패:', error);
       } finally {
         this.loading = false;

@@ -385,7 +385,7 @@ onMounted(() => {
 
 .summary-title {
   color: #64748b;
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 500;
   line-height: 1.2;
   margin-bottom: 8px;

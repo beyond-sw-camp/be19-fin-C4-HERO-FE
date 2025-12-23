@@ -1,6 +1,6 @@
 <!-- 
   <pre>
-  (File => TypeScript / Vue) Name   : DeptVacationCalendar.vue
+  TypeScript Name   : DeptVacationCalendar.vue
   Description : 부서 휴가 캘린더 페이지
                 - 월 단위 캘린더에 부서원들의 휴가 일정을 시각화
                 - 본인 휴가 / 팀원 휴가 색상 구분
@@ -24,21 +24,13 @@
           <div class="panel-title">부서 휴가 캘린더</div>
 
           <div class="month-nav">
-            <button
-              type="button"
-              class="month-btn"
-              @click="moveMonth(-1)"
-            >
+            <button type="button" class="month-btn" @click="moveMonth(-1)">
               ‹
             </button>
             <span class="month-label">
               {{ currentYear }}년 {{ currentMonth + 1 }}월
             </span>
-            <button
-              type="button"
-              class="month-btn"
-              @click="moveMonth(1)"
-            >
+            <button type="button" class="month-btn" @click="moveMonth(1)">
               ›
             </button>
           </div>
@@ -48,11 +40,7 @@
         <div class="calendar-container">
           <!-- 요일 헤더 -->
           <div class="calendar-weekdays">
-            <div
-              v-for="dayName in weekdayLabels"
-              :key="dayName"
-              class="weekday"
-            >
+            <div v-for="dayName in weekdayLabels" :key="dayName" class="weekday">
               {{ dayName }}
             </div>
           </div>
@@ -71,16 +59,22 @@
                 </div>
 
                 <div class="cell-events">
+                  <!-- 최대 N개만 표시 -->
                   <div
-                    v-for="event in cell.events"
+                    v-for="event in cell.visibleEvents"
                     :key="event.id"
                     class="vacation-bar"
                     :class="{
                       'vacation-bar--self': event.isSelf,
-                      'vacation-bar--team': !event.isSelf
+                      'vacation-bar--team': !event.isSelf,
                     }"
                   >
                     {{ event.employeeName }} - {{ event.type }}
+                  </div>
+
+                  <!-- 나머지 개수 요약 -->
+                  <div v-if="cell.hiddenCount > 0" class="vacation-more">
+                    +{{ cell.hiddenCount }}
                   </div>
                 </div>
               </template>
@@ -109,15 +103,15 @@ import { computed, onMounted, ref } from 'vue'
 import { useDepartmentVacationStore } from '@/stores/vacation/departmentVacation'
 
 /**
- * 캘린더에 뿌릴 이벤트 타입
+ * 캘린더에 뿌릴 이벤트 타입 (구글 캘린더 기반)
+ * - employeeId는 구글에서 안 오므로(공개캘린더 A안) name 기반으로 self 판별
  */
 interface DeptVacationEvent {
-  id: number
-  employeeId: number
+  id: string
   employeeName: string
   type: string
-  startDate: string // YYYY-MM-DD
-  endDate: string   // YYYY-MM-DD
+  startDate: string // YYYY-MM-DD (inclusive)
+  endDate: string   // YYYY-MM-DD (inclusive)
   isSelf: boolean
 }
 
@@ -125,49 +119,173 @@ interface CalendarCell {
   isEmpty: boolean
   date: Date | null
   events: DeptVacationEvent[]
+  visibleEvents: DeptVacationEvent[]
+  hiddenCount: number
 }
 
 const store = useDepartmentVacationStore()
 
 const now = new Date()
 const currentYear = ref(now.getFullYear())
-const currentMonth = ref(now.getMonth()) 
+const currentMonth = ref(now.getMonth()) // 0-based
 
 /** 요일 라벨 (일 ~ 토) */
 const weekdayLabels: string[] = ['일', '월', '화', '수', '목', '금', '토']
 
-/**
- * 백엔드가 LocalDateTime을 내려줘도 캘린더에서는 날짜만 필요
- * "2025-12-05T09:00:00" -> "2025-12-05"
- */
-const toDateOnly = (value: string): string => value?.slice(0, 10)
+/** 셀 당 최대 표시 이벤트 수 */
+const MAX_EVENTS_PER_CELL = 2
+
+/** 구글 캘린더 이벤트 원본을 화면용으로 담을 상태 */
+const googleEvents = ref<DeptVacationEvent[]>([])
 
 /**
- * store.items(DepartmentVacationDTO[]) -> 캘린더 표시용 이벤트로 변환
+ * “본인” 판별용 이름
+ * - 지금 프로젝트에서 로그인 정보가 어디에 저장되는지에 따라 키를 맞춰 주세요.
+ * - 예) localStorage.getItem('employeeName') 또는 authStore.user.name 등
  */
-const events = computed<DeptVacationEvent[]>(() => {
-  const myId = store.myEmployeeId
+const myEmployeeName = ref<string>(localStorage.getItem('employeeName') || '')
 
-  return store.items.map((it) => ({
-    id: it.vacationLogId,
-    employeeId: it.employeeId,
-    employeeName: it.employeeName,
-    type: it.vacationTypeName,
-    startDate: toDateOnly(it.startDate),
-    endDate: toDateOnly(it.endDate),
-    isSelf: myId != null && it.employeeId === myId,
-  }))
+/**
+ * 로컬 기준 YYYY-MM-DD 포맷 (toISOString 사용 금지: 타임존으로 하루 밀림 방지)
+ */
+const formatLocalDate = (d: Date): string => {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+/** YYYY-MM-DD -> Date(로컬) */
+const parseYmdToDate = (ymd: string): Date => {
+  const [y, m, d] = ymd.split('-').map(Number)
+  return new Date(y, (m ?? 1) - 1, d ?? 1)
+}
+
+/** YYYY-MM-DD 하루 빼기 (종일 이벤트 end.date 보정용) */
+const minusOneDay = (ymd: string): string => {
+  const dt = parseYmdToDate(ymd)
+  dt.setDate(dt.getDate() - 1)
+  return formatLocalDate(dt)
+}
+
+/**
+ * 구글 캘린더 이벤트 제목 파싱
+ * - "김경영 - 연차휴가" 같은 형식이면 분리
+ * - 아니면 전체를 employeeName에 두고 type은 빈값 처리(원하면 디폴트 문자열로)
+ */
+const parseSummary = (summary: string): { employeeName: string; type: string } => {
+  const raw = summary?.trim() || ''
+  const parts = raw.split(' - ')
+  if (parts.length >= 2) {
+    return { employeeName: parts[0].trim(), type: parts.slice(1).join(' - ').trim() }
+  }
+  return { employeeName: raw || '(제목 없음)', type: '' }
+}
+
+/**
+ * 구글 캘린더에서 “해당 월” 이벤트를 가져옵니다.
+ * - month: 1~12
+ */
+const fetchGoogleCalendarEvents = async (year: number, month: number): Promise<void> => {
+  const apiKey = import.meta.env.VITE_GOOGLE_API_KEY as string | undefined
+  const calendarId = import.meta.env.VITE_GOOGLE_CALENDAR_ID as string | undefined
+
+  if (!apiKey || !calendarId) {
+    console.error('VITE_GOOGLE_API_KEY 또는 VITE_GOOGLE_CALENDAR_ID가 없습니다.')
+    googleEvents.value = []
+    return
+  }
+
+  // 해당 월 범위: [monthStart, nextMonthStart)
+  const monthStart = new Date(year, month - 1, 1, 0, 0, 0)
+  const nextMonthStart = new Date(year, month, 1, 0, 0, 0)
+
+  const timeMin = monthStart.toISOString()
+  const timeMax = nextMonthStart.toISOString()
+
+  const url =
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events` +
+    `?key=${encodeURIComponent(apiKey)}` +
+    `&singleEvents=true` +
+    `&orderBy=startTime` +
+    `&timeMin=${encodeURIComponent(timeMin)}` +
+    `&timeMax=${encodeURIComponent(timeMax)}` +
+    `&timeZone=Asia/Seoul` +
+    `&maxResults=2500`
+
+  const res = await fetch(url)
+  const data = await res.json()
+
+  if (!res.ok) {
+    console.error('Google Calendar API error:', res.status, data)
+    googleEvents.value = []
+    return
+  }
+
+  const items: any[] = Array.isArray(data.items) ? data.items : []
+
+  googleEvents.value = items.map((it) => {
+    const id = String(it.id)
+    const summary = String(it.summary ?? '')
+    const { employeeName, type } = parseSummary(summary)
+
+    // dateTime(시간 있음) or date(종일)
+    const startRaw: string | undefined = it?.start?.dateTime || it?.start?.date
+    const endRaw: string | undefined = it?.end?.dateTime || it?.end?.date
+
+    const startDate = startRaw ? String(startRaw).slice(0, 10) : ''
+    const endDateOnly = endRaw ? String(endRaw).slice(0, 10) : startDate
+
+    // 종일 이벤트면 end.date가 “다음날”로 내려오므로 하루 빼서 inclusive로 보정
+    const isAllDay = Boolean(it?.start?.date && it?.end?.date)
+    const inclusiveEndDate = isAllDay ? minusOneDay(endDateOnly) : endDateOnly
+
+    const isSelf =
+      myEmployeeName.value
+        ? employeeName === myEmployeeName.value
+        : false
+
+    return {
+      id,
+      employeeName,
+      type: type || '(휴가)',
+      startDate,
+      endDate: inclusiveEndDate,
+      isSelf,
+    } as DeptVacationEvent
+  })
+}
+
+/**
+ * 날짜별 이벤트 인덱스(Map) 생성
+ * - 구글 이벤트 기반
+ */
+const eventIndex = computed(() => {
+  const map = new Map<string, DeptVacationEvent[]>()
+
+  for (const ev of googleEvents.value) {
+    if (!ev.startDate || !ev.endDate) continue
+
+    const start = parseYmdToDate(ev.startDate)
+    const end = parseYmdToDate(ev.endDate)
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = formatLocalDate(d)
+      const arr = map.get(key)
+      if (arr) arr.push(ev)
+      else map.set(key, [ev])
+    }
+  }
+
+  return map
 })
 
 /**
- * 특정 날짜에 포함되는 이벤트 반환
+ * 특정 날짜(셀)에 포함되는 이벤트 반환
  */
 const getEventsForDate = (date: Date): DeptVacationEvent[] => {
-  const target = date.toISOString().slice(0, 10)
-
-  return events.value.filter((ev) => {
-    return target >= ev.startDate && target <= ev.endDate
-  })
+  const key = formatLocalDate(date)
+  return eventIndex.value.get(key) ?? []
 }
 
 /**
@@ -184,55 +302,64 @@ const calendarCells = computed<CalendarCell[]>(() => {
 
   // 앞쪽 빈 칸
   for (let i = 0; i < firstWeekday; i += 1) {
-    cells.push({ isEmpty: true, date: null, events: [] })
+    cells.push({
+      isEmpty: true,
+      date: null,
+      events: [],
+      visibleEvents: [],
+      hiddenCount: 0,
+    })
   }
 
   // 실제 날짜 셀
   for (let day = 1; day <= totalDays; day += 1) {
     const d = new Date(currentYear.value, currentMonth.value, day)
+    const dayEvents = getEventsForDate(d)
+
     cells.push({
       isEmpty: false,
       date: d,
-      events: getEventsForDate(d),
+      events: dayEvents,
+      visibleEvents: dayEvents.slice(0, MAX_EVENTS_PER_CELL),
+      hiddenCount: Math.max(0, dayEvents.length - MAX_EVENTS_PER_CELL),
     })
   }
 
   // 뒤쪽 빈 칸
   while (cells.length % 7 !== 0) {
-    cells.push({ isEmpty: true, date: null, events: [] })
+    cells.push({
+      isEmpty: true,
+      date: null,
+      events: [],
+      visibleEvents: [],
+      hiddenCount: 0,
+    })
   }
 
   return cells
 })
 
 /**
- * 월 이동 + 해당 월 데이터 재조회
+ * 월 이동 + 해당 월 데이터 재조회 (구글 캘린더)
  */
 const moveMonth = async (diff: number): Promise<void> => {
   const newDate = new Date(currentYear.value, currentMonth.value + diff, 1)
   currentYear.value = newDate.getFullYear()
   currentMonth.value = newDate.getMonth()
 
-  // API month는 1~12로 전달
-  await store.fetchCalendar(currentYear.value, currentMonth.value + 1)
+  await fetchGoogleCalendarEvents(currentYear.value, currentMonth.value + 1)
 }
 
 /**
  * 초기 로딩
+ * - 기존 store.fetchCalendar는 구글 적용 시점에는 사용하지 않습니다.
+ * - (원하면) store는 myEmployeeId 같은 정보만 들고 있게 두고, 캘린더 데이터는 googleEvents로만 씁니다.
  */
 onMounted(async () => {
-  // 로그인 전 임시 테스트용 (필요하면 켜서 사용)
-  // store.setDepartmentId(1)
-  // store.setMyEmployeeId(11)
-
-  await store.fetchCalendar(currentYear.value, currentMonth.value + 1)
+  await fetchGoogleCalendarEvents(currentYear.value, currentMonth.value + 1)
 })
 </script>
 
-<style scoped>
-/* TODO: dept-vacation-wrapper / dept-vacation-page / calendar-container 등
-   BEM 네이밍 컨벤션에 맞춰 점진적 리팩터링 예정 */
-</style>
 
 
 <style scoped>

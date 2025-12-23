@@ -210,7 +210,7 @@ import { RouterLink, useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 
 import { useAttendanceStore } from '@/stores/attendance/attendanceStore'; // 상단 요약 카드용
-import { useChangeLogStore } from '@/stores/attendance/changelog';        // 근무제 변경 이력 리스트용
+import { useChangeLogStore } from '@/stores/attendance/changeLog';        // 근무제 변경 이력 리스트용
 
 const route = useRoute();
 const attendanceStore = useAttendanceStore();
@@ -385,7 +385,7 @@ const formatTime = (time?: string | null): string => {
 
 .summary-title {
   color: #64748b;
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 500;
   line-height: 1.2;
   margin-bottom: 8px;

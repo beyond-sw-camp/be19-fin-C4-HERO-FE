@@ -1,6 +1,6 @@
 /**
  * <pre>
- * (File=>TypeScript) Name   : attendanceApi.ts
+ * TypeScript Name   : attendanceApi.ts
  * Description : 근태(Attendance) 도메인 API 호출 모듈
  *               - apiClient(axios instance) 기반으로 공통 호출 함수 제공
  *               - Authorization 헤더는 apiClient 인터셉터에서 자동 첨부됨
