@@ -1,3 +1,21 @@
+<!--
+  * <pre>
+  * Vue Name        : ApprovalPayrollAdjustForm.vue
+  * Description     : 급여조정신청서
+  *
+  * 컴포넌트 연계
+  *  - 부모 컴포넌트: ApprovalCreateCommonForm.vue
+  *
+  * History
+  *   2025/12/10 - 민철 최초 작성
+  *   2025/12/14 - 민철 공통 컴포넌트화
+  *   2025/12/23 - 민철 파일명 변경
+  * </pre>
+  *
+  * @module approval
+  * @author 민철
+  * @version 2.0
+-->
 <template>
   <div class="detail-form-section">
     <div class="form-row">

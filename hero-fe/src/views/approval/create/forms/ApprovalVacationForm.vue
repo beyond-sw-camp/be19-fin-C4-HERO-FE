@@ -1,3 +1,21 @@
+<!--
+  * <pre>
+  * Vue Name        : ApprovalVacationForm.vue
+  * Description     : 휴가신청서
+  *
+  * 컴포넌트 연계
+  *  - 부모 컴포넌트: ApprovalCreateCommonForm.vue
+  *
+  * History
+  *   2025/12/10 - 민철 최초 작성
+  *   2025/12/14 - 민철 공통 컴포넌트화
+  *   2025/12/23 - 민철 파일명 변경
+  * </pre>
+  *
+  * @module approval
+  * @author 민철
+  * @version 2.0
+-->
 <template>
   <div class="detail-form-section">
     <div class="form-row">
@@ -312,7 +330,6 @@ watch(
   border-bottom-right-radius: 10px;
 }
 
-/* --- 날짜 입력(Calendar) --- */
 .col-period {
   flex: 1;
   min-width: 300px;
@@ -363,7 +380,6 @@ watch(
   font-size: 16px;
 }
 
-/* 사유 입력 */
 .reason-content {
   flex-direction: column;
   padding: 16px 20px;
@@ -388,6 +404,6 @@ watch(
 }
 
 .input-textarea:focus {
-  border-color: #cbd5e1; /* 포커스 시 테두리 색상 변경 */
+  border-color: #cbd5e1;
 }
 </style>
