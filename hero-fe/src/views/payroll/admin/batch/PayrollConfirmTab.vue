@@ -140,8 +140,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { usePayrollAdminStore } from '@/stores/payroll/payrollAdminStore';
-import type { PayrollBatchStatus } from '@/types/payroll/payroll.admin';
+import { usePayrollAdminStore } from '@/stores/payroll/payrollBatchStore';
+import type { PayrollBatchStatus } from '@/types/payroll/payroll.batch';
 
 const store = usePayrollAdminStore();
 
@@ -246,9 +246,7 @@ const canPay = (b: { status: PayrollBatchStatus }) => {
 }
 
 .table-wrap {
-  border-radius: 12px;
   overflow: auto;
-  border: 1px solid #e5e7eb;
   flex: 1;
   min-height: 0;
 }
@@ -260,7 +258,7 @@ table {
 }
 
 .thead {
-  background: #162456;
+  background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
   color: #ffffff;
 }
 
@@ -319,7 +317,11 @@ th, td {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #06336f, #123c9c);
+    background: linear-gradient(
+    180deg,
+    rgba(28, 57, 142, 1) 0%,
+    rgba(22, 36, 86, 1) 100%
+  );
   color: white;
 }
 
@@ -382,6 +384,7 @@ th, td {
 }
 
 .warn {
+  padding:20px;
   margin-top: 10px;
   color: #b45309;
   font-size: 13px;

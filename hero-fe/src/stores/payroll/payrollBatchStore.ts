@@ -1,16 +1,17 @@
 /**
  * <pre>
- * TypeScript Name : payrollAdminStore.ts
- * Description     : 급여(Payroll) 관리자용 Pinia Store - 배치 관리
+ * TypeScript Name : payrollBatchStore.ts
+ * Description     : 급여(Payroll) 관리자용 월별 급여 배치 Pinia Store - 배치 관리
  *
  * History
  *   2025/12/09 - 동근 최초 작성 (급여 관련 API 연동 + Pinia 상태 관리 구성)
  *   2025/12/15 - 동근 배치 화면 연동 스토어 추가
+ *   2025/12/23 - payrollAdminStore에서 payrollBatchStore로 이름 변경
  * </pre>
  *
  * @module payroll-store
  * @author 동근
- * @version 1.1
+ * @version 1.2
  */
 
 import { defineStore } from 'pinia';
@@ -22,7 +23,7 @@ import type {
     PayrollEmployeeResultResponse,
     PayrollBatchStatus,
     PayrollBatchTargetEmployee,
-} from '@/types/payroll/payroll.admin';
+} from '@/types/payroll/payroll.batch';
 
 export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
     const loading = ref(false);

@@ -18,11 +18,11 @@ import type { RouteRecordRaw } from "vue-router";
  * 급여 도메인 라우트 설정 (관리자용)
  * @module payroll-admin
  * @see /views/payroll/admin/Index.vue  급여 대시보드(관리자)
- * @see /views/payroll/admin/Batch.vue  월별 급여 배치
+ * @see /views/payroll/admin/batch/Batch.vue  월별 급여 배치
  * @see /views/payroll/admin/Adjust.vue  급여 조정
  * @see /views/payroll/admin/Search.vue  사원 급여 조회(검색)
  * @see /views/payroll/admin/PaymentHistory.vue  급여 지급 이력
- * @see /views/payroll/admin/Items.vue  급여 항목 관리
+ * @see /views/payroll/admin/items/Items.vue  급여 항목 관리
  * @see /views/payroll/admin/Report.vue  급여 보고서
  * @see /views/payroll/admin/Policy.vue  급여 정책/설정 관리
  */
@@ -60,7 +60,7 @@ const payrollAdminRoutes: RouteRecordRaw[] = [
     {
         path: "/payroll/admin/items",
         name: "PayrollAdminItems",
-        component: () => import("@/views/payroll/admin/Items.vue"),
+        component: () => import("@/views/payroll/admin/items/Items.vue"),
         meta: { title: "급여 항목 관리" },
     },
     {
