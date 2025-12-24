@@ -82,9 +82,10 @@ const truncate = (text?: string, length = 15) => {
 const getStatusText = (status?: string) => {
   if (!status) return '-';
   switch (status) {
-    case '0': case 'WAITING': return '대기';
-    case '1': case 'APPROVED': return '승인';
-    case '2': case 'REJECTED': return '반려';
+    case 'WAITING': return '대기';
+    case 'REVIEW_PASSED': return '승인';
+    case 'FINAL_APPROVED': return '최종 승인';
+    case 'REJECTED': return '반려';
     default: return status;
   }
 };
@@ -92,9 +93,10 @@ const getStatusText = (status?: string) => {
 // 상태별 CSS 클래스 매핑
 const getStatusClass = (status?: string) => {
   switch (status) {
-    case '0': case 'WAITING': return 'status-pending';
-    case '1': case 'APPROVED': return 'status-approved';
-    case '2': case 'REJECTED': return 'status-rejected';
+    case 'WAITING': return 'status-pending';
+    case 'REVIEW_PASSED': return 'status-approved';
+    case 'FINAL_APPROVED': return 'status-approved';
+    case 'REJECTED': return 'status-rejected';
     default: return '';
   }
 };
