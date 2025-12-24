@@ -378,7 +378,6 @@ const getNotificationIcon = (type: string): string => {
     'attendance': '/images/alarm/alarm-check.svg',
     'payroll': '/images/alarm/alarm-money.svg',
     'approval': '/images/alarm/alarm-paper.svg',
-    'leave': '/images/alarm/alarm-calendar.svg',
     'evaluation': '/images/alarm/alarm-paper.svg',
     'system': '/images/alarm/alarmsetting.svg'
   };
