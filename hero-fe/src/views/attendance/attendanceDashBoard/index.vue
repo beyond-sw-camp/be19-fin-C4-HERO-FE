@@ -69,12 +69,6 @@
                 class="filter-input"
                 :max="today"
               />
-<<<<<<< HEAD
-              <span class="date-icon">📅</span>
-            </div>
-          </div>
-=======
->>>>>>> cc32dee900475e50a45125cb145da3537f398b09
 
               <span class="filter-separator">~</span>
 
@@ -84,15 +78,11 @@
                 class="filter-input"
                 :max="today"
               />
-<<<<<<< HEAD
-              <span class="date-icon">📅</span>
-=======
             </div>
             <!-- 오른쪽: 검색 / 초기화 버튼 -->
             <div class="search-button-group">
               <button class="btn-search" @click="onSearch">검색</button>
               <button class="btn-reset" @click="onReset">초기화</button>
->>>>>>> cc32dee900475e50a45125cb145da3537f398b09
             </div>
           </div>
         </div>
