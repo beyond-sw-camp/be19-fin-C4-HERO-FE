@@ -1,6 +1,6 @@
 <!--
   <pre>
-  Vue Name   : SettingsNotification
+  Vue Name   : NotificationSettings
   Description : 관리자 알림 발송 및 관리 페이지
   
   History
@@ -203,7 +203,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue';
 import { useSettingsNotificationStore } from '@/stores/settings/settings-notification.store';
-import NotificationTargetModal from './NotificationTargetModal.vue';
+import NotificationTargetModal from './NotificationSettingsTargetModal.vue';
 import {
   Chart as ChartJS,
   Title,
