@@ -79,9 +79,13 @@ const emit = defineEmits<{
 }>();
 </script>
 <style scoped>
+* {
+  font-size: 14px;
+  font-family: "Inter-Regular", sans-serif;
+}
+
 /* 필터 섹션 컨테이너 */
 .filter-section {
-  max-width: 1400px;
   margin: 24px auto;
   padding: 0 32px;
   display: flex;
@@ -144,9 +148,8 @@ const emit = defineEmits<{
 /* 활성화된 탭 버튼 스타일 */
 .tab-button.active {
   background: linear-gradient(135deg, #1E40AF 0%, #1E3A8A 100%);
-  border-color: #1E40AF;
+  /* border-color: #1E40AF; */
   color: white;
-  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
 }
 
 /* 알림 개수 배지 */

@@ -328,7 +328,7 @@
         </div>
 
       <!-- 설정 관리 -->
-      <div class="menu-item has-dropdown"
+      <div class="menu-item"
           :class="{ 'active-parent': activeParent === 'settings' }"
           @click="handleParentClick('settings')">
         <div class="menu-content">
@@ -336,16 +336,6 @@
             <img class="settings-icon sidebar-icon" :src="getMenuIcon('settings')" />
           </div>
           <div class="menu-text">설정</div>
-        </div>
-        <div class="dropdown-arrow" :class="{ rotate: isSettingsOpen }">
-          <img class="personnel-dropdown-arrow" src="/images/dropdownArrow.png" />
-        </div>
-      </div>
-      
-      <div v-if="isSettingsOpen && !isCollapsed" class="sub-menu-list">
-        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'department' }"
-            @click="handleSubMenuClick('department')">
-          <div class="sub-menu-text">시스템 설정</div>
         </div>
       </div>
 
@@ -399,7 +389,6 @@ const isAttendanceOpen = ref<boolean>(false);
 const isVacationOpen = ref<boolean>(false);
 const isPayrollOpen = ref<boolean>(false);
 const isPayrollAdminOpen = ref<boolean>(false);
-const isSettingsOpen = ref<boolean>(false);
 
 
 //Sidebar 접힘 여부
@@ -416,7 +405,7 @@ const menuIcons = {
   payroll: { default: '/images/payroll.svg', active: '/images/payroll-white.svg' },
   payrollAdmin: { default: '/images/payroll-admin.svg', active: '/images/payroll-admin-white.svg' },
   organization: { default: '/images/organization.svg', active: '/images/organization-white.svg' },
-  settings: { default: '/images/config.svg', active: '/images/config.svg' },
+  settings: { default: '/images/config.svg', active: '/images/config-white.svg' },
 };
 
 /**
@@ -444,6 +433,8 @@ const handleParentClick = (key: string) => {
 // 대시보드는 바로 이동
   if( key === 'dashboard'){
     router.push('/');
+  } else if (key === 'settings') {
+    router.push('/settings');
   }
 
   //클릭한 메뉴만 토글, 나머지는 자동으로 열린 메뉴 닫기
@@ -454,8 +445,6 @@ const handleParentClick = (key: string) => {
   isVacationOpen.value = key === 'vacation' ? !isVacationOpen.value : false;
   isPayrollOpen.value = key === 'payroll' ? !isPayrollOpen.value : false;
   isPayrollAdminOpen.value = key === 'payrollAdmin' ? !isPayrollAdminOpen.value : false;
-  isSettingsOpen.value = key === 'settings' ? !isSettingsOpen.value : false;
-
 };
 
 /**
@@ -538,11 +527,6 @@ const handleSubMenuClick = (key: string) => {
   } else if (key === 'vacationDept') {
     router.push('/vacation/department');
   }
-
-  // 설정 관리 하위 메뉴 라우팅
-  if(key === 'department'){
-    router.push ('/settings/department');
-  }
 };
 
 // 사이드바 접기/펼치기 토글
@@ -558,7 +542,6 @@ const handleCollapse = () => {
     isVacationOpen.value = false;
     isPayrollOpen.value = false;
     isPayrollAdminOpen.value = false;
-    isSettingsOpen.value = false;
   } else {
     syncActiveByRoute(route.path);
   }
@@ -678,6 +661,12 @@ const syncActiveByRoute = (path: string) => {
   // 조직도
   if (path.startsWith('/organization')) {
     activeParent.value = 'organization';
+  }
+
+  // 설정
+  if (path.startsWith('/settings')) {
+    activeParent.value = 'settings';
+    return;
   }
 };
 

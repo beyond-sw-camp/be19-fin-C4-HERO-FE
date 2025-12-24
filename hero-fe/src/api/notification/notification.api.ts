@@ -81,7 +81,7 @@ export const notificationApi = {
    * @returns {Promise<void>}
    */
   softRemove: async (notificationId: number): Promise<void> => {
-    await apiClient.delete(`/notifications/${notificationId}`);
+    await apiClient.patch(`/notifications/${notificationId}`);
   },
 
   /**

@@ -147,7 +147,6 @@ export type NotificationType =
  * - attendance: 근태 관련 알림
  * - payroll: 급여 관련 알림
  * - approval: 결재 관련 알림
- * - leave: 휴가 관련 알림
  * - evaluation: 평가 관련 알림
  * - system: 시스템 공지 및 기타 알림
  */
@@ -155,7 +154,6 @@ export type NotificationCategory =
   | 'attendance'
   | 'payroll'
   | 'approval'
-  | 'leave'
   | 'evaluation'
   | 'system';
 

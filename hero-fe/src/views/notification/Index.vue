@@ -126,7 +126,6 @@ const tabs: Ref<Tab[]> = ref([
   { id: 'attendance', label: '근태', count: 0 },
   { id: 'payroll', label: '급여', count: 0 },
   { id: 'approval', label: '결재', count: 0 },
-  { id: 'leave', label: '휴가', count: 0 },
   { id: 'evaluation', label: '평가', count: 0 },
   { id: 'system', label: '시스템', count: 0 },
   { id: 'deleted', label: '삭제된 알림', count: 0 }
@@ -272,7 +271,7 @@ const handleMarkAllRead = async (): Promise<void> => {
  * 설정 버튼 클릭 이벤트 핸들러
  */
 const toggleSettings = (): void => {
-  router.push({ name: 'NotificationSettings' });  // 설정 페이지로 이동
+  router.push({ name: 'NotificationMySettings' });  // 설정 페이지로 이동
 };
 
 /**
@@ -309,7 +308,6 @@ const getIcon = (type: NotificationCategory): string => {
     'attendance': '/images/alarm/alarm-check.svg',
     'payroll': '/images/alarm/alarm-money.svg',
     'approval': '/images/alarm/alarm-paper.svg',
-    'leave': '/images/alarm/alarm-calendar.svg',
     'evaluation': '/images/alarm/alarm-paper.svg',
     'system': '/images/alarm/alarmsetting.svg'
   };
@@ -368,7 +366,6 @@ onUnmounted(() => {
 }
 
 .notification-list {
-  max-width: 1400px;
   margin: 0 auto;
   padding: 0 32px 40px;
   overflow-y: visible;

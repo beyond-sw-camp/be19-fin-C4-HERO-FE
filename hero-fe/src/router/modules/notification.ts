@@ -38,10 +38,12 @@ const notificationRoutes: RouteRecordRaw[] = [
     }
   },
   {
-    path: '/notifications/settings',
-    name: 'NotificationSettings',
-    component: () => import('@/views/notification/NotificationSettings.vue'),
-    meta: { requiresAuth: true }
+    path: '/notifications/my-settings',
+    name: 'NotificationMySettings',
+    component: () => import('@/views/notification/NotificationMySettings.vue'),
+    meta: {
+      title: '알림 설정'
+     }
   }
 ];
 

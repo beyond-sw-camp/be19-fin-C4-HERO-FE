@@ -1,11 +1,12 @@
 /*
   <pre>
-  (File=>TypeScript) Name   : settings.ts
+  TypeScript Name   : settings
   Description : 부서/직책/직급/권한 등의 설정을 위한 모듈입니다.
 
   History
-  2025/12/15 - 승건 최초 작성
-  2025/12/18 - 민철 결재 관리 설정 화면 컴포넌트 생성 
+  2025/12/15 - (승건) 최초 작성
+  2025/12/18 - (민철) 결재 관리 설정 화면 컴포넌트 생성 
+  2025/12/23 - (혜원) 알림 관리 설정 화면 컴포넌트 생성
   </pre>
 
   @author 이승건
@@ -19,6 +20,7 @@ import Grade from '@/views/settings/Grade.vue';
 import JobTitle from '@/views/settings/JobTitle.vue';
 import Permission from '@/views/settings/Permission.vue';
 import ApprovalSettings from '@/views/settings/ApprovalSettings.vue';
+import NotificationSettings from '@/views/settings/notification/NotificationSettings.vue';
 
 const settingsRoutes: RouteRecordRaw[] = [
   {
@@ -54,8 +56,13 @@ const settingsRoutes: RouteRecordRaw[] = [
         name: 'ApprovalSettings',
         component: ApprovalSettings,
       },
+      {
+        path: 'notification',
+        name: 'NotificationSettings',
+        component: NotificationSettings,
+      }
     ],
-  },
+  }
 ];
 
 export default settingsRoutes;

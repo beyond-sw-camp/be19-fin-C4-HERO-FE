@@ -216,12 +216,6 @@ const notificationTypes: NotificationSettingItem[] = [
     icon: '/images/alarm/alarm-check.svg',
   },
   {
-    id: 'leaveEnabled',
-    label: '휴가 알림',
-    description: '휴가 승인, 반려 알림',
-    icon: '/images/alarm/alarm-calendar.svg',
-  },
-  {
     id: 'evaluationEnabled',
     label: '평가 알림',
     description: '평가 시작, 완료 알림',

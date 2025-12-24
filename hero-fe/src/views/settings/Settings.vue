@@ -42,6 +42,7 @@ const tabs = [
   { id: 'jobTitle', label: '직책 관리', path: '/settings/jobTitle' },
   { id: 'permission', label: '권한 관리', path: '/settings/permission' },
   { id: 'approval', label: '결재 관리', path: '/settings/approval' },
+  { id: 'notification', label: '알림 관리', path: '/settings/notification' },
 ];
 
 const changeTab = (tab: any) => {
@@ -88,6 +89,8 @@ onMounted(() => {
   padding: 20px;
   flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-card {
@@ -96,6 +99,9 @@ onMounted(() => {
   border-top-left-radius: 0;
   border: 1px solid #e2e8f0;
   min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .tabs-container {
@@ -133,7 +139,8 @@ onMounted(() => {
 }
 
 .content-container {
-  padding: 24px;
-  height: 570px;
+  flex: 1;
+  height: auto;
+  overflow: hidden;
 }
 </style>
