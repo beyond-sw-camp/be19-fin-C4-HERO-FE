@@ -66,18 +66,19 @@ const emit = defineEmits<{
 </script>
 
 <style scoped>
-/* 헤더 영역 */
 .header {
+  width: 100%;
+  height: 50px;
   background: white;
   border-bottom: 1px solid #E2E8F0;
+  border-width: 0px 0px 2px 0px;
+  padding: 6px 8px;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .header-content {
-  max-width: 1400px;
   height: 55px;
   margin: 0 auto;
   padding: 20px 32px;
@@ -89,7 +90,7 @@ const emit = defineEmits<{
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
 }
 
 /* 뒤로가기 버튼 */
@@ -102,13 +103,11 @@ const emit = defineEmits<{
   background: transparent;
   border: none;
   color: #64748B;
-  cursor: pointer;
   padding: 0;
   transition: all 0.2s;
 }
 
 .back-button:hover {
-  color: #1E40AF;
   transform: translateX(-2px);
 }
 
