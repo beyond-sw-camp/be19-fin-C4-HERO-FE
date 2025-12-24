@@ -185,14 +185,6 @@ const formatMoney = (value: number) => `₩${value.toLocaleString()}`;
   font-size: 13px;
 }
 
-.history-table thead tr:first-child th:first-child {
-  border-top-left-radius: 5px;
-}
-
-.history-table thead tr:first-child th:last-child {
-  border-top-right-radius: 5px;
-}
-
 .history-table th {
   text-align: left;
   padding: 12px 20px;
@@ -242,7 +234,7 @@ const formatMoney = (value: number) => `₩${value.toLocaleString()}`;
 }
 
 .table-header {
-  background-color: #162456;
+  background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
   color: white;
 }
 

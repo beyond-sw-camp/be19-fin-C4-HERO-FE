@@ -18,17 +18,17 @@ import { ref, computed } from 'vue';
 import { notificationApi } from '@/api/notification/notification.api';
 import { useAuthStore } from '@/stores/auth';
 import { useNotificationSocket } from '@/composables/notification/useNotificationSocket';
-import type { 
-  Notification, 
-  NotificationDTO, 
-  NotificationCategory 
+import type {
+  Notification,
+  NotificationDTO,
+  NotificationCategory
 } from '@/types/notification/notification.types';
 import { useNotificationSettingsStore } from './notificationSettingsStore';
 
 export const useNotificationStore = defineStore('notification', () => {
   const authStore = useAuthStore();
   const { isConnected, connect, disconnect } = useNotificationSocket();
-  
+
   // State 
   const notifications = ref<Notification[]>([]);
   const deletedNotifications = ref<Notification[]>([]);
@@ -50,10 +50,10 @@ export const useNotificationStore = defineStore('notification', () => {
     try {
       isLoading.value = true;
       error.value = null;
-      
+
       const data = await notificationApi.findNotifications(false);
       notifications.value = data.map(mapDTOToNotification);
-        
+
     } catch (err) {
       error.value = '알림을 불러오는데 실패했습니다';
       console.error('알림 조회 실패:', err);
@@ -84,10 +84,10 @@ export const useNotificationStore = defineStore('notification', () => {
     try {
       isLoading.value = true;
       error.value = null;
-      
+
       const data = await notificationApi.findDeletedNotifications();
       deletedNotifications.value = data.map(mapDTOToNotification);
-      
+
     } catch (err) {
       error.value = '삭제된 알림을 불러오는데 실패했습니다';
       console.error('삭제된 알림 조회 실패:', err);
@@ -104,7 +104,7 @@ export const useNotificationStore = defineStore('notification', () => {
   const markAsRead = async (notificationId: number): Promise<void> => {
     try {
       await notificationApi.modifyIsRead(notificationId);
-      
+
       // 로컬 상태 업데이트
       const notification = notifications.value.find(n => n.notificationId === notificationId);
       if (notification && !notification.isRead) {
@@ -126,7 +126,7 @@ export const useNotificationStore = defineStore('notification', () => {
 
     try {
       await notificationApi.modifyAllIsRead();
-      
+
       // 로컬 상태 업데이트
       const now = new Date().toISOString();
       notifications.value.forEach(notification => {
@@ -136,7 +136,7 @@ export const useNotificationStore = defineStore('notification', () => {
         }
       });
       unreadCount.value = 0;
-      
+
     } catch (err) {
       console.error('전체 읽음 처리 실패:', err);
       throw err;
@@ -149,20 +149,20 @@ export const useNotificationStore = defineStore('notification', () => {
   const softDeleteNotification = async (notificationId: number): Promise<void> => {
     try {
       await notificationApi.softRemove(notificationId);
-      
+
       // 일반 목록에서 제거
       const index = notifications.value.findIndex(n => n.notificationId === notificationId);
       if (index !== -1) {
         const notification = notifications.value[index];
-        
+
         // 삭제 상태 업데이트
         notification.isDeleted = true;
         notification.deletedAt = new Date().toISOString();
-        
+
         // 삭제된 목록으로 이동
         deletedNotifications.value.unshift(notification);
         notifications.value.splice(index, 1);
-        
+
         // 미읽은 알림이었다면 카운트 감소
         if (!notification.isRead) {
           unreadCount.value = Math.max(0, unreadCount.value - 1);
@@ -181,20 +181,20 @@ export const useNotificationStore = defineStore('notification', () => {
   const restoreNotification = async (notificationId: number): Promise<void> => {
     try {
       await notificationApi.modifyRestore(notificationId);
-      
+
       // 삭제된 목록에서 제거
       const index = deletedNotifications.value.findIndex(n => n.notificationId === notificationId);
       if (index !== -1) {
         const notification = deletedNotifications.value[index];
-        
+
         // 복구 상태 업데이트
         notification.isDeleted = false;
         notification.deletedAt = null;
-        
+
         // 일반 목록으로 복구
         notifications.value.unshift(notification);
         deletedNotifications.value.splice(index, 1);
-        
+
         // 미읽은 알림이면 카운트 증가
         if (!notification.isRead) {
           unreadCount.value += 1;
@@ -213,7 +213,7 @@ export const useNotificationStore = defineStore('notification', () => {
   const hardDeleteNotification = async (notificationId: number): Promise<void> => {
     try {
       await notificationApi.removeNotification(notificationId);
-      
+
       // 삭제된 목록에서 완전히 제거
       const index = deletedNotifications.value.findIndex(n => n.notificationId === notificationId);
       if (index !== -1) {
@@ -234,18 +234,18 @@ export const useNotificationStore = defineStore('notification', () => {
     // 1. DB 설정 확인
     const settingsStore = useNotificationSettingsStore();
     await settingsStore.loadSettings();
-    
+
     if (!settingsStore.settings.browserNotification) {
       console.log('사용자가 브라우저 알림을 OFF로 설정함. 알림 표시 안 함');
       return;
     }
-    
+
     // 2. 브라우저 권한 확인
     if (!('Notification' in window)) {
       console.log('브라우저가 알림을 지원하지 않음');
       return;
     }
-    
+
     if (Notification.permission !== 'granted') {
       console.log('브라우저 알림 권한이 없음. 알림 표시 안 함');
       return;
@@ -302,7 +302,7 @@ export const useNotificationStore = defineStore('notification', () => {
     const date = new Date(dateString);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    
+
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
@@ -311,7 +311,7 @@ export const useNotificationStore = defineStore('notification', () => {
     if (minutes < 60) return `${minutes}분 전`;
     if (hours < 24) return `${hours}시간 전`;
     if (days < 7) return `${days}일 전`;
-    
+
     return date.toLocaleDateString('ko-KR');
   };
 
@@ -327,10 +327,10 @@ export const useNotificationStore = defineStore('notification', () => {
     }
 
     console.log('[WebSocket] 연결 시작:', employeeId.value);
-    
+
     connect(employeeId.value, (newNotification: NotificationDTO) => {
       console.log('[WebSocket] 새 알림 수신:', newNotification);
-      
+
       const formattedNotification = mapDTOToNotification(newNotification);
       formattedNotification.timeAgo = '방금 전';
 
@@ -359,12 +359,12 @@ export const useNotificationStore = defineStore('notification', () => {
     isLoading,
     error,
     isConnected,
-    
+
     // Actions - Query
     fetchNotifications,
     fetchUnreadCount,
     fetchDeletedNotifications,
-    
+
     // Actions - Command
     markAsRead,
     markAllAsRead,
@@ -372,7 +372,7 @@ export const useNotificationStore = defineStore('notification', () => {
     restoreNotification,
     hardDeleteNotification,
     addNotification,
-    
+
     // WebSocket
     connectWebSocket,
     disconnectWebSocket,

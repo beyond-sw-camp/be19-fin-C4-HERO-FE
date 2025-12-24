@@ -176,8 +176,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { usePayrollAdminStore } from '@/stores/payroll/payrollAdminStore';
-import type { PayrollEmployeeResultResponse, PayrollStatus } from '@/types/payroll/payroll.admin';
+import { usePayrollAdminStore } from '@/stores/payroll/payrollBatchStore';
+import type { PayrollEmployeeResultResponse, PayrollStatus } from '@/types/payroll/payroll.batch';
 import PayrollErrorModal from './PayrollErrorModal.vue';
 
 const store = usePayrollAdminStore();
@@ -344,10 +344,8 @@ watch(
 }
 
 .table-wrap {
-  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
-}
+  }
 
 table {
   width: 100%;
@@ -356,7 +354,7 @@ table {
 }
 
 .thead {
-  background: #162456;
+  background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
   color: #ffffff;
 }
 
@@ -380,7 +378,11 @@ th, td {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #06336f, #123c9c);
+   background: linear-gradient(
+    180deg,
+    rgba(28, 57, 142, 1) 0%,
+    rgba(22, 36, 86, 1) 100%
+  );
   color: white;
 }
 
@@ -484,4 +486,9 @@ th, td {
   color: #dc2626;
   font-size: 13px;
 }
+
+tbody tr:not(.empty):nth-child(even) {
+  background-color: #E2E8F0;
+}
+
 </style>

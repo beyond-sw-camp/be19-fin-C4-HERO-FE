@@ -132,8 +132,8 @@ import { ref, onMounted } from 'vue';
 import CreateBatchModal from './CreateBatchModal.vue';
 import BatchDetailDrawer from './BatchDetailDrawer.vue';
 
-import { usePayrollAdminStore } from '@/stores/payroll/payrollAdminStore';
-import type { PayrollBatchStatus } from '@/types/payroll/payroll.admin';
+import { usePayrollAdminStore } from '@/stores/payroll/payrollBatchStore';
+import type { PayrollBatchStatus } from '@/types/payroll/payroll.batch';
 
 const store = usePayrollAdminStore();
 
@@ -225,9 +225,7 @@ const badgeClass = (s: PayrollBatchStatus) => {
 }
 
 .table-wrap {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #e5e7eb;
+  overflow: auto;
 }
 
 table {
@@ -237,7 +235,7 @@ table {
 }
 
 .thead {
-  background: #162456;
+  background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
   color: #ffffff;
 }
 
@@ -261,7 +259,11 @@ th, td {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #06336f, #123c9c);
+   background: linear-gradient(
+    180deg,
+    rgba(28, 57, 142, 1) 0%,
+    rgba(22, 36, 86, 1) 100%
+  );
   color: white;
 }
 
@@ -334,7 +336,11 @@ th, td {
 }
 
 .mini-btn.primary {
-  background: #162456;
+   background: linear-gradient(
+    180deg,
+    rgba(28, 57, 142, 1) 0%,
+    rgba(22, 36, 86, 1) 100%
+  );
   color: #fff;
   border-color: #162456;
 }
