@@ -332,7 +332,7 @@ const formatMoney = (value: number) => `₩${value.toLocaleString()}`;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #06336f, #123c9c);
+  background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
   color: white;
 }
 

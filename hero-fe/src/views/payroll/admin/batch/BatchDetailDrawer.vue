@@ -107,7 +107,7 @@
 </template>
 
 <script setup lang="ts">
-import type { PayrollBatchDetailResponse, PayrollBatchStatus } from '@/types/payroll/payroll.admin';
+import type { PayrollBatchDetailResponse, PayrollBatchStatus } from '@/types/payroll/payroll.batch';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -289,7 +289,11 @@ const badgeClass = (s: PayrollBatchStatus) => {
 }
 
 .btn--primary {
-  background: linear-gradient(135deg, #06336f, #123c9c);
+   background: linear-gradient(
+    180deg,
+    rgba(28, 57, 142, 1) 0%,
+    rgba(22, 36, 86, 1) 100%
+  );
   color: #ffffff;
 }
 

@@ -1,6 +1,6 @@
 /**
  * <pre>
- * File Name: template.types.ts
+ * TypeScript Name: template.types.ts
  * Description: template관련 객체 타입 정의
  *
  * 주요 타입:

@@ -73,7 +73,7 @@ import { ref } from 'vue';
 import PayrollBatchTab from './PayrollBatchTab.vue';
 import PayrollCalculateTab from './PayrollCalculateTab.vue';
 import PayrollConfirmTab from './PayrollConfirmTab.vue';
-import { usePayrollAdminStore } from '@/stores/payroll/payrollAdminStore';
+import { usePayrollAdminStore } from '@/stores/payroll/payrollBatchStore';
 
 type TabKey = 'batch' | 'calculate' | 'confirm';
 

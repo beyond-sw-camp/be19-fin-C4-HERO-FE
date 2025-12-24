@@ -1,6 +1,6 @@
 /**
  * <pre>
- * File Name: approval.api.ts
+ * TypeScript Name: approval.api.ts
  * Description 
  * :결재(Approval) 도메인과 관련된 서버 API 호출을 담당하는 모듈
  * - 비즈니스 로직이나 상태 관리는 포함하지 않음

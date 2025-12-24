@@ -13,10 +13,11 @@
  * History
  * 2025/12/12 - 동근 최초 작성
  * 2025/12/15 - 동근 배치 API 연동 추가
+ * 2025/12/23 - 동근 수당/공제 항목 API 연동 추가
  * </pre>
  *
  * @author 동근
- * @version 1.1
+ * @version 1.2
  */
 import client from '@/api/apiClient';
 
@@ -26,9 +27,19 @@ import type {
     PayrollEmployeeResultResponse,
     PayrollBatchStatus,
     PayrollBatchTargetEmployee
-} from '@/types/payroll/payroll.admin';
+} from '@/types/payroll/payroll.batch';
+
+import type {
+    AllowanceResponse,
+    AllowanceCreateRequest,
+    DeductionResponse,
+    DeductionCreateRequest,
+    Yn
+} from '@/types/payroll/payroll.items';
 
 const BASE = '/admin/payroll/batches';
+const ALLOWANCE_BASE = '/admin/payroll/allowances';
+const DEDUCTION_BASE = '/admin/payroll/deductions';
 
 export const payrollAdminApi = {
     // GET /api/admin/payroll/batches?month=&status=
@@ -88,5 +99,49 @@ export const payrollAdminApi = {
     // POST /api/admin/payroll/batches/{batchId}/pay
     async payBatch(batchId: number) {
         await client.post<void>(`${BASE}/${batchId}/pay`);
+    },
+
+    // ===== Allowance =====
+    async listAllowances(params?: { activeYn?: Yn | '' }) {
+        const res = await client.get<AllowanceResponse[]>(ALLOWANCE_BASE, { params });
+        return res.data;
+    },
+
+    async createAllowance(body: AllowanceCreateRequest) {
+        await client.post<void>(ALLOWANCE_BASE, body);
+    },
+
+    async updateAllowance(allowanceId: string, body: AllowanceCreateRequest) {
+        await client.put<void>(`${ALLOWANCE_BASE}/${allowanceId}`, body);
+    },
+
+    async activateAllowance(allowanceId: string) {
+        await client.patch<void>(`${ALLOWANCE_BASE}/${allowanceId}/activate`);
+    },
+
+    async deactivateAllowance(allowanceId: string) {
+        await client.patch<void>(`${ALLOWANCE_BASE}/${allowanceId}/deactivate`);
+    },
+
+    // ===== Deduction =====
+    async listDeductions(params?: { activeYn?: Yn | '' }) {
+        const res = await client.get<DeductionResponse[]>(DEDUCTION_BASE, { params });
+        return res.data;
+    },
+
+    async createDeduction(body: DeductionCreateRequest) {
+        await client.post<void>(DEDUCTION_BASE, body);
+    },
+
+    async updateDeduction(deductionId: string, body: DeductionCreateRequest) {
+        await client.put<void>(`${DEDUCTION_BASE}/${deductionId}`, body);
+    },
+
+    async activateDeduction(deductionId: string) {
+        await client.patch<void>(`${DEDUCTION_BASE}/${deductionId}/activate`);
+    },
+
+    async deactivateDeduction(deductionId: string) {
+        await client.patch<void>(`${DEDUCTION_BASE}/${deductionId}/deactivate`);
     }
 };

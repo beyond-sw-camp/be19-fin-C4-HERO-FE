@@ -1,3 +1,20 @@
+<!--
+  * <pre>
+  * Vue Name        : ApprovalSettings.vue
+  * Description     : 결재 관리 탭
+  *
+  * 컴포넌트 연계
+  *  - 부모 컴포넌트: Settings.vue
+  *
+  * History
+  *   2025/12/18 - 민철 결재 관리 탭 UI 구현
+  *   2025/12/22 - 민철 설정 API 연동
+  * </pre>
+  *
+  * @module settings
+  * @author 민철
+  * @version 2.0
+-->
 <template>
   <div class="approval-page-container">
     <aside class="side-panel">

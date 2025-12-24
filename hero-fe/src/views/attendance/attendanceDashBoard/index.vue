@@ -58,53 +58,44 @@
     <!-- 하단 패널 (필터 + 테이블 + 페이지네이션) -->
     <div class="dashboard-panel">
       <!-- Personal.vue 과 동일한 구조의 기간 필터 영역 -->
-      <div class="panel-search">
-        <div class="panel-search-inner">
-          <!-- 기간(시작) -->
-          <div class="date-filter-group">
-            <span class="date-label">기간(시작)</span>
-            <div class="date-input-wrapper">
+        <div class="panel-search">
+          <div class="panel-search-inner">
+            <!-- 왼쪽: 조회기간 + 날짜 범위 (전자결재와 동일한 형태) -->
+            <div class="filter-row">
+              <span class="filter-label">조회기간</span>
               <input
                 v-model="startDate"
                 type="date"
-                class="date-input"
+                class="filter-input"
+                :max="today"
               />
+<<<<<<< HEAD
               <span class="date-icon">📅</span>
             </div>
           </div>
+=======
+>>>>>>> cc32dee900475e50a45125cb145da3537f398b09
 
-          <!-- 기간(종료) -->
-          <div class="date-filter-group">
-            <span class="date-label">기간(종료)</span>
-            <div class="date-input-wrapper">
+              <span class="filter-separator">~</span>
+
               <input
                 v-model="endDate"
                 type="date"
-                class="date-input"
+                class="filter-input"
+                :max="today"
               />
+<<<<<<< HEAD
               <span class="date-icon">📅</span>
+=======
+            </div>
+            <!-- 오른쪽: 검색 / 초기화 버튼 -->
+            <div class="search-button-group">
+              <button class="btn-search" @click="onSearch">검색</button>
+              <button class="btn-reset" @click="onReset">초기화</button>
+>>>>>>> cc32dee900475e50a45125cb145da3537f398b09
             </div>
           </div>
-
-          <!-- 검색 / 초기화 버튼 -->
-          <div class="search-button-group">
-            <button
-              type="button"
-              class="btn-search"
-              @click="onSearch"
-            >
-              검색
-            </button>
-            <button
-              type="button"
-              class="btn-reset"
-              @click="onReset"
-            >
-              초기화
-            </button>
-          </div>
         </div>
-      </div>
 
       <!-- 테이블 영역 -->
       <div class="dashboard-table-wrapper">
@@ -204,6 +195,9 @@ import {
   useAttendanceDashboardStore,
   type AttendanceDashboardDTO,
 } from '@/stores/attendance/dashboard';
+
+const today = new Date().toISOString().slice(0, 10);
+
 
 /** 근태 대시보드 Pinia 스토어 인스턴스 */
 const dashboardStore = useAttendanceDashboardStore();
@@ -377,7 +371,7 @@ onMounted(() => {
 
 /* === Personal.vue 와 동일하게 맞춘 기간 필터 영역 === */
 .panel-search {
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
   padding: 14px 18px;
 }
 
@@ -386,6 +380,19 @@ onMounted(() => {
   justify-content: flex-end;
   align-items: flex-end;
   gap: 8px;
+}
+
+/* 조회기간 + 날짜 범위 한 줄 정렬 */
+.filter-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+/* "조회기간" 텍스트 */
+.filter-label {
+  color: #64748b;
 }
 
 /* 날짜 필터 그룹 */
@@ -578,5 +585,21 @@ onMounted(() => {
   background: #155dfc;
   color: #ffffff;
   border-color: #155dfc;
+}
+
+/* 날짜 인풋 (전자결재 페이지와 비슷한 스타일) */
+.filter-input {
+  width: 220px;
+  height: 40px;
+  border-radius: 10px;
+  border: 2px solid #cad5e2;
+  background: #ffffff;
+  padding: 0 12px;
+  color: #1f2933;
+}
+
+/* ~ 구분자 */
+.filter-separator {
+  color: #64748b;
 }
 </style>

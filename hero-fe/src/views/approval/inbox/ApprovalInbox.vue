@@ -1,20 +1,21 @@
 <!--
- * <pre>
- * Vue Name        : Inbox.vue
- * Description     : 결재문서함
- *
- * 컴포넌트 연계
- * - 문서 상세 조회
- * - TemplateList.vue: 새 결재 작성 버튼 클릭 시 결재문서서식페이지로 라우팅
- *
- * History
- *   2025/12/16 - 민철 최초 작성
- * </pre>
- *
- * @module electornicApproval-inbox
- * @author 민철
- * @version 1.0
- -->
+  * <pre>
+  * Vue Name        : ApprovalInbox.vue
+  * Description     : 결재문서함
+  *
+  * 컴포넌트 연계
+  * - 문서 상세 조회
+  * - ApprovalTemplates.vue: 새 결재 작성 버튼 클릭 시 결재문서서식페이지로 라우팅
+  *
+  * History
+  *   2025/12/17 - 민철 최초 작성
+  *   2025/12/23 - 민철 파일명 변경  
+  * </pre>
+  *
+  * @module approval
+  * @author 민철
+  * @version 2.0
+-->
 <template>
   <div class="inbox-container">
     <div class="inbox-wrapper">

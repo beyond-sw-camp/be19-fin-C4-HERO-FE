@@ -1,3 +1,21 @@
+<!--
+  * <pre>
+  * Vue Name        : ApprovalAttendanceFixForm.vue
+  * Description     : 근태기록수정신청서
+  *
+  * 컴포넌트 연계
+  *  - 부모 컴포넌트: ApprovalCreateCommonForm.vue
+  *
+  * History
+  *   2025/12/10 - 민철 최초 작성
+  *   2025/12/14 - 민철 공통 컴포넌트화
+  *   2025/12/23 - 민철 파일명 변경
+  * </pre>
+  *
+  * @module approval
+  * @author 민철
+  * @version 2.0
+-->
 <template>
   <div class="detail-form-section">
     <div 
@@ -8,7 +26,7 @@
 
     <div class="form-row">
       <div class="row-label">
-        <span class="label-text">초과근무신청정보</span>
+        <span class="label-text">수정신청정보</span>
       </div>
       <div class="row-content">
         <div class="section-body">
@@ -17,7 +35,7 @@
             <div class="input-group col-half">
               <div class="group-label group-label-with-icon">
                 <img class="icon-label" src="/images/vacation.svg" alt="date" />
-                <span class="label-text">근무 날짜</span>
+                <span class="label-text">근태기록수정날짜</span>
               </div>
               <div class="date-input-box">
                 <input 
@@ -32,7 +50,7 @@
             <div class="input-group col-half relative-box">
               <div class="group-label group-label-with-icon">
                 <img class="icon-label" src="/images/clock.svg" alt="time" />
-                <span class="label-text">시작 시간</span>
+                <span class="label-text">수정출근시간</span>
               </div>
               
               <div 
@@ -70,7 +88,7 @@
             <div class="input-group col-half relative-box">
               <div class="group-label group-label-with-icon">
                 <img class="icon-label" src="/images/clock.svg" alt="time" />
-                <span class="label-text">종료 시간</span>
+                <span class="label-text">수정퇴근시간</span>
               </div>
 
               <div 
@@ -112,13 +130,13 @@
     
     <div class="form-row border-top">
       <div class="row-label label-bottom">
-        <span class="label-text">신청사유</span>
+        <span class="label-text">수정사유</span>
       </div>
       <div class="row-content reason-content">
         <textarea 
           v-model="reason"
           class="input-textarea"
-          placeholder="초과근무 신청사유를 입력해 주세요."
+          placeholder="근태기록수정사유를 입력해 주세요."
         ></textarea>
       </div>
     </div>
@@ -130,15 +148,15 @@ import { ref, reactive, watch, computed } from 'vue';
 
 // v-model을 위한 Props와 Emits
 const props = defineProps<{
-  modelValue?: OvertimeFormData;
+  modelValue?: ModifyWorkRecordFormData;
 }>();
 
 const emit = defineEmits<{
-  'update:modelValue': [value: OvertimeFormData];
+  'update:modelValue': [value: ModifyWorkRecordFormData];
 }>();
 
 // 타입 정의
-export interface OvertimeFormData {
+export interface ModifyWorkRecordFormData {
   workDate: string;
   startTime: string;
   endTime: string;
@@ -146,7 +164,7 @@ export interface OvertimeFormData {
 }
 
 // 폼 데이터 (reactive로 관리)
-const formData = reactive<OvertimeFormData>({
+const formData = reactive<ModifyWorkRecordFormData>({
   workDate: props.modelValue?.workDate || '',
   startTime: props.modelValue?.startTime || '00:00',
   endTime: props.modelValue?.endTime || '00:00',
