@@ -190,7 +190,6 @@ const getIcon = (type: string): string => {
     'attendance': '/images/alarm/alarm-check.svg',
     'payroll': '/images/alarm/alarm-money.svg',
     'approval': '/images/alarm/alarm-paper.svg',
-    'leave': '/images/alarm/alarm-calendar.svg',
     'evaluation': '/images/alarm/alarm-paper.svg',
     'system': '/images/alarm/alarmsetting.svg'
   };
@@ -224,7 +223,6 @@ const getLinkText = (type: NotificationCategory): string => {
     'attendance': '근태 확인하기',
     'payroll': '명세서 보기',
     'approval': '결재 상세보기',
-    'leave': '휴가 확인하기',
     'evaluation': '평가 보기',
     'system': '자세히 보기'
   };
