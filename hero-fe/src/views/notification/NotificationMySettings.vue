@@ -200,7 +200,7 @@ const notificationTypes: NotificationSettingItem[] = [
   {
     id: 'attendanceEnabled',
     label: '근태 알림',
-    description: '출퇴근, 지각 등 근태 관련 알림',
+    description: '출퇴근, 지각, 휴가 등 근태 관련 알림',
     icon: '/images/alarm/alarm-time.svg',
   },
   {
@@ -214,12 +214,6 @@ const notificationTypes: NotificationSettingItem[] = [
     label: '결재 알림',
     description: '결재 승인, 반려 등 결재 관련 알림',
     icon: '/images/alarm/alarm-check.svg',
-  },
-  {
-    id: 'leaveEnabled',
-    label: '휴가 알림',
-    description: '휴가 승인, 반려 알림',
-    icon: '/images/alarm/alarm-calendar.svg',
   },
   {
     id: 'evaluationEnabled',
