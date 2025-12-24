@@ -34,7 +34,7 @@ interface JwtPayload {
     gradeName: string;       // 직급명
     jobTitleId: number;      // DB 직책 정보 인조키
     jobTitleName: string;    // 직책명
-    auth: string;            // 권한
+    auth: string[];            // 권한
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -60,7 +60,13 @@ export const useAuthStore = defineStore('auth', () => {
     function login(token: string) {
         try {
             accessToken.value = token;
-            user.value = jwtDecode<JwtPayload>(token);
+            const decoded = jwtDecode<any>(token);
+
+            // auth가 쉼표로 구분된 단일 문자열로 넘어오는 경우, 각 권한을 분리하여 배열로 변환합니다.
+            if (decoded.auth && typeof decoded.auth === 'string') {
+                decoded.auth = decoded.auth.split(',');
+            }
+            user.value = decoded as JwtPayload;
 
             //로그인 성공 시 세션 시작
             const sessionStore = useSessionStore();
@@ -125,5 +131,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
 
-    return { accessToken, user, isAuthenticated, employeeId, login, logout, refresh };
+    /**
+     * (설명 : )사용자가 특정 권한을 가지고 있는지 확인합니다.
+     * @param {string} role - 확인할 권한 (예: 'ROLE_ADMIN')
+     * @returns {boolean}
+     */
+    function hasRole(role: string): boolean {
+        return user.value?.auth?.includes(role) ?? false;
+    }
+
+    return { accessToken, user, isAuthenticated, employeeId, login, logout, refresh, hasRole };
 });
