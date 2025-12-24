@@ -10,12 +10,14 @@
  * History
  *   2025/12/14 - 민철 공통 컴포넌트화
  *   2025/12/23 - 민철 파일명 변경 
+ *   2025/12/24 - 민철 작성 UI 최종 구현(제목/분류/결재선/참고목록 지정)
+ *   2025/12/25 - 민철 서식 목록에서 서식ID 쿼리스트링으로 전달받기
  * </pre>
  *
  * @module approval
  * @author 민철
  * @version 2.0
- -->
+-->
 <template>
   <div class="page-wrapper">
 
@@ -52,7 +54,8 @@
         <div class="form-container">
           <ApprovalCreateCommonForm
             ref="commonFormRef"
-            :title="title"
+            :templateId="templateId"
+            :templateName="templateName"
             :category="category"
             :empName="empName"
             :empDept="empDept"
@@ -76,8 +79,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import apiClient from '@/api/apiClient';
 import ApprovalCreateCommonForm from './ApprovalCreateCommonForm.vue';
 import { 
@@ -91,18 +94,32 @@ import {
   ApprovalPayrollRaiseForm,
   ApprovalPayrollAdjustForm,
 } from './forms';
-import { useTemplateStore } from '@/stores/approval/approval.store';
+import { useApprovalTemplateStore } from '@/stores/approval/approval.store';
 import { useAuthStore } from '@/stores/auth';
+import { storeToRefs } from 'pinia';
 
 const router = useRouter();
-const approvalStore = useTemplateStore();
+const route = useRoute();
+const approvalStore = useApprovalTemplateStore();
 const authStore = useAuthStore();
+
+const { templates, template } = storeToRefs(approvalStore);
 
 const props = defineProps<{
   formName: string;
 }>();
 
-// CommonForm 참조
+onMounted(async () => {
+  const idFromQuery = Number(route.query.templateId);
+  
+  if (idFromQuery) {
+    await approvalStore.fetchTemplate(idFromQuery);
+  }
+  
+});
+
+
+
 const commonFormRef = ref<InstanceType<typeof ApprovalCreateCommonForm>>();
 
 // 섹션 컴포넌트 매핑
@@ -122,8 +139,9 @@ const currentDetailSection = computed(() => {
   return sectionMap[props.formName];
 });
 
-const title = computed(() => approvalStore.title || '서식명');
-const category = computed(() => approvalStore.category || '분류명');
+const templateId = computed(() => template.value.templateId || 0);
+const templateName = computed(() => template.value.templateName || '서식명');
+const category = computed(() => template.value.category || '분류명');
 const empName = computed(() => authStore.user?.employeeName || '직원이름');
 const empDept = computed(() => authStore.user?.departmentName || '부서');
 const empGrade = computed(() => authStore.user?.gradeName || '직급');
@@ -136,23 +154,17 @@ const currentDate = computed(() => {
   return `${year}-${month}-${day}`;
 });
 
-// 핵심: Section 데이터를 저장하는 ref (v-model로 자동 업데이트됨)
 const sectionData = ref<any>({});
 
-// ✅ FormData 생성 함수 (JSON + File)
 const createFormData = (status: 'draft' | 'submitted') => {
   const commonFormData = commonFormRef.value?.getCommonData();
   
-  // sectionData를 JSON 문자열로 변환
   const detailsJsonString = JSON.stringify(sectionData.value);
   
-  // ✅ [LOG] 여기서 변환된 JSON 문자열 확인 가능
   console.log('details (JSON String):', detailsJsonString);
   
-  // 1. FormData 객체 생성
   const formData = new FormData();
 
-  // 2. DTO 데이터 생성 (파일 제외)
   const requestDto = {
     formType: props.formName,
     documentType: category.value,
@@ -163,15 +175,13 @@ const createFormData = (status: 'draft' | 'submitted') => {
     draftDate: currentDate.value,
     status: status,
     submittedAt: status === 'submitted' ? new Date().toISOString() : null,
-    approvalLine: commonFormData?.approvalLine || [],
+    lines: commonFormData?.lines || [],
     references: commonFormData?.references || [],
     details: detailsJsonString
   };
 
-  // 3. DTO를 'data' 파트에 JSON Blob으로 추가
   formData.append('data', new Blob([JSON.stringify(requestDto)], { type: 'application/json' }));
 
-  // 4. 파일들을 'files' 파트에 추가
   if (commonFormData?.attachments) {
     commonFormData.attachments.forEach((file: File) => {
       formData.append('files', file);
@@ -204,18 +214,15 @@ const handleSaveDraft = async () => {
   }
 };
 
-// 미리보기
 const previewDocument = () => {
   const formData = createFormData('draft');
   console.log('🔍 미리보기 (FormData 생성됨)');
   
-  // (formData as any)를 사용하여 타입 에러 우회
   for (const pair of (formData as any).entries()) {
     console.log(`${pair[0]}:`, pair[1]);
   }
 };
 
-// 상신
 const handleSubmit = async () => {
   try {
     if (!validateForm()) {
@@ -240,7 +247,6 @@ const handleSubmit = async () => {
   }
 };
 
-// 폼 유효성 검사
 const validateForm = (): boolean => {
   const commonFormData = commonFormRef.value?.getCommonData();
   
@@ -277,7 +283,7 @@ const validateForm = (): boolean => {
 .page-wrapper {
   display: flex;
   flex-direction: column;
-  height: 100vh; 
+  height: 100%; 
   overflow: hidden;
 }
 
@@ -425,21 +431,29 @@ const validateForm = (): boolean => {
 }
 
 .page-body {
+  display: flex;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.form-wrapper {
+  padding: 0px 100px 0px 100px;
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
 }
 
-.form-wrapper {
-  padding: 0px 100px 0px 100px;
-}
-
 .form-container {
+  display: flex;
   height: 100%;
   width: 100%;
   padding: 0;
   background-color: #ffff;
+  overflow-y: auto;
 }
 </style>
