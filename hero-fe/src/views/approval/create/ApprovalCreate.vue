@@ -12,11 +12,12 @@
  *   2025/12/23 - 민철 파일명 변경 
  *   2025/12/24 - 민철 작성 UI 최종 구현(제목/분류/결재선/참고목록 지정)
  *   2025/12/25 - 민철 서식 목록에서 서식ID 쿼리스트링으로 전달받기
+ *   2025/12/26 - 민철 Composable 사용 및 타입 안정성 개선, 미리보기 주석처리
  * </pre>
  *
  * @module approval
  * @author 민철
- * @version 2.0
+ * @version 2.2
 -->
 <template>
   <div class="page-wrapper">
@@ -36,10 +37,10 @@
             <img class="btn-icon" src="/images/file.svg" />
             <div class="btn-text">임시저장</div>
           </button>
-          <button class="btn-secondary" @click="previewDocument()">
+          <!-- <button class="btn-secondary" @click="previewDocument()">
             <img class="btn-icon" src="/images/preview.svg" />
             <div class="btn-text">미리보기</div>
-          </button>
+          </button> -->
           <button class="btn-primary" @click="handleSubmit()">
             <img class="btn-icon" src="/images/submit.svg" />
             <div class="btn-text-white">상신</div>
@@ -60,7 +61,7 @@
             :empName="empName"
             :empDept="empDept"
             :empGrade="empGrade"
-            @preview="previewDocument()"
+            @saveDraft="handleSaveDraft()"
             @cancel="backToList()"
             @submit="handleSubmit()"
           >
@@ -81,7 +82,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import apiClient from '@/api/apiClient';
+import { useApprovalDocument } from '@/composables/approval/useApprovalDocument';
+import { ApprovalDocumentRequestDTO } from '@/types/approval/approval_request.types';
 import ApprovalCreateCommonForm from './ApprovalCreateCommonForm.vue';
 import { 
   ApprovalVacationForm,
@@ -98,16 +100,29 @@ import { useApprovalTemplateStore } from '@/stores/approval/approval.store';
 import { useAuthStore } from '@/stores/auth';
 import { storeToRefs } from 'pinia';
 
+/* ========================================== */
+/* Router & Composables */
+/* ========================================== */
+
 const router = useRouter();
 const route = useRoute();
+const { saveDraft, submit } = useApprovalDocument();
 const approvalStore = useApprovalTemplateStore();
 const authStore = useAuthStore();
 
-const { templates, template } = storeToRefs(approvalStore);
+const { template } = storeToRefs(approvalStore);
+
+/* ========================================== */
+/* Props */
+/* ========================================== */
 
 const props = defineProps<{
   formName: string;
 }>();
+
+/* ========================================== */
+/* Lifecycle */
+/* ========================================== */
 
 onMounted(async () => {
   const idFromQuery = Number(route.query.templateId);
@@ -121,6 +136,7 @@ onMounted(async () => {
 
 
 const commonFormRef = ref<InstanceType<typeof ApprovalCreateCommonForm>>();
+const sectionData = ref<any>({});
 
 // 섹션 컴포넌트 매핑
 const sectionMap: Record<string, any> = {
@@ -154,18 +170,21 @@ const currentDate = computed(() => {
   return `${year}-${month}-${day}`;
 });
 
-const sectionData = ref<any>({});
+/* ========================================== */
+/* Methods */
+/* ========================================== */
 
-const createFormData = (status: 'draft' | 'submitted') => {
+/**
+ * DTO 생성
+ * ✅ 타입 명시하여 안정성 확보
+ */
+const createRequestDTO = (status: 'draft' | 'submitted'): ApprovalDocumentRequestDTO => {
   const commonFormData = commonFormRef.value?.getCommonData();
-  
   const detailsJsonString = JSON.stringify(sectionData.value);
   
-  console.log('details (JSON String):', detailsJsonString);
+  console.log('📝 details (JSON String):', detailsJsonString);
   
-  const formData = new FormData();
-
-  const requestDto = {
+  return {
     formType: props.formName,
     documentType: category.value,
     title: commonFormData?.title || '',
@@ -179,103 +198,59 @@ const createFormData = (status: 'draft' | 'submitted') => {
     references: commonFormData?.references || [],
     details: detailsJsonString
   };
-
-  formData.append('data', new Blob([JSON.stringify(requestDto)], { type: 'application/json' }));
-
-  if (commonFormData?.attachments) {
-    commonFormData.attachments.forEach((file: File) => {
-      formData.append('files', file);
-    });
-  }
-  
-  return formData;
 };
 
+/**
+ * 목록으로 돌아가기
+ */
 const backToList = () => {
   router.push('/approval/document-templates');
 };
 
-// 임시저장
+/**
+ * 임시저장
+ * ✅ Composable 사용
+ */
 const handleSaveDraft = async () => {
   try {
-    const formData = createFormData('draft');
+    const requestDTO = createRequestDTO('draft');
+    const commonFormData = commonFormRef.value?.getCommonData();
+    const files = commonFormData?.attachments || [];
     
-    const response = await apiClient.post('/approval/draft', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    
-    alert('임시저장되었습니다.');
-    console.log('저장 결과:', response.data);
+    const response = await saveDraft(requestDTO, files);
+    console.log('✅ 임시저장 완료:', response);
   } catch (error) {
-    console.error('임시저장 실패:', error);
-    alert('임시저장에 실패했습니다.');
+    console.error('❌ 임시저장 에러:', error);
   }
 };
 
-const previewDocument = () => {
-  const formData = createFormData('draft');
-  console.log('🔍 미리보기 (FormData 생성됨)');
-  
-  for (const pair of (formData as any).entries()) {
-    console.log(`${pair[0]}:`, pair[1]);
-  }
-};
+/**
+ * 미리보기
+ */
+// const previewDocument = () => {
+//   const requestDTO = createRequestDTO('draft');
+//   console.log('🔍 미리보기 데이터:', requestDTO);
+// };
 
+/**
+ * 상신
+ * ✅ Composable 사용 (유효성 검사 포함)
+ */
 const handleSubmit = async () => {
   try {
-    if (!validateForm()) {
-      return;
+    const requestDTO = createRequestDTO('submitted');
+    const commonFormData = commonFormRef.value?.getCommonData();
+    const files = commonFormData?.attachments || [];
+    
+    const response = await submit(requestDTO, files, props.formName);
+    
+    if (response) {
+      console.log('✅ 상신 완료:', response);
+      router.push('/approval/document-templates');
     }
-
-    const formData = createFormData('submitted');
-
-    const response = await apiClient.post('/approval/submit', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-    
-    alert('상신되었습니다.');
-    console.log('상신 결과:', response.data);
-    
-    router.push('/approval/document-templates');
   } catch (error) {
-    console.error('상신 실패:', error);
-    alert('상신에 실패했습니다.');
+    console.error('❌ 상신 에러:', error);
   }
-};
-
-const validateForm = (): boolean => {
-  const commonFormData = commonFormRef.value?.getCommonData();
-  
-  if (!commonFormData?.title) {
-    alert('제목을 입력하세요.');
-    return false;
-  }
-
-  if (props.formName === 'vacation') {
-    if (!sectionData.value.vacationType) {
-      alert('휴가 종류를 선택하세요.');
-      return false;
-    }
-    if (!sectionData.value.startDate || !sectionData.value.endDate) {
-      alert('휴가 기간을 선택하세요.');
-      return false;
-    }
-  } else if (props.formName === 'overtime') {
-    if (!sectionData.value.workDate) {
-      alert('근무 날짜를 선택하세요.');
-      return false;
-    }
-    if (!sectionData.value.startTime || !sectionData.value.endTime) {
-      alert('근무 시간을 입력하세요.');
-      return false;
-    }
-  }
-
-  return true;
 };
 </script>
 

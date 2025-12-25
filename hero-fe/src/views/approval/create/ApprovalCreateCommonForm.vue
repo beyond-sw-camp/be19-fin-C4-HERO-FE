@@ -1,7 +1,7 @@
 <!--
  * <pre>
  * Vue Name        : ApprovalCreateCommonForm.vue
- * Description     : 공통 서식
+ * Description     : 공통 서식 (조직도 모달 통합)
  *
  * 컴포넌트 연계
  * - 부모 컴포넌트: ApprovalCreate.vue
@@ -12,11 +12,12 @@
  *   2025/12/14 - 공통 컴포넌트화
  *   2025/12/23 - 민철 파일명 변경
  *   2025/12/24 - 민철 작성 UI 최종 구현(제목/분류/결재선/참고목록 지정)
+ *   2025/12/26 - 민철 조직도 모달 통합
  * </pre>
  *
  * @module approval
  * @author 민철
- * @version 2.1
+ * @version 2.2
  -->
 <template>
   <div class="form-wrapper">
@@ -88,13 +89,10 @@
                   <div class="stamp-body">
                     <div class="approver-info-vertical">
                       <div class="approver-name-row">
-                        <span class="approver-name">{{ commonData.lines[0]?.approverName || authStore.user?.employeeName
-                          }}</span>
-                        <span class="approver-rank">{{ commonData.lines[0]?.gradeName || authStore.user?.gradeName
-                          }}</span>
+                        <span class="approver-name">{{ commonData.lines[0]?.approverName || authStore.user?.employeeName }}</span>
+                        <span class="approver-rank">{{ commonData.lines[0]?.gradeName || authStore.user?.gradeName }}</span>
                       </div>
-                      <span class="approver-dept">{{ commonData.lines[0]?.departmentName ||
-                        authStore.user?.departmentName }}</span>
+                      <span class="approver-dept">{{ commonData.lines[0]?.departmentName || authStore.user?.departmentName }}</span>
                     </div>
                     <div class="stamp-signature approved">
                       <div class="signature-text">
@@ -206,7 +204,7 @@
                 <div class="row-content flow-content">
                   <div class="approval-flow">
 
-                    <!-- ✅ 기존 template v-for 구조 그대로 유지하며 동적 데이터 사용 -->
+                    <!-- ✅ 결재선 카드 -->
                     <template v-for="(approver, index) in commonData.lines" :key="index">
                       <div class="flow-card">
                         <div class="card-inner">
@@ -237,6 +235,7 @@
                         src="/images/linearrow.svg" alt="화살표" />
                     </template>
 
+                    <!-- ✅ 결재자 추가 버튼 -->
                     <button v-if="commonData.lines.length < 3" class="flow-card add-card" @click="openModal('LINE')"
                       type="button">
                       <div class="add-icon">
@@ -256,18 +255,17 @@
                 <div class="row-content ref-content">
                   <div class="reference-wrapper">
 
-                    <!-- ✅ 기존 v-if, v-for 구조 그대로 유지하며 동적 데이터 사용 -->
+                    <!-- ✅ 참조 칩 리스트 -->
                     <div v-if="commonData.references.length > 0" class="ref-chip-list">
                       <div v-for="(refMember, index) in commonData.references" :key="index" class="ref-chip">
-                        <span class="ref-name">{{ refMember.referencerName }} {{ refMember.gradeName }} {{
-                          refMember.departmentName
-                        }}</span>
+                        <span class="ref-name">{{ refMember.referencerName }} {{ refMember.gradeName }} {{ refMember.departmentName }}</span>
                         <button class="btn-ref-delete" @click="removeReference(index)" type="button">
                           <img src="/images/deletebutton.svg" alt="삭제" width="10" height="10" />
                         </button>
                       </div>
                     </div>
 
+                    <!-- ✅ 참조 추가 버튼 -->
                     <button class="btn-add-ref" @click="openModal('REF')" type="button">
                       <img src="/images/plus-dark.svg" alt="추가" width="12" height="12" />
                       <span class="btn-text-sm">참조 추가</span>
@@ -277,9 +275,14 @@
                 </div>
               </div>
 
+              <!-- ✅ 조직도 모달 (Teleport) -->
               <Teleport to="body">
                 <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
-                  <ApprovalLineModal :type="modalType" @close="closeModal" @save="handleModalSave" />
+                  <ApprovalLineModal 
+                    :type="modalType" 
+                    @close="closeModal" 
+                    @confirm="handleModalConfirm" 
+                  />
                 </div>
               </Teleport>
 
@@ -330,7 +333,7 @@
 
         <!-- 하단 버튼 -->
         <div class="action-buttons">
-          <button class="btn-secondary" @click="onPreview">
+          <button class="btn-secondary" @click="onSave">
             <img class="btn-icon" src="/images/file.svg" />
             <span class="btn-text">임시저장</span>
           </button>
@@ -358,6 +361,7 @@ import {
   ApprovalDefaultLineDTO,
   ApprovalDefaultReferenceDTO
 } from '@/types/approval/template.types';
+import { SelectedApproverDTO } from '@/types/approval/organization.types';  // ✅ 추가
 import ApprovalLineModal from '@/views/approval/create/forms/ApprovalLineModal.vue';
 
 const templateStore = useApprovalTemplateStore();
@@ -375,7 +379,7 @@ const props = defineProps<{
 
 // emit
 const emit = defineEmits<{
-  (e: 'preview'): void
+  (e: 'saveDraft'): void
   (e: 'cancel'): void
   (e: 'submit'): void
 }>();
@@ -411,7 +415,7 @@ watch(
  */
 const initializeData = async () => {
   try {
-    // 1. 기안자 정보 설정 (첫 번째 결재선)
+    // 1. 기안자 정보 설정
     const currentUser = authStore.user || {
       employeeId: 0,
       employeeName: props.empName,
@@ -482,7 +486,9 @@ const initializeData = async () => {
   }
 };
 
-
+/**
+ * 결재자 삭제
+ */
 const removeApprover = (index: number) => {
   if (index === 0) {
     alert("기안자(본인)는 결재선에서 제외할 수 없습니다.");
@@ -491,74 +497,105 @@ const removeApprover = (index: number) => {
 
   commonData.lines.splice(index, 1);
 
+  // ✅ seq 재정렬 (1부터 시작)
   commonData.lines.forEach((line, idx) => {
-    line.seq = idx + 3;
+    line.seq = idx + 1;
   });
 };
+
+/**
+ * 참조 삭제
+ */
+const removeReference = (index: number) => {
+  commonData.references.splice(index, 1);
+};
+
+/* ========================================== */
+/* 모달 관련 */
+/* ========================================== */
 
 const isModalOpen = ref(false);
 const modalType = ref<'LINE' | 'REF'>('LINE');
 
+/**
+ * 모달 열기
+ */
 const openModal = (type: 'LINE' | 'REF') => {
   modalType.value = type;
   isModalOpen.value = true;
 };
 
+/**
+ * 모달 닫기
+ */
 const closeModal = () => {
   isModalOpen.value = false;
 };
 
-const handleModalSave = (selectedUsers: any[]) => {
-  if (modalType.value === 'LINE') {
+/**
+ * ✅ 모달 확인 처리 (조직도에서 선택 완료)
+ */
+const handleModalConfirm = (selectedEmployees: SelectedApproverDTO[]) => {
+  console.log('✅ 선택된 직원:', selectedEmployees);
 
+  if (modalType.value === 'LINE') {
+    // 결재선 추가
     const currentCount = commonData.lines.length;
-    const addCount = selectedUsers.length;
+    const addCount = selectedEmployees.length;
 
     if (currentCount + addCount > 3) {
       alert("결재선은 본인 포함 최대 3단계까지만 지정 가능합니다.");
       return;
     }
 
-    const startSeq = currentCount + 1;
+    // 현재 최대 seq 찾기
+    const maxSeq = Math.max(...commonData.lines.map(line => line.seq), 0);
 
-    const newLines: ApprovalDefaultLineDTO[] = selectedUsers.map((user, idx) => ({
-      templateId: props.templateId,
-      approverId: user.employeeId,
-      approverName: user.employeeName,
-      departmentId: user.departmentId,
-      departmentName: user.departmentName,
-      gradeName: user.gradeName,
-      jobTitleName: user.jobTitleName || '',
-      seq: startSeq + idx,
-    }));
+    // 선택된 직원들을 결재선에 추가
+    selectedEmployees.forEach((employee, index) => {
+      const newLine: ApprovalDefaultLineDTO = {
+        seq: maxSeq + index + 1,
+        approverId: employee.approverId,
+        approverName: employee.approverName,
+        departmentId: employee.departmentId,
+        departmentName: employee.departmentName,
+        gradeName: employee.gradeName,
+        jobTitleName: employee.jobTitleName,
+      };
 
-    commonData.lines.push(...newLines);
+      commonData.lines.push(newLine);
+    });
+
+    console.log('✅ 업데이트된 결재선:', commonData.lines);
 
   } else {
+    // 참조 추가
+    selectedEmployees.forEach(employee => {
+      const newRef: ApprovalDefaultReferenceDTO = {
+        referencerId: employee.approverId,
+        referencerName: employee.approverName,
+        departmentId: employee.departmentId,
+        departmentName: employee.departmentName,
+        gradeName: employee.gradeName,
+        jobTitleName: employee.jobTitleName,
+      };
 
-    const newRefs: ApprovalDefaultReferenceDTO[] = selectedUsers.map(user => ({
-      templateId: props.templateId,
-      referencerId: user.employeeId,
-      referencerName: user.employeeName,
-      departmentId: user.departmentId,
-      departmentName: user.departmentName,
-      gradeName: user.gradeName,
-      jobTitleName: user.jobTitleName || '',
-    }));
-
-    newRefs.forEach(newRef => {
+      // 중복 체크
       const exists = commonData.references.some(r => r.referencerId === newRef.referencerId);
       if (!exists) {
         commonData.references.push(newRef);
       }
     });
+
+    console.log('✅ 업데이트된 참조:', commonData.references);
   }
+
   closeModal();
 };
 
-const removeReference = (index: number) => {
-  commonData.references.splice(index, 1);
-};
+/* ========================================== */
+/* 유틸리티 */
+/* ========================================== */
 
 const currentDate = computed(() => {
   const today = new Date();
@@ -583,7 +620,9 @@ const handleFileUpload = (event: Event) => {
 
   if (target.value) target.value = '';
 };
+
 const removeFile = (index: number) => commonData.attachments.splice(index, 1);
+
 const formatFileSize = (bytes: number) => {
   if (bytes === 0) return '0 B';
   const k = 1024;
@@ -599,7 +638,7 @@ const getCommonData = () => ({
   references: commonData.references
 });
 
-const onPreview = () => emit('preview');
+const onSave = () => emit('saveDraft');
 const onCancel = () => emit('cancel');
 const onSubmit = () => emit('submit');
 
@@ -718,24 +757,5 @@ defineExpose({ getCommonData });
 
 .hidden-file-input {
   display: none;
-}
-
-/* Bounce Animation */
-.dialog-bounce-enter-active,
-.dialog-bounce-leave-active,
-.dialog-bounce-enter-active .el-dialog,
-.dialog-bounce-leave-active .el-dialog {
-  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.dialog-bounce-enter-from,
-.dialog-bounce-leave-to {
-  opacity: 0;
-}
-
-.dialog-bounce-enter-from .el-dialog,
-.dialog-bounce-leave-to .el-dialog {
-  transform: scale(0.3) translateY(-50px);
-  opacity: 0;
 }
 </style>
