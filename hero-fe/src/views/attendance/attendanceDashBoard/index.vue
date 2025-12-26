@@ -119,6 +119,8 @@
               v-for="(row, index) in pagedEmployees"
               :key="row.employeeId"
               :class="{ 'row-striped': index % 2 === 1 }"
+              @click="openEmployeeChart(row.employeeId)"
+              style="cursor:pointer;"
             >
               <td>{{ row.employeeNumber }}</td>
               <td>{{ row.employeeName }}</td>
@@ -180,18 +182,27 @@
         </button>
       </div>
     </div>
+    <EmployeeHalfChart
+      :open="employeeDashboardOpen"
+      :employee-id="selectedEmployeeId"
+      @close="closeEmployeeChart"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-
+import EmployeeHalfChart from '@/views/attendance/attendanceDashboard/EmplloyeeHalfChartDrawer.vue'
+import { useAttendanceEmployeeDashboardStore } from '@/stores/attendance/attendanceEmployeeDashboard'
 import {
   useAttendanceDashboardStore,
   type AttendanceDashboardDTO,
   type ScoreSort,
 } from '@/stores/attendance/dashboard'
+
+const employeeDashboardStore = useAttendanceEmployeeDashboardStore()
+const { open: employeeDashboardOpen, selectedEmployeeId } = storeToRefs(employeeDashboardStore)
 
 /** YYYY-MM (month input용) */
 const currentMonth = new Date().toISOString().slice(0, 7)
@@ -240,6 +251,16 @@ const goPage = (page: number): void => {
   if (page < 1 || page > totalPages.value) return
   dashboardStore.fetchDashboard(page)
 }
+
+const openEmployeeChart = async (employeeId: number): Promise<void> => {
+  // year/half 기본값은 store에 있으니 employeeId만 넘겨도 됨
+  await employeeDashboardStore.fetchEmployeeHalfDashboard(employeeId)
+}
+
+const closeEmployeeChart = (): void => {
+  employeeDashboardStore.setOpen(false)
+}
+
 
 /** 초기 진입 */
 onMounted(async () => {
@@ -583,4 +604,3 @@ onMounted(async () => {
   color: rgb(187, 187, 30);
 }
 </style>
-

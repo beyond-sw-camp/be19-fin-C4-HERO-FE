@@ -23,7 +23,7 @@
       <div class="dept-vacation-panel">
         <!-- 패널 헤더 : 제목 + 월 이동 -->
         <div class="panel-header">
-          <div class="panel-title">{{ calendarTitle }} 휴가 캘린더</div>
+          <div class="panel-title">{{ calendarTitle }}</div>
 
           <div class="month-nav">
             <button type="button" class="month-btn" @click="moveMonth(-1)">

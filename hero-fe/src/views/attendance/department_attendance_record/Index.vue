@@ -1,9 +1,16 @@
 <!-- 
+  <pre>
   TypeScript Name   : WorkSystemStatus.vue
   Description : 부서 근태 현황 조회 페이지
                 - 단일 날짜 기준 조회
                 - 로그인한 사용자의 부서(departmentId) 기준 조회
                 - 프론트 단 페이지네이션
+  History
+  2025/12/26 - 이지윤 최초 작성
+  </pre>
+
+  @author 이지윤
+  @version 1.0
 -->
 
 <template>
@@ -23,10 +30,8 @@
                   class="date-input"
                   :max="today"
                 />
-
               </div>
             </div>
-
 
             <!-- 검색 / 초기화 버튼 -->
             <div class="search-button-group">
@@ -77,13 +82,14 @@
                   </td>
 
                   <td class="cell-status">
-                    <span class="status-pill"
-                    :class="{
-                      'status-normal': row.status === '정상',
-                      'status-late': row.status === '지각',
-                      'status-absent': row.status === '결근',
-                      'status-early': row.status === '조퇴',
-                    }"
+                    <span
+                      class="status-pill"
+                      :class="{
+                        'status-normal': row.status === '정상',
+                        'status-late': row.status === '지각',
+                        'status-absent': row.status === '결근',
+                        'status-early': row.status === '조퇴'
+                      }"
                     >
                       {{ row.status }}
                     </span>
@@ -152,144 +158,184 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { storeToRefs } from 'pinia'
+/**
+ * WorkSystemStatus.vue
+ * - 부서 근무제/근태 현황 조회 화면
+ * - 단일 날짜 기준 조회 + 로그인 사용자의 부서 기준으로 필터링
+ * - 프론트 단 페이지네이션 적용
+ */
+
+import { computed, onMounted, ref } from 'vue';
+import { storeToRefs } from 'pinia';
+
 import {
   useDeptWorkSystemStore,
   type DeptWorkSystemRowDTO,
-} from '@/stores/attendance/deptWorkSystem'
-import { useAuthStore } from '@/stores/auth'
+} from '@/stores/attendance/deptWorkSystem';
+import { useAuthStore } from '@/stores/auth';
 
+/**
+ * 오늘 날짜(YYYY-MM-DD)
+ * - date input의 max 속성에 사용
+ */
 const today = new Date().toISOString().slice(0, 10);
 
 /**
  * 화면에서 사용하는 테이블 한 행 타입
- * - 백엔드 DTO(DeptWorkSystemRowDTO)를 화면용 필드로 변환한 형태
+ * - 백엔드 DTO(DeptWorkSystemRowDTO)를 화면 표시용 필드로 변환한 형태
  */
 interface EmployeeWorkSystemRow {
-  id: string
-  date: string
-  name: string
-  status: string
-  position: string
-  workSystem: string
-  workTime: string
+  id: string;
+  date: string;
+  name: string;
+  status: string;
+  position: string;
+  workSystem: string;
+  workTime: string;
 }
 
-/** 스토어 */
-const deptWorkStore = useDeptWorkSystemStore()
-const {workDate} = storeToRefs(deptWorkStore)
-const authStore = useAuthStore()
+/* =========================
+   스토어 & 인증 관련
+   ========================= */
+
+/** 부서 근태 현황 스토어 */
+const deptWorkStore = useDeptWorkSystemStore();
+const { workDate } = storeToRefs(deptWorkStore);
+
+/** 인증 스토어 (TODO: departmentId 연동 시 사용) */
+const authStore = useAuthStore();
+
+/* =========================
+   화면 상태 (필터/페이지)
+   ========================= */
 
 /** 단일 날짜 필터 */
-const selectedDate = ref<string>('')
-const isSearching = ref(false)
-const isResetting = ref(false)
+const selectedDate = ref<string>('');
 
-/** 페이지네이션 상태 (프론트 전용) */
-const currentPage = ref<number>(1)
-const pageSize = ref<number>(5)
+/** 검색/초기화 진행 여부 (버튼 상태 표현용) */
+const isSearching = ref(false);
+const isResetting = ref(false);
 
+/** 페이지네이션 상태(프론트 전용) */
+const currentPage = ref<number>(1);
+const pageSize = ref<number>(5);
 
+/* =========================
+   DTO → 화면 행 데이터 변환
+   ========================= */
 
 /**
  * 스토어의 DTO 목록을 화면용 행 데이터로 변환
- * - date/name/status/position/workSystem/workTime 으로 매핑
+ * - date/name/status/position/workSystem/workTime 형식으로 정규화
  */
 const allList = computed<EmployeeWorkSystemRow[]>(() => {
   // 이번 조회에 사용된 날짜(백엔드 필터용)를 스토어에서 가져옴
-  const dateForRow = deptWorkStore.workDate
+  const dateForRow = workDate.value;
 
   return deptWorkStore.rows.map((row: DeptWorkSystemRowDTO, index) => ({
-    // ✅ 각 행마다 고유한 key (employeeId + index 조합)
+    // 각 행마다 고유한 key (employeeId + index 조합)
     id: `${row.employeeId}-${index}`,
-
-    // ✅ 테이블에 표시할 날짜
+    // 테이블에 표시할 날짜는 현재 조회 기준 workDate
     date: dateForRow,
-
     name: row.employeeName,
     status: row.state,
     position: row.jobTitle,
     workSystem: row.workSystemName,
     workTime: `${row.startTime} - ${row.endTime}`,
-  }))
-})
+  }));
+});
 
-
-/** 전체 페이지 수 (프론트 기준) */
+/**
+ * 전체 페이지 수(프론트 기준)
+ */
 const totalPages = computed<number>(() => {
-  return Math.max(1, Math.ceil(allList.value.length / pageSize.value))
-})
+  return Math.max(1, Math.ceil(allList.value.length / pageSize.value));
+});
 
-/** 현재 페이지에 보여줄 데이터 */
+/**
+ * 현재 페이지에 보여줄 데이터
+ */
 const pagedList = computed<EmployeeWorkSystemRow[]>(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
 
-  return allList.value.slice(start, end)
-})
+  return allList.value.slice(start, end);
+});
+
+/* =========================
+   이벤트 핸들러 (검색/초기화/페이지 이동)
+   ========================= */
 
 /**
  * 검색 버튼 클릭
  * - 선택한 날짜 기준으로 부서 근태 현황 조회
  */
 const onSearch = async (): Promise<void> => {
-  if (!selectedDate.value) return
-
-  isSearching.value = true
-  try {
-    currentPage.value = 1
-    workDate.value = selectedDate.value
-
-    const departmentId = 1 // TODO: authStore.user?.departmentId 등으로 교체
-    deptWorkStore.setFilters(departmentId, workDate.value)
-    await deptWorkStore.fetchDeptWorkSystem(1)
-  } finally {
-    isSearching.value = false
+  if (!selectedDate.value) {
+    return;
   }
-}
+
+  isSearching.value = true;
+
+  try {
+    currentPage.value = 1;
+    workDate.value = selectedDate.value;
+
+    // TODO: authStore.user?.departmentId 등으로 실제 로그인 사용자 부서 연결
+    const departmentId = 1;
+
+    deptWorkStore.setFilters(departmentId, workDate.value);
+    await deptWorkStore.fetchDeptWorkSystem(1);
+  } finally {
+    isSearching.value = false;
+  }
+};
 
 /**
  * 초기화 버튼 클릭
  * - 날짜를 오늘로 초기화하고 해당 날짜 기준으로 다시 조회
  */
 const onReset = async (): Promise<void> => {
-  isResetting.value = true
+  isResetting.value = true;
+
   try {
-    const today = new Date()
-    const iso = today.toISOString().slice(0, 10)
+    const todayDate = new Date();
+    const iso = todayDate.toISOString().slice(0, 10);
 
-    selectedDate.value = iso
-    workDate.value = iso
-    currentPage.value = 1
+    selectedDate.value = iso;
+    workDate.value = iso;
+    currentPage.value = 1;
 
-    const departmentId = 1 // TODO: 동일
-    deptWorkStore.setFilters(departmentId, iso)
-    await deptWorkStore.fetchDeptWorkSystem(1)
+    // TODO: authStore.user?.departmentId 로 교체 예정
+    const departmentId = 1;
+
+    deptWorkStore.setFilters(departmentId, iso);
+    await deptWorkStore.fetchDeptWorkSystem(1);
   } finally {
-    isResetting.value = false
+    isResetting.value = false;
   }
-}
+};
 
 /**
  * 페이지 이동 (프론트 페이지네이션)
  */
 const goPage = (page: number): void => {
   if (page < 1 || page > totalPages.value) {
-    return
+    return;
   }
 
-  currentPage.value = page
-}
+  currentPage.value = page;
+};
 
 /**
  * 화면 진입 시 기본 조회
  * - 오늘 날짜 + 내 부서 기준으로 조회
  */
 onMounted(async () => {
-  await onReset()
-})
+  await onReset();
+});
 </script>
+
 
 <style scoped>
 * {
