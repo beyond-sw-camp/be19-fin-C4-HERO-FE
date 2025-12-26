@@ -8,6 +8,7 @@
 .form-wrapper {
   padding: 0;
   width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -41,7 +42,13 @@
 /* -----------------------------------------------------------
     2. TYPOGRAPHY & COMMON UTILS
    ----------------------------------------------------------- */
-.label-text, .value-text, .stamp-role-label, .approver-name, .approver-rank, .input-text, .placeholder-text {
+.label-text,
+.value-text,
+.stamp-role-label,
+.approver-name,
+.approver-rank,
+.input-text,
+.placeholder-text {
   font-family: "Inter-Regular", sans-serif;
   font-weight: 400;
 }
@@ -52,7 +59,9 @@
   line-height: 20px;
 }
 
-.value-text, .approver-name, .input-text {
+.value-text,
+.approver-name,
+.input-text {
   color: #0f172b;
   font-size: 14px;
   line-height: 20px;
@@ -99,7 +108,7 @@
   align-items: stretch;
   justify-content: space-between;
   gap: 20px;
-  flex-wrap: wrap; 
+  flex-wrap: wrap;
   width: 100%;
 }
 
@@ -126,6 +135,7 @@
   align-items: center;
   border-bottom: 1px solid #e2e8f0;
 }
+
 .info-row.last-row {
   border-bottom: none;
 }
@@ -167,11 +177,17 @@
   gap: 16px;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   width: 100%;
+  padding: none;
 }
 
 .stamp-box {
+  width: 160px !important;
+  min-width: 130px !important;
+  max-width: 150px !important;
+  height: 190px;
+  flex: none !important;
   border: 0.67px solid #e2e8f0;
   border-radius: 10px;
   padding: 10px 0;
@@ -179,8 +195,6 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  flex: 1;
-  min-width: 100px;
   overflow: hidden;
 }
 
@@ -197,38 +211,93 @@
 }
 
 .stamp-body {
-  padding: 16px 0;
+  padding: 5px 5px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   align-items: center;
-  height: 100px;
+  height: 100px !important;
+  min-height: 100px !important;
   justify-content: center;
+  width: 100%;
+}
+
+.approver-info-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+}
+
+.approver-name-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.approver-name {
+  color: #0f172b;
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.approver-rank {
+  color: #62748e;
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.approver-dept {
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .approver-info {
   display: flex;
   gap: 10px;
 }
+
 .approver-rank {
   color: #62748e;
   font-size: 12px;
 }
 
 .stamp-signature {
-  width: 64px;
-  height: 64px;
+  width: 45px !important;
+  height: 45px !important;
+  min-width: 45px !important;
+  min-height: 45px !important;
+  max-width: 45px !important;
+  max-height: 45px !important;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  flex-shrink: 0;
 }
+
 .stamp-signature.approved {
   border: 2px solid #fb2c36;
 }
+
 .stamp-signature.pending {
-  border: 0.67px solid #cad5e2;
-  border-radius: 4px;
+  border: 2px solid #cad5e2;
+  border-radius: 50% !important;
 }
 
 .signature-text {
@@ -241,9 +310,28 @@
   color: #e7000b;
   font-size: 12px;
 }
+
 .status-pending {
   color: #90a1b9;
   font-size: 12px;
+}
+
+.approver-name.empty {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.stamp-signature.empty {
+  background-color: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 50%;
+}
+
+.status-empty {
+  color: #cbd5e1;
+  font-size: 16px;
+  font-weight: 300;
 }
 
 .stamp-footer {
@@ -253,11 +341,33 @@
   display: flex;
   justify-content: center;
 }
+
 .stamp-date {
   color: #90a1b9;
   font-size: 12px;
   white-space: nowrap;
 }
+
+
+
+/* ========================================
+   이름/직책 가로 배치, 부서 세로 배치
+   ======================================== */
+
+
+/* ========================================
+   도장(원) 크기 고정
+   ======================================== */
+
+
+
+
+/* ========================================
+   미지정 상태 스타일
+   ======================================== */
+
+
+
 
 /* -----------------------------------------------------------
     5. MAIN FORM SECTION (공통 입력 영역)
@@ -280,7 +390,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  flex-wrap: wrap; 
+  flex-wrap: wrap;
 }
 
 .row-label-top {
@@ -292,7 +402,7 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  align-self: stretch; 
+  align-self: stretch;
 }
 
 .row-label {
@@ -303,7 +413,7 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  align-self: stretch; 
+  align-self: stretch;
 }
 
 .row-content {
@@ -342,7 +452,7 @@
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
-  align-items: stretch; 
+  align-items: stretch;
   width: 100%;
 }
 
@@ -350,9 +460,9 @@
   border: 0.7px solid #e2e8f0;
   border-radius: 8px;
   padding: 8px;
-  flex: 1;
-  min-width: 110px;
-  height: auto; 
+  width: 160px;
+  min-height: 80px;
+  height: auto;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -361,12 +471,12 @@
 
 .card-inner {
   display: flex;
-  gap: 8px; 
+  gap: 8px;
   align-items: center;
 }
 
 .avatar-circle {
-  width: 26px; 
+  width: 26px;
   height: 26px;
   background: #1c398e;
   border-radius: 50%;
@@ -384,8 +494,8 @@
 .card-details {
   display: flex;
   flex-direction: column;
-  gap: 1px; 
-  overflow: hidden; 
+  gap: 1px;
+  overflow: hidden;
 }
 
 .detail-row {
@@ -429,20 +539,21 @@
 .flow-arrow {
   width: 14px;
   height: 14px;
-  flex-shrink: 0;  
-  align-self: center; 
+  flex-shrink: 0;
+  align-self: center;
 }
 
-.flow-card.add-card {
+.flow-card .add-card {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  flex: 1; 
+  /* flex: 1; */
   min-width: 110px;
+  width: 20px;
 }
 
 .add-icon {
-  font-size: 24px; 
+  font-size: 24px;
   color: #62748e;
   line-height: 1;
 }
@@ -453,6 +564,7 @@
   align-items: flex-start;
   gap: 8px;
 }
+
 .file-upload-box {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -463,34 +575,126 @@
   cursor: pointer;
   background: #fff;
 }
+
 .hidden-file-input {
   display: none;
 }
+
 .icon-upload {
   width: 16px;
   height: 16px;
 }
+
 .upload-label {
   color: #62748e;
   font-size: 14px;
 }
+
 .upload-text-wrap {
   display: flex;
   align-items: center;
 }
+
 .desc-text {
   color: #90a1b9;
   font-size: 12px;
 }
+
 .file-desc {
   display: flex;
   align-items: center;
 }
 
 /* Reference */
-.ref-content {
-  gap: 20px;
+.reference-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
 }
+
+/* 칩 목록 컨테이너 */
+.ref-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* 개별 참조자 칩 디자인 */
+.ref-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f1f5f9;
+  /* 연한 회색 배경 */
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  /* 둥근 모서리 */
+  padding: 6px 12px;
+  transition: all 0.2s;
+}
+
+.ref-chip:hover {
+  background-color: #e2e8f0;
+}
+
+.ref-name {
+  font-size: 13px;
+  color: #334155;
+  font-weight: 500;
+}
+
+/* 칩 내부 삭제 버튼 */
+.btn-ref-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  opacity: 0.5;
+  border-radius: 50%;
+}
+
+.btn-ref-delete:hover {
+  opacity: 1;
+  background-color: #cbd5e1;
+}
+
+/* 참조 추가 버튼 (심플한 텍스트+아이콘 형태) */
+.btn-add-ref {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: #fff;
+  border: 1px dashed #cbd5e1;
+  /* 점선 테두리로 '추가' 영역임을 강조 */
+  border-radius: 8px;
+  cursor: pointer;
+  width: fit-content;
+  transition: all 0.2s;
+}
+
+.btn-add-ref:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.btn-text-sm {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.ref-content {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 8px;
+}
+
 .ref-input-area {
   flex: 1;
   border: 1px solid #e2e8f0;
@@ -498,11 +702,13 @@
   padding: 10px;
   min-height: 41px;
 }
+
 .ref-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
+
 .btn-ref-add {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -511,6 +717,7 @@
   cursor: pointer;
   min-width: 95px;
 }
+
 .btn-text-sm {
   font-size: 14px;
 }
