@@ -1,6 +1,6 @@
 /**
  * <pre>
- * TypeScript Name: NotificationSettingsStore
+ * TypeScript Name: notificationSettings.store
  * Description: 사용자 알림 설정 상태 및 관리를 위한 Pinia 스토어
  * - JWT 토큰 기반으로 백엔드와 통신 (employeeId 파라미터 제거)
  * - 브라우저 알림 권한 변경 시 자동으로 DB 동기화 기능 포함
