@@ -29,7 +29,8 @@ export function setupAuthGuard(router: Router) {
         // 디버깅: 어떤 경로로 이동을 시도하는지 확인합니다.
         console.log(`[Auth Guard] Navigating from '${from.fullPath}' to '${to.fullPath}' (name: ${String(to.name)})`);
 
-        const isProtectedRoute = to.name !== 'Login';
+        const publicRoutes = ['Login', 'FindPassword', 'ResetPassword'];
+        const isProtectedRoute = !publicRoutes.includes(to.name as string);
 
         // 1. 보호된 경로에 접근하려 하고, 현재 인증되지 않은 경우에만 토큰 갱신을 시도합니다.
         if (isProtectedRoute && !authStore.isAuthenticated) {

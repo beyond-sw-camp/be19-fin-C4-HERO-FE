@@ -45,6 +45,13 @@
         <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
       </form>
     </div>
+
+    <!-- 비밀번호 변경 모달 -->
+    <PasswordChangeModal
+      v-if="showPasswordChangeModal"
+      :current-password="password"
+      @success="handlePasswordChangeSuccess"
+    />
   </div>
 </template>
 
@@ -53,12 +60,15 @@ import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import apiClient from '@/api/apiClient';
+import PasswordChangeModal from './PasswordChangeModal.vue';
+import type { LoginResponseData } from '@/types/auth/password.types';
 
 const account = ref('');
 const password = ref('');
 const errorMessage = ref('');
 const passwordFieldType = ref<'password' | 'text'>('password');
 const saveId = ref(false);
+const showPasswordChangeModal = ref(false);
 
 const router = useRouter();
 const route = useRoute();
@@ -88,7 +98,7 @@ const handleLogin = async () => {
   }
 
   try {
-    const response = await apiClient.post('/auth/login', {
+    const response = await apiClient.post<LoginResponseData>('/auth/login', {
       account: account.value,
       password: password.value,
     });
@@ -108,8 +118,13 @@ const handleLogin = async () => {
       console.log('로그인 성공');
       console.log(authStore.user);
 
-      // 로그인 후 리디렉션 쿼리가 있으면 해당 경로로, 없으면 메인 페이지로 이동
-      router.push((route.query.redirect as string) || '/');
+      // 비밀번호 변경 필요 여부 확인
+      if (response.data && response.data.passwordChangeRequired) {
+        showPasswordChangeModal.value = true;
+      } else {
+        // 로그인 후 리디렉션 쿼리가 있으면 해당 경로로, 없으면 메인 페이지로 이동
+        router.push((route.query.redirect as string) || '/');
+      }
     } else {
       errorMessage.value = '로그인 실패: 서버로부터 유효한 인증 토큰을 받지 못했습니다.';
     }
@@ -124,6 +139,16 @@ const handleLogin = async () => {
     }
     console.error('Login error:', error);
   }
+};
+
+/**
+ * 비밀번호 변경 성공 시 처리
+ * 모달을 닫고 로그아웃 처리하거나 다시 로그인하도록 유도
+ */
+const handlePasswordChangeSuccess = () => {
+  showPasswordChangeModal.value = false;
+  authStore.logout(); // 보안을 위해 다시 로그인하도록 로그아웃 처리
+  password.value = ''; // 비밀번호 입력창 초기화
 };
 
 /**
