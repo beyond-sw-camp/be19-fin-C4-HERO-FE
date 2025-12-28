@@ -12,6 +12,7 @@
  *
  * History
  * 2025/12/17 (민철) 최초 작성
+ * 2025/12/23 (민철) 서식 목록 조회 / 서식 상세 / 북마크 API
  * </pre>
  *
  * @author 민철
@@ -20,16 +21,52 @@
 
 import apiClient from '@/api/apiClient';
 import type { DocumentsResponseDTO } from '@/types/approval/inbox.types';
+import type {
+    ApprovalTemplateDetailResponseDTO,
+    ApprovalTemplateResponseDTO
+} from '@/types/approval/template.types';
 import type { PageResponse } from '@/types/common/pagination.types';
 
 /**
- * 서식 관련 api
+ * 서식 관련 API
  * - 서식 목록 조회
  * - 상신/임시저장
  * - 결재선 지정
  * - 참조자 지정
  */
 export const approvalTemplateApi = {
+    
+    /**
+     * 서식 목록 조회 API
+     * 
+     * @returns DocumentResponseDTO[] 
+     */
+    getTemplates: async () => {
+        const response = await apiClient.get<ApprovalTemplateResponseDTO[]>('/approval/templates');
+        return response.data;
+    },
+
+    /**
+     * 서식 작성화면 조회 API (결재선, 참조 목록)
+     * 
+     * @params
+     * @returns
+     */
+    getTemplate: async (templateId: number) => {
+        const response = await apiClient.get<ApprovalTemplateDetailResponseDTO>(`/approval/templates/${templateId}`);
+        return response.data;
+    },
+
+    /**
+     * 북마크 토글 API
+     * 
+     * @param templateId 서식ID
+     * @returns 
+     */
+    toggleBookmark: async (templateId: number) => {
+        const response = await apiClient.post<boolean>(`/approval/templates/${templateId}/bookmark`);
+        return response.data;
+    }
 
 }
 
@@ -44,8 +81,8 @@ export const approvalTemplateApi = {
  */
 export const approvalDocumentApi = {
     getList: (params: {
-        page: number;
-        size: number;
+        page?: number;
+        size?: number;
         condition?: string;
         sortBy?: string;
         fromDate?: string;

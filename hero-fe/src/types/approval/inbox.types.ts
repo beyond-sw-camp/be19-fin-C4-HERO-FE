@@ -39,5 +39,5 @@ export interface DocumentsResponseDTO {
   title: string;
   drafterDept: string;
   drafter: string;
-  draftAt: string;
+  drafterAt: string;
 };

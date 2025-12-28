@@ -17,26 +17,59 @@
  */
 
 import { defineStore } from 'pinia';
-import { approvalDocumentApi } from '@/api/approval/approval.api';
+import {
+    approvalDocumentApi,
+    approvalTemplateApi,
+} from '@/api/approval/approval.api';
 import type { DocumentsResponseDTO } from '@/types/approval/inbox.types';
 import type { SearchCondition } from '@/types/common/pagination.types';
+import {
+    ApprovalDefaultReferenceDTO,
+    ApprovalDefaultLineDTO,
+    ApprovalTemplateResponseDTO,
+    ApprovalTemplateDetailResponseDTO,
+} from '@/types/approval/template.types';
 
-export const useTemplateStore = defineStore('approval', {
+
+export const useApprovalTemplateStore = defineStore('approvalTemplate', {
     state: () => ({
-        title: '',
-        category: ''
+        templates: [] as ApprovalTemplateResponseDTO[],
+        template: {} as ApprovalTemplateDetailResponseDTO,
+        isBookmarked: false,
     }),
 
     actions: {
-        setCurrentForm(payload: {
-            title: string;
-            category: string;
-        }) {
-            this.title = payload.title;
-            this.category = payload.category;
-        }
+        async fetchTemplates() {
+            try {
+                const data = await approvalTemplateApi.getTemplates();
+                this.templates = data;
+                return data;
+            } catch (error) {
+                console.error('서식 목록 조회 실패:', error);
+            } 
+        },
+
+        async fetchTemplate(templateId: number) {
+            try {
+                const data = await approvalTemplateApi.getTemplate(templateId);
+                this.template = data;
+            } catch (error) {
+                console.error('서식 상세 조회 실패:', error);
+            } 
+        },
+
+        async toggleBookmark(templateId: number) {
+            try {
+                const data = await approvalTemplateApi.toggleBookmark(templateId);
+                this.isBookmarked = data;
+            } catch (error) {
+                console.error('즐겨찾기 변경 실패:', error);
+                alert('즐겨찾기 변경 실패');
+            } 
+        },
     }
-})
+});
+
 
 export const useApprovalDocumentsStore = defineStore('approvalDocuments', {
     state: () => ({

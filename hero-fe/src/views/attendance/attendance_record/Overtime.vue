@@ -457,6 +457,8 @@ onMounted(() => {
 .panel-body{
   border: 1px solid #e2e8f0;
   background-color: #ffffff;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;  
 }
 
 /* 검색 영역 */
@@ -507,7 +509,7 @@ onMounted(() => {
 
 .panel-table {
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  /* border-radius: 8px; */
   overflow: hidden;
 }
 

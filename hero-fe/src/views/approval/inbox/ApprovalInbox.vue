@@ -105,7 +105,7 @@
                     <td class="cell docTitle">{{ doc.title }}</td>
                     <td class="cell drafterDept">{{ doc.drafterDept }}</td>
                     <td class="cell drafter">{{ doc.drafter }}</td>
-                    <td class="cell drafterDate">{{ doc.draftAt }}</td>
+                    <td class="cell drafterDate">{{ doc.drafterAt }}</td>
                   </tr>
                 </template>
                 
@@ -333,8 +333,13 @@ td {
 }
 
 .status-text {
-  
+  display: flex;
+  padding: 5px;
+  width: fit-content;
   background-color: aqua;
+  justify-content: center;
+  align-items: center;
+  border-radius: 10px;
 }
 
 .inbox-body-bottom {

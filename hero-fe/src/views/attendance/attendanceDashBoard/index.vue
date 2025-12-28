@@ -1,6 +1,6 @@
 <!-- 
   <pre>
-  (File => TypeScript / Vue) Name   : AttendanceDashboard.vue
+  TypeScript Name   : AttendanceDashboard.vue
   Description : 근태 점수 대시보드 화면
                 - 기간 필터(시작/종료일) + 검색/초기화
                 - 직원별 지각/결근/점수 테이블
@@ -23,7 +23,7 @@
       <div class="summary-card">
         <div class="summary-title">전체 직원</div>
         <div class="summary-value-wrapper">
-          <span class="summary-value">{{ totalEmployees }}</span>
+          <span class="summary-value">{{ summary.totalEmployees }}</span>
           <span class="summary-unit">명</span>
         </div>
       </div>
@@ -32,7 +32,7 @@
       <div class="summary-card">
         <div class="summary-title">우수 직원(95점 이상)</div>
         <div class="summary-value-wrapper">
-          <span class="summary-value">{{ excellentEmployees }}</span>
+          <span class="summary-value">{{ summary.excellentEmployees }}</span>
           <span class="summary-unit">명</span>
         </div>
       </div>
@@ -41,7 +41,7 @@
       <div class="summary-card">
         <div class="summary-title">위험 직원(85점 이하)</div>
         <div class="summary-value-wrapper">
-          <span class="summary-value">{{ riskyEmployees }}</span>
+          <span class="summary-value">{{ summary.riskyEmployees }}</span>
           <span class="summary-unit">명</span>
         </div>
       </div>
@@ -49,43 +49,56 @@
       <!-- 점수 계산 식 -->
       <div class="summary-card">
         <div class="summary-title">점수 계산 식</div>
-        <div class="summary-formula">
-          점수: 100 - (지각 × 1) - (결근 × 2)
-        </div>
+        <div class="summary-formula">점수 : 100 - (지각 × 1) - (결근 × 2)</div>
       </div>
     </div>
 
     <!-- 하단 패널 (필터 + 테이블 + 페이지네이션) -->
     <div class="dashboard-panel">
-      <!-- Personal.vue 과 동일한 구조의 기간 필터 영역 -->
-        <div class="panel-search">
-          <div class="panel-search-inner">
-            <!-- 왼쪽: 조회기간 + 날짜 범위 (전자결재와 동일한 형태) -->
-            <div class="filter-row">
-              <span class="filter-label">조회기간</span>
-              <input
-                v-model="startDate"
-                type="date"
-                class="filter-input"
-                :max="today"
-              />
+      <!-- 필터 영역 -->
+      <div class="panel-search">
+        <div class="panel-search-inner">
+          <div class="filter-row">
+            <span class="filter-label">필터</span>
 
-              <span class="filter-separator">~</span>
+            <!-- 월 선택 -->
+            <input
+              v-model="selectedMonth"
+              type="month"
+              class="filter-select"
+              :max="currentMonth"
+            />
 
-              <input
-                v-model="endDate"
-                type="date"
-                class="filter-input"
-                :max="today"
-              />
-            </div>
-            <!-- 오른쪽: 검색 / 초기화 버튼 -->
-            <div class="search-button-group">
-              <button class="btn-search" @click="onSearch">검색</button>
-              <button class="btn-reset" @click="onReset">초기화</button>
-            </div>
+            <!-- 부서 선택 -->
+            <select
+              v-model="selectedDepartmentId"
+              class="filter-select"
+              :disabled="deptLoading"
+            >
+              <option :value="null">전체 부서</option>
+              <option
+                v-for="dept in departmentOptions"
+                :key="dept.departmentId"
+                :value="dept.departmentId"
+              >
+                {{ dept.departmentName }}
+              </option>
+            </select>
+
+            <!-- 점수 정렬 -->
+            <select v-model="scoreSort" class="filter-select">
+              <option value="DESC">점수 높은 순</option>
+              <option value="ASC">점수 낮은 순</option>
+            </select>
+          </div>
+
+          <!-- 오른쪽: 검색 / 초기화 버튼 -->
+          <div class="search-button-group">
+            <button class="btn-search" @click="onSearch">검색</button>
+            <button class="btn-reset" @click="onReset">초기화</button>
           </div>
         </div>
+      </div>
 
       <!-- 테이블 영역 -->
       <div class="dashboard-table-wrapper">
@@ -100,43 +113,38 @@
               <th class="col-score">점수</th>
             </tr>
           </thead>
+
           <tbody>
             <tr
               v-for="(row, index) in pagedEmployees"
               :key="row.employeeId"
               :class="{ 'row-striped': index % 2 === 1 }"
+              @click="openEmployeeChart(row.employeeId)"
+              style="cursor:pointer;"
             >
-              <!-- 사번 -->
               <td>{{ row.employeeNumber }}</td>
-
-              <!-- 이름 -->
               <td>{{ row.employeeName }}</td>
-
-              <!-- 부서 -->
               <td>{{ row.departmentName }}</td>
 
-              <!-- 지각 -->
-              <td :class="{ 'danger-text': row.tardyCount > 0 }">
+              <td
+                class="count-cell"
+                :class="row.tardyCount > 0 ? 'status-late' : 'status-normal'"
+              >
                 {{ row.tardyCount }}회
               </td>
 
-              <!-- 결근 -->
-              <td :class="{ 'danger-text': row.absenceCount > 0 }">
+              <td
+                class="count-cell"
+                :class="row.absenceCount > 0 ? 'status-absent' : 'status-normal'"
+              >
                 {{ row.absenceCount }}회
               </td>
 
-              <!-- 점수 -->
               <td>{{ row.score }}점</td>
             </tr>
 
-            <!-- 데이터 없음 -->
             <tr v-if="pagedEmployees.length === 0">
-              <td
-                colspan="6"
-                class="empty-row"
-              >
-                검색 조건에 해당하는 직원이 없습니다.
-              </td>
+              <td colspan="6" class="empty-row">검색 조건에 해당하는 직원이 없습니다.</td>
             </tr>
           </tbody>
         </table>
@@ -167,128 +175,111 @@
         <button
           type="button"
           class="page-button"
-          :disabled="currentPage === totalPages"
+          :disabled="totalPages === 0 || currentPage >= totalPages"
           @click="goPage(currentPage + 1)"
         >
           다음
         </button>
       </div>
     </div>
+    <EmployeeHalfChart
+      :open="employeeDashboardOpen"
+      :employee-id="selectedEmployeeId"
+      @close="closeEmployeeChart"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import { storeToRefs } from 'pinia';
-
+import { computed, onMounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import EmployeeHalfChart from '@/views/attendance/attendanceDashboard/EmplloyeeHalfChartDrawer.vue'
+import { useAttendanceEmployeeDashboardStore } from '@/stores/attendance/attendanceEmployeeDashboard'
 import {
   useAttendanceDashboardStore,
   type AttendanceDashboardDTO,
-} from '@/stores/attendance/dashboard';
+  type ScoreSort,
+} from '@/stores/attendance/dashboard'
 
-const today = new Date().toISOString().slice(0, 10);
+const employeeDashboardStore = useAttendanceEmployeeDashboardStore()
+const { open: employeeDashboardOpen, selectedEmployeeId } = storeToRefs(employeeDashboardStore)
 
+/** YYYY-MM (month input용) */
+const currentMonth = new Date().toISOString().slice(0, 7)
 
-/** 근태 대시보드 Pinia 스토어 인스턴스 */
-const dashboardStore = useAttendanceDashboardStore();
+/** 필터 로컬 상태 */
+const selectedMonth = ref<string>(currentMonth)
+const selectedDepartmentId = ref<number | null>(null)
+const scoreSort = ref<ScoreSort>('DESC')
 
-/**
- * storeToRefs 로 state를 추출하여 템플릿에 바인딩
- */
+/** Store */
+const dashboardStore = useAttendanceDashboardStore()
 const {
-  dashboardList,   // 현재 페이지 직원 목록
-  currentPage,     // 현재 페이지 번호(프론트 기준)
-  totalPages,      // 전체 페이지 수
-  totalCount,      // 전체 직원 수
-  startDate,       // 기간(시작) - YYYY-MM-DD
-  endDate,         // 기간(종료) - YYYY-MM-DD
-} = storeToRefs(dashboardStore);
+  dashboardList,
+  currentPage,
+  totalPages,
+  summary,
+  departmentOptions,
+  deptLoading,
+} = storeToRefs(dashboardStore)
 
-/**
- * 상단 카드용 집계 - 전체 직원 수
- * - 전체 데이터 개수는 PageResponse.totalCount/totalElements를 사용
- */
-const totalEmployees = computed<number>(() => totalCount.value);
+/** 현재 페이지 목록 */
+const pagedEmployees = computed<AttendanceDashboardDTO[]>(() => dashboardList.value)
 
-/**
- * 상단 카드용 집계 - 우수 직원 수 (95점 이상)
- * - 현재는 "현재 페이지 기준"으로 계산
- *   (TODO: 필요하면 백엔드에서 전체 집계값을 내려주도록 확장)
- */
-const excellentEmployees = computed<number>(() => {
-  return dashboardList.value.filter((emp) => emp.score >= 95).length;
-});
-
-/**
- * 상단 카드용 집계 - 위험 직원 수 (85점 이하)
- * - 현재는 "현재 페이지 기준"으로 계산
- */
-const riskyEmployees = computed<number>(() => {
-  return dashboardList.value.filter((emp) => emp.score <= 85).length;
-});
-
-/**
- * 현재 페이지에 표시할 직원 목록
- * - 서버 페이징을 사용하므로, PageResponse.content를 그대로 사용
- */
-const pagedEmployees = computed<AttendanceDashboardDTO[]>(() => {
-  return dashboardList.value;
-});
-
-/**
- * 검색 버튼 클릭 핸들러
- * - 기간 필터(startDate, endDate)를 스토어에 반영하고 1페이지부터 재조회
- */
+/** 검색 */
 const onSearch = (): void => {
-  dashboardStore.setFilterDates(startDate.value, endDate.value);
-  dashboardStore.fetchDashboard(1);
-};
+  dashboardStore.setMonth(selectedMonth.value)
+  dashboardStore.setDepartment(selectedDepartmentId.value)
+  dashboardStore.setScoreSort(scoreSort.value)
+  dashboardStore.refreshDashboard(1)
+}
 
-/**
- * 초기화 버튼 클릭 핸들러
- * - 기간 필터와 페이지를 초기화하고 전체 기준으로 다시 조회
- * - Personal.vue와 동일하게 인풋은 빈 문자열로 두어 placeholder 유지
- */
+/** 초기화 */
 const onReset = (): void => {
-  startDate.value = '';
-  endDate.value = '';
-  dashboardStore.setFilterDates('', '');
-  dashboardStore.fetchDashboard(1);
-};
+  selectedMonth.value = currentMonth
+  selectedDepartmentId.value = null
+  scoreSort.value = 'DESC'
 
-/**
- * 페이지 이동
- * - 서버에 해당 페이지를 다시 요청
- *
- * @param {number} page - 이동할 페이지 번호
- ****************************************
- * @param → 함수의 인자(Parameter)
- ****************************************
- */
+  dashboardStore.setMonth(currentMonth)
+  dashboardStore.setDepartment(null)
+  dashboardStore.setScoreSort('DESC')
+  dashboardStore.refreshDashboard(1)
+}
+
+/** 페이지 이동 */
 const goPage = (page: number): void => {
-  if (page < 1 || page > totalPages.value) {
-    return;
-  }
-  dashboardStore.fetchDashboard(page);
-};
+  if (page < 1 || page > totalPages.value) return
+  dashboardStore.fetchDashboard(page)
+}
 
-/**
- * 화면 진입 시 기본 조회
- * - 기간 필터가 비어 있는 상태로 전체 기준 1페이지 조회
- */
-onMounted(() => {
-  dashboardStore.fetchDashboard(1);
-});
+const openEmployeeChart = async (employeeId: number): Promise<void> => {
+  // year/half 기본값은 store에 있으니 employeeId만 넘겨도 됨
+  await employeeDashboardStore.fetchEmployeeHalfDashboard(employeeId)
+}
+
+const closeEmployeeChart = (): void => {
+  employeeDashboardStore.setOpen(false)
+}
+
+
+/** 초기 진입 */
+onMounted(async () => {
+  dashboardStore.setMonth(currentMonth)
+  dashboardStore.setDepartment(null)
+  dashboardStore.setScoreSort('DESC')
+
+  if (!departmentOptions.value.length) {
+    await dashboardStore.fetchDepartmentOptions()
+  }
+  dashboardStore.refreshDashboard(1)
+})
 </script>
 
 <style scoped>
-/* TODO: attendance-dashboard-wrapper / dashboard-panel / dashboard-table 등
-   BEM 네이밍 컨벤션에 맞춰 점진적 리팩터링 예정 */
-</style>
-
-
-
-<style scoped>
+  * {
+  font-size: 14px;
+  font-family: "Inter-Regular", sans-serif;
+}
 .attendance-dashboard-wrapper {
   width: 100%;
   height: 100%;
@@ -319,7 +310,7 @@ onMounted(() => {
 
 .summary-title {
   color: #64748b;
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 500;
   line-height: 1.2;
   margin-bottom: 8px;
@@ -344,7 +335,8 @@ onMounted(() => {
 }
 
 .summary-formula {
-  font-size: 13px;
+  font-size: 16px;
+  font-weight: 700;
   color: #1f2933;
 }
 
@@ -578,7 +570,7 @@ onMounted(() => {
 }
 
 /* 날짜 인풋 (전자결재 페이지와 비슷한 스타일) */
-.filter-input {
+.filter-select {
   width: 220px;
   height: 40px;
   border-radius: 10px;
@@ -588,8 +580,27 @@ onMounted(() => {
   color: #1f2933;
 }
 
-/* ~ 구분자 */
-.filter-separator {
-  color: #64748b;
+.filter-select:focus{
+  outline: none;
+}
+
+.dashboard-table td.count-cell {
+  font-weight: 600;
+}
+
+.dashboard-table td.status-normal {
+  color: #000000;
+}
+
+.dashboard-table td.status-late {
+  color: #ff0000;
+}
+
+.dashboard-table td.status-absent {
+  color: #16a34a;
+}
+
+.dashboard-table td.status-early {
+  color: rgb(187, 187, 30);
 }
 </style>
