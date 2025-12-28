@@ -16,7 +16,7 @@
             <!-- Actual Image -->
             <img
               v-else
-              :src="employee.imagePath"
+              :src="profileImageUrl"
               alt="프로필 사진"
               class="profile-image"
               @error="imageError = true"
@@ -90,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { fetchEmployeeDetail } from '@/api/personnel/personnel';
 import type { EmployeeDetailResponse } from '@/types/personnel/personnel';
 
@@ -123,6 +123,23 @@ const getEmployeeDetails = async (id: number) => {
     isLoading.value = false;
   }
 };
+
+// 프로필 이미지 URL 계산
+const profileImageUrl = computed(() => {
+  const path = employee.value?.imagePath;
+  if (!path) return '';
+  
+  // 이미 전체 URL인 경우 (http로 시작)
+  if (path.startsWith('http')) return path;
+
+  // 상대 경로인 경우 백엔드 주소와 /uploads 프리픽스 조합
+  const baseUrl = 'http://localhost:8080';
+  let resourcePath = path.startsWith('/') ? path : `/${path}`;
+  if (!resourcePath.startsWith('/uploads')) {
+    resourcePath = `/uploads${resourcePath}`;
+  }
+  return `${baseUrl}${resourcePath}`;
+});
 
 // 모달 열림/닫힘 감지
 watch(() => props.modelValue, (isVisible) => {

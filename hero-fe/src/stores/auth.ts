@@ -34,6 +34,7 @@ interface JwtPayload {
     gradeName: string;       // 직급명
     jobTitleId: number;      // DB 직책 정보 인조키
     jobTitleName: string;    // 직책명
+    imagePath: string        // 프로필 이미지 경로
     auth: string[];            // 권한
 }
 

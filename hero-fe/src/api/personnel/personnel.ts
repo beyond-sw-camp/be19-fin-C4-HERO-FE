@@ -61,10 +61,14 @@ export const fetchEmployeeDetail = (employeeId: number) => {
 
 /**
  * 신규 사원 등록
- * @param data 사원 등록 정보 (SignupRequestDTO)
+ * @param data 사원 등록 정보 (FormData)
  */
-export const createEmployee = (data: EmployeeRegisterParams) => {
-  return client.post<ApiResponse<void>>('/employee/signup', data);
+export const createEmployee = (data: FormData) => {
+  return client.post<ApiResponse<void>>('/employee/signup', data, {
+    headers: {
+        'Content-Type': 'multipart/form-data'
+    }
+  })
 };
 
 /**
@@ -80,4 +84,3 @@ export const fetchMyInfo = () => {
 export const fetchEmployeeSearchOptions = () => {
   return client.get<ApiResponse<EmployeeSearchOptionsResponse>>('/employee/search-options');
 };
-

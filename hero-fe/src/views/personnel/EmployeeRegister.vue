@@ -60,7 +60,7 @@
             </div>
               <div class="form-item full-width">
               <label class="required">프로필 사진</label>
-              <input type="file" disabled />
+              <input type="file" @change="handleFileChange" accept="image/*" />
             </div>
           </div>
 
@@ -146,7 +146,7 @@ const formData = reactive<EmployeeRegisterParams>({
   contractType: '',
   gender: 'M',
   hireDate: '',
-  imagePath: '/images/default-profile.png', // 기본값 설정
+  imageFile: null,
   baseSalary: 0,
   birthDate: '',
   address: '',
@@ -167,6 +167,15 @@ onMounted(async () => {
     console.error('옵션 정보를 불러오는데 실패했습니다.', error);
   }
 });
+
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (target.files && target.files.length > 0) {
+    formData.imageFile = target.files[0];
+  } else {
+    formData.imageFile = null; // 파일 선택 취소 시 초기화
+  }
+};
 
 const handleSalaryInput = (event: Event) => {
   const target = event.target as HTMLInputElement;
@@ -193,13 +202,27 @@ const handleSave = async () => {
     return;
   }
 
-  // 선택 항목이 빈 문자열일 경우 전송 데이터에서 제외 (백엔드에서 null로 처리되도록 함)
-  const submitData = { ...formData };
-  if (!submitData.birthDate) delete submitData.birthDate;
-  if (!submitData.address) delete submitData.address;
-  if (!submitData.departmentName) delete submitData.departmentName;
-  if (!submitData.gradeName) delete submitData.gradeName;
-  if (!submitData.jobTitleName) delete submitData.jobTitleName;
+  // FormData 생성
+  const submitData = new FormData();
+  submitData.append('employeeName', formData.employeeName);
+  submitData.append('employeeNumber', formData.employeeNumber);
+  submitData.append('email', formData.email);
+  submitData.append('phone', formData.phone);
+  submitData.append('contractType', formData.contractType);
+  submitData.append('gender', formData.gender);
+  submitData.append('hireDate', formData.hireDate);
+  submitData.append('baseSalary', String(formData.baseSalary));
+  
+  if (formData.imageFile) {
+    submitData.append('imageFile', formData.imageFile);
+  }
+
+  // 선택 항목 (값이 있는 경우에만 추가)
+  if (formData.birthDate) submitData.append('birthDate', formData.birthDate);
+  if (formData.address) submitData.append('address', formData.address);
+  if (formData.departmentName) submitData.append('departmentName', formData.departmentName);
+  if (formData.gradeName) submitData.append('gradeName', formData.gradeName);
+  if (formData.jobTitleName) submitData.append('jobTitleName', formData.jobTitleName);
 
   try {
     const response = await createEmployee(submitData);

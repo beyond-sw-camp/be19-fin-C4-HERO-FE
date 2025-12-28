@@ -50,7 +50,7 @@ export interface EmployeeRegisterParams {
   contractType: string;       // 고용 형태 (필수)
   gender: string;             // 성별 (M/F) (필수)
   hireDate: string;           // 입사일 (YYYY-MM-DD) (필수)
-  imagePath: string;          // 프로필 이미지 경로 (필수)
+  imageFile?: File | null;    // 프로필 이미지 파일 (선택)
   baseSalary: number;         // 기본급 (필수)
   birthDate?: string;         // 생년월일 (선택)
   address?: string;           // 주소 (선택)

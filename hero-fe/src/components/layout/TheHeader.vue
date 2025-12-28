@@ -56,7 +56,10 @@
         <!-- 사용자 프로필 정보 -->
         <div v-if="user" class="profile-container">
           <div class="profile-box" @click="toggleDropdown">
-            <div class="profile-icon">{{ user.employeeName?.charAt(0) }}</div>
+            <div class="profile-icon">
+              <img v-if="user.imagePath && !imageLoadError" :src="profileImageUrl" class="profile-img" alt="Profile" @error="handleImageError" />
+              <span v-else>{{ user.employeeName?.charAt(0) }}</span>
+            </div>
             <div class="profile-info">
               <div class="profile-name">{{ user.employeeName }} {{ user.gradeName }}</div>
               <div class="profile-team">{{ user.departmentName }}</div>
@@ -78,7 +81,7 @@
 
 <script setup lang="ts">
 
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 //세션 관리
@@ -94,7 +97,33 @@ const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
 
 const isDropdownOpen = ref(false);
+const imageLoadError = ref(false);
 
+const handleImageError = () => {
+  imageLoadError.value = true;
+};
+
+// 사용자 정보(이미지 경로)가 변경되면 에러 상태 초기화
+watch(() => user.value?.imagePath, () => {
+  imageLoadError.value = false;
+});
+
+// 프로필 이미지 URL 계산
+const profileImageUrl = computed(() => {
+  const path = user.value?.imagePath;
+  if (!path) return '';
+
+  // http로 시작하는 외부 링크는 그대로 사용
+  if (path.startsWith('http')) return path;
+
+  // 상대 경로인 경우 백엔드 주소와 /uploads 프리픽스 조합
+  const baseUrl = 'http://localhost:8080';
+  let resourcePath = path.startsWith('/') ? path : `/${path}`;
+  if (!resourcePath.startsWith('/uploads')) {
+    resourcePath = `/uploads${resourcePath}`;
+  }
+  return `${baseUrl}${resourcePath}`;
+});
 
 // 메인 로고 버튼 클릭 시 대시보드 이동
 const goDashboard = () => {
@@ -335,6 +364,13 @@ const handleLogout = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.profile-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 11.25px;
 }
 
 .profile-info {
