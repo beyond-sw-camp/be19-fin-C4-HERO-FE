@@ -183,7 +183,7 @@
 // 1. Import 구문
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useNotificationSettingsStore } from '@/stores/notification/notificationSettingsStore';
+import { useNotificationSettingsStore } from '@/stores/notification/notificationSettings.store';
 import type { NotificationSettingItem } from '@/types/notification/notification.types';
 
 // 2. Composables (외부 로직)

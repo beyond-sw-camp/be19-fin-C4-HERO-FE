@@ -48,14 +48,53 @@
 import TheHeader from '@/components/layout/TheHeader.vue';
 import TheFooter from '@/components/layout/TheFooter.vue';
 import TheSidebar from '@/components/layout/TheSidebar.vue';
-import { onMounted, watch } from "vue";
+import { onMounted, onUnmounted, watch } from 'vue';
 import { useRoute } from "vue-router";
 import { useSessionStore } from "@/stores/session";
-
+import { useAuthStore } from '@/stores/auth';
+import { useNotificationStore } from '@/stores/notification/notification.store';
 
 // 현재 라우트 및 세션 스토어 (route.fullPath 변화를 감지하여 세션을 연장)
 const route = useRoute();
 const session = useSessionStore();
+
+const authStore = useAuthStore(); 
+const notificationStore = useNotificationStore();
+
+// 최초 진입 시 세션 타이머 시작 & WebSocket 연결
+onMounted(() => {
+  session.startSession();
+  
+  // 인증된 사용자면 WebSocket 연결
+  if (authStore.isAuthenticated) {  
+    notificationStore.connectWebSocket();
+  }
+});
+
+// 페이지 전환 시 세션 갱신
+watch(
+  () => route.fullPath,
+  () => {
+    session.refreshSession();
+  },
+);
+
+// 로그인/로그아웃 감지하여 WebSocket 연결/해제
+watch(
+  () => authStore.isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated) {
+      notificationStore.connectWebSocket();
+    } else {
+      notificationStore.disconnectWebSocket();
+    }
+  }
+);
+
+// 앱 종료 시 WebSocket 연결 해제
+onUnmounted(() => {
+  notificationStore.disconnectWebSocket();
+});
 
 // 최초 진입 시 세션 타이머 시작됨
 onMounted(() => {

@@ -4,18 +4,21 @@
  * Description: WebSocket 알림 연결 Composable
  *              STOMP 프로토콜을 사용한 실시간 알림 수신
  *              - WebSocket 서버 연결 및 해제
+ *              - JWT 토큰 기반 인증
  *              - 알림 토픽 구독 관리
  *              - 자동 재연결 (5초 간격)
  *              - Heartbeat를 통한 연결 유지
  *
  * History
  * 2025/12/14 (혜원) 최초 작성
+ * 2025/12/25 (혜원) JWT 토큰 인증 추가
  * </pre>
 */
 
 import { ref, Ref } from 'vue';
 import SockJS from 'sockjs-client';
 import { Client, StompSubscription } from '@stomp/stompjs';
+import { useAuthStore } from '@/stores/auth';  // 추가
 import type { NotificationDTO, WebSocketMessage } from '@/types/notification/notification.types';
 
 interface UseNotificationSocket {
@@ -45,12 +48,29 @@ export function useNotificationSocket(): UseNotificationSocket {
     employeeId: number,
     onMessage: (notification: NotificationDTO) => void
   ): void => {
+    // authStore에서 토큰 가져오기
+    const authStore = useAuthStore();
+    const token = authStore.accessToken;
+    
+    if (!token) {
+      console.error('[WebSocket] JWT 토큰이 없습니다. 로그인이 필요합니다.');
+      return;
+    }
+
+    console.log('[WebSocket] 토큰 확인:', token ? '토큰 존재' : '토큰 없음');
+
     // SockJS 소켓 생성
     const socket = new SockJS('http://localhost:8080/ws/notifications');
     
     // STOMP 클라이언트 설정
     stompClient = new Client({
       webSocketFactory: () => socket as WebSocket,
+      
+      // STOMP 연결 시 JWT 토큰을 헤더에 포함
+      connectHeaders: {
+        Authorization: `Bearer ${token}`
+      },
+      
       debug: (str: string) => {
         // 프로덕션에서는 주석 처리
         // console.log(str);
@@ -61,8 +81,9 @@ export function useNotificationSocket(): UseNotificationSocket {
     });
 
     // 연결 성공 시 콜백
-    stompClient.onConnect = () => {
+    stompClient.onConnect = (frame) => {
       console.log('[WebSocket] 연결 성공');
+      console.log('[WebSocket] 연결 프레임:', frame);
       isConnected.value = true;
 
       if (stompClient) {
@@ -97,6 +118,7 @@ export function useNotificationSocket(): UseNotificationSocket {
     };
 
     // WebSocket 연결 시작
+    console.log('[WebSocket] 연결 시작...');
     stompClient.activate();
   };
 

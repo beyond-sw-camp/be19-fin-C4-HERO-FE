@@ -9,410 +9,430 @@
   History
   2025/12/22 - (혜원) 최초 작성
   2025/12/22 - (혜원) 최근 활동 알림 연동 추가
+  2025/12/26 - (혜원) 대시보드 API 연동
   </pre>
  
   @author 혜원
-  @version 1.0
+  @version 1.4
 -->
-
 <template>
   <div class="dashboard-wrapper">
     <!-- 좌측 패널 -->
     <div class="left-panel">
-      <!-- 근태현황 카드 -->
-      <section class="card main-attendance-card">
-        <div class="card-header">
-          <div class="header-title-group">
-            <h3>근태현황</h3>
-            <p class="current-date">{{ currentDateTime }}</p>
-          </div>
-          <span class="text-link">최근 시간</span>
-        </div>
+      <!-- 출퇴근 타각 -->
+      <TimeClock
+        :current-date-time="currentDateTime"
+        :today-attendance="todayAttendance"
+        :weekly-work-hours="weeklyWorkHours"
+        @punch-in="handlePunchIn"
+        @punch-out="handlePunchOut"
+      />
 
-        <!-- 출근/퇴근 버튼 -->
-        <div class="punch-group-row">
-          <button 
-            class="btn-punch in" 
-            @click="handlePunchIn"
-          >
-            <div class="btn-icon-box primary">
-              <img 
-                src="/images/home-check.svg" 
-                alt="출근" 
-                class="btn-icon-img" 
-              />
-            </div>
-            <div class="btn-text">
-              <span class="guide">오늘도 힘내봅시다</span>
-              <strong class="action-label">출근하기</strong>
-            </div>
-          </button>
-
-          <button 
-            class="btn-punch out disabled" 
-            disabled
-          >
-            <div class="btn-icon-box gray">
-              <img 
-                src="/images/home-out.svg" 
-                alt="퇴근" 
-                class="btn-icon-img" 
-              />
-            </div>
-            <div class="btn-text">
-              <span class="guide">먼저 출근해주세요</span>
-              <strong class="action-label">퇴근하기</strong>
-            </div>
-          </button>
-        </div>
-
-        <!-- 휴식시간 정보 -->
-        <div class="info-strip">
-          <div class="strip-left">
-            <i class="pi pi-coffee"></i>
-            <span>휴식시간</span>
-          </div>
-          <span class="strip-value">0시간</span>
-        </div>
-
-        <!-- 주간 근무시간 차트 -->
-        <div class="chart-section">
-          <div class="chart-container">
-            <Doughnut 
-              :data="chartData" 
-              :options="chartOptions" 
-            />
-            <div class="chart-center-text">
-              <span class="hours-val">21.6</span>
-              <span class="unit-val">시간</span>
-            </div>
-          </div>
-          <div class="progress-footer">
-            <span class="active-text">이번 주 근무</span>
-            <span class="muted-text">/ 전체 시간</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- 최근 활동 카드 -->
-      <section class="card activity-card-container">
-        <div class="activity-header">
-          <h3>최근 활동</h3>
-          <button 
-            class="more-btn" 
-            @click="router.push('/notifications')"
-          >
-            더보기 <i class="pi pi-angle-right"></i>
-          </button>
-        </div>
-        <div class="activity-body-list">
-          <div 
-            v-if="notificationStore.isLoading" 
-            class="loading-msg"
-          >
-            알림을 불러오는 중...
-          </div>
-          <template v-else-if="recentNotifications.length > 0">
-            <div 
-              v-for="item in recentNotifications" 
-              :key="item.notificationId" 
-              class="activity-row-item" 
-              @click="handleNotificationClick(item)"
-            >
-              <div class="activity-icon-box">
-                <img 
-                  :src="getNotificationIcon(item.type)" 
-                  class="custom-noti-icon" 
-                  alt="알림 아이콘"
-                />
-              </div>
-              <div class="activity-text-wrap">
-                <p class="activity-msg">{{ item.message }} • {{ item.timeAgo }}</p>
-              </div>
-            </div>
-          </template>
-          <div 
-            v-else 
-            class="empty-msg"
-          >
-            최근 활동 내역이 없습니다.
-          </div>
-        </div>
-      </section>
+      <!-- 최근 활동 -->
+      <RecentActivity
+        :notifications="recentNotifications"
+        :is-loading="notificationStore.isLoading"
+        @view-all="router.push('/notifications')"
+        @click-notification="handleNotificationClick"
+      />
     </div>
 
     <!-- 우측 패널 -->
     <div class="right-panel">
       <!-- 오늘 근무 현황 -->
-      <section class="card">
-        <h3 class="card-title-blue">오늘 근무 현황</h3>
-        <div class="grid-4">
-          <div 
-            v-for="s in todayStats" 
-            :key="s.label" 
-            class="status-box" 
-            :class="s.class"
-          >
-            <div class="s-head">
-              <i :class="s.icon"></i> {{ s.label }}
-            </div>
-            <div class="s-body">{{ s.value }}</div>
-            <div class="s-foot">{{ s.footer }}</div>
-          </div>
-        </div>
-      </section>
+      <TodayStats :stats="todayStats" />
 
       <!-- 이번 달 요약 -->
-      <section class="card">
-        <h3 class="card-title-blue">이번 달 요약</h3>
-        <div class="grid-3">
-          <div 
-            v-for="m in monthlySummary" 
-            :key="m.label" 
-            class="summary-box"
-          >
-            <div class="summary-icon">
-              <img 
-                :src="m.image" 
-                :alt="m.label" 
-                class="summary-icon-img" 
-              />
-            </div>
-            <div class="summary-val">{{ m.value }}</div>
-            <div class="summary-lab">{{ m.label }}</div>
-            <div class="summary-sub">{{ m.sub }}</div>
-          </div>
-        </div>
-      </section>
+      <MonthlySummary :summary="monthlySummary" />
 
       <!-- 출근 통계 & 휴가 현황 -->
       <div class="grid-2">
-        <section class="card">
-          <h3 class="card-title-blue">출근 통계</h3>
-          <div class="stats-table">
-            <div class="stats-row">
-              <span>이번 달 출근율</span>
-              <strong class="t-blue">98.5%</strong>
-            </div>
-            <div class="stats-row">
-              <span>정상 출근</span>
-              <strong class="t-green">21일</strong>
-            </div>
-            <div class="stats-row">
-              <span>지각</span>
-              <strong class="t-red">0일</strong>
-            </div>
-            <div class="stats-row">
-              <span>결근</span>
-              <strong class="t-dark">0일</strong>
-            </div>
-          </div>
-        </section>
-        <section class="card">
-          <h3 class="card-title-blue">휴가 현황</h3>
-          <div class="stats-table">
-            <div class="stats-row">
-              <span>전체 연차</span>
-              <strong class="t-blue">15일</strong>
-            </div>
-            <div class="stats-row">
-              <span>사용 연차</span>
-              <strong class="t-orange">7일</strong>
-            </div>
-            <div class="stats-row">
-              <span>잔여 연차</span>
-              <strong class="t-green">8일</strong>
-            </div>
-            <div class="stats-row">
-              <span>소멸 예정</span>
-              <strong class="t-red">0일</strong>
-            </div>
-          </div>
-        </section>
+        <StatsCard
+          title="출근 통계"
+          type="table"
+          :items="attendanceStatsItems"
+        />
+        <StatsCard
+          title="휴가 현황"
+          type="table"
+          :items="vacationStatsItems"
+        />
       </div>
 
       <!-- 결재 현황 -->
-      <section class="card">
-        <h3 class="card-title-blue">결재 현황</h3>
-        <div class="grid-3">
-          <div class="summary-box">
-            <div class="summary-val t-brown">5건</div>
-            <div class="summary-sub">결재 대기</div>
-          </div>
-          <div class="summary-box">
-            <div class="summary-val t-green">28건</div>
-            <div class="summary-sub">결재 완료</div>
-          </div>
-          <div class="summary-box">
-            <div class="summary-val t-red">1건</div>
-            <div class="summary-sub">반려됨</div>
-          </div>
-        </div>
-      </section>
+      <StatsCard
+        title="결재 현황"
+        type="grid"
+        :items="approvalStatsItems"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// 1. Import 구문
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Doughnut } from 'vue-chartjs';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { useNotificationStore } from '@/stores/notification/notificationStore';
+import { useNotificationStore } from '@/stores/notification/notification.store';
 import type { Notification } from '@/types/notification/notification.types';
+import dashboardApi from '@/api/dashboard/dashboard.api';
+import type { ClockStatusDTO } from '@/types/dashboard/dashboard.types';
 
-// Chart.js 등록
-ChartJS.register(ArcElement, Tooltip, Legend);
+// 컴포넌트 임포트
+import TimeClock from '@/components/dashboard/TimeClock.vue';
+import RecentActivity from '@/components/dashboard/RecentActivity.vue';
+import TodayStats from '@/components/dashboard/TodayStats.vue';
+import MonthlySummary from '@/components/dashboard/MonthlySummary.vue';
+import StatsCard from '@/components/dashboard/StatsCard.vue';
 
-// 2. Composables
 const router = useRouter();
 const notificationStore = useNotificationStore();
 
-// 3. Reactive 데이터
-const currentDateTime = ref('2025년 11월 25일 (화) 14:30:25');
+// 상태
+const currentDateTime = ref('');
+const isLoading = ref(false);
+const todayAttendance = ref<ClockStatusDTO | null>(null);
+const currentWorkDuration = ref(0);
+const weeklyWorkHours = ref(0);
+let timeInterval: ReturnType<typeof setInterval> | null = null;
+let workDurationInterval: ReturnType<typeof setInterval> | null = null;
 
-/**
- * 오늘 근무 현황 데이터
- * @type {Array<Object>} 출근, 퇴근, 근무시간, 상태 정보
- */
-const todayStats = ref([
+// 오늘 근무 현황
+const todayStats = computed(() => [
   { 
     label: '출근', 
-    value: '--:--', 
-    footer: '출근전', 
+    value: todayAttendance.value?.startTime || '--:--', 
+    footer: todayAttendance.value?.startTime ? '출근 완료' : '출근전', 
     icon: 'pi pi-sign-in', 
-    class: 'border-blue' 
+    class: todayAttendance.value?.startTime ? '' : 'border-blue' 
   },
   { 
     label: '퇴근', 
-    value: '--:--', 
-    footer: '근무중', 
+    value: todayAttendance.value?.endTime || '--:--', 
+    footer: todayAttendance.value?.endTime ? '퇴근 완료' : (todayAttendance.value?.startTime ? '근무중' : '출근전'),
     icon: 'pi pi-sign-out' 
   },
   { 
-    label: '근무시간', 
-    value: '5:59', 
-    footer: '진행중', 
+    label: '근무시간',
+    get value() {
+      if (todayAttendance.value?.endTime && todayAttendance.value?.workDuration) {
+        const duration = todayAttendance.value.workDuration;
+        return `${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}`;
+      }
+      if (todayAttendance.value?.startTime && !todayAttendance.value?.endTime) {
+        if (currentWorkDuration.value > 0) {
+          return `${Math.floor(currentWorkDuration.value / 60)}:${String(currentWorkDuration.value % 60).padStart(2, '0')}`;
+        }
+        return '0:00';
+      }
+      return '--:--';
+    },
+    footer: todayAttendance.value?.endTime ? '완료' : (todayAttendance.value?.startTime ? '진행중' : '출근전'), 
     icon: 'pi pi-clock' 
   },
   { 
     label: '상태', 
-    value: '출근전', 
+    value: todayAttendance.value?.state || '출근전', 
     footer: '', 
     icon: 'pi pi-user', 
-    class: 'bg-red' 
+    class: !todayAttendance.value?.startTime ? 'bg-red' : '' 
   }
 ]);
 
-/**
- * 이번 달 요약 데이터
- * @type {Array<Object>} 근무 일수, 잔여 연차, 사용 휴가 정보
- */
+// 이번 달 요약
 const monthlySummary = ref([
-  { 
-    label: '일수', 
-    value: '12일', 
-    sub: '근무', 
-    image: '/images/home-day.svg' 
-  },
-  { 
-    label: '잔여', 
-    value: '5일', 
-    sub: '연차', 
-    image: '/images/home-annualleave.svg' 
-  },
-  { 
-    label: '사용', 
-    value: '15일', 
-    sub: '휴가', 
-    image: '/images/home-leave.svg' 
-  }
+  { label: '일수', value: '0일', sub: '근무', image: '/images/home-day.svg' },
+  { label: '잔여', value: '0일', sub: '연차', image: '/images/home-annualleave.svg' },
+  { label: '사용', value: '0일', sub: '휴가', image: '/images/home-leave.svg' }
 ]);
 
-/**
- * 차트 데이터 설정
- * @type {Object} Doughnut 차트용 데이터
- */
-const chartData = ref({
-  datasets: [
-    {
-      data: [21.6, 18.4],
-      backgroundColor: ['#1E3A8A', '#E2E8F0'],
-      borderWidth: 0,
-      cutout: '85%'
-    }
-  ]
-});
+// 출근 통계
+const attendanceStatsItems = ref([
+  { label: '이번 달 출근율', value: '98.5%', colorClass: 't-blue' },
+  { label: '정상 출근', value: '21일', colorClass: 't-green' },
+  { label: '지각', value: '0일', colorClass: 't-red' },
+  { label: '결근', value: '0일', colorClass: 't-dark' }
+]);
 
-/**
- * 차트 옵션 설정
- * @type {Object} Doughnut 차트용 옵션
- */
-const chartOptions = ref({
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: { enabled: false }
-  }
-});
+// 휴가 현황
+const vacationStatsItems = ref([
+  { label: '전체 연차', value: '15일', colorClass: 't-blue' },
+  { label: '사용 연차', value: '7일', colorClass: 't-orange' },
+  { label: '잔여 연차', value: '8일', colorClass: 't-green' },
+  { label: '소멸 예정', value: '0일', colorClass: 't-red' }
+]);
 
-// 4. Computed 속성
-/**
- * 최근 알림 3개 추출
- * @returns {Array<Notification>} 최신 알림 3개
- */
+// 결재 현황
+const approvalStatsItems = ref([
+  { label: '결재 대기', value: '5건', colorClass: 't-brown' },
+  { label: '결재 완료', value: '28건', colorClass: 't-green' },
+  { label: '반려됨', value: '1건', colorClass: 't-red' }
+]);
+
+// 최근 알림
 const recentNotifications = computed(() => 
   notificationStore.notifications.slice(0, 3)
 );
 
-// 5. 메소드
-/**
- * 알림 타입에 따른 아이콘 경로 반환
- * @param {string} type - 알림 타입 (attendance, payroll, approval 등)
- * @returns {string} 아이콘 이미지 경로
- */
-const getNotificationIcon = (type: string): string => {
-  const iconMap: Record<string, string> = {
-    'attendance': '/images/alarm/alarm-check.svg',
-    'payroll': '/images/alarm/alarm-money.svg',
-    'approval': '/images/alarm/alarm-paper.svg',
-    'evaluation': '/images/alarm/alarm-paper.svg',
-    'system': '/images/alarm/alarmsetting.svg'
-  };
+// 메소드
+const updateCurrentDateTime = (): void => {
+  const now = new Date();
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const date = String(now.getDate()).padStart(2, '0');
+  const day = days[now.getDay()];
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
   
-  return iconMap[type] || '/images/alarm/alarmsetting.svg';
+  currentDateTime.value = `${year}년 ${month}월 ${date}일 (${day}) ${hours}:${minutes}:${seconds}`;
 };
 
-/**
- * 알림 클릭 핸들러
- * @param {Notification} notification - 클릭한 알림 객체
- */
+const updateWorkDuration = (): void => {
+  if (todayAttendance.value?.startTime && !todayAttendance.value?.endTime) {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const startDateTime = new Date(`${today}T${todayAttendance.value.startTime}`);
+    const diffMs = now.getTime() - startDateTime.getTime();
+    currentWorkDuration.value = Math.floor(diffMs / 60000);
+  } else {
+    currentWorkDuration.value = 0;
+  }
+};
+
+const startWorkDurationTimer = (): void => {
+  if (workDurationInterval) {
+    clearInterval(workDurationInterval);
+  }
+  
+  if (todayAttendance.value?.startTime && !todayAttendance.value?.endTime) {
+    updateWorkDuration();
+    workDurationInterval = setInterval(updateWorkDuration, 1000);
+  }
+};
+
+const stopWorkDurationTimer = (): void => {
+  if (workDurationInterval) {
+    clearInterval(workDurationInterval);
+    workDurationInterval = null;
+  }
+};
+
+const fetchTodayAttendance = async (): Promise<void> => {
+  try {
+    const response = await dashboardApi.getTodayStatus();
+    todayAttendance.value = response.data || null;
+  } catch (error) {
+    console.error('오늘 근태 정보 조회 실패:', error);
+    todayAttendance.value = null;
+  }
+};
+
+const fetchWeeklyAttendance = async (): Promise<void> => {
+  try {
+    const response = await dashboardApi.getWeeklyStats();
+    const stats = response.data;
+    
+    if (stats) {
+      weeklyWorkHours.value = stats.totalWorkHours || 0;
+      
+      console.log('주간 통계 조회 성공:', {
+        totalWorkHours: stats.totalWorkHours,
+        totalWorkMinutes: stats.totalWorkMinutes,
+        achievementRate: stats.achievementRate,
+        isWorkingToday: stats.isWorkingToday
+      });
+    }
+  } catch (error) {
+    console.error('주간 근태 정보 조회 실패:', error);
+    weeklyWorkHours.value = 0;
+  }
+};
+
+// 이번 달 요약 조회
+const fetchMonthlyStats = async (): Promise<void> => {
+  try {
+    const response = await dashboardApi.getMonthlySummary();
+    const data = response.data;
+    
+    if (data) {
+      monthlySummary.value = [
+        { label: '일수', value: `${data.workDays}일`, sub: '근무', image: '/images/home-day.svg' },
+        { label: '잔여', value: `${data.remainingAnnualLeave}일`, sub: '연차', image: '/images/home-annualleave.svg' },
+        { label: '사용', value: `${data.usedVacationDays}일`, sub: '휴가', image: '/images/home-leave.svg' }
+      ];
+    }
+  } catch (error) {
+    console.error('월간 요약 조회 실패:', error);
+  }
+};
+
+// 출근 통계 조회
+const fetchAttendanceStats = async (): Promise<void> => {
+  try {
+    const response = await dashboardApi.getAttendanceStats();
+    const data = response.data;
+    
+    if (data) {
+      const total = data.normalDays + data.lateDays + data.absentDays + data.earlyLeaveDays;
+      const rate = total > 0 ? ((data.normalDays / total) * 100).toFixed(1) : '0.0';
+      
+      attendanceStatsItems.value = [
+        { label: '이번 달 출근율', value: `${rate}%`, colorClass: 't-blue' },
+        { label: '정상 출근', value: `${data.normalDays}일`, colorClass: 't-green' },
+        { label: '지각', value: `${data.lateDays}일`, colorClass: 't-red' },
+        { label: '결근', value: `${data.absentDays}일`, colorClass: 't-dark' }
+      ];
+    }
+  } catch (error) {
+    console.error('출근 통계 조회 실패:', error);
+  }
+};
+
+// 휴가 현황 조회
+const fetchVacationStats = async (): Promise<void> => {
+  try {
+    const response = await dashboardApi.getVacationStats();
+    const data = response.data;
+    
+    if (data) {
+      const total = data.annualLeaveDays + data.halfDayDays + data.sickLeaveDays + data.otherLeaveDays;
+      
+      vacationStatsItems.value = [
+        { label: '연차', value: `${data.annualLeaveDays}일`, colorClass: 't-blue' },
+        { label: '반차', value: `${data.halfDayDays}일`, colorClass: 't-orange' },
+        { label: '병가', value: `${data.sickLeaveDays}일`, colorClass: 't-green' },
+        { label: '기타', value: `${data.otherLeaveDays}일`, colorClass: 't-red' }
+      ];
+    }
+  } catch (error) {
+    console.error('휴가 현황 조회 실패:', error);
+  }
+};
+
+// 결재 현황 조회
+const fetchApprovalStats = async (): Promise<void> => {
+  try {
+    const response = await dashboardApi.getApprovalStats();
+    const data = response.data;
+    
+    if (data) {
+      approvalStatsItems.value = [
+        { label: '결재 대기', value: `${data.pendingCount}건`, colorClass: 't-blue' },
+        { label: '결재 완료', value: `${data.approvedCount}건`, colorClass: 't-green' },
+        { label: '결재 반려', value: `${data.rejectedCount}건`, colorClass: 't-red' }
+      ];
+    }
+  } catch (error) {
+    console.error('결재 현황 조회 실패:', error);
+  }
+};
+
 const handleNotificationClick = async (notification: Notification): Promise<void> => {
   await notificationStore.markAsRead(notification.notificationId);
-  
   if (notification.link) {
     router.push(notification.link);
   }
 };
 
-/**
- * 출근 버튼 클릭 핸들러
- */
-const handlePunchIn = (): void => {
-  alert('출근 완료!');
-  // TODO: 실제 출근 API 호출 로직 구현 필요
+const handlePunchIn = async (): Promise<void> => {
+  try {
+    isLoading.value = true;
+    await dashboardApi.clockIn();
+    alert('출근 완료!');
+    
+    // 출퇴근 상태 먼저 갱신
+    await fetchTodayAttendance();
+    
+    // 타이머 시작
+    startWorkDurationTimer();
+    
+    // 주간/월간 통계 갱신 (차트 업데이트!)
+    await Promise.all([
+      fetchWeeklyAttendance(),
+      fetchMonthlyStats(),
+      fetchAttendanceStats(),
+      fetchVacationStats()
+    ]);
+  } catch (error: any) {
+    console.error('출근 처리 실패:', error);
+    const errorMessage = error.response?.data?.message || '출근 처리에 실패했습니다.';
+    alert(errorMessage);
+  } finally {
+    isLoading.value = false;
+  }
 };
 
-// 6. 생명주기 훅
+const handlePunchOut = async (): Promise<void> => {
+  try {
+    isLoading.value = true;
+    await dashboardApi.clockOut();
+    alert('퇴근 완료! 오늘도 수고하셨습니다.');
+    
+    // 타이머 정지
+    stopWorkDurationTimer();
+    
+    // 출퇴근 상태 먼저 갱신
+    await fetchTodayAttendance();
+    
+    // 주간/월간 통계 갱신 (차트 업데이트!)
+    await Promise.all([
+      fetchWeeklyAttendance(),
+      fetchMonthlyStats(),
+      fetchAttendanceStats(),
+      fetchVacationStats()
+    ]);
+  } catch (error: any) {
+    console.error('퇴근 처리 실패:', error);
+    const errorMessage = error.response?.data?.message || '퇴근 처리에 실패했습니다.';
+    alert(errorMessage);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const loadDashboardData = async (): Promise<void> => {
+  isLoading.value = true;
+  try {
+    await Promise.all([
+      notificationStore.fetchNotifications(),
+      fetchTodayAttendance(),
+      fetchWeeklyAttendance(),
+      fetchMonthlyStats(),
+      fetchAttendanceStats(),
+      fetchVacationStats(),
+      fetchApprovalStats()
+    ]);
+    
+    if (todayAttendance.value?.startTime && !todayAttendance.value?.endTime) {
+      startWorkDurationTimer();
+    }
+  } catch (error) {
+    console.error('대시보드 데이터 로드 실패:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 onMounted(async () => {
-  await notificationStore.fetchNotifications();
+  updateCurrentDateTime();
+  timeInterval = setInterval(updateCurrentDateTime, 1000);
+  await loadDashboardData();
+});
+
+onUnmounted(() => {
+  if (timeInterval) {
+    clearInterval(timeInterval);
+  }
+  if (workDurationInterval) {
+    clearInterval(workDurationInterval);
+  }
 });
 </script>
 
 <style scoped>
-/* 전체 레이아웃 */
 .dashboard-wrapper {
   display: flex;
   gap: 27px;
@@ -436,295 +456,9 @@ onMounted(async () => {
   gap: 27px;
 }
 
-.card {
-  background: #fff;
-  border-radius: 11.25px;
-  border: 2px solid #E2E8F0;
-  padding: 29px;
-  box-shadow: 0px 1px 2px -1px rgba(0, 0, 0, 0.10);
-}
-
-/* 근태 현황 카드 */
-.main-attendance-card {
-  min-height: 650px;
-  display: flex;
-  flex-direction: column;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 30px;
-}
-
-.current-date {
-  color: #90A1B9;
-  font-size: 18px;
-  margin-top: 5px;
-}
-
-/* 출근/퇴근 버튼 */
-.punch-group-row {
-  display: flex;
-  gap: 18px;
-  margin-bottom: 30px;
-  width: 100%;
-}
-
-.btn-punch {
-  flex: 1;
-  height: 120px;
-  border: none;
-  border-radius: 11.25px;
-  background: #F8FAFC;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 0 30px;
-  cursor: pointer;
-  gap: 20px;
-}
-
-.btn-punch.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-icon-box {
-  width: 64px;
-  height: 64px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: #fff;
-}
-
-.btn-icon-box.primary {
-  background: #1E3A8A;
-}
-
-.btn-icon-box.gray {
-  background: #90A1B9;
-}
-
-.btn-icon-img {
-  width: 32px;
-  height: 32px;
-  filter: brightness(0) invert(1);
-}
-
-.btn-text {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-.btn-text .guide {
-  font-size: 14px;
-  color: #62748E;
-  margin-bottom: 4px;
-}
-
-.btn-text .action-label {
-  font-size: 24px;
-  color: #45556C;
-  font-weight: 700;
-}
-
-/* 휴식시간 정보 */
-.info-strip {
-  background: #F8FAFC;
-  border: 2px solid #E2E8F0;
-  border-radius: 11.25px;
-  padding: 20px;
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-/* 차트 */
-.chart-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.chart-container {
-  width: 220px;
-  height: 220px;
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.chart-center-text {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.hours-val {
-  font-size: 36px;
-  font-weight: 700;
-  color: #1C398E;
-}
-
-.progress-footer {
-  margin-top: 36px;
-}
-
-/* 최근 활동 */
-.activity-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.activity-header h3 {
-  color: #1C398E;
-  font-size: 18px;
-  font-weight: 700;
-  margin: 0;
-}
-
-.more-btn {
-  background: none;
-  border: none;
-  color: #62748E;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.activity-row-item {
-  height: 72px;
-  padding: 18px;
-  background: #EFF6FF;
-  border-radius: 11.25px;
-  outline: 2px #DBEAFE solid;
-  outline-offset: -2px;
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  margin-bottom: 13.5px;
-  cursor: pointer;
-}
-
-.activity-icon-box {
-  width: 40.5px;
-  height: 40.5px;
-  background: #1E3A8A;
-  border-radius: 11.25px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.custom-noti-icon {
-  width: 20px;
-  height: 20px;
-  filter: brightness(0) invert(1);
-}
-
-/* 우측 패널 */
-.card-title-blue {
-  color: #1C398E;
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 20px;
-}
-
-.grid-4 {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
-
-.grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-}
-
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 27px;
 }
-
-/* 오늘 근무 현황 */
-.status-box {
-  background: #F8FAFC;
-  border: 2px solid #E2E8F0;
-  border-radius: 11.25px;
-  padding: 15px;
-}
-
-.status-box.border-blue {
-  border-color: #DBEAFE;
-}
-
-.status-box.bg-red {
-  background: #FDF0F0;
-  border-color: #FCDCDC;
-}
-
-.s-body {
-  font-size: 24px;
-  font-weight: 700;
-  margin: 5px 0;
-}
-
-/* 이번 달 요약 */
-.summary-box {
-  background: #F8FAFC;
-  border: 2px solid #E2E8F0;
-  border-radius: 11.25px;
-  padding: 25px;
-  text-align: center;
-}
-
-.summary-icon {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.summary-icon-img {
-  width: 70%;
-  height: 70%;
-}
-
-.summary-val {
-  font-size: 26px;
-  font-weight: 700;
-  color: #1C398E;
-  margin-bottom: 5px;
-}
-
-/* 통계 테이블 */
-.stats-table .stats-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-/* 색상 유틸리티 */
-.t-blue { color: #1C398E; }
-.t-green { color: #0D542B; }
-.t-red { color: #82181A; }
-.t-orange { color: #7E2A0C; }
-.t-brown { color: #733E0A; }
-.t-dark { color: #0F172B; }
 </style>
