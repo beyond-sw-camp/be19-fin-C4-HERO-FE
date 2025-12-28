@@ -84,7 +84,7 @@
               <div class="text-input-box">
                 <input 
                   type="text" 
-                  v-model="targetEmpId" 
+                  v-model="employeeId" 
                   class="native-input" 
                   placeholder="사번 입력" 
                 />
@@ -98,7 +98,7 @@
               <div class="text-input-box">
                 <input 
                   type="text" 
-                  v-model="targetEmpName" 
+                  v-model="employeeName" 
                   class="native-input" 
                   placeholder="이름 입력" 
                 />
@@ -167,8 +167,8 @@
               <div class="group-label"><span class="label-text">발령 직책</span></div>
               <div 
                 class="dropdown-box" 
-                :class="{ 'is-open': activeDropdown === 'newDuty' }" 
-                @click.stop="toggleDropdown('newDuty')"
+                :class="{ 'is-open': activeDropdown === 'gradeAfter' }" 
+                @click.stop="toggleDropdown('gradeAfter')"
               >
                 <div class="dropdown-value">
                   <span :class="newInfo.duty ? 'text-selected' : 'placeholder-text'">
@@ -177,16 +177,16 @@
                 </div>
                 <img 
                   class="icon-dropdown" 
-                  :class="{ 'rotate': activeDropdown === 'newDuty' }" 
+                  :class="{ 'rotate': activeDropdown === 'gradeAfter' }" 
                   src="/images/dropdownarrow.svg" 
                   alt="arrow" 
                 />
-                <ul v-if="activeDropdown === 'newDuty'" class="dropdown-options">
+                <ul v-if="activeDropdown === 'gradeAfter'" class="dropdown-options">
                   <li 
                     v-for="opt in dutyOptions" 
                     :key="opt.value" 
                     class="dropdown-item" 
-                    @click.stop="selectOption('newDuty', opt)"
+                    @click.stop="selectOption('gradeAfter', opt)"
                   >
                     {{ opt.label }}
                   </li>
@@ -265,7 +265,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, watch, computed, onMounted} from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/stores/auth';
 
@@ -280,17 +280,18 @@ const emit = defineEmits<{
 
 // 타입 정의
 export interface PersonnelAppointmentFormData {
-  appointmentType: string;
-  effectiveDate: string;
-  targetEmpId: number;
-  targetEmpName: string;
-  currentDept: string;
-  currentDuty: string;
-  currentPosition: string;
-  newDept: string;
-  newDuty: string;
-  newPosition: string;
-  workStatus: string;
+  changeType: string;         // 발령 유형
+  employeeId: number;         // 대상 사원 ID
+  employeeName: string;       // 대상 사원 이름
+  effectiveDate: string;      // 발령 효력 발생일
+  departmentBefore: string;   // 현재 부서
+  gradeBefore: string;        // 현재 직급
+  jobTitleBefore: string;     // 현재 직책
+  departmentAfter: string;    // 신규 부서
+  gradeAfter: string;         // 신규 직급
+  jobTitleAfter: string;        // 신규 직책
+  status: string;             // 근무상태
+  auditDate: string;          // 기안일
 }
 
 const userStore = useAuthStore();
@@ -298,23 +299,31 @@ const { user } = storeToRefs(userStore);
 
 // 폼 데이터 (reactive로 관리)
 const formData = reactive<PersonnelAppointmentFormData>({
-  appointmentType: props.modelValue?.appointmentType || '',
+  changeType: props.modelValue?.changeType || '',
   effectiveDate: props.modelValue?.effectiveDate || '',
-  targetEmpId: props.modelValue?.targetEmpId || 0,
-  targetEmpName: props.modelValue?.targetEmpName || '',
-  currentDept: props.modelValue?.currentDept || user.value?.departmentName || '',
-  currentDuty: props.modelValue?.currentDuty || user.value?.gradeName || '',
-  currentPosition: props.modelValue?.currentPosition || user.value?.jobTitleName || '',
-  newDept: props.modelValue?.newDept || '',
-  newDuty: props.modelValue?.newDuty || '',
-  newPosition: props.modelValue?.newPosition || '',
-  workStatus: props.modelValue?.workStatus || ''
+  employeeId: props.modelValue?.employeeId || 0,
+  employeeName: props.modelValue?.employeeName || '',
+  departmentBefore: props.modelValue?.departmentBefore || user.value?.departmentName || '',
+  gradeBefore: props.modelValue?.gradeBefore || user.value?.gradeName || '',
+  jobTitleBefore: props.modelValue?.jobTitleBefore || user.value?.jobTitleName || '',
+  departmentAfter: props.modelValue?.departmentAfter || '',
+  gradeAfter: props.modelValue?.gradeAfter || '',
+  jobTitleAfter: props.modelValue?.jobTitleAfter || '',
+  status: props.modelValue?.status || '',
+  auditDate: props.modelValue?.auditDate || ''
 });
 
 const effectiveDate = ref(formData.effectiveDate);
-const targetEmpId = ref(formData.targetEmpId);
-const targetEmpName = ref(formData.targetEmpName);
+const employeeId = ref(formData.employeeId);
+const employeeName = ref(formData.employeeName);
 const selectedType = ref<{ label: string, value: string } | null>(null);
+const auditDate = computed(() => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+});
 
 const typeOptions = [
   { label: '정기 인사', value: 'regular' },
@@ -364,19 +373,19 @@ const closeDropdown = () => {
 const selectOption = (key: string, option: { label: string, value: string }) => {
   if (key === 'type') {
     selectedType.value = option;
-    formData.appointmentType = option.value;
-  } else if (key === 'newDept') {
+    formData.changeType = option.value;
+  } else if (key === 'departmentAfter') {
     newInfo.dept = option;
-    formData.newDept = option.value;
-  } else if (key === 'newDuty') {
+    formData.departmentAfter = option.value;
+  } else if (key === 'gradeAfter') {
     newInfo.duty = option;
-    formData.newDuty = option.value;
-  } else if (key === 'newPosition') {
+    formData.gradeAfter = option.value;
+  } else if (key === 'jobTitleAfter') {
     newInfo.position = option;
-    formData.newPosition = option.value;
+    formData.jobTitleAfter = option.value;
   } else if (key === 'status') {
     newInfo.status = option;
-    formData.workStatus = option.value;
+    formData.status = option.value;
   }
   
   closeDropdown();
@@ -385,24 +394,27 @@ const selectOption = (key: string, option: { label: string, value: string }) => 
 // formData 변경 시 부모에게 자동 전달
 watch(
   [
-    () => formData.appointmentType,
+    () => formData.changeType,
     effectiveDate,
-    targetEmpId,
-    targetEmpName,
-    () => formData.newDept,
-    () => formData.newDuty,
-    () => formData.newPosition,
-    () => formData.workStatus
+    employeeId,
+    employeeName,
+    () => formData.departmentAfter,
+    () => formData.gradeAfter,
+    () => formData.jobTitleAfter,
+    () => formData.status
   ],
-  ([newType, newEffectiveDate, newTargetEmpId, newTargetEmpName, newDept, newDuty, newPosition, newStatus]) => {
+  ([newType, newEffectiveDate, newemployeeId, newTargetEmpName, departmentAfter, gradeAfter, jobTitleAfter, newStatus]) => {
     formData.effectiveDate = newEffectiveDate;
-    formData.targetEmpId = newTargetEmpId;
-    formData.targetEmpName = newTargetEmpName;
-    
-    // Store 값도 항상 최신으로 유지
-    formData.currentDept = user.value?.departmentName || '';
-    formData.currentDuty = user.value?.gradeName || '';
-    formData.currentPosition = user.value?.jobTitleName || '';
+    formData.employeeId = newemployeeId;
+    formData.employeeName = newTargetEmpName;
+    formData.departmentBefore = user.value?.departmentName || '';
+    formData.gradeBefore = user.value?.gradeName || '';
+    formData.jobTitleBefore = user.value  ?.jobTitleName || '';
+    formData.departmentAfter = departmentAfter;
+    formData.gradeAfter = gradeAfter;
+    formData.jobTitleAfter = jobTitleAfter;
+    formData.status = newStatus;
+    formData.auditDate = auditDate.value;
     
     emit('update:modelValue', { ...formData });
   }

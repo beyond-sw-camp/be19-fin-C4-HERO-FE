@@ -9,174 +9,187 @@
   *
   * History
   *   2025/12/17 - 민철 최초 작성
-  *   2025/12/23 - 민철 파일명 변경  
+  *   2025/12/23 - 민철 파일명 변경
+  *   2025/12/26 - 민철 탭별 문서 조회 기능 구현
+  *   2025/12/26 - 민철 문서 클릭 시 상세 화면 이동 기능 추가
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 2.0
+  * @version 3.1
 -->
 <template>
   <div class="inbox-container">
     <div class="inbox-wrapper">
-        <div class="inbox-header">
-          <div class="inbox-tabs">
-            <button class="tab tab-start" 
-                    :class="{ active : activeTab === 'all' }"
-                    @click="clickTab('all')">전체</button>
-            <button class="tab"
-                    :class="{ active : activeTab === 'que' }"
-                    @click="clickTab('que')">대기</button>
-            <button class="tab"
-                    :class="{ active : activeTab === 'request' }"
-                    @click="clickTab('request')">요청</button>
-            <button class="tab"
-                    :class="{ active : activeTab === 'reject' }"
-                    @click="clickTab('reject')">반려</button>
-            <button class="tab"
-                    :class="{ active : activeTab === 'ref' }"
-                    @click="clickTab('ref')">참조</button>
-            <button class="tab"
-                    :class="{ active : activeTab === 'end' }"
-                    @click="clickTab('end')">승인</button>
-            <button class="tab tab-end"
-                    :class="{ active : activeTab === 'draft' }"
-                    @click="clickTab('draft')">임시저장</button>
-          </div>
+      <div class="inbox-header">
+        <div class="inbox-tabs">
+          <button class="tab tab-start" :class="{ active: activeTab === 'all' }"
+            @click="handleTabClick('all')">전체</button>
+          <button class="tab" :class="{ active: activeTab === 'que' }"
+            @click="handleTabClick('que')">대기</button>
+          <button class="tab" :class="{ active: activeTab === 'request' }"
+            @click="handleTabClick('request')">요청</button>
+          <button class="tab" :class="{ active: activeTab === 'reject' }"
+            @click="handleTabClick('reject')">반려</button>
+          <button class="tab" :class="{ active: activeTab === 'ref' }"
+            @click="handleTabClick('ref')">참조</button>
+          <button class="tab" :class="{ active: activeTab === 'end' }"
+            @click="handleTabClick('end')">승인</button>
+          <button class="tab tab-end" :class="{ active: activeTab === 'draft' }"
+            @click="handleTabClick('draft')">임시저장</button>
         </div>
-        <div class="inbox-body">
-          <div class="inbox-body-header">
-            <div class="top-left">
-              <button class="top-first-button"
-                      @click="toTemplateList()">
-                <img src="/images/plus.svg" alt="plus"/>
-                <span class="newdoc-button">새 결재 작성</span>
-              </button>
-            </div>
-            <div class="top-right">
-              <div class="top-second">
-                <div class="from-cal">조회기간</div>
-                <input class="input-box calendar" 
-                      type="date"
-                      >
-                <div class="stream-icon">~</div>
-                <input class="input-box calendar" type="date">
-              </div>
-              <div class="top-third">
-                <select class="input-box filter">
-                  <option value="all">전체</option>
-                  <option value="docNo">문서번호</option>
-                  <option value="docType">문서분류</option>
-                  <option value="name">문서서식</option>
-                  <option value="title">제목</option>
-                  <option value="dept">부서</option>
-                  <option value="drafter">상신자</option>
-                </select>
-                <input type="text" placeholder="검색어를 입력하세요" class="input-box">
-                <button class="search-button">검색</button>
-              </div>
-            </div>
+      </div>
+      <div class="inbox-body">
+        <div class="inbox-body-header">
+          <div class="top-left">
+            <button class="top-first-button" @click="toTemplateList()">
+              <img src="/images/plus.svg" alt="plus" />
+              <span class="newdoc-button">새 결재 작성</span>
+            </button>
           </div>
-          <div class="inbox-body-table">
-            <table>
-              <thead>
-                <tr>
-                  <td class="cell docNoc">문서번호</td>
-                  <td class="cell docStatus">결재상태</td>
-                  <td class="cell docCategory">문서분류</td>
-                  <td class="cell docName">문서서식</td>
-                  <td class="cell docTitle">문서제목</td>
-                  <td class="cell drafterDept">부서</td>
-                  <td class="cell drafter">상신자</td>
-                  <td class="cell drafterDate">상신일시</td>
-                </tr>
-              </thead>
-              <tbody>
-                <template v-if="!loading && documents.length > 0">
-                  <tr v-for="doc in documents" :key="doc.docId">
-                    <td class="cell docNoc">{{ doc.docNo }}</td>
-                    <td class="cell docStatus">
-                      <div class="status-text">
-                        {{ doc.docStatus }}
-                      </div>
-                    </td>
-                    <td class="cell docCategory">{{ doc.category }}</td>
-                    <td class="cell docName">{{ doc.name }}</td>
-                    <td class="cell docTitle">{{ doc.title }}</td>
-                    <td class="cell drafterDept">{{ doc.drafterDept }}</td>
-                    <td class="cell drafter">{{ doc.drafter }}</td>
-                    <td class="cell drafterDate">{{ doc.drafterAt }}</td>
-                  </tr>
-                </template>
-                
-                <tr v-else-if="!loading && documents.length === 0">
-                   <td colspan="8" style="text-align: center; padding: 20px;">
-                     조회된 문서가 없습니다.
-                   </td>
-                </tr>
-
-                 <tr v-if="loading">
-                   <td colspan="8" style="text-align: center; padding: 20px;">
-                     로딩 중...
-                   </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <div class="inbox-body-bottom">
-            <div class="inbox-body-buttons">
-              <button class="inbox-button button-seq" 
-                      @click="handlePageChange(page - 1)"
-                      :disabled="page === 0">이전</button>
-              
-              <button class="inbox-button button-page active">{{ page + 1 }}</button>
-              
-              <button class="inbox-button button-seq" 
-                      @click="handlePageChange(page + 1)"
-                      :disabled="page >= totalPages - 1">다음</button>
+          <div class="top-right">
+            <div class="top-second">
+              <div class="from-cal">조회기간</div>
+              <input class="input-box calendar" type="date" v-model="fromDate" @change="onSearchChange">
+              <div class="stream-icon">~</div>
+              <input class="input-box calendar" type="date" v-model="toDate" @change="onSearchChange">
+            </div>
+            <div class="top-third">
+              <select class="input-box filter" v-model="sortBy" @change="onSearchChange">
+                <option value="">전체</option>
+                <option value="docNo">문서번호</option>
+                <option value="docType">문서분류</option>
+                <option value="name">문서서식</option>
+                <option value="title">제목</option>
+                <option value="dept">부서</option>
+                <option value="drafter">상신자</option>
+              </select>
+              <input type="text" placeholder="검색어를 입력하세요" class="input-box" v-model="searchKeyword"
+                @keyup.enter="onSearchChange">
+              <button class="search-button" @click="onSearchChange">검색</button>
             </div>
           </div>
         </div>
-        </div>        
+        <div class="inbox-body-table">
+          <table>
+            <thead>
+              <tr>
+                <td class="cell docNoc">문서번호</td>
+                <td class="cell docStatus">결재상태</td>
+                <td class="cell docCategory">문서분류</td>
+                <td class="cell docName">문서서식</td>
+                <td class="cell docTitle">문서제목</td>
+                <td class="cell drafterDept">부서</td>
+                <td class="cell drafter">상신자</td>
+                <td class="cell drafterDate">상신일시</td>
+              </tr>
+            </thead>
+            <tbody>
+              <template v-if="!loading && documents.length > 0">
+                <tr v-for="doc in documents" :key="doc.docId" class="clickable-row"
+                  @click="toDocumentDetail(doc.docId)">
+                  <td class="cell docNoc">{{ doc.docNo }}</td>
+                  <td class="cell docStatus">
+                    <div class="status-text">
+                      {{ doc.docStatus }}
+                    </div>
+                  </td>
+                  <td class="cell docCategory">{{ doc.category }}</td>
+                  <td class="cell docName">{{ doc.name }}</td>
+                  <td class="cell docTitle">{{ doc.title }}</td>
+                  <td class="cell drafterDept">{{ doc.drafterDept }}</td>
+                  <td class="cell drafter">{{ doc.drafter }}</td>
+                  <td class="cell drafterDate">{{ doc.drafterAt }}</td>
+                </tr>
+              </template>
 
+              <tr v-else-if="!loading && documents.length === 0">
+                <td colspan="8" style="text-align: center; padding: 20px;">
+                  조회된 문서가 없습니다.
+                </td>
+              </tr>
+
+              <tr v-if="loading">
+                <td colspan="8" style="text-align: center; padding: 20px;">
+                  로딩 중...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="inbox-body-bottom">
+          <div class="inbox-body-buttons">
+            <button class="inbox-button button-seq" @click="handlePageChange(page - 1)"
+              :disabled="page === 0">이전</button>
+
+            <button class="inbox-button button-page active">{{ page + 1 }}</button>
+
+            <button class="inbox-button button-seq" @click="handlePageChange(page + 1)"
+              :disabled="page >= totalPages - 1">다음</button>
+          </div>
+        </div>
+      </div>
     </div>
+
+  </div>
 
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useInboxList } from '@/composables/approval/useApproval';
+import { useInbox } from '@/composables/approval/useInbox';
 
 const router = useRouter();
-const { documents, page, totalPages, handlePageChange, loading } = useInboxList();
 
-const activeTab = ref<string>('all');
+// composable 사용
+const {
+  documents,
+  page,
+  totalPages,
+  activeTab,
+  loading,
+  handleTabClick,
+  handlePageChange,
+  handleSearch,
+} = useInbox();
 
-const clickTab = (tab: string) => {
-    activeTab.value = tab;
-    if (tab === 'all') {
-        console.log('전체');
-    } else if (tab === 'que') {
-        console.log('대기');
-    } else if (tab === 'request') {
-        console.log('요청');
-    } else if (tab === 'reject') {
-        console.log('반려');
-    } else if (tab === 'ref') {
-        console.log('참조');
-    } else if (tab === 'end') {
-        console.log('승인');
-    } else if (tab === 'draft') {
-        console.log('임시저장');
-    }
+// 검색 조건 로컬 상태
+const fromDate = ref('');
+const toDate = ref('');
+const sortBy = ref('');
+const searchKeyword = ref('');
+
+/**
+ * 검색 조건 변경 핸들러
+ */
+const onSearchChange = () => {
+  handleSearch({
+    fromDate: fromDate.value,
+    toDate: toDate.value,
+    sortBy: sortBy.value,
+    condition: searchKeyword.value,
+  });
 };
 
+/**
+ * 결재 서식 목록 페이지로 이동
+ */
 const toTemplateList = () => {
-  console.log('결재문서서식페이지로 이동');
   router.push('/approval/document-templates');
-}
+};
+
+/**
+ * 문서 상세 페이지로 이동
+ * @param {number} docId - 문서 ID
+ */
+const toDocumentDetail = (docId: number) => {
+  router.push({
+    name: 'ApprovalDetail',
+    params: { docId: docId.toString() }
+  });
+};
 
 </script>
 
@@ -185,6 +198,7 @@ const toTemplateList = () => {
   font-size: 14px;
   font-family: "Inter-Regular", sans-serif;
 }
+
 .inbox-container {
   padding: 20px;
   overflow: auto;
@@ -198,7 +212,7 @@ const toTemplateList = () => {
 .inbox-header {
   display: flex;
   flex-direction: row;
-  
+
 }
 
 .inbox-tabs {
@@ -311,7 +325,7 @@ const toTemplateList = () => {
 }
 
 table {
-  
+
   border-collapse: collapse;
   padding: 10px;
 }
@@ -372,4 +386,13 @@ td {
   background-color: #155dfc;
 }
 
+/* 클릭 가능한 행 스타일 */
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clickable-row:hover {
+  background-color: #f8fafc;
+}
 </style>
