@@ -1,7 +1,6 @@
 /**
  * TypeScript Name   : payroll.admin.ts
  * Description : 급여(Payroll) 관리자용 API 호출 모듈
- *               - 급여 대시보드
  *               - 월별 급여 배치
  *               - 급여 조정
  *               - 급여 조회
@@ -12,10 +11,11 @@
  * 2025/12/15 - 동근 배치 API 연동 추가
  * 2025/12/23 - 동근 수당/공제 항목 API 연동 추가
  * 2025/12/26 - 동근 급여관리 사이드바 항목 반영
+ * 2025/12/28 - 동근 급여 조회 API 연동 추가
  * </pre>
  *
  * @author 동근
- * @version 1.3
+ * @version 1.4
  */
 import client from '@/api/apiClient';
 
@@ -35,9 +35,24 @@ import type {
     Yn
 } from '@/types/payroll/payroll.items';
 
+import type {
+    PayrollPaymentSearchParams,
+    PayrollPaymentPageResponse,
+    PayrollPaymentSearchRow,
+    PayrollPaymentDetailResponse,
+} from '@/types/payroll/payroll.payment';
+
+type CustomResponse<T> = {
+    success: boolean;
+    data: T;
+    errorCode?: string;
+    message?: string;
+};
+
 const BASE = '/admin/payroll/batches';
 const ALLOWANCE_BASE = '/admin/payroll/allowances';
 const DEDUCTION_BASE = '/admin/payroll/deductions';
+const PAYMENT_BASE = '/admin/payroll/payments';
 
 export const payrollAdminApi = {
     // GET /api/admin/payroll/batches?month=&status=
@@ -141,5 +156,20 @@ export const payrollAdminApi = {
 
     async deactivateDeduction(deductionId: string) {
         await client.patch<void>(`${DEDUCTION_BASE}/${deductionId}/deactivate`);
-    }
+    },
+
+    async searchPayments(params: PayrollPaymentSearchParams) {
+        const res = await client.get<CustomResponse<PayrollPaymentPageResponse<PayrollPaymentSearchRow>>>(
+            `${PAYMENT_BASE}/search`,
+            { params }
+        );
+        return res.data.data;
+    },
+
+    async getPaymentDetail(payrollId: number) {
+        const res = await client.get<CustomResponse<PayrollPaymentDetailResponse>>(
+            `${PAYMENT_BASE}/${payrollId}`
+        );
+        return res.data.data;
+    },
 };

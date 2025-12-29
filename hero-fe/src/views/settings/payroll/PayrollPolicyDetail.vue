@@ -69,17 +69,17 @@
               <div class="card">
                 <div class="form-grid-2">
                   <div class="form-row">
-                    <label class="label">급여 지급일 (PAYDAY_DAY)</label>
+                    <label class="label">급여 지급일</label>
                     <input class="input-text" type="number" min="1" max="31" v-model.number="scheduleForm.paydayDay" placeholder="예) 25" />
                   </div>
                   <div class="form-row">
-                    <label class="label">정산 마감일 (CLOSE_DAY)</label>
+                    <label class="label">정산 마감일</label>
                     <input class="input-text" type="number" min="1" max="31" v-model.number="scheduleForm.closeDay" placeholder="예) 20" />
                   </div>
                 </div>
                 <div class="form-grid-2">
                   <div class="form-row">
-                    <label class="label">휴일 처리 (HOLIDAY_RULE)</label>
+                    <label class="label">휴일 처리</label>
                     <select class="input-text" v-model="scheduleForm.holidayRule">
                       <option value="PREV_BUSINESS_DAY">전 영업일</option>
                       <option value="NEXT_BUSINESS_DAY">다음 영업일</option>
@@ -87,7 +87,7 @@
                     </select>
                   </div>
                   <div class="form-row">
-                    <label class="label">명세서 발송일 (PAYSLIP_SEND_DAY)</label>
+                    <label class="label">명세서 발송일</label>
                     <input class="input-text" type="number" min="1" max="31" v-model.number="scheduleForm.payslipSendDay" placeholder="예) 25 (지급일과 동일)" />
                   </div>
                 </div>
@@ -98,7 +98,7 @@
               <div class="card">
                 <div class="form-grid-2">
                   <div class="form-row">
-                    <label class="label">반올림 방식 (ROUNDING_MODE)</label>
+                    <label class="label">반올림 방식</label>
                     <select class="input-text" v-model="calcForm.roundingMode">
                       <option value="">선택</option>
                       <option value="HALF_UP">반올림</option>
@@ -107,7 +107,7 @@
                     </select>
                   </div>
                   <div class="form-row">
-                    <label class="label">처리 단위 (ROUNDING_UNIT)</label>
+                    <label class="label">처리 단위</label>
                     <select class="input-text" v-model="calcForm.roundingUnit">
                       <option value="">선택</option>
                       <option value="1">1원</option>
@@ -119,7 +119,7 @@
 
                 <div class="form-grid-2">
                   <div class="form-row">
-                    <label class="label">계산 기준 (BASE_AMOUNT_TYPE)</label>
+                    <label class="label">계산 기준</label>
                     <select class="input-text" v-model="calcForm.baseAmountType">
                       <option value="">선택</option>
                       <option value="BASE_SALARY">기본급 기준</option>
@@ -128,7 +128,7 @@
                   </div>
 
                   <div class="form-row">
-                    <label class="label">비고 (DESCRIPTION_MEMO)</label>
+                    <label class="label">비고</label>
                     <input class="input-text" v-model="calcForm.memo" placeholder="설명(선택)" />
                   </div>
                 </div>

@@ -229,13 +229,9 @@
         </div>
       </div>
 
-        <!-- 급여 관리 하위 메뉴 -->
-        <div v-if="isPayrollAdminOpen && !isCollapsed" class="sub-menu-list">
-        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'payrollAdminDash' }"
-        @click="handleSubMenuClick('payrollAdminDash')">
-        <div class="sub-menu-text">급여 대시보드</div>
-      </div>
 
+        <div v-if="isPayrollAdminOpen && !isCollapsed" class="sub-menu-list">
+                  <!-- 급여 관리 하위 메뉴 -->
         <div class="sub-menu-item" :class="{ active: activeSubMenu === 'payrollBatch' }"
         @click="handleSubMenuClick('payrollBatch')">
         <div class="sub-menu-text">급여 배치</div>

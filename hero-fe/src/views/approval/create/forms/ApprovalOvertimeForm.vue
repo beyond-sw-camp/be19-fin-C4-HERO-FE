@@ -157,10 +157,10 @@ const emit = defineEmits<{
 
 // 타입 정의
 export interface OvertimeFormData {
-  workDate: string;
-  startTime: string;
-  endTime: string;
-  reason: string;
+  workDate: string;      // 근무 날짜 (YYYY-MM-DD)
+  startTime: string;     // 시작 시간 (HH:mm)
+  endTime: string;       // 종료 시간 (HH:mm)
+  reason: string;        // 사유
 }
 
 // 폼 데이터 (reactive로 관리)
@@ -203,13 +203,13 @@ const selectTime = (type: string, field: 'hour' | 'minute', value: string) => {
   }
 };
 
+const startTimeString = computed(() => formatTime(startTime));
+const endTimeString = computed(() => formatTime(endTime));
+
 const formatTime = (timeObj: { hour: string, minute: string }) => {
   if (!timeObj.hour || !timeObj.minute) return '';
   return `${timeObj.hour}:${timeObj.minute}`;
 };
-
-const startTimeString = computed(() => formatTime(startTime));
-const endTimeString = computed(() => formatTime(endTime));
 
 // formData 변경 시 부모에게 자동 전달
 watch(
