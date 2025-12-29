@@ -152,6 +152,7 @@ const saveGuide = async () => {
     console.log('📌 평가 가이드 저장 데이터:', payload)
 
     alert('평가 가이드가 저장되었습니다.')
+    goBack();
   } catch (error) {
     console.error("Error saving template:", error);
     alert("저장 실패, 확인 후 재시도해주세요");

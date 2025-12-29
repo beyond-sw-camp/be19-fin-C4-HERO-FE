@@ -351,6 +351,7 @@ const saveTemplate = async () => {
     );
 
     alert("평가 템플릿 저장 완료");
+    goBack();
 
   } catch (error) {
     console.error("Error saving template:", error);
