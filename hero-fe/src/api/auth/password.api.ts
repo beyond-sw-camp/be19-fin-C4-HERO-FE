@@ -7,7 +7,7 @@ import type {
 
 // 비밀번호 변경 (로그인 후)
 export const changePassword = (data: PasswordChangeRequest) => {
-  return apiClient.put('/auth/password', data);
+  return apiClient.put('/employee/password', data);
 };
 
 // 비밀번호 재설정 요청 (이메일 발송)
