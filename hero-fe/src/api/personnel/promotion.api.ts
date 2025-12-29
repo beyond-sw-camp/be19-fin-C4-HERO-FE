@@ -24,6 +24,7 @@ import type {
     PromotionPlanRequestDTO,
     PromotionNominationRequestDTO,
     PromotionReviewRequestDTO,
+    DirectPromotionRequestDTO,
     //response
     PromotionOptionsDTO,
     PromotionPlanResponseDTO,
@@ -143,4 +144,12 @@ export const reviewCandidate = (data: PromotionReviewRequestDTO) => {
  */
 export const confirmFinalApproval = (data: PromotionReviewRequestDTO) => {
     return client.post<ApiResponse<void>>('/promotion/review/final', data);
+}
+
+/**
+ * 특정 직원을 즉시 승진시킵니다. (특별 승진)
+ * @param data 즉시 승진 요청 정보
+ */
+export const promoteDirectly = (data: DirectPromotionRequestDTO) => {
+    return client.post<ApiResponse<void>>('/promotion/direct', data);
 }

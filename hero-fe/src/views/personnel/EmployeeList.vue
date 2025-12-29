@@ -64,10 +64,30 @@
       </div>
   
       <!-- 페이지네이션 -->
-      <div class="pagination-container">
-        <button :disabled="pagination.page === 0" @click="goToPage(pagination.page - 1)">이전</button>
-        <span>{{ pagination.page + 1 }} / {{ pagination.totalPages }}</span>
-        <button :disabled="pagination.page >= pagination.totalPages - 1" @click="goToPage(pagination.page + 1)">다음</button>
+      <div class="pagination">
+        <button
+          class="page-button"
+          :disabled="pagination.page === 0 || isLoading"
+          @click="goToPage(pagination.page - 1)"
+        >
+          이전
+        </button>
+        <button
+          v-for="page in pagination.totalPages"
+          :key="page"
+          class="page-button"
+          :class="{ 'page-active': page === pagination.page + 1 }"
+          @click="goToPage(page - 1)"
+        >
+          {{ page }}
+        </button>
+        <button
+          class="page-button"
+          :disabled="pagination.page >= pagination.totalPages - 1 || isLoading"
+          @click="goToPage(pagination.page + 1)"
+        >
+          다음
+        </button>
       </div>
     </div>
 
@@ -308,7 +328,7 @@ onMounted(() => {
   font-size: 16px;
 }
 
-.pagination-container {
+.pagination {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -316,16 +336,24 @@ onMounted(() => {
   gap: 10px;
 }
 
-.pagination-container button {
-  padding: 5px 10px;
-  border: 1px solid #e2e8f0;
+.page-button {
+  padding: 5px 12px;
+  border: 1px solid #cad5e2;
   background: white;
-  border-radius: 5px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #62748e;
   cursor: pointer;
 }
 
-.pagination-container button:disabled {
+.page-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.page-button.page-active {
+  background: #155dfc;
+  border-color: #155dfc;
+  color: white;
 }
 </style>

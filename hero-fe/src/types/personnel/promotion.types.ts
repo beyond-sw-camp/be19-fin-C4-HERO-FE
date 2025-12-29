@@ -94,6 +94,15 @@ export interface PromotionReviewRequestDTO {
     comment?: string;
 }
 
+/**
+ * 특별 승진(즉시 승진) 요청 DTO
+ */
+export interface DirectPromotionRequestDTO {
+    employeeId: number;
+    targetGradeId: number;
+    reason: string;
+}
+
 // --- Response DTOs (응답 데이터) ---
 /**
  * 설정할 수 있는 부서, 직급을 알기 위한 옵션 조회용 DTO

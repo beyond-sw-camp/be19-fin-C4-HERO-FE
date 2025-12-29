@@ -69,6 +69,14 @@ const personnelRoutes: RouteRecordRaw[] = [
           title: '승진 심사',
         }
       },
+      {
+        path: 'special',
+        name: 'SpecialPromotion',
+        component: () => import('@/views/personnel/special/SpecialPromotion.vue'),
+        meta: {
+          title: '특별 승진',
+        }
+      },
     ],
   }
 ];
