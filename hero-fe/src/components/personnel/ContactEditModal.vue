@@ -5,10 +5,11 @@
 
   History
   2025/12/28 (혜원) 최초 작성
+  2025/12/29 (혜원) 전화번호 자동 하이픈 포맷팅 추가
   </pre>
  
   @author 혜원
-  @version 1.0
+  @version 1.1
  -->
 <template>
   <div v-if="isOpen" class="modal-overlay" @click="handleClose">
@@ -52,8 +53,10 @@
             placeholder="010-1234-5678"
             required
             class="form-input"
+            @input="handlePhoneInput"
+            maxlength="13"
           />
-          <div class="help-text">예: 010-1234-5678</div>
+          <div class="help-text">숫자만 입력하면 자동으로 하이픈이 추가됩니다</div>
         </div>
 
         <!-- 주소 -->
@@ -136,6 +139,38 @@ watch(() => props.initialData, (newData) => {
     };
   }
 }, { immediate: true });
+
+/**
+ * 전화번호 자동 하이픈 포맷팅
+ * 
+ * @param value 입력된 전화번호 문자열
+ * @returns 하이픈이 추가된 전화번호 (예: 010-1234-5678)
+ */
+const formatPhoneNumber = (value: string): string => {
+  // 숫자만 추출
+  const numbers = value.replace(/[^0-9]/g, '');
+  
+  // 길이에 따라 포맷팅
+  if (numbers.length <= 3) {
+    return numbers;
+  } else if (numbers.length <= 7) {
+    return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+  } else if (numbers.length <= 11) {
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`;
+  } else {
+    // 11자 초과 시 11자까지만 사용
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+  }
+};
+
+/**
+ * 휴대폰 입력 시 자동 포맷팅
+ */
+const handlePhoneInput = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const formatted = formatPhoneNumber(input.value);
+  formData.value.mobile = formatted;
+};
 
 /**
  * 모달 닫기
