@@ -47,6 +47,7 @@
         </div>
       </div>
 
+      <div class="field">
       <div class="filter-actions">
         <div class="left-meta">
                    <span class="total">
@@ -55,11 +56,13 @@
           <span v-if="errorMessage" class="error">{{ errorMessage }}</span>
         </div>
 
+
         <div class="right-actions">
           <button class="btn-primary" type="button" @click="onSearch" :disabled="loading">
             조회
           </button>
         </div>
+      </div>
       </div>
     </section>
 
@@ -270,7 +273,11 @@ async function onSearch() {
   background-color: #ffffff;
   border-radius: 16px;
   border: 1px solid #e5e7eb;
-  padding: 16px 20px;
+  padding: 16px 0px;
+}
+
+.field{
+  padding: 0 20px;
 }
 .filter-grid {
   display: grid;
