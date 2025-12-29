@@ -195,10 +195,6 @@ export function useApprovalDocument() {
      * 필수: adjustmentType, currentAmount, adjustedAmount
      */
     const validatePayrollAdjust = (details: any): boolean => {
-        if (!details.adjustmentType) {
-            alert('조정 항목을 선택하세요.');
-            return false;
-        }
         if (!details.adjustmentAmount || details.adjustmentAmount <= 0) {
             alert('조정 후 금액을 입력하세요.');
             return false;

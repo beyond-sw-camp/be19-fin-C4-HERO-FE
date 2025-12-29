@@ -12,11 +12,13 @@
   *   2025/12/23 - 민철 파일명 변경
   *   2025/12/26 - 민철 탭별 문서 조회 기능 구현
   *   2025/12/26 - 민철 문서 클릭 시 상세 화면 이동 기능 추가
+  *   2025/12/29 - 민철 결재 상태별 뱃지 색상 구분 및 고정 크기 적용
+  *   2025/12/29 - 민철 테이블 열 너비 조정 및 좌우 균형 배치
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 3.1
+  * @version 3.3
 -->
 <template>
   <div class="inbox-container">
@@ -56,7 +58,7 @@
             </div>
             <div class="top-third">
               <select class="input-box filter" v-model="sortBy" @change="onSearchChange">
-                <option value="">전체</option>
+                <option value="all">전체</option>
                 <option value="docNo">문서번호</option>
                 <option value="docType">문서분류</option>
                 <option value="name">문서서식</option>
@@ -74,7 +76,7 @@
           <table>
             <thead>
               <tr>
-                <td class="cell docNoc">문서번호</td>
+                <td class="cell docNo">문서번호</td>
                 <td class="cell docStatus">결재상태</td>
                 <td class="cell docCategory">문서분류</td>
                 <td class="cell docName">문서서식</td>
@@ -88,10 +90,10 @@
               <template v-if="!loading && documents.length > 0">
                 <tr v-for="doc in documents" :key="doc.docId" class="clickable-row"
                   @click="toDocumentDetail(doc.docId)">
-                  <td class="cell docNoc">{{ doc.docNo }}</td>
+                  <td class="cell docNo">{{ doc.docNo }}</td>
                   <td class="cell docStatus">
-                    <div class="status-text">
-                      {{ doc.docStatus }}
+                    <div class="status-badge" :class="getStatusClass(doc.docStatus)">
+                      {{ getStatusText(doc.docStatus) }}
                     </div>
                   </td>
                   <td class="cell docCategory">{{ doc.category }}</td>
@@ -189,6 +191,29 @@ const toDocumentDetail = (docId: number) => {
     name: 'ApprovalDetail',
     params: { docId: docId.toString() }
   });
+};
+
+/**
+ * 결재 상태에 따른 CSS 클래스 반환
+ * @param {string} status - 결재 상태값
+ * @returns {string} CSS 클래스명
+ */
+const getStatusClass = (status: string): string => {
+  const statusMap: Record<string, string> = {
+    '진행중': 'status-inprogress',
+    '승인완료': 'status-approved',
+    '반려': 'status-rejected'
+  };
+  return statusMap[status] || 'status-inprogress';
+};
+
+/**
+ * 결재 상태 텍스트 반환 (필요시 변환)
+ * @param {string} status - 결재 상태값
+ * @returns {string} 표시할 상태 텍스트
+ */
+const getStatusText = (status: string): string => {
+  return status;
 };
 
 </script>
@@ -316,44 +341,103 @@ const toDocumentDetail = (docId: number) => {
   color: #ffff;
   padding: 10px 15px 10px 15px;
   border-radius: 10px;
-  background-color: #155dfc;
+  background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
 }
 
 .inbox-body-table {
   display: flex;
   flex-direction: column;
+  overflow-x: auto;
 }
 
 table {
-
+  width: 100%;
   border-collapse: collapse;
-  padding: 10px;
+  table-layout: fixed;
 }
 
 thead {
   color: #ffff;
   background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
-  justify-content: space-around;
-
 }
 
 td {
-  padding: 10px 5px 10px 20px;
+  padding: 12px 16px;
   border-bottom: 1px solid #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cell {
-  padding: 10px;
+  text-align: left;
 }
 
-.status-text {
-  display: flex;
-  padding: 5px;
-  width: fit-content;
-  background-color: aqua;
+/* 테이블 열 너비 설정 */
+.docNo {
+  width: 200px;
+}
+
+.docStatus {
+  width: 150px;
+}
+
+.docCategory {
+  width: 120px;
+}
+
+.docName {
+  width: 160px;
+}
+
+.docTitle {
+  /* width: auto; */
+  min-width: 200px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.drafterDept {
+  width: 120px;
+}
+
+.drafter {
+  width: 120px;
+}
+
+.drafterDate {
+  width: 190px;
+}
+
+/* 결재 상태 뱃지 공통 스타일 - 고정 크기 */
+.status-badge {
+  display: inline-flex;
+  padding: 4px 12px;
+  min-width: 70px;
   justify-content: center;
   align-items: center;
   border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* 진행중 상태 */
+.status-inprogress {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+/* 승인완료 상태 */
+.status-approved {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+/* 반려 상태 */
+.status-rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
 }
 
 .inbox-body-bottom {

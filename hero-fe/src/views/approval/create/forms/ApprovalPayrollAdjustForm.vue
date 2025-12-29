@@ -26,41 +26,7 @@
         <div class="section-body">
           <div class="input-group-row">
             
-            <div class="input-group col-type">
-              <div class="group-label">
-                <span class="label-text">조정항목타입 *</span>
-              </div>
-              
-              <div 
-                class="dropdown-box" 
-                :class="{ 'is-open': isOpen }" 
-                @click="toggleDropdown"
-              >
-                <div class="dropdown-value">
-                  <span :class="selectedType ? 'text-selected' : 'placeholder-text'">
-                    {{ selectedType ? selectedType.label : '선택하세요' }}
-                  </span>
-                </div>
-                <img 
-                  class="icon-dropdown" 
-                  :class="{ 'rotate': isOpen }"
-                  src="/images/dropdownarrow.svg" 
-                  alt="dropdown"
-                />
-                
-                <ul v-if="isOpen" class="dropdown-options">
-                  <li 
-                    v-for="option in adjustmentOptions" 
-                    :key="option.value" 
-                    class="dropdown-item"
-                    @click.stop="selectType(option)"
-                  >
-                    {{ option.label }}
-                  </li>
-                </ul>
-              </div>
-            </div>
-
+          
             <div class="input-group col-amount">
               <div class="group-label">
                 <span class="label-text">조정 금액 *</span>
@@ -138,7 +104,6 @@ const emit = defineEmits<{
 
 // 타입 정의
 export interface ModifyPayrollFormData {
-  adjustmentType: string;     // 조정 유형
   currentAmount: number;      // 현재 금액
   adjustmentAmount: number;   // 조정 후 금액
   reason: string;             // 사유
@@ -146,21 +111,10 @@ export interface ModifyPayrollFormData {
 
 // 폼 데이터 (reactive로 관리)
 const formData = reactive<ModifyPayrollFormData>({
-  adjustmentType: props.modelValue?.adjustmentType || '',
   currentAmount: props.modelValue?.currentAmount || 2000000,
   adjustmentAmount: props.modelValue?.adjustmentAmount || 2000000,
   reason: props.modelValue?.reason || ''
 });
-
-const isOpen = ref(false);
-const selectedType = ref<{ label: string, value: string } | null>(null);
-
-const adjustmentOptions = [
-  { value: 'basic', label: '추가수당' },
-  { value: 'position', label: '상여(인센티브)' },
-  { value: 'overtime', label: '감액(공제)' },
-  { value: 'bonus', label: '기타' },
-];
 
 const currentAmount = computed(() => {
   return payroll.value?.beforePayroll || formData.currentAmount || 0;
@@ -192,15 +146,6 @@ const onBlur = () => {
   isFocused.value = false;
 };
 
-const toggleDropdown = () => {
-  isOpen.value = !isOpen.value;
-};
-
-const selectType = (option: { label: string, value: string }) => {
-  selectedType.value = option;
-  formData.adjustmentType = option.label;
-  isOpen.value = false;
-};
 
 // 숫자 포맷팅 (천 단위 콤마)
 const formatNumber = (num: number | undefined) => {
@@ -212,9 +157,8 @@ const formatNumber = (num: number | undefined) => {
 
 // formData 변경 시 부모에게 자동 전달
 watch(
-  [() => formData.adjustmentType, currentAmount, adjustmentAmount, reason],
-  ([newType, newCurrentAmount, newAdjustedAmount, newReason]) => {
-    formData.adjustmentType = newType;
+  [() => currentAmount.value, adjustmentAmount, reason],
+  ([ newCurrentAmount, newAdjustedAmount, newReason]) => {
     formData.currentAmount = newCurrentAmount;
     formData.adjustmentAmount = newAdjustedAmount;
     formData.reason = newReason;
