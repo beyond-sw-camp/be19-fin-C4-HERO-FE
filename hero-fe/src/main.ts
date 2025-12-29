@@ -1,5 +1,8 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import { VueQueryPlugin } from '@tanstack/vue-query';
+import Toast from 'vue-toastification';
+import 'vue-toastification/dist/index.css';
 
 import App from './App.vue';
 import router from './router';
@@ -11,6 +14,42 @@ async function initializeApp() {
     const pinia = createPinia();
     
     app.use(pinia);
+
+    // =================== Vue Query 설정 ===================
+    app.use(VueQueryPlugin, {
+        queryClientConfig: {
+            defaultOptions: {
+                queries: {
+                    refetchOnWindowFocus: false, // 창 포커스 시 자동 재조회 비활성화
+                    retry: 1, // 실패 시 1번 재시도
+                    staleTime: 5 * 60 * 1000, // 5분 - 데이터 신선도 유지 시간
+                    cacheTime: 10 * 60 * 1000, // 10분 - 캐시 유지 시간
+                },
+                mutations: {
+                    retry: 0, // Mutation 실패 시 재시도 안 함
+                }
+            },
+        },
+    });
+
+    // =================== Toast 설정 ===================
+    app.use(Toast, {
+        position: 'top-right',
+        timeout: 3000, // 3초 후 자동 사라짐
+        closeOnClick: true,
+        pauseOnFocusLoss: true,
+        pauseOnHover: true,
+        draggable: true,
+        draggablePercent: 0.6,
+        showCloseButtonOnHover: false,
+        hideProgressBar: false,
+        closeButton: 'button',
+        icon: true,
+        rtl: false,
+        transition: 'Vue-Toastification__bounce',
+        maxToasts: 5, // 최대 5개까지만 표시
+        newestOnTop: true
+    });
 
     // Pinia가 설치된 후 auth 스토어를 초기화합니다.
     const authStore = useAuthStore();
