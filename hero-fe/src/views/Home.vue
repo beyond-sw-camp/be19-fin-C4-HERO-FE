@@ -78,6 +78,7 @@ import { useNotificationStore } from '@/stores/notification/notification.store';
 import type { Notification } from '@/types/notification/notification.types';
 import dashboardApi from '@/api/dashboard/dashboard.api';
 import type { ClockStatusDTO } from '@/types/dashboard/dashboard.types';
+import { fetchMyProfile, generateMySeal } from '@/api/personnel/personnel';
 
 // 컴포넌트 임포트
 import TimeClock from '@/components/dashboard/TimeClock.vue';
@@ -330,6 +331,26 @@ const fetchApprovalStats = async (): Promise<void> => {
   }
 };
 
+/**
+ * 직인 체크 및 자동 생성
+ */
+const checkAndGenerateSeal = async (): Promise<void> => {
+  try {
+    const response = await fetchMyProfile();
+    const profile = response.data.data;
+    
+    if (!profile?.sealImageUrl) {
+      console.log('직인이 없습니다. 자동 생성을 시작합니다...');
+      await generateMySeal();
+      console.log('직인 자동 생성 완료');
+    } else {
+      console.log('직인이 이미 존재합니다:', profile.sealImageUrl);
+    }
+  } catch (error) {
+    console.warn('직인 생성 중 오류 발생 (무시):', error);
+  }
+};
+
 const handleNotificationClick = async (notification: Notification): Promise<void> => {
   await notificationStore.markAsRead(notification.notificationId);
   if (notification.link) {
@@ -396,6 +417,9 @@ const handlePunchOut = async (): Promise<void> => {
 const loadDashboardData = async (): Promise<void> => {
   isLoading.value = true;
   try {
+    // 직인 체크 및 자동 생성
+    checkAndGenerateSeal();
+    
     await Promise.all([
       notificationStore.fetchNotifications(),
       fetchTodayAttendance(),
