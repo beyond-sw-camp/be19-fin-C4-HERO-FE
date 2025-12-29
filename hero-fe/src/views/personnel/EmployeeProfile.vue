@@ -7,10 +7,11 @@
   2025/12/28 (혜원) 최초 작성
   2025/12/28 (혜원) 연락처 수정 기능 추가
   2025/12/28 (혜원) 비밀번호 변경 기능 추가
+  2025/12/29 (혜원) Null-safe 처리 추가 (빈 값 저장 허용)
   </pre>
  
   @author 혜원
-  @version 1.2
+  @version 1.3
  -->
 <template>
   <div class="profile-container">
@@ -32,24 +33,24 @@
       <div class="sidebar-card">
         <!-- Profile Section -->
         <div class="profile-section">
-          <div class="profile-avatar">{{ employee.employeeName?.charAt(0) }}</div>
-          <div class="profile-name">{{ employee.employeeName }}</div>
-          <div class="profile-team">{{ employee.team }}</div>
-          <div class="profile-badge">{{ employee.rank }}</div>
+          <div class="profile-avatar">{{ employee.employeeName?.charAt(0) || '?' }}</div>
+          <div class="profile-name">{{ employee.employeeName || '이름 없음' }}</div>
+          <div class="profile-team">{{ employee.team || '-' }}</div>
+          <div class="profile-badge">{{ employee.rank || '-' }}</div>
         </div>
 
         <!-- Stamp Section -->
         <div class="stamp-section">
           <div class="stamp-header">
-            <svg class="stamp-icon" viewBox="0 0 16 16" fill="none">
-              <path d="M6 1.33L6 8.66M2.67 8.66L13.33 8.66" stroke="#64748B" stroke-width="1.33" stroke-linecap="round"/>
-            </svg>
+            <img src="/images/seal.svg" alt="직인" style="width: 16px; height: 16px;" />
             <span>등록된 직인</span>
           </div>
           <div class="stamp-empty" v-if="!employee.sealImageUrl">
-            <svg class="empty-icon" viewBox="0 0 48 48" fill="none">
-              <path d="M18 4L30 4L30 26M8 26L40 26L40 36L8 36L8 26Z" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
-            </svg>
+          <img 
+            src="/images/seal.svg" 
+            alt="직인" 
+            style="width: 32px; height: 32px; filter: grayscale(80%) brightness(0.6);"
+          />
             <div class="empty-text">등록된 직인이 없습니다</div>
             <div class="empty-subtext">아래 버튼을 눌러 등록하세요</div>
           </div>
@@ -61,15 +62,11 @@
         <!-- Action Buttons -->
         <div class="action-buttons">
           <button class="btn-secondary" @click="handlePasswordChange">
-            <svg viewBox="0 0 16 16" fill="none">
-              <path d="M2 7.33L14 7.33M4.66 1.33L4.66 7.33" stroke="currentColor" stroke-width="1.33"/>
-            </svg>
+            <img src="/images/password.svg" alt="비밀번호" style="width: 16px; height: 16px;" />  
             비밀번호 변경
           </button>
           <button class="btn-primary" @click="handleSealEdit">
-            <svg viewBox="0 0 16 16" fill="none">
-              <path d="M6 1.33L6 8.66M2.67 8.66L13.33 8.66" stroke="currentColor" stroke-width="1.33"/>
-            </svg>
+            <img src="/images/seal.svg" alt="직인" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" />
             직인 편집
           </button>
         </div>
@@ -83,11 +80,11 @@
           <div class="info-grid">
             <div class="info-item">
               <label>사원번호</label>
-              <div class="info-value">{{ employee.employeeNumber }}</div>
+              <div class="info-value">{{ employee.employeeNumber || '-' }}</div>
             </div>
             <div class="info-item">
               <label>이름</label>
-              <div class="info-value">{{ employee.employeeName }}</div>
+              <div class="info-value">{{ employee.employeeName || '-' }}</div>
             </div>
             <div class="info-item">
               <label>
@@ -105,7 +102,7 @@
                 </svg>
                 계약 구분
               </label>
-              <div class="badge badge-blue">{{ employee.contractType }}</div>
+              <div class="badge badge-blue">{{ employee.contractType || '-' }}</div>
             </div>
             <div class="info-item">
               <label>직책</label>
@@ -113,15 +110,15 @@
             </div>
             <div class="info-item">
               <label>직급</label>
-              <div class="info-value">{{ employee.rank }}</div>
+              <div class="info-value">{{ employee.rank || '-' }}</div>
             </div>
             <div class="info-item">
               <label>부서</label>
-              <div class="info-value">{{ employee.department }}</div>
+              <div class="info-value">{{ employee.department || '-' }}</div>
             </div>
             <div class="info-item">
               <label>팀</label>
-              <div class="info-value">{{ employee.team }}</div>
+              <div class="info-value">{{ employee.team || '-' }}</div>
             </div>
           </div>
         </section>
@@ -135,7 +132,7 @@
           <div class="info-grid">
             <div class="info-item">
               <label>이메일</label>
-              <div class="info-value">{{ employee.email }}</div>
+              <div class="info-value">{{ employee.email || '-' }}</div>
             </div>
             <div class="info-item">
               <label>회사 전화</label>
@@ -143,7 +140,7 @@
             </div>
             <div class="info-item">
               <label>휴대폰</label>
-              <div class="info-value">{{ employee.mobile }}</div>
+              <div class="info-value">{{ employee.mobile || '-' }}</div>
             </div>
             <div class="info-item">
               <label>주소</label>
@@ -162,7 +159,7 @@
             </div>
             <div class="info-item">
               <label>근속연수</label>
-              <div class="info-value">{{ employee.yearsOfService }}년</div>
+              <div class="info-value">{{ employee.yearsOfService || '0' }}년</div>
             </div>
             <div class="info-item">
               <label>
@@ -175,11 +172,11 @@
             </div>
             <div class="info-item">
               <label>재직 상태</label>
-              <div class="badge badge-green">{{ employee.status }}</div>
+              <div class="badge badge-green">{{ employee.status || '-' }}</div>
             </div>
             <div class="info-item">
               <label>성과평가</label>
-              <div class="info-value">{{ employee.performance }}</div>
+              <div class="info-value">{{ employee.performance || '-' }}</div>
             </div>
           </div>
         </section>
@@ -229,11 +226,12 @@
 
     <!-- Contact Edit Modal -->
     <ContactEditModal
+      v-if="employee"
       :is-open="isContactModalOpen"
       :initial-data="{
-        email: employee?.email || '',
-        mobile: employee?.mobile || '',
-        address: employee?.address
+        email: employee.email || '',
+        mobile: employee.mobile || '',
+        address: employee.address || ''
       }"
       @close="handleContactModalClose"
       @success="handleContactUpdateSuccess"
@@ -248,9 +246,10 @@
 
     <!-- Seal Edit Modal -->
     <SealEditModal
+      v-if="employee"
       :is-open="isSealModalOpen"
-      :employee-name="employee?.employeeName"
-      :current-seal-url="employee?.sealImageUrl"
+      :employee-name="employee.employeeName || ''"
+      :current-seal-url="employee.sealImageUrl"
       @close="handleSealModalClose"
       @success="handleSealUpdateSuccess"
     />
@@ -259,11 +258,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useToast } from 'vue-toastification';
 import { fetchMyProfile, type EmployeeProfileResponse } from '@/api/personnel/personnel';
 import ContactEditModal from '@/components/personnel/ContactEditModal.vue';
 import PasswordChangeModal from '@/components/personnel/PasswordChangeModal.vue';
 import SealEditModal from '@/components/personnel/SealEditModal.vue';
 
+const toast = useToast();
 const employee = ref<EmployeeProfileResponse | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
@@ -285,6 +286,7 @@ const loadProfile = async () => {
   } catch (err: any) {
     console.error('프로필 로드 에러:', err);
     error.value = err.response?.data?.message || '프로필 정보를 불러오는 중 오류가 발생했습니다.';
+    toast.error(error.value);
   } finally {
     loading.value = false;
   }
@@ -293,7 +295,7 @@ const loadProfile = async () => {
 /**
  * 날짜 포맷팅 (YYYY-MM-DD)
  */
-const formatDate = (dateString: string | null): string => {
+const formatDate = (dateString: string | null | undefined): string => {
   if (!dateString) return '-';
   return dateString;
 };
@@ -301,7 +303,7 @@ const formatDate = (dateString: string | null): string => {
 /**
  * 금액 포맷팅
  */
-const formatCurrency = (value: number | null): string => {
+const formatCurrency = (value: number | null | undefined): string => {
   if (!value) return '0';
   return value.toLocaleString('ko-KR');
 };
@@ -322,15 +324,20 @@ const handlePasswordModalClose = () => {
 
 /**
  * 비밀번호 변경 성공
+ * Toast는 PasswordChangeModal에서 표시
  */
 const handlePasswordChangeSuccess = () => {
-  alert('비밀번호가 성공적으로 변경되었습니다.');
+  // 추가 작업 필요 시 여기에 작성
 };
 
 /**
  * 직인 편집 핸들러
  */
 const handleSealEdit = () => {
+  if (!employee.value) {
+    toast.error('프로필 정보를 불러온 후 시도해주세요');
+    return;
+  }
   isSealModalOpen.value = true;
 };
 
@@ -343,16 +350,20 @@ const handleSealModalClose = () => {
 
 /**
  * 직인 수정 성공 시 프로필 새로고침
+ * Toast는 SealEditModal에서 표시
  */
 const handleSealUpdateSuccess = async () => {
   await loadProfile();
-  alert('직인이 성공적으로 저장되었습니다.');
 };
 
 /**
  * 연락처 수정 핸들러
  */
 const handleEdit = () => {
+  if (!employee.value) {
+    toast.error('프로필 정보를 불러온 후 시도해주세요');
+    return;
+  }
   isContactModalOpen.value = true;
 };
 
@@ -365,6 +376,7 @@ const handleContactModalClose = () => {
 
 /**
  * 연락처 수정 성공 시 프로필 새로고침
+ * Toast는 ContactEditModal에서 표시
  */
 const handleContactUpdateSuccess = async () => {
   await loadProfile();
@@ -375,7 +387,7 @@ const handleContactUpdateSuccess = async () => {
  */
 const handleDepartmentHistory = () => {
   console.log('부서 이동 이력 조회');
-  // TODO: 부서 이동 이력 모달 또는 페이지로 이동
+  toast.info('부서 이동 이력 조회 기능은 준비 중입니다');
 };
 
 /**
@@ -383,7 +395,7 @@ const handleDepartmentHistory = () => {
  */
 const handleGradeHistory = () => {
   console.log('직급 변경 이력 조회');
-  // TODO: 직급 변경 이력 모달 또는 페이지로 이동
+  toast.info('직급 변경 이력 조회 기능은 준비 중입니다');
 };
 
 /**
@@ -391,7 +403,7 @@ const handleGradeHistory = () => {
  */
 const handlePerformanceHistory = () => {
   console.log('성과평가 이력 조회');
-  // TODO: 성과평가 이력 모달 또는 페이지로 이동
+  toast.info('성과평가 이력 조회 기능은 준비 중입니다');
 };
 
 // 컴포넌트 마운트 시 프로필 로드
@@ -554,7 +566,7 @@ onMounted(() => {
 }
 
 .stamp-image img {
-  max-width: 100%;
+  max-width: 20%;
   height: auto;
 }
 
