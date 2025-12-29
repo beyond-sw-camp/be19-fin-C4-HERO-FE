@@ -72,7 +72,8 @@
           >
             <div class="sub-menu-text">부서 근태 현황</div>
           </div>
-                    <div
+          <div
+            v-if="canSeeAttendanceDashboard"
             class="sub-menu-item"
             :class="{ active: activeSubMenu === 'attendanceDashboard' }"
             @click="handleSubMenuClick('attendanceDashboard')"
@@ -370,8 +371,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+
+const authStore = useAuthStore();
+
+const canSeeAttendanceDashboard = computed(() =>
+  authStore.hasAnyRole([
+    'ROLE_SYSTEM_ADMIN',
+    'ROLE_HR_EVALUATION',
+    'ROLE_HR_ATTENDANCE',
+    'ROLE_DEPT_MANAGER',
+  ])
+);
 
 const router = useRouter();
 const route = useRoute();
@@ -586,7 +599,9 @@ const syncActiveByRoute = (path: string) => {
     if (!isCollapsed.value) isAttendanceOpen.value = true;
     if (path.includes('attendance_record')) activeSubMenu.value = 'attendanceRecord';
     else if (path.includes('/department')) activeSubMenu.value = 'attendanceDept';
-    else if (path.includes('/dashboard')) activeSubMenu.value = 'attendanceDashboard';
+    else if (path.includes('/dashboard') && canSeeAttendanceDashboard.value) {
+      activeSubMenu.value = 'attendanceDashboard';
+    }
     return;
   }
 
