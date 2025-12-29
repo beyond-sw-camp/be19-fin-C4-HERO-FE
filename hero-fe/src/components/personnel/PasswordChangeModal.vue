@@ -5,10 +5,11 @@
 
   History
   2025/12/28 (혜원) 최초 작성
+  2025/12/29 (혜원) 비밀번호 강도 표시 및 일치 검증 추가
   </pre>
  
   @author 혜원
-  @version 1.0
+  @version 1.1
  -->
 <template>
   <div v-if="isOpen" class="modal-overlay" @click="handleClose">
@@ -22,10 +23,7 @@
         <!-- 현재 비밀번호 -->
         <div class="form-group">
           <label class="label-with-icon required">
-            <svg class="label-icon" viewBox="0 0 16 16" fill="none">
-              <path d="M2 8L14 8" stroke="#432DD7" stroke-width="1.33"/>
-              <path d="M6 4L6 8M10 4L10 6" stroke="#432DD7" stroke-width="1.33"/>
-            </svg>
+          <img src="/images/password.svg" alt="비밀번호" class="label-icon" />
             현재 비밀번호
           </label>
           <div class="input-wrapper">
@@ -41,10 +39,7 @@
               class="toggle-password"
               @click="showCurrentPassword = !showCurrentPassword"
             >
-              <svg viewBox="0 0 20 20" fill="none">
-                <path d="M2 10C2 10 5 4 10 4C15 4 18 10 18 10" stroke="#64748B" stroke-width="1.67"/>
-                <circle cx="10" cy="10" r="3" stroke="#64748B" stroke-width="1.67"/>
-              </svg>
+            <img src="/images/save.svg" alt="저장" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" />
             </button>
           </div>
         </div>
@@ -54,10 +49,7 @@
         <!-- 새 비밀번호 -->
         <div class="form-group">
           <label class="label-with-icon required">
-            <svg class="label-icon" viewBox="0 0 16 16" fill="none">
-              <path d="M2 8L14 8" stroke="#432DD7" stroke-width="1.33"/>
-              <path d="M6 4L6 8M10 4L10 6" stroke="#432DD7" stroke-width="1.33"/>
-            </svg>
+          <img src="/images/password.svg" alt="비밀번호" class="label-icon" />
             새 비밀번호
           </label>
           <div class="input-wrapper">
@@ -80,15 +72,58 @@
               </svg>
             </button>
           </div>
+
+          <!-- 비밀번호 강도 표시 -->
+          <div v-if="formData.newPassword" class="password-strength-container">
+            <div class="strength-bar-wrapper">
+              <div 
+                class="strength-bar" 
+                :class="`strength-${passwordStrength}`"
+                :style="{ width: `${(passwordStrength / 4) * 100}%` }"
+              ></div>
+            </div>
+            <span class="strength-text" :class="`strength-${passwordStrength}`">
+              {{ strengthText }}
+            </span>
+          </div>
+
+          <!-- 비밀번호 요구사항 체크리스트 -->
           <div class="password-requirements">
             <div :class="['requirement', { valid: requirements.minLength }]">
-              • 최소 8자 이상
+              <svg v-if="requirements.minLength" class="check-icon" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8L6 11L13 4" stroke="#10B981" stroke-width="2"/>
+              </svg>
+              <svg v-else class="x-icon" viewBox="0 0 16 16" fill="none">
+                <path d="M4 4L12 12M12 4L4 12" stroke="#EF4444" stroke-width="2"/>
+              </svg>
+              최소 8자 이상
             </div>
             <div :class="['requirement', { valid: requirements.hasLetters }]">
-              • 영문 대소문자 포함
+              <svg v-if="requirements.hasLetters" class="check-icon" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8L6 11L13 4" stroke="#10B981" stroke-width="2"/>
+              </svg>
+              <svg v-else class="x-icon" viewBox="0 0 16 16" fill="none">
+                <path d="M4 4L12 12M12 4L4 12" stroke="#EF4444" stroke-width="2"/>
+              </svg>
+              영문 대소문자 포함
             </div>
             <div :class="['requirement', { valid: requirements.hasNumbers }]">
-              • 숫자 포함
+              <svg v-if="requirements.hasNumbers" class="check-icon" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8L6 11L13 4" stroke="#10B981" stroke-width="2"/>
+              </svg>
+              <svg v-else class="x-icon" viewBox="0 0 16 16" fill="none">
+                <path d="M4 4L12 12M12 4L4 12" stroke="#EF4444" stroke-width="2"/>
+              </svg>
+              숫자 포함
+            </div>
+            <div :class="['requirement', { valid: requirements.hasSpecialChars }]">
+              <svg v-if="requirements.hasSpecialChars" class="check-icon" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8L6 11L13 4" stroke="#10B981" stroke-width="2"/>
+              </svg>
+              <svg v-else class="x-icon" viewBox="0 0 16 16" fill="none">
+                <path d="M4 4L12 12M12 4L4 12" stroke="#EF4444" stroke-width="2"/>
+              </svg>
+              특수문자 포함 (!@#$%^&*)
             </div>
           </div>
         </div>
@@ -96,10 +131,7 @@
         <!-- 새 비밀번호 확인 -->
         <div class="form-group">
           <label class="label-with-icon required">
-            <svg class="label-icon" viewBox="0 0 16 16" fill="none">
-              <path d="M2 8L14 8" stroke="#432DD7" stroke-width="1.33"/>
-              <path d="M6 4L6 8M10 4L10 6" stroke="#432DD7" stroke-width="1.33"/>
-            </svg>
+          <img src="/images/password.svg" alt="비밀번호" class="label-icon" />
             새 비밀번호 확인
           </label>
           <div class="input-wrapper">
@@ -109,6 +141,7 @@
               placeholder="새 비밀번호를 다시 입력하세요"
               required
               class="form-input"
+              :class="{ 'input-error': showPasswordMismatch }"
               @input="checkPasswordMatch"
             />
             <button 
@@ -122,8 +155,23 @@
               </svg>
             </button>
           </div>
-          <div v-if="passwordMismatch" class="error-text">
-            비밀번호가 일치하지 않습니다
+
+          <!-- 비밀번호 일치 여부 표시 -->
+          <div v-if="formData.confirmPassword" class="password-match-indicator">
+            <div v-if="passwordMatch" class="match-success">
+              <svg class="match-icon" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="9" fill="#10B981"/>
+                <path d="M6 10L8.5 12.5L14 7" stroke="white" stroke-width="2"/>
+              </svg>
+              <span>비밀번호가 일치합니다</span>
+            </div>
+            <div v-else class="match-error">
+              <svg class="mismatch-icon" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="9" fill="#EF4444"/>
+                <path d="M7 7L13 13M13 7L7 13" stroke="white" stroke-width="2"/>
+              </svg>
+              <span>비밀번호가 일치하지 않습니다</span>
+            </div>
           </div>
         </div>
 
@@ -152,7 +200,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { useToast } from 'vue-toastification';
 import { changePassword } from '@/api/personnel/personnel';
+
+const toast = useToast();
 
 interface Props {
   isOpen: boolean;
@@ -175,13 +226,56 @@ const showNewPassword = ref(false);
 const showConfirmPassword = ref(false);
 const loading = ref(false);
 const error = ref<string | null>(null);
-const passwordMismatch = ref(false);
 
 // 비밀번호 요구사항 체크
 const requirements = ref({
   minLength: false,
   hasLetters: false,
-  hasNumbers: false
+  hasNumbers: false,
+  hasSpecialChars: false
+});
+
+/**
+ * 비밀번호 강도 계산
+ * 0: 매우 약함
+ * 1: 약함
+ * 2: 보통
+ * 3: 강함
+ * 4: 매우 강함
+ */
+const passwordStrength = computed(() => {
+  const password = formData.value.newPassword;
+  let strength = 0;
+
+  if (password.length >= 8) strength++;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+  if (/\d/.test(password)) strength++;
+  if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+
+  return strength; // 0-4
+});
+
+/**
+ * 강도 텍스트
+ */
+const strengthText = computed(() => {
+  const texts = ['매우 약함', '약함', '보통', '강함', '매우 강함'];
+  return texts[passwordStrength.value] || '매우 약함';
+});
+
+/**
+ * 비밀번호 일치 여부
+ */
+const passwordMatch = computed(() => {
+  return formData.value.newPassword === formData.value.confirmPassword &&
+         formData.value.confirmPassword.length > 0;
+});
+
+/**
+ * 비밀번호 불일치 표시 여부
+ */
+const showPasswordMismatch = computed(() => {
+  return formData.value.confirmPassword.length > 0 && !passwordMatch.value;
 });
 
 /**
@@ -193,17 +287,14 @@ const validatePassword = () => {
   requirements.value.minLength = password.length >= 8;
   requirements.value.hasLetters = /[a-z]/.test(password) && /[A-Z]/.test(password);
   requirements.value.hasNumbers = /\d/.test(password);
+  requirements.value.hasSpecialChars = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 };
 
 /**
  * 비밀번호 일치 확인
  */
 const checkPasswordMatch = () => {
-  if (formData.value.confirmPassword) {
-    passwordMismatch.value = formData.value.newPassword !== formData.value.confirmPassword;
-  } else {
-    passwordMismatch.value = false;
-  }
+  // computed로 자동 계산되므로 별도 로직 불필요
 };
 
 /**
@@ -211,13 +302,14 @@ const checkPasswordMatch = () => {
  */
 const isFormValid = computed(() => {
   return (
-    formData.value.currentPassword &&
-    formData.value.newPassword &&
-    formData.value.confirmPassword &&
+    formData.value.currentPassword.length > 0 &&
+    formData.value.newPassword.length > 0 &&
+    formData.value.confirmPassword.length > 0 &&
     requirements.value.minLength &&
     requirements.value.hasLetters &&
     requirements.value.hasNumbers &&
-    !passwordMismatch.value
+    requirements.value.hasSpecialChars &&
+    passwordMatch.value
   );
 });
 
@@ -235,11 +327,11 @@ watch(() => props.isOpen, (isOpen) => {
     showNewPassword.value = false;
     showConfirmPassword.value = false;
     error.value = null;
-    passwordMismatch.value = false;
     requirements.value = {
       minLength: false,
       hasLetters: false,
-      hasNumbers: false
+      hasNumbers: false,
+      hasSpecialChars: false
     };
   }
 });
@@ -266,11 +358,25 @@ const handleSubmit = async () => {
       currentPassword: formData.value.currentPassword,
       newPassword: formData.value.newPassword
     });
+    
+    // 성공 Toast 추가
+    toast.success('비밀번호가 변경되었습니다');
+    
     emit('success');
     handleClose();
   } catch (err: any) {
     console.error('비밀번호 변경 에러:', err);
-    error.value = err.response?.data?.message || '비밀번호 변경에 실패했습니다.';
+    // 에러 메시지 커스터마이징
+    const errorMessage = '비밀번호 변경에 실패했습니다.';
+    
+    // 현재 비밀번호 불일치 에러 처리
+    if (errorMessage.includes('비밀번호') || errorMessage.includes('일치')) {
+      error.value = '현재 비밀번호가 일치하지 않습니다';
+      toast.error('현재 비밀번호가 일치하지 않습니다');
+    } else {
+      error.value = errorMessage;
+      toast.error(errorMessage);
+    }
   } finally {
     loading.value = false;
   }
@@ -404,6 +510,15 @@ const handleSubmit = async () => {
   box-shadow: 0 0 0 3px rgba(67, 45, 215, 0.1);
 }
 
+.form-input.input-error {
+  border-color: #EF4444;
+}
+
+.form-input.input-error:focus {
+  border-color: #EF4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
 .toggle-password {
   position: absolute;
   right: 12px;
@@ -427,14 +542,62 @@ const handleSubmit = async () => {
   height: 20px;
 }
 
+/* 비밀번호 강도 표시 */
+.password-strength-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.strength-bar-wrapper {
+  width: 100%;
+  height: 4px;
+  background: #E2E8F0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-bar {
+  height: 100%;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.strength-bar.strength-0 { background: #EF4444; }
+.strength-bar.strength-1 { background: #F97316; }
+.strength-bar.strength-2 { background: #EAB308; }
+.strength-bar.strength-3 { background: #22C55E; }
+.strength-bar.strength-4 { background: #10B981; }
+
+.strength-text {
+  font-size: 12px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.strength-text.strength-0 { color: #EF4444; }
+.strength-text.strength-1 { color: #F97316; }
+.strength-text.strength-2 { color: #EAB308; }
+.strength-text.strength-3 { color: #22C55E; }
+.strength-text.strength-4 { color: #10B981; }
+
+/* 비밀번호 요구사항 체크리스트 */
 .password-requirements {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  padding: 12px;
+  background: #F8FAFC;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
   margin-top: 8px;
 }
 
 .requirement {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: #64748B;
   font-size: 14px;
   line-height: 20px;
@@ -446,11 +609,46 @@ const handleSubmit = async () => {
   font-weight: 500;
 }
 
-.error-text {
-  color: #EF4444;
+.check-icon,
+.x-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* 비밀번호 일치 표시 */
+.password-match-indicator {
+  margin-top: 8px;
+}
+
+.match-success,
+.match-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
   font-size: 14px;
-  line-height: 20px;
-  margin-top: 4px;
+  font-weight: 500;
+}
+
+.match-success {
+  background: #ECFDF5;
+  color: #10B981;
+  border: 1px solid #A7F3D0;
+}
+
+.match-error {
+  background: #FEF2F2;
+  color: #EF4444;
+  border: 1px solid #FECACA;
+}
+
+.match-icon,
+.mismatch-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .modal-footer {

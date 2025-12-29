@@ -6,10 +6,11 @@
   History
   2025/12/28 (혜원) 최초 작성
   2025/12/29 (혜원) 전화번호 자동 하이픈 포맷팅 추가
+  2025/12/29 (혜원) Vee-Validate 폼 검증 추가
   </pre>
  
   @author 혜원
-  @version 1.1
+  @version 1.4
  -->
 <template>
   <div v-if="isOpen" class="modal-overlay" @click="handleClose">
@@ -19,53 +20,47 @@
         <button class="close-btn" @click="handleClose">×</button>
       </div>
 
-      <form @submit.prevent="handleSubmit" class="modal-body">
+      <form @submit.prevent="onSubmit" class="modal-body">
         <!-- 이메일 -->
         <div class="form-group">
           <label class="label-with-icon">
-            <svg class="label-icon" viewBox="0 0 16 16" fill="none">
-              <path d="M2 5.33L14 5.33M2 9.33L14 9.33" stroke="#432DD7" stroke-width="1.33"/>
-              <path d="M2 4L14 4L14 14L2 14L2 4Z" stroke="#432DD7" stroke-width="1.33"/>
-            </svg>
+            <img src="/images/email.svg" alt="이메일" class="label-icon" />
             이메일
           </label>
           <input 
             v-model="formData.email" 
             type="email" 
             placeholder="kim.developer@company.com"
-            required
             class="form-input"
+            :class="{ 'input-error': errors.email }"
           />
-          <div class="help-text">업무용 이메일 주소를 입력해주세요</div>
+          <div v-if="errors.email" class="error-text">{{ errors.email }}</div>
+          <div v-else class="help-text">업무용 이메일 주소를 입력해주세요</div>
         </div>
 
         <!-- 휴대폰 -->
         <div class="form-group">
           <label class="label-with-icon">
-            <svg class="label-icon" viewBox="0 0 16 16" fill="none">
-              <path d="M2 2L14 2L14 14L2 14L2 2Z" stroke="#432DD7" stroke-width="1.33"/>
-            </svg>
+            <img src="/images/phone.svg" alt="휴대폰" class="label-icon" />
             휴대폰
           </label>
           <input 
             v-model="formData.mobile" 
             type="tel" 
             placeholder="010-1234-5678"
-            required
             class="form-input"
+            :class="{ 'input-error': errors.mobile }"
             @input="handlePhoneInput"
             maxlength="13"
           />
-          <div class="help-text">숫자만 입력하면 자동으로 하이픈이 추가됩니다</div>
+          <div v-if="errors.mobile" class="error-text">{{ errors.mobile }}</div>
+          <div v-else class="help-text">숫자만 입력하면 자동으로 하이픈이 추가됩니다</div>
         </div>
 
         <!-- 주소 -->
         <div class="form-group">
           <label class="label-with-icon">
-            <svg class="label-icon" viewBox="0 0 16 16" fill="none">
-              <path d="M4 2L12 2L12 14L4 14L4 2Z" stroke="#432DD7" stroke-width="1.33"/>
-              <path d="M6 6L6 6.01M8 6L8 6.01" stroke="#432DD7" stroke-width="1.33"/>
-            </svg>
+            <img src="/images/address.svg" alt="주소" class="label-icon" />
             주소
           </label>
           <input 
@@ -79,10 +74,7 @@
         <!-- 버튼 -->
         <div class="modal-footer">
           <button type="submit" class="btn-submit" :disabled="loading">
-            <svg viewBox="0 0 16 16" fill="none">
-              <path d="M2 2L14 2L14 14L2 14L2 2Z" stroke="white" stroke-width="1.33"/>
-              <path d="M6 10L10 10M6 3L6 6" stroke="white" stroke-width="1.33"/>
-            </svg>
+            <img src="/images/save.svg" alt="저장" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" />
             {{ loading ? '저장 중...' : '저장하기' }}
           </button>
           <button type="button" class="btn-cancel" @click="handleClose">
@@ -101,7 +93,11 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { useForm } from 'vee-validate';
+import * as yup from 'yup';
 import { updateContactInfo, type ContactUpdateRequest } from '@/api/personnel/personnel';
+import { useToast } from 'vue-toastification';
+import { useQueryClient } from '@tanstack/vue-query';
 
 interface Props {
   isOpen: boolean;
@@ -117,6 +113,45 @@ const emit = defineEmits<{
   close: [];
   success: [];
 }>();
+
+const toast = useToast();
+const queryClient = useQueryClient();
+
+/**
+ * Vee-Validate 스키마 정의
+ * 모든 필드 선택 입력 (nullable)
+ * 값이 있을 때만 형식 검증
+ */
+const schema = yup.object({
+  email: yup
+    .string()
+    .nullable()
+    .test('email-format', '이메일 형식이 올바르지 않습니다', function(value) {
+      // 값이 비어있으면 통과
+      if (!value || value.trim() === '') return true;
+      // 값이 있으면 이메일 형식 검증
+      return yup.string().email().isValidSync(value);
+    }),
+  mobile: yup
+    .string()
+    .nullable()
+    .test('mobile-format', '휴대폰 형식: 010-1234-5678', function(value) {
+      // 값이 비어있으면 통과
+      if (!value || value.trim() === '') return true;
+      // 값이 있으면 전화번호 형식 검증
+      return /^010-\d{4}-\d{4}$/.test(value);
+    }),
+  address: yup.string().nullable()
+});
+
+const { handleSubmit, setValues, errors, values } = useForm({
+  validationSchema: schema,
+  initialValues: {
+    email: '',
+    mobile: '',
+    address: ''
+  }
+});
 
 const formData = ref<ContactUpdateRequest>({
   email: '',
@@ -137,8 +172,26 @@ watch(() => props.initialData, (newData) => {
       mobile: newData.mobile || '',
       address: newData.address || ''
     };
+    
+    // Vee-Validate 값도 설정
+    setValues({
+      email: newData.email || '',
+      mobile: newData.mobile || '',
+      address: newData.address || ''
+    });
   }
 }, { immediate: true });
+
+/**
+ * formData 변경 시 Vee-Validate 동기화
+ */
+watch(() => formData.value, (newData) => {
+  setValues({
+    email: newData.email || '',
+    mobile: newData.mobile || '',
+    address: newData.address || ''
+  });
+}, { deep: true });
 
 /**
  * 전화번호 자동 하이픈 포맷팅
@@ -181,23 +234,38 @@ const handleClose = () => {
 };
 
 /**
- * 폼 제출
+ * 폼 제출 (Vee-Validate)
  */
-const handleSubmit = async () => {
+const onSubmit = handleSubmit(async () => {
   loading.value = true;
   error.value = null;
 
   try {
-    await updateContactInfo(formData.value);
+    // 빈 값을 빈 문자열로 전송 (백엔드에서 처리)
+    const payload: ContactUpdateRequest = {
+      email: formData.value.email?.trim() || '',
+      mobile: formData.value.mobile?.trim() || '',
+      address: formData.value.address?.trim() || ''
+    };
+
+    await updateContactInfo(payload);
+    
+    // 성공 토스트
+    toast.success('연락처가 수정되었습니다');
+    
+    // 쿼리 무효화 (프로필 재조회)
+    queryClient.invalidateQueries({ queryKey: ['employeeProfile'] });
+    
     emit('success');
     handleClose();
   } catch (err: any) {
     console.error('연락처 수정 에러:', err);
     error.value = err.response?.data?.message || '연락처 정보 수정에 실패했습니다.';
+    toast.error(error.value);
   } finally {
     loading.value = false;
   }
-};
+});
 </script>
 
 <style scoped>
@@ -294,6 +362,13 @@ const handleSubmit = async () => {
   line-height: 20px;
 }
 
+.error-text {
+  color: #DC2626;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+}
+
 .form-input {
   padding: 12px 16px;
   border: 1.2px solid #E2E8F0;
@@ -312,6 +387,15 @@ const handleSubmit = async () => {
   outline: none;
   border-color: #432DD7;
   box-shadow: 0 0 0 3px rgba(67, 45, 215, 0.1);
+}
+
+.form-input.input-error {
+  border-color: #DC2626;
+}
+
+.form-input.input-error:focus {
+  border-color: #DC2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
 }
 
 .modal-footer {

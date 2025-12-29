@@ -200,3 +200,21 @@ export const uploadSealImage = (formData: FormData) => {
 export const deleteSeal = () => {
   return client.delete<ApiResponse<void>>('/employee/seal');
 };
+
+/**
+ * 내 직인 자동 생성
+ * Security Context에서 자동으로 사용자 정보 추출
+ * @author 혜원
+ */
+export const generateMySeal = () => {
+  return client.post<ApiResponse<void>>('/employee/seal/generate');
+};
+
+/**
+ * 내 직인 이미지 조회
+ * Security Context에서 자동으로 사용자 정보 추출
+ * @author 혜원
+ */
+export const getMySeal = () => {
+  return client.get<ApiResponse<string>>('/employee/seal');
+};

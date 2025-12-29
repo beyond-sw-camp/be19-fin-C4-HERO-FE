@@ -28,18 +28,15 @@
               :class="['seal-type-card', { active: sealType === 'TEXT' }]"
               @click="sealType = 'TEXT'"
             >
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M4 4L20 4" stroke="currentColor" stroke-width="2"/>
-              </svg>
+              <img src="/images/text.svg" alt="텍스트" style="width: 16px; height: 16px;" />
               <span>텍스트 직인</span>
             </div>
             <div 
               :class="['seal-type-card', { active: sealType === 'IMAGE' }]"
               @click="sealType = 'IMAGE'"
             >
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M7 3L10 5M3 15L6 18" stroke="currentColor" stroke-width="2"/>
-              </svg>
+              <img src="/images/upload.svg" alt="업로드" style="width: 16px; height: 16px;" />
+
               <span>이미지 업로드</span>
             </div>
           </div>
@@ -54,9 +51,7 @@
             <!-- 텍스트 직인 설정 -->
             <div v-if="sealType === 'TEXT'" class="text-seal-settings">
               <div class="setting-header">
-                <svg viewBox="0 0 20 20" fill="none">
-                  <path d="M3 3L17 3" stroke="#432DD7" stroke-width="1.67"/>
-                </svg>
+                <img src="/images/text.svg" alt="텍스트" style="width: 16px; height: 16px;" />
                 <span>텍스트 직인 설정</span>
               </div>
               <div class="form-group">
@@ -76,9 +71,7 @@
             <!-- 이미지 업로드 설정 -->
             <div v-else class="image-seal-settings">
               <div class="setting-header">
-                <svg viewBox="0 0 20 20" fill="none">
-                  <path d="M7 3L10 5M3 15L6 18" stroke="#432DD7" stroke-width="1.67"/>
-                </svg>
+                <img src="/images/upload.svg" alt="업로드" style="width: 16px; height: 16px;" />
                 <span>이미지 업로드</span>
               </div>
               <div class="upload-area" @click="triggerFileInput">
@@ -108,9 +101,7 @@
           <!-- 우측: 미리보기 -->
           <div class="preview-section">
             <div class="preview-header">
-              <svg viewBox="0 0 20 20" fill="none">
-                <path d="M7 2L10 4M3 11L6 14" stroke="#432DD7" stroke-width="1.67"/>
-              </svg>
+              <img src="/images/seal.svg" alt="직인" style="width: 16px; height: 16px;" />
               <span>직인 미리보기</span>
             </div>
 
@@ -166,10 +157,7 @@
             class="btn-delete" 
             @click="handleDelete"
           >
-            <svg viewBox="0 0 16 16" fill="none">
-              <path d="M3 4L13 4M5 4L5 3L11 3L11 4M6 7L6 11M10 7L10 11" stroke="currentColor" stroke-width="1.33"/>
-              <path d="M4 4L4 13L12 13L12 4" stroke="currentColor" stroke-width="1.33"/>
-            </svg>
+          <img src="/images/trashcan.svg" alt="삭제" style="width: 16px; height: 16px;" />
             삭제
           </button>
         </div>
@@ -795,7 +783,7 @@ const handleSubmit = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 6px;
 }
 
 .btn-submit {
@@ -835,11 +823,6 @@ const handleSubmit = async () => {
   border: 1.2px solid #FCA5A5;
   color: #DC2626;
   width: 100px;
-}
-
-.btn-delete svg {
-  width: 16px;
-  height: 16px;
 }
 
 .btn-delete:hover {
