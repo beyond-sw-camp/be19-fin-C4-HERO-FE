@@ -42,6 +42,29 @@
             <h2>{{ selectedDepartment.departmentName }} 정보</h2>
           </div>
           <div class="panel-body">
+            <!-- 부서 기본 정보 (전화번호, 부서장) -->
+            <div class="detail-section department-info-card" v-if="selectedDepartment.departmentPhone">
+              <div class="info-row">
+                <span class="info-label">부서 전화번호</span>
+                <span class="info-value">{{ selectedDepartment.departmentPhone }}</span>
+              </div>
+            </div>
+
+            <div class="detail-section" v-if="departmentManager">
+              <h3 class="detail-title">부서장</h3>
+              <div class="department-info-card">
+                <div class="manager-profile" @click="handleSelectEmployee(departmentManager)">
+                  <div class="manager-img-wrapper">
+                    <img v-if="!centerListImageErrorIds.has(departmentManager.employeeId)" :src="getProfileImageUrl(departmentManager.imagePath)" @error="onCenterListImageError(departmentManager.employeeId)" class="manager-img" alt="profile" />
+                    <div v-else class="profile-initial-small">{{ departmentManager.employeeName.charAt(0) }}</div>
+                  </div>
+                  <div class="manager-info">
+                    <span class="manager-name">{{ departmentManager.employeeName }} {{ departmentManager.gradeName }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div v-if="selectedDepartment.children && selectedDepartment.children.length > 0" class="detail-section">
               <h3 class="detail-title">하위 부서</h3>
               <ul class="sub-department-list">
@@ -54,7 +77,7 @@
             <div v-if="selectedDepartment.employees && selectedDepartment.employees.length > 0" class="detail-section">
               <h3 class="detail-title">소속 인원</h3>
               <ul class="employee-list-center">
-                <li v-for="emp in sortedEmployees" :key="emp.employeeId" @click="handleSelectEmployee(emp)" :class="{ 'selected': selectedEmployee?.employeeId === emp.employeeId }" class="employee-item-center">
+                <li v-for="emp in selectedDepartment.employees" :key="emp.employeeId" @click="handleSelectEmployee(emp)" :class="{ 'selected': selectedEmployee?.employeeId === emp.employeeId }" class="employee-item-center">
                   <div class="profile-img-wrapper">
                     <img v-if="!centerListImageErrorIds.has(emp.employeeId)" :src="getProfileImageUrl(emp.imagePath)" @error="onCenterListImageError(emp.employeeId)" class="profile-img" alt="profile" />
                     <div v-else class="profile-initial">{{ emp.employeeName.charAt(0) }}</div>
@@ -100,7 +123,56 @@
               <div class="info-item"><span class="label">연락처</span><span class="value">{{ selectedEmployee.phone }}</span></div>
               <div class="info-item"><span class="label">입사일</span><span class="value">{{ selectedEmployee.hireDate }}</span></div>
             </div>
+            
+            <div class="action-buttons">
+              <button class="action-btn" @click="openGradeHistory">직급 로그 보기</button>
+              <button class="action-btn" @click="openDeptHistory">부서 로그 보기</button>
+            </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 직급 로그 모달 -->
+    <div v-if="showGradeModal" class="modal-overlay" @click.self="closeModals">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>직급 변경 이력</h3>
+          <button class="close-modal-btn" @click="closeModals">×</button>
+        </div>
+        <div class="modal-body">
+          <ul v-if="gradeHistoryList.length > 0" class="history-list">
+            <li v-for="item in gradeHistoryList" :key="item.employeeHistoryId" class="history-item">
+              <span class="history-date">{{ formatDate(item.changedAt) }}</span>
+              <div class="history-detail">
+                <span class="history-val">{{ item.gradeName }}</span>
+                <span class="history-type">{{ item.changeType }}</span>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="no-history">변경 이력이 없습니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 부서 로그 모달 -->
+    <div v-if="showDeptModal" class="modal-overlay" @click.self="closeModals">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>부서 변경 이력</h3>
+          <button class="close-modal-btn" @click="closeModals">×</button>
+        </div>
+        <div class="modal-body">
+          <ul v-if="deptHistoryList.length > 0" class="history-list">
+            <li v-for="item in deptHistoryList" :key="item.employeeHistoryId" class="history-item">
+              <span class="history-date">{{ formatDate(item.changedAt) }}</span>
+              <div class="history-detail">
+                <span class="history-val">{{ item.departmentName }}</span>
+                <span class="history-type">{{ item.changeType }}</span>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="no-history">변경 이력이 없습니다.</p>
         </div>
       </div>
     </div>
@@ -115,44 +187,23 @@ import type { OrganizationNode, OrganizationEmployeeDetail } from '@/types/organ
 import OrganizationTreeNode from './OrganizationTreeNode.vue';
 
 const store = useOrganizationStore();
-const { organizationChart, isLoading, error } = storeToRefs(store);
-
-const filteredOrganizationChart = computed(() => {
-  return organizationChart.value?.filter(node => node.departmentName !== '관리자 부서') || [];
-});
-
-const sortedEmployees = computed(() => {
-  const employees = selectedDepartment.value?.employees;
-  if (!employees) return [];
-
-  return [...employees].sort((a, b) => {
-    // 1. 팀장 우선 (직책이 '팀장'인 경우 최상단)
-    const aIsLeader = a.jobTitleName === '팀장';
-    const bIsLeader = b.jobTitleName === '팀장';
-    if (aIsLeader && !bIsLeader) return -1;
-    if (!aIsLeader && bIsLeader) return 1;
-
-    // 2. 직급 순서 (높은 직급이 위로)
-    const gradeOrder: Record<string, number> = {
-      '사장': 1, '부사장': 2, '전무': 3, '상무': 4, '이사': 5,
-      '부장': 6, '차장': 7, '과장': 8, '대리': 9, '주임': 10, '사원': 11, '인턴': 12
-    };
-    const aRank = gradeOrder[a.gradeName] || 99;
-    const bRank = gradeOrder[b.gradeName] || 99;
-    
-    if (aRank !== bRank) return aRank - bRank;
-
-    // 3. 입사일 순 (먼저 입사한 사람이 위로)
-    const aDate = a.hireDate || '9999-12-31';
-    const bDate = b.hireDate || '9999-12-31';
-    return aDate.localeCompare(bDate);
-  });
-});
+const { organizationChart, isLoading, error, deptHistoryList, gradeHistoryList } = storeToRefs(store);
 
 const selectedDepartment = ref<OrganizationNode | null>(null);
 const selectedEmployee = ref<OrganizationEmployeeDetail | null>(null);
 const centerListImageErrorIds = ref(new Set<number>());
 const selectedEmployeeImageError = ref(false);
+const showDeptModal = ref(false);
+const showGradeModal = ref(false);
+
+const filteredOrganizationChart = computed(() => {
+  return organizationChart.value?.filter(node => node.departmentName !== '관리자 부서') || [];
+});
+
+const departmentManager = computed(() => {
+  if (!selectedDepartment.value || !selectedDepartment.value.managerId) return null;
+  return selectedDepartment.value.employees?.find(emp => emp.employeeId === selectedDepartment.value!.managerId);
+});
 
 const loadData = () => {
   store.loadOrganizationChart();
@@ -193,6 +244,38 @@ const getProfileImageUrl = (path?: string) => {
 
 const onCenterListImageError = (id: number) => {
   centerListImageErrorIds.value.add(id);
+};
+
+const openDeptHistory = async () => {
+  if (!selectedEmployee.value) return;
+  try {
+    await store.loadDepartmentHistory(selectedEmployee.value.employeeId);
+    showDeptModal.value = true;
+  } catch (e) {
+    console.error(e);
+    alert('부서 이력을 불러오는데 실패했습니다.');
+  }
+};
+
+const openGradeHistory = async () => {
+  if (!selectedEmployee.value) return;
+  try {
+    await store.loadGradeHistory(selectedEmployee.value.employeeId);
+    showGradeModal.value = true;
+  } catch (e) {
+    console.error(e);
+    alert('직급 이력을 불러오는데 실패했습니다.');
+  }
+};
+
+const closeModals = () => {
+  showDeptModal.value = false;
+  showGradeModal.value = false;
+};
+
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleString();
 };
 
 onMounted(() => {
@@ -314,6 +397,81 @@ onMounted(() => {
   font-size: 15px;
   font-weight: 600;
   margin-bottom: 12px;
+}
+
+.department-info-card {
+  background-color: #f8fafc;
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.info-label {
+  font-size: 13px;
+  color: #64748b;
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.info-value {
+  font-size: 14px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.manager-profile {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.manager-profile:hover {
+  background-color: #e2e8f0;
+}
+
+.manager-img-wrapper {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 8px;
+}
+
+.manager-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-initial-small {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.manager-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
 }
 .sub-department-list, .employee-list-center {
   list-style: none;
@@ -461,5 +619,128 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 500;
   color: #334155;
+}
+
+.action-buttons {
+  margin-top: 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  background-color: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  width: 400px;
+  max-height: 600px; /* 고정된 최대 높이 */
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 0;
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto; /* 내용이 길어지면 스크롤 */
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-date {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.history-detail {
+  text-align: right;
+}
+
+.history-val {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.history-type {
+  font-size: 12px;
+  color: #3b82f6;
+}
+
+.no-history {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+  margin: 20px 0;
 }
 </style>

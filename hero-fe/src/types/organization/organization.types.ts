@@ -37,10 +37,49 @@ export interface OrganizationNode {
   departmentName: string;
   parentDepartmentId?: number | null;
   depth: number;
+  departmentPhone?: string; // 부서 전화번호
+  managerId?: number | null; // 부서장 ID
   
   // 하위 부서 목록
   children: OrganizationNode[];
   
   // 해당 부서에 소속된 직원 목록
   employees: OrganizationEmployeeDetail[];
+}
+
+/**
+ * 부서 변경 이력 DTO
+ * (Backend: EmployeeDepartmentHistoryDTO)
+ */
+export interface DepartmentHistoryResponse {
+  employeeHistoryId: number;
+  employeeId: number;
+  changedBy: number;
+  changedAt: string;
+  changeType: string;
+  departmentName: string;
+}
+
+/**
+ * 직급 변경 이력 DTO
+ * (Backend: EmployeeGradeHistoryDTO)
+ */
+export interface GradeHistoryResponse {
+  employeeHistoryId: number;
+  employeeId: number;
+  changedBy: number;
+  changedAt: string;
+  changeType: string;
+  gradeName: string;
+}
+
+/**
+ * API 공통 응답 포맷
+ * (Backend: CustomResponse<T>)
+ */
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  errorCode?: string;
+  message?: string;
 }
