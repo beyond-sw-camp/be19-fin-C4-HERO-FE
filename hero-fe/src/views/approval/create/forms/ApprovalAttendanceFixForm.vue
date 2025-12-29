@@ -157,21 +157,21 @@ const emit = defineEmits<{
 
 // 타입 정의
 export interface ModifyWorkRecordFormData {
-  workDate: string;
-  startTime: string;
-  endTime: string;
-  reason: string;
+  targetDate: string;    // 수정 대상 날짜 (YYYY-MM-DD)
+  correctedStart: string;     // 수정 출근 시간 (HH:mm)
+  correctedEnd: string;       // 수정 퇴근 시간 (HH:mm)
+  reason: string;        // 수정 사유
 }
 
 // 폼 데이터 (reactive로 관리)
 const formData = reactive<ModifyWorkRecordFormData>({
-  workDate: props.modelValue?.workDate || '',
-  startTime: props.modelValue?.startTime || '00:00',
-  endTime: props.modelValue?.endTime || '00:00',
+  targetDate: props.modelValue?.targetDate || '',
+  correctedStart: props.modelValue?.correctedStart || '00:00',
+  correctedEnd: props.modelValue?.correctedEnd || '00:00',
   reason: props.modelValue?.reason || ''
 });
 
-const workDate = ref(formData.workDate);
+const workDate = ref(formData.targetDate);
 const reason = ref(formData.reason);
 
 const parseTime = (timeStr: string) => {
@@ -183,8 +183,8 @@ const parseTime = (timeStr: string) => {
 const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
-const startTime = reactive(parseTime(formData.startTime));
-const endTime = reactive(parseTime(formData.endTime));
+const startTime = reactive(parseTime(formData.correctedStart));
+const endTime = reactive(parseTime(formData.correctedEnd));
 const activePicker = ref<string | null>(null);
 
 const openPicker = (type: string) => {
@@ -215,9 +215,9 @@ const endTimeString = computed(() => formatTime(endTime));
 watch(
   [workDate, startTimeString, endTimeString, reason],
   ([newWorkDate, newStartTime, newEndTime, newReason]) => {
-    formData.workDate = newWorkDate;
-    formData.startTime = newStartTime;
-    formData.endTime = newEndTime;
+    formData.targetDate = newWorkDate;
+    formData.correctedStart = newStartTime;
+    formData.correctedEnd = newEndTime;
     formData.reason = newReason;
     emit('update:modelValue', { ...formData });
   }

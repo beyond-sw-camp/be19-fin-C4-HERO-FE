@@ -45,7 +45,7 @@
               >
                 <div class="dropdown-value">
                   <span :class="selectedSchedule ? 'text-selected' : 'placeholder-text'">
-                    {{ selectedSchedule ? selectedSchedule.label : '선택하세요' }}
+                    {{ selectedSchedule ? selectedSchedule.workSystemTypeName : '선택하세요' }}
                   </span>
                 </div>
                 <img 
@@ -57,12 +57,12 @@
                 
                 <ul v-if="isDropdownOpen" class="dropdown-options">
                   <li 
-                    v-for="option in scheduleOptions" 
-                    :key="option.value" 
+                    v-for="option in workSystemTypes" 
+                    :key="option.workSystemTypeId" 
                     class="dropdown-item"
                     @click.stop="selectSchedule(option)"
                   >
-                    {{ option.label }}
+                    {{ option.workSystemTypeName }}
                   </li>
                 </ul>
               </div>
@@ -184,7 +184,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from 'vue';
+import { ref, reactive, watch, computed, onMounted } from 'vue';
+import { useApprovalDataStore } from '@/stores/approval/approval_data.store';
+import { storeToRefs } from 'pinia';
+import { WorkSystemTypeResponseDTO } from '@/types/approval/approval_data.types';
+
+const approvalDataStore = useApprovalDataStore();
+const { workSystemTypes } = storeToRefs(approvalDataStore);
+
+onMounted( async () => {
+  await approvalDataStore.fetchWorkSystemTypes();
+});
 
 // v-model을 위한 Props와 Emits
 const props = defineProps<{
@@ -197,19 +207,19 @@ const emit = defineEmits<{
 
 // 타입 정의
 export interface ChangeWorkFormData {
-  workSystemName: string;
-  applyDate: string;
-  workStartTime: string;
-  workEndTime: string;
-  reason: string;
+  workSystemTemplateName: string;  // 근무제 템플릿명
+  applyDate: string;               // 적용 날짜 (YYYY-MM-DD)
+  startTime: string;               // 시작 시간 (HH:mm)
+  endTime: string;                 // 종료 시간 (HH:mm)
+  reason: string;                  // 사유
 }
 
 // 폼 데이터 (reactive로 관리)
 const formData = reactive<ChangeWorkFormData>({
-  workSystemName: props.modelValue?.workSystemName || '',
+  workSystemTemplateName: props.modelValue?.workSystemTemplateName || '',
   applyDate: props.modelValue?.applyDate || '',
-  workStartTime: props.modelValue?.workStartTime || '09:00',
-  workEndTime: props.modelValue?.workEndTime || '18:00',
+  startTime: props.modelValue?.startTime || '00:00',
+  endTime: props.modelValue?.endTime || '00:00',
   reason: props.modelValue?.reason || ''
 });
 
@@ -218,21 +228,17 @@ const applyDate = ref(formData.applyDate);
 
 // 드롭다운
 const isDropdownOpen = ref(false);
-const selectedSchedule = ref<{ label: string, value: string } | null>(null);
+const selectedSchedule = ref<WorkSystemTypeResponseDTO>();
 
-const scheduleOptions = [
-  { value: 'flexible', label: '선택적 근무시간제' },
-  { value: 'shift', label: '교대 근무제' },
-  { value: 'remote', label: '재택 근무제' },
-];
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
 };
 
-const selectSchedule = (option: { label: string, value: string }) => {
+const selectSchedule = (option: WorkSystemTypeResponseDTO) => {
   selectedSchedule.value = option;
-  formData.workSystemName = option.value;
+  formData.workSystemTemplateName = option.workSystemTypeName;
+  emit('update:modelValue', { ...formData });
   isDropdownOpen.value = false;
 };
 
@@ -245,8 +251,8 @@ const parseTime = (timeStr: string) => {
 const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
 const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
-const startTime = reactive(parseTime(formData.workStartTime));
-const endTime = reactive(parseTime(formData.workEndTime));
+const startTime = reactive(parseTime(formData.startTime));
+const endTime = reactive(parseTime(formData.endTime));
 const activePicker = ref<string | null>(null);
 
 const openPicker = (type: string) => {
@@ -275,11 +281,12 @@ const endTimeString = computed(() => formatTime(endTime));
 
 // formData 변경 시 부모에게 자동 전달
 watch(
-  [() => formData.workSystemName, applyDate, startTimeString, endTimeString, reason],
+  [() => formData.workSystemTemplateName, applyDate, startTimeString, endTimeString, reason],
   ([newWorkSystemName, newApplyDate, newStartTime, newEndTime, newReason]) => {
+    formData.workSystemTemplateName = newWorkSystemName;
     formData.applyDate = newApplyDate;
-    formData.workStartTime = newStartTime;
-    formData.workEndTime = newEndTime;
+    formData.startTime = newStartTime;
+    formData.endTime = newEndTime;
     formData.reason = newReason;
     emit('update:modelValue', { ...formData });
   }

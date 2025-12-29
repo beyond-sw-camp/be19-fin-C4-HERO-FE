@@ -1,39 +1,62 @@
 /**
- * TypeScript Name   : approval.ts
- * Description : 결재(Approval) 도메인 라우트 설정
- *               - 결재 작성 화면
- *               - 결재 서식 목록 화면
- *               - 결재 문서함 화면
+ * <pre>
+ * Route Name      : approval_routes.ts
+ * Description     : 결재 관련 라우터 설정
+ *
+ * 라우트 목록:
+ * - /approval/inbox: 문서함 (탭별 조회)
+ * - /approval/documents/:docId: 문서 상세 조회
+ * - /approval/document-templates: 결재 서식 목록
+ * - /approval/create/:formName: 결재 작성
  *
  * History
- * 2025/12/10 - 민철 최초 작성
- * 2025/12/23 - 민철 파일명 변경
+ *   2025/12/26 - 민철 최초 작성
+ * </pre>
  *
  * @author 민철
- * @version 2.0
+ * @version 1.0
  */
-import type { RouteRecordRaw } from 'vue-router';
+
+import { RouteRecordRaw } from 'vue-router';
 
 const approvalRoutes: RouteRecordRaw[] = [
   {
-    path: '/approval/document-templates',
-    name: 'DocumentTemplates',
-    component: () => import('@/views/approval/templates/ApprovalTemplates.vue'),
-    meta: { title: 'Document Templates' },
-  },
-  {
     path: '/approval/inbox',
-    name: 'DocumentInbox',
+    name: 'ApprovalInbox',
     component: () => import('@/views/approval/inbox/ApprovalInbox.vue'),
-    meta: { title: 'Document Inbox' },
+    meta: {
+      requiresAuth: true,
+      title: '결재 문서함',
+    },
   },
   {
-    path: '/approval/create/:formName', 
+    path: '/approval/documents/:docId',
+    name: 'ApprovalDetail',
+    component: () => import('@/views/approval/detail/ApprovalDetail.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '결재 문서 조회',
+    },
+  },
+  {
+    path: '/approval/document-templates',
+    name: 'ApprovalTemplates',
+    component: () => import('@/views/approval/templates/ApprovalTemplates.vue'),
+    meta: {
+      requiresAuth: true,
+      title: '결재 서식 목록',
+    },
+  },
+  {
+    path: '/approval/create/:formName',
     name: 'ApprovalCreate',
     component: () => import('@/views/approval/create/ApprovalCreate.vue'),
-    props: true, 
-    meta: { title: 'Create Document' }
-  }
+    meta: {
+      requiresAuth: true,
+      title: '결재 작성',
+    },
+    props: true,
+  },
 ];
 
 export default approvalRoutes;

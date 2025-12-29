@@ -41,7 +41,7 @@
                   <span 
                     :class="selectedOption ? 'text-selected' : 'placeholder-text'"
                   >
-                    {{ selectedOption ? selectedOption.label : '선택하세요' }}
+                    {{ selectedOption ? selectedOption.vacationTypeName : '선택하세요' }}
                   </span>
                 </div>
                 <img 
@@ -53,12 +53,12 @@
 
                 <ul v-if="isOpen" class="dropdown-options">
                   <li 
-                    v-for="option in leaveOptions" 
-                    :key="option.value" 
+                    v-for="option in vacationTypes" 
+                    :key="option.vacationTypeId" 
                     class="dropdown-item"
                     @click.stop="selectOption(option)"
                   >
-                    {{ option.label }}
+                    {{ option.vacationTypeName }}
                   </li>
                 </ul>
               </div>
@@ -105,7 +105,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, watch, onMounted } from 'vue';
+import { useApprovalDataStore } from '@/stores/approval/approval_data.store';
+import { storeToRefs } from 'pinia';
+import { VacationTypeResponseDTO } from '@/types/approval/approval_data.types';
+
+const approvalDataStore = useApprovalDataStore();
+const { vacationTypes } = storeToRefs(approvalDataStore);
+
+onMounted( async () => {
+  await approvalDataStore.fetchVacationTypes();
+});
 
 // v-model을 위한 Props와 Emits
 const props = defineProps<{
@@ -118,10 +128,10 @@ const emit = defineEmits<{
 
 // 타입 정의
 export interface VacationFormData {
-  vacationType: string;
-  startDate: string;
-  endDate: string;
-  reason: string;
+  vacationType: string;  // 휴가 종류 (annual, half_am, half_pm, sick, public, special)
+  startDate: string;     // 시작일 (YYYY-MM-DD)
+  endDate: string;       // 종료일 (YYYY-MM-DD)
+  reason: string;        // 사유
 }
 
 // 폼 데이터 (reactive로 관리)
@@ -134,25 +144,17 @@ const formData = reactive<VacationFormData>({
 
 // 드롭다운 관련 (UI만)
 const isOpen = ref(false);
-const selectedOption = ref<{ label: string; value: string } | null>(null);
-
-const leaveOptions = [
-  { value: 'annual', label: '연차' },
-  { value: 'half_am', label: '오전 반차' },
-  { value: 'half_pm', label: '오후 반차' },
-  { value: 'sick', label: '병가' },
-  { value: 'public', label: '공가' },
-  { value: 'special', label: '경조사' },
-];
+const selectedOption = ref<VacationTypeResponseDTO>();
 
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value;
 };
 
 // 옵션 선택 시 formData 업데이트
-const selectOption = (option: { label: string; value: string }) => {
+const selectOption = (option: { vacationTypeId: number; vacationTypeName: string; }) => {
   selectedOption.value = option;
-  formData.vacationType = option.value;  // formData 업데이트
+  formData.vacationType = option.vacationTypeName;
+  emit('update:modelValue', { ...formData })  // formData 업데이트
   isOpen.value = false;
 };
 

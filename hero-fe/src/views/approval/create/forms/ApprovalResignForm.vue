@@ -96,20 +96,10 @@
             <div class="input-group col-quarter">
               <div class="group-label group-label-with-icon">
                 <img class="icon-label" src="/images/vacation.svg" alt="date" />
-                <span class="label-text">생년월일</span>
-              </div>
-              <div class="date-input-box">
-                <input type="date" v-model="birthDate" class="native-input" />
-              </div>
-            </div>
-
-            <div class="input-group col-quarter">
-              <div class="group-label group-label-with-icon">
-                <img class="icon-label" src="/images/vacation.svg" alt="date" />
                 <span class="label-text">입사일자</span>
               </div>
               <div class="date-input-box">
-                <input type="date" v-model="joinDate" class="native-input" />
+                <input type="date" v-model="hireDate" class="native-input" />
               </div>
             </div>
 
@@ -119,7 +109,7 @@
                 <span class="label-text">퇴사일자</span>
               </div>
               <div class="date-input-box">
-                <input type="date" v-model="resignationDate" class="native-input" />
+                <input type="date" v-model="terminationDate" class="native-input" />
               </div>
             </div>
 
@@ -134,7 +124,7 @@
               >
                 <div class="dropdown-value">
                   <span :class="selectedReason ? 'text-selected' : 'placeholder-text'">
-                    {{ selectedReason ? selectedReason.label : '선택하세요' }}
+                    {{ selectedReason ? selectedReason.resignTypeName : '선택하세요' }}
                   </span>
                 </div>
                 <img 
@@ -145,12 +135,12 @@
                 />
                 <ul v-if="isDropdownOpen" class="dropdown-options">
                   <li 
-                    v-for="option in reasonOptions" 
-                    :key="option.value" 
+                    v-for="option in resignTypes" 
+                    :key="option.resignTypeId" 
                     class="dropdown-item"
                     @click.stop="selectReason(option)"
                   >
-                    {{ option.label }}
+                    {{ option.resignTypeName }}
                   </li>
                 </ul>
               </div>
@@ -167,7 +157,7 @@
       </div>
       <div class="row-content reason-content">
         <textarea 
-          v-model="detailReason"
+          v-model="terminateReasonDetail"
           class="input-textarea"
           placeholder="퇴직사유에 대한 상세 내용을 입력해 주세요."
         ></textarea>
@@ -177,9 +167,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, watch, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/stores/auth';
+import { useApprovalDataStore } from '@/stores/approval/approval_data.store';
+import { ResignTypeResponseDTO } from '@/types/approval/approval_data.types';
+
+const approvalDataStore = useApprovalDataStore();
+const { resignTypes } = storeToRefs(approvalDataStore);
+
+onMounted( async () => {
+  await approvalDataStore.fetchResignTypes();
+});
+
+
 
 // v-model을 위한 Props와 Emits
 const props = defineProps<{
@@ -192,15 +193,14 @@ const emit = defineEmits<{
 
 // 타입 정의
 export interface ResignFormData {
-  employeeId: number;
-  departmentName: string;
-  gradeName: string;
-  employeeName: string;
-  birthDate: string;
-  joinDate: string;
-  resignationDate: string;
-  resignReason: string;
-  detailReason: string;
+  employeeName: string;      // 사원명
+  employeeNumber: number;         // 사원 ID
+  department: string;     // 부서명
+  grade: string;          // 직급명
+  hireDate: string;          // 입사일 (YYYY-MM-DD)
+  terminationDate: string;   // 퇴직일 (YYYY-MM-DD)
+  terminateReason: string;      // 퇴직 사유 (드롭다운)
+  terminateReasonDetail: string;      // 상세 사유
 }
 
 // Store 데이터 연결
@@ -209,59 +209,48 @@ const { user } = storeToRefs(userStore);
 
 // 폼 데이터 (reactive로 관리)
 const formData = reactive<ResignFormData>({
-  employeeId: props.modelValue?.employeeId ?? (user.value?.employeeId ? Number(user.value.employeeId) : 0),
-  departmentName: props.modelValue?.departmentName || user.value?.departmentName || '',
-  gradeName: props.modelValue?.gradeName || user.value?.gradeName || '',
   employeeName: props.modelValue?.employeeName || user.value?.employeeName || '',
-  birthDate: props.modelValue?.birthDate || '',
-  joinDate: props.modelValue?.joinDate || '',
-  resignationDate: props.modelValue?.resignationDate || '',
-  resignReason: props.modelValue?.resignReason || '',
-  detailReason: props.modelValue?.detailReason || ''
+  employeeNumber: props.modelValue?.employeeNumber ?? (user.value?.employeeId ? Number(user.value.employeeId) : 0),
+  department: props.modelValue?.department || user.value?.departmentName || '',
+  grade: props.modelValue?.grade || user.value?.gradeName || '',
+  hireDate: props.modelValue?.hireDate || '',
+  terminationDate: props.modelValue?.terminationDate || '',
+  terminateReason: props.modelValue?.terminateReason || '',
+  terminateReasonDetail: props.modelValue?.terminateReasonDetail || ''
 });
 
-const birthDate = ref(formData.birthDate);
-const joinDate = ref(formData.joinDate);
-const resignationDate = ref(formData.resignationDate);
-const detailReason = ref(formData.detailReason);
+const hireDate = ref(formData.hireDate);
+const terminationDate = ref(formData.terminationDate);
+const terminateReasonDetail = ref(formData.terminateReasonDetail);
 
 // 드롭다운 로직
 const isDropdownOpen = ref(false);
-const selectedReason = ref<{ label: string, value: string } | null>(null);
+const selectedReason = ref<ResignTypeResponseDTO | null>(null);
 
-const reasonOptions = [
-  { label: '개인 사정', value: 'personal' },
-  { label: '이직', value: 'job_change' },
-  { label: '계약 만료', value: 'contract_end' },
-  { label: '정년 퇴직', value: 'retirement' },
-  { label: '기타', value: 'etc' },
-];
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
 };
 
-const selectReason = (option: { label: string, value: string }) => {
+const selectReason = (option: ResignTypeResponseDTO) => {
   selectedReason.value = option;
-  formData.resignReason = option.value;
+  formData.terminateReason = option.resignTypeName;
   isDropdownOpen.value = false;
 };
 
 // formData 변경 시 부모에게 자동 전달
 watch(
-  [() => formData.resignReason, birthDate, joinDate, resignationDate, detailReason],
-  ([newResignReason, newBirthDate, newJoinDate, newResignationDate, newDetailReason]) => {
-    formData.birthDate = newBirthDate;
-    formData.joinDate = newJoinDate;
-    formData.resignationDate = newResignationDate;
-    formData.detailReason = newDetailReason;
-    
+  [() => formData.terminateReason, hireDate, terminationDate, terminateReasonDetail],
+  ([newResignReason, newJoinDate, newResignationDate, newDetailReason]) => {
+    formData.terminateReason = newResignReason;
+    formData.hireDate = newJoinDate;
+    formData.terminationDate = newResignationDate;
+    formData.terminateReasonDetail = newDetailReason;
     // Store 값도 항상 최신으로 유지
-    formData.employeeId = user.value?.employeeId ? Number(user.value.employeeId) : 0;
-    formData.departmentName = user.value?.departmentName || '';
-    formData.gradeName = user.value?.gradeName || '';
+    formData.employeeNumber = user.value?.employeeId ? Number(user.value.employeeId) : 0;
+    formData.department = user.value?.departmentName || '';
+    formData.grade = user.value?.gradeName || '';
     formData.employeeName = user.value?.employeeName || '';
-    
     emit('update:modelValue', { ...formData });
   }
 );
