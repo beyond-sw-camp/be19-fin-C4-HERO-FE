@@ -24,6 +24,7 @@ import ApprovalSettings from '@/views/settings/ApprovalSettings.vue';
 import NotificationSettings from '@/views/settings/notification/NotificationSettings.vue';
 import PayrollPolicy from '@/views/settings/payroll/PayrollPolicy.vue';
 import PayrollPolicyDetail from '@/views/settings/payroll/PayrollPolicyDetail.vue';
+import AttendancePolicy from '@/views/settings/AttendancePolicy.vue';
 
 
 const settingsRoutes: RouteRecordRaw[] = [
@@ -75,7 +76,12 @@ const settingsRoutes: RouteRecordRaw[] = [
         name: 'PayrollPolicySettingsDetail',
         component: PayrollPolicyDetail,
         props: true,
-      }
+      },
+      {
+        path: 'attendance-policy',
+        name: 'AttendancePolicySettings',
+        component: AttendancePolicy,
+      },
     ],
   }
 ];
