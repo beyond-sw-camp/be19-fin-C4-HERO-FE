@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@stomp/stompjs": "^7.2.1",
-    "@tanstack/vue-query": "^5.92.3",
+    "@tanstack/vue-query": "^5.92.4",
     "@toast-ui/editor": "^3.2.2",
     "axios": "^1.13.2",
     "chart.js": "^4.5.1",
