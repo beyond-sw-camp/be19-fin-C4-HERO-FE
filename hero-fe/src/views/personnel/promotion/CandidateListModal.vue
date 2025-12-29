@@ -1,19 +1,13 @@
-<!-- 
-  File Name   : CandidateListModal.vue
-  Description : 승진 계획 상세의 후보자 목록을 보여주는 모달
-  
-  History
-  2025/12/19 - [User] 최초 작성
--->
 <template>
-  <div v-if="open" class="modal-backdrop" @click.self="closeModal">
+  <div v-if="open" class="modal-overlay" @click.self="close">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 class="modal-title">승진 후보자 목록</h3>
-        <button @click="closeModal" class="close-btn">&times;</button>
+        <h3>승진 후보자 목록</h3>
+        <button class="close-btn" @click="close">×</button>
       </div>
+
       <div class="modal-body">
-        <div class="table-wrapper">
+        <div class="table-container">
           <table class="candidate-table">
             <thead>
               <tr>
@@ -23,23 +17,39 @@
                 <th>직급</th>
                 <th>추천인</th>
                 <th>추천 사유</th>
+                <th>상태</th>
+                <th>비고(반려사유)</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="candidate in candidates" :key="candidate.employeeId">
+              <tr v-for="candidate in candidates" :key="candidate.candidateId">
                 <td>{{ candidate.employeeNumber }}</td>
                 <td>{{ candidate.employeeName }}</td>
                 <td>{{ candidate.department }}</td>
                 <td>{{ candidate.grade }}</td>
                 <td>{{ candidate.nominatorName || '-' }}</td>
-                <td class="reason-cell">{{ candidate.nominationReason || '-' }}</td>
+                <td class="text-left" :title="candidate.nominationReason">
+                  {{ truncate(candidate.nominationReason) }}
+                </td>
+                <td>
+                  <span :class="['status-badge', getStatusClass(candidate.status)]">
+                    {{ getStatusText(candidate.status) }}
+                  </span>
+                </td>
+                <td class="text-left" :title="candidate.rejectionReason">
+                  {{ truncate(candidate.rejectionReason) || '-' }}
+                </td>
               </tr>
               <tr v-if="!candidates || candidates.length === 0">
-                <td colspan="6" class="no-data">등록된 후보자가 없습니다.</td>
+                <td colspan="8" class="no-data">등록된 후보자가 없습니다.</td>
               </tr>
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-confirm" @click="close">확인</button>
       </div>
     </div>
   </div>
@@ -48,27 +58,58 @@
 <script setup lang="ts">
 import type { PromotionCandidateDTO } from '@/types/personnel/promotion.types';
 
-interface Props {
+// Props 정의
+const props = defineProps<{
   open: boolean;
-  candidates: PromotionCandidateDTO[] | undefined;
-}
+  candidates?: PromotionCandidateDTO[];
+}>();
 
-defineProps<Props>();
+// Emits 정의
 const emit = defineEmits(['update:open']);
 
-const closeModal = () => {
+// 모달 닫기
+const close = () => {
   emit('update:open', false);
+};
+
+// 텍스트 말줄임 처리
+const truncate = (text?: string, length = 15) => {
+  if (!text) return '';
+  return text.length > length ? text.substring(0, length) + '...' : text;
+};
+
+// 상태 텍스트 매핑
+const getStatusText = (status?: string) => {
+  if (!status) return '-';
+  switch (status) {
+    case 'WAITING': return '대기';
+    case 'REVIEW_PASSED': return '승인';
+    case 'FINAL_APPROVED': return '최종 승인';
+    case 'REJECTED': return '반려';
+    default: return status;
+  }
+};
+
+// 상태별 CSS 클래스 매핑
+const getStatusClass = (status?: string) => {
+  switch (status) {
+    case 'WAITING': return 'status-pending';
+    case 'REVIEW_PASSED': return 'status-approved';
+    case 'FINAL_APPROVED': return 'status-approved';
+    case 'REJECTED': return 'status-rejected';
+    default: return '';
+  }
 };
 </script>
 
 <style scoped>
-.modal-backdrop {
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -78,71 +119,113 @@ const closeModal = () => {
 .modal-content {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  width: 90%;
-  max-width: 800px;
+  width: 1000px;
+  max-width: 95%;
+  max-height: 80vh;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
 }
 
 .modal-header {
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
+  padding: 16px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid #e2e8f0;
+  color: white;
 }
 
-.modal-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1c398e;
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: white;
 }
 
 .close-btn {
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 1.8rem;
   cursor: pointer;
-  color: #94a3b8;
+  color: white;
+  line-height: 1;
 }
 
 .modal-body {
   padding: 24px;
-  max-height: 60vh;
   overflow-y: auto;
+  flex: 1;
+}
+
+.table-container {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow-x: auto;
 }
 
 .candidate-table {
   width: 100%;
   border-collapse: collapse;
-  text-align: left;
-}
-
-.candidate-table th, .candidate-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid #e2e8f0;
-  font-size: 14px;
 }
 
 .candidate-table th {
-  background-color: #f8fafc;
+  background: #f8fafc;
+  padding: 12px;
   font-weight: 600;
   color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+  font-size: 14px;
 }
 
 .candidate-table td {
+  padding: 12px;
   color: #334155;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+  font-size: 14px;
 }
 
-.reason-cell {
-  white-space: pre-wrap;
-  word-break: keep-all;
+.text-left {
+  text-align: left !important;
 }
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-pending { background-color: #f1f5f9; color: #64748b; }
+.status-approved { background-color: #dcfce7; color: #166534; }
+.status-rejected { background-color: #fee2e2; color: #991b1b; }
 
 .no-data {
-  text-align: center;
-  padding: 40px;
+  padding: 40px !important;
   color: #94a3b8;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-confirm {
+  background: #1c398e;
+  color: white;
+  border: none;
+  padding: 10px 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-confirm:hover {
+  background: #162456;
 }
 </style>

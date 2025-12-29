@@ -44,8 +44,8 @@ export interface PromotionCandidateDTO {
     grade?: string,
     nominatorName?: string,
     nominationReason?: string,
-    isApproved?: boolean,
-    rejectionReason?: string
+    status?: string,
+    rejectionReason?: string, // 반려 사유 또는 승인 코멘트
     evaluationPoint?: number
 }
 
@@ -85,6 +85,15 @@ export interface PromotionNominationRequestDTO {
     nominationReason: string;
 }
 
+/**
+ * 승진 심사(승인/반려) 요청 DTO
+ */
+export interface PromotionReviewRequestDTO {
+    candidateId: number;
+    isPassed: boolean;
+    comment?: string;
+}
+
 // --- Response DTOs (응답 데이터) ---
 /**
  * 설정할 수 있는 부서, 직급을 알기 위한 옵션 조회용 DTO
@@ -116,4 +125,31 @@ export interface PromotionPlanDetailResponseDTO {
     appointmentAt?: string,
     detailPlan?: PromotionDetailPlanDTO[],
     planContent?: string
+}
+
+/**
+ * 심사용 승진 상세 계획 DTO (승인 현황 포함)
+ */
+export interface PromotionDetailForReviewResponseDTO {
+    promotionDetailId: number;
+    departmentId: number;
+    department: string;
+    gradeId: number;
+    grade: string;
+    quotaCount: number;
+    approvedCount: number;
+    candidateList: PromotionCandidateDTO[];
+}
+
+/**
+ * 심사용 승진 계획 상세 조회 응답 DTO
+ */
+export interface PromotionPlanForReviewResponseDTO {
+    promotionId: number;
+    planName: string;
+    createdAt: string;
+    nominationDeadlineAt: string;
+    appointmentAt: string;
+    planContent: string;
+    detailPlan: PromotionDetailForReviewResponseDTO[];
 }

@@ -218,8 +218,9 @@ onMounted(() => {
 }
 
 .content {
-  padding: 20px 20px 0;
+  padding: 0;
   flex: 1;
+  overflow: auto;
 }
 
 .promotion-table {

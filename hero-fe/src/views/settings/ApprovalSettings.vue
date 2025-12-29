@@ -252,11 +252,16 @@ const addStep = () => {
 };
 
 const removeStep = (index: number) => {
+  console.log('🗑️ removeStep 호출:', index);
+  console.log('  - 삭제 전:', JSON.parse(JSON.stringify(lines.value)));
+  
   lines.value.splice(index, 1);
 
   lines.value.forEach((line, i) => {
-    line.seq = i;
+    line.seq = i + 1;
   });
+
+  console.log('  - 삭제 후:', JSON.parse(JSON.stringify(lines.value)));
 };
 
 const addReference = () => {
@@ -276,15 +281,23 @@ const onTypeChange = (item: any) => {
 };
 
 const handleSave = () => {
+  // ✅ seq 검증
+  const hasInvalidSeq = lines.value.some(line => line.seq < 1);
+  if (hasInvalidSeq) {
+    alert('❌ 잘못된 seq 값이 있습니다. 다시 설정해주세요.');
+    return;
+  }
 
   const data = ref<SettingsApprovalRequestDTO>({
     lines: lines.value,
     references: references.value
   });
 
-  const message = templateStore.setDefaultSettings(selectedDoc.value.templateId, data.value);
+  const message = templateStore.setDefaultSettings(
+    selectedDoc.value.templateId, 
+    data.value
+  );
   
-  console.log('저장', data.value);
   alert(`${selectedDoc.value.templateName} ${message}`);
 };
 </script>

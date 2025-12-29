@@ -1,9 +1,5 @@
 <template>
-  <div>
-    <div class="page-header">
-      <h2 class="page-title">사원 권한 관리</h2>
-    </div>
-    
+  <div class="page-content">
     <!-- 검색 -->
     <div class="search-container">
       <input v-model="searchQuery" @keyup.enter="fetchData" type="text" placeholder="사원명 검색" class="search-input" />
@@ -263,6 +259,8 @@ onMounted(async () => {
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
+  padding: 24px 24px 0;
+  justify-content: flex-end;
 }
 
 .search-input {
@@ -284,14 +282,23 @@ onMounted(async () => {
   font-weight: 600;
 }
 
+.page-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .data-table tbody tr:last-child td {
   border-bottom: none;
 }
 
 .table-container {
   overflow-x: auto;
+  overflow-y: auto;
+  height: calc(100vh - 300px);
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
   margin-bottom: 20px;
 }
 
@@ -308,6 +315,9 @@ onMounted(async () => {
 }
 
 .data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
   font-weight: 600;

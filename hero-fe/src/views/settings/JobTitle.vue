@@ -1,7 +1,6 @@
 <template>
-  <div>
+  <div class="page-content">
     <div class="page-header">
-      <h2 class="page-title">직책 관리</h2>
       <button @click="saveJobTitles" class="btn-save">
         저장
       </button>
@@ -98,8 +97,9 @@ const saveJobTitles = async () => {
 <style scoped>
 .page-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
+  padding: 24px 24px 0;
   margin-bottom: 20px;
 }
 
@@ -123,11 +123,22 @@ const saveJobTitles = async () => {
   background-color: #162456;
 }
 
+.page-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .table-container {
   overflow-x: auto;
-  /* overflow-y: auto; */
+  overflow-y: auto;
+  height: calc(100vh - 300px);
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  background: white;
   margin-bottom: 20px;
 }
 
@@ -178,6 +189,8 @@ const saveJobTitles = async () => {
 
 .btn-add {
   width: 100%;
+  width: calc(100% - 48px);
+  margin: 0 24px 24px;
   padding: 12px;
   border: 2px dashed #e2e8f0;
   color: #64748b;

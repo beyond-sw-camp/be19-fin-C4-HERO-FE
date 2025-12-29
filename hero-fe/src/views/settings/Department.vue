@@ -1,7 +1,6 @@
 <template>
-  <div>
+  <div class="page-content">
     <div class="page-header">
-      <h2 class="page-title">부서 관리</h2>
       <button @click="saveDepartments" class="btn-save">
         변경사항 저장
       </button>
@@ -342,9 +341,19 @@ onMounted(async () => {
 <style scoped>
 .page-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.page-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  padding: 24px;
+  overflow: hidden;
 }
 
 .page-title {
@@ -382,8 +391,7 @@ onMounted(async () => {
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 20px;
-  min-height: 400px;
-  max-height: 600px;
+  height: calc(100vh - 300px);
   overflow-y: auto;
 }
 

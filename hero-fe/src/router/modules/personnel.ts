@@ -60,7 +60,15 @@ const personnelRoutes: RouteRecordRaw[] = [
         meta: {
           title: '승진 추천',
         }
-      }
+      },
+      {
+        path: 'review',
+        name: 'promotionReview',
+        component: () => import('@/views/personnel/review/Review.vue'),
+        meta: {
+          title: '승진 심사',
+        }
+      },
     ],
   }
 ];

@@ -38,11 +38,15 @@ export const usePromotionRecommendStore = defineStore('promotion-recommend', () 
                 console.log('Store: 추천 계획 목록 수신:', response.data.data);
                 recommendPlans.value = response.data.data;
             } else {
-                console.error('추천 가능 계획 조회 API 실패:', response.data.error);
+                console.error(`추천 가능 계획 조회 API 실패 [${(response.data as any).errorCode}]: ${response.data.message}`);
                 recommendPlans.value = [];
             }
-        } catch (error) {
-            console.error('추천 가능 계획 조회 실패:', error);
+        } catch (error: any) {
+            if (error.response && error.response.data) {
+                console.error(`추천 가능 계획 조회 실패 [${error.response.data.errorCode}]: ${error.response.data.message}`);
+            } else {
+                console.error('추천 가능 계획 조회 실패:', error);
+            }
             recommendPlans.value = [];
         } finally {
             loading.value = false;
@@ -57,11 +61,15 @@ export const usePromotionRecommendStore = defineStore('promotion-recommend', () 
                 console.log('Store: 상세 조회 데이터 수신:', response.data.data);
                 recommendPlanDetail.value = response.data.data;
             } else {
-                console.error('추천 상세 조회 API 실패:', response.data.error);
+                console.error(`추천 상세 조회 API 실패 [${(response.data as any).errorCode}]: ${response.data.message}`);
                 recommendPlanDetail.value = null;
             }
-        } catch (error) {
-            console.error('추천 상세 조회 실패:', error);
+        } catch (error: any) {
+            if (error.response && error.response.data) {
+                console.error(`추천 상세 조회 실패 [${error.response.data.errorCode}]: ${error.response.data.message}`);
+            } else {
+                console.error('추천 상세 조회 실패:', error);
+            }
             recommendPlanDetail.value = null;
         } finally {
             loading.value = false;
@@ -72,9 +80,16 @@ export const usePromotionRecommendStore = defineStore('promotion-recommend', () 
         loading.value = true;
         try {
             const response = await nominateCandidate(data);
+            if (!response.data.success) {
+                console.error(`후보자 추천 API 실패 [${(response.data as any).errorCode}]: ${response.data.message}`);
+            }
             return response.data.success;
-        } catch (error) {
-            console.error('후보자 추천 실패:', error);
+        } catch (error: any) {
+            if (error.response && error.response.data) {
+                console.error(`후보자 추천 실패 [${error.response.data.errorCode}]: ${error.response.data.message}`);
+            } else {
+                console.error('후보자 추천 실패:', error);
+            }
             return false;
         } finally {
             loading.value = false;
@@ -85,9 +100,16 @@ export const usePromotionRecommendStore = defineStore('promotion-recommend', () 
         loading.value = true;
         try {
             const response = await cancelNomination(candidateId);
+            if (!response.data.success) {
+                console.error(`추천 취소 API 실패 [${(response.data as any).errorCode}]: ${response.data.message}`);
+            }
             return response.data.success;
-        } catch (error) {
-            console.error('추천 취소 실패:', error);
+        } catch (error: any) {
+            if (error.response && error.response.data) {
+                console.error(`추천 취소 실패 [${error.response.data.errorCode}]: ${error.response.data.message}`);
+            } else {
+                console.error('추천 취소 실패:', error);
+            }
             return false;
         } finally {
             loading.value = false;

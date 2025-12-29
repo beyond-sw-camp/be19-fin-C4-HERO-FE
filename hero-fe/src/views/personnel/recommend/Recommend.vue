@@ -246,8 +246,13 @@ const handleSelectPlan = async (plan: PromotionPlanResponseDTO) => {
 
 // Step 2 -> Step 3
 const handleSelectDetail = (detail: any) => {
-  console.log('View: 선택된 상세 그룹:', detail);
-  console.log('View: 후보자 데이터 예시:', detail.candidateList?.[0]);
+  console.group('상세 그룹 및 후보자 데이터 확인');
+  console.log('선택된 상세 그룹:', detail);
+  if (detail.candidateList && detail.candidateList.length > 0) {
+    console.log('첫 번째 후보자 데이터:', detail.candidateList[0]);
+    console.log('첫 번째 후보자의 추천 사유(nominationReason):', detail.candidateList[0].nominationReason);
+  }
+  console.groupEnd();
   selectedDetail.value = detail;
   step.value = 3;
 };
@@ -710,16 +715,23 @@ onMounted(() => {
 .stat-row {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   font-size: 13px;
+  gap: 8px;
 }
 
 .stat-row .label {
   color: #94a3b8;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .stat-row .val {
   color: #475569;
   font-weight: 500;
+  text-align: right;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .member-action button {

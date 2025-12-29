@@ -43,6 +43,7 @@ const tabs = [
   { id: 'permission', label: '권한 관리', path: '/settings/permission' },
   { id: 'approval', label: '결재 관리', path: '/settings/approval' },
   { id: 'notification', label: '알림 관리', path: '/settings/notification' },
+  { id: 'payrollPolicy', label: '급여 설정', path: '/settings/payroll-policy' },
 ];
 
 const changeTab = (tab: any) => {
@@ -139,8 +140,11 @@ onMounted(() => {
 }
 
 .content-container {
+  padding: 0;
   flex: 1;
-  height: auto;
+  min-height: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 </style>

@@ -9,7 +9,7 @@ import { useAuthStore } from './stores/auth';
 async function initializeApp() {
     const app = createApp(App);
     const pinia = createPinia();
-    
+
     app.use(pinia);
 
     // Pinia가 설치된 후 auth 스토어를 초기화합니다.

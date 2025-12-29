@@ -23,10 +23,12 @@ import type {
     //request
     PromotionPlanRequestDTO,
     PromotionNominationRequestDTO,
+    PromotionReviewRequestDTO,
     //response
     PromotionOptionsDTO,
     PromotionPlanResponseDTO,
-    PromotionPlanDetailResponseDTO
+    PromotionPlanDetailResponseDTO,
+    PromotionPlanForReviewResponseDTO
 } from '@/types/personnel/promotion.types';
 
 // API 공통 응답 타입 정의
@@ -34,6 +36,7 @@ export interface ApiResponse<T> {
     success: boolean;
     data: T;
     error?: any;
+    message?: string;
 }
 
 // 페이징 응답 타입 정의
@@ -109,4 +112,35 @@ export const nominateCandidate = (data: PromotionNominationRequestDTO) => {
  */
 export const cancelNomination = (candidateId: number) => {
     return client.delete<ApiResponse<void>>(`/promotion/nominations/${candidateId}`);
+}
+
+/**
+ * (인사팀용) 심사 가능한 승진 계획 목록 조회
+ */
+export const fetchPromotionPlansForReview = () => {
+    return client.get<ApiResponse<PromotionPlanResponseDTO[]>>('/promotion/reviews');
+}
+
+/**
+ * (인사팀용) 심사용 승진 계획 상세 조회
+ * @param promotionId 
+ */
+export const fetchReviewPromotionDetail = (promotionId: number) => {
+    return client.get<ApiResponse<PromotionPlanForReviewResponseDTO>>(`/promotion/review/${promotionId}`);
+}
+
+/**
+ * 승진 후보자 심사 (승인/반려)
+ * @param data 
+ */
+export const reviewCandidate = (data: PromotionReviewRequestDTO) => {
+    return client.post<ApiResponse<void>>('/promotion/review', data);
+}
+
+/**
+ * 최종 승인 처리
+ * @param data 
+ */
+export const confirmFinalApproval = (data: PromotionReviewRequestDTO) => {
+    return client.post<ApiResponse<void>>('/promotion/review/final', data);
 }

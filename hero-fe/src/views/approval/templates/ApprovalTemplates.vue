@@ -46,7 +46,7 @@
           <div class="formtpl-list">
             <button 
               v-for="form in bookmarkedForms" 
-              :key="'bm-' + form.id"
+              :key="'bm-' + form.templateId"
               class="formtpl-card is-favorite"
               @click="handleCardClick(form)"
             >
@@ -55,11 +55,11 @@
                   <img :src="getCategoryIcon(form.category)" :alt="form.category">
                 </div>
                 <div>
-                  <div class="formtpl-name">{{ form.title }}</div>
+                  <div class="formtpl-name">{{ form.templateName }}</div>
                   <div class="formtpl-category">{{ form.category }}</div>
                 </div>
               </div>
-              <div class="formtpl-action" @click.stop="toggleBookmark(form.id)">
+              <div class="formtpl-action" @click.stop="toggleBookmark(form.templateId)">
                 ★
               </div>
             </button>
@@ -79,7 +79,7 @@
           <div class="formtpl-list">
             <button 
               v-for="form in forms" 
-              :key="form.id"
+              :key="form.templateId"
               class="formtpl-card"
               :class="{ 'is-favorite': form.bookmarking }"
               @click="handleCardClick(form)"
@@ -89,11 +89,11 @@
                   <img :src="getCategoryIcon(form.category)" :alt="form.category">
                 </div>
                 <div>
-                  <div class="formtpl-name">{{ form.title }}</div>
+                  <div class="formtpl-name">{{ form.templateName }}</div>
                   <div class="formtpl-category">{{ form.category }}</div>
                 </div>
               </div>
-              <div class="formtpl-action" @click.stop="toggleBookmark(form.id)">
+              <div class="formtpl-action" @click.stop="toggleBookmark(form.templateId)">
                 {{ form.bookmarking ? '★' : '☆' }}
               </div>
             </button>
@@ -108,66 +108,39 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useTemplateStore } from '@/stores/approval/approval.store';
-import apiClient from '@/api/apiClient';
+import { storeToRefs } from 'pinia';
+import { useAuthStore } from '@/stores/auth';
+import { useApprovalTemplateStore } from '@/stores/approval/approval.store';
+import { ApprovalTemplateResponseDTO } from '@/types/approval/template.types';
 
-// ✅ 프론트엔드 템플릿 사용을 위해 title로 통일
-interface FormItem {
-  id: number;
-  title: string;       // 백엔드 DTO의 name을 여기에 매핑
-  templateKey: string;
-  category: string;
-  description: string;
-  bookmarking: boolean;
-}
 
 const router = useRouter();
-const approvalStore = useTemplateStore();
+const templateStore = useApprovalTemplateStore();
+const authStore = useAuthStore();
+
+const { templates, isBookmarked } = storeToRefs(templateStore);
 
 const searchKeyword = ref<string>('');
-const rawForms = ref<FormItem[]>([]);
 
-// ✅ API 호출 및 데이터 매핑
-const fetchTemplates = async () => {
-  try {
-    const response = await apiClient.get('/approval/templates');
-    
-    rawForms.value = response.data.map((item: any) => ({
-      id: item.id,
-      title: item.name,           // 백엔드 'name' -> 프론트 'title'
-      templateKey: item.templateKey,
-      category: item.category,
-      description: item.description,
-      bookmarking: item.bookmarking 
-    }));
-  } catch (error) {
-    console.error('서식 목록 조회 실패:', error);
-  }
-};
+  
+  onMounted(() => {
+    templateStore.fetchTemplates();
+  });
+  
+// const template = templates;
 
-// ✅ 즐겨찾기 토글 (API 연동)
-const toggleBookmark = async (id: number) => {
-  try {
-    // 1. 백엔드 요청
-    await apiClient.post(`/approval/templates/${id}/bookmark`);
+const toggleBookmark = async (templateId: number) => {
 
-    // 2. 성공 시 로컬 상태 업데이트
-    const target = rawForms.value.find(f => f.id === id);
-    if (target) {
+  templateStore.toggleBookmark(templateId);
+
+  const target = rawForms.value.find(f => f.templateId === templateId);
+  if (target) {
       target.bookmarking = !target.bookmarking;
-    }
-  } catch (error) {
-    console.error('즐겨찾기 변경 실패:', error);
-    alert('즐겨찾기 처리에 실패했습니다.');
   }
 };
 
-// ✅ 컴포넌트 마운트 시 데이터 조회
-onMounted(() => {
-  fetchTemplates();
-});
+const rawForms = templates;
 
-// ✅ 검색 필터링
 const filteredList = computed(() => {
   const keyword = searchKeyword.value.trim();
   if (!keyword) return rawForms.value;
@@ -175,18 +148,16 @@ const filteredList = computed(() => {
   return rawForms.value.filter(item => 
     item.templateKey.includes(keyword) || 
     item.category.includes(keyword) ||
-    item.title.includes(keyword) // title로 검색
+    item.templateName.includes(keyword)
   );
 });
 
-// ✅ 즐겨찾기 목록
 const bookmarkedForms = computed(() => {
   return filteredList.value.filter(item => item.bookmarking);
 });
 
-// ✅ 카테고리 그룹화
 const groupedForms = computed(() => {
-  const groups: Record<string, FormItem[]> = {};
+  const groups: Record<string, ApprovalTemplateResponseDTO[]> = {};
   filteredList.value.forEach(item => {
     if (!groups[item.category]) {
       groups[item.category] = [];
@@ -196,7 +167,6 @@ const groupedForms = computed(() => {
   return groups;
 });
 
-// ✅ 아이콘 매핑
 const getCategoryIcon = (category: string): string => {
   switch (category) {
     case '인사': return '/images/personnel.svg';
@@ -207,20 +177,21 @@ const getCategoryIcon = (category: string): string => {
   }
 };
 
-// ✅ 카드 클릭 핸들러
-const handleCardClick = (form: FormItem) => {
-  console.log('선택된 양식:', form.templateKey);
-  approvalStore.setCurrentForm({
-    title: form.title, 
-    category: form.category
-  });
-  router.push({
+const handleCardClick = async (form: ApprovalTemplateResponseDTO) => {
+  console.log('선택된 양식:', form.templateKey, form.templateId);
+  
+  await router.push({
     name: 'ApprovalCreate',
-    params: { formName: form.templateKey }
+    params: { 
+      formName: form.templateKey,
+    },
+    query: {
+      templateId: form.templateId
+    }
   });
 };
 </script>
 
 <style scoped>
-@import "@/assets/styles/templateList.css";
+@import "@/assets/styles/approval/templateList.css";
 </style>
