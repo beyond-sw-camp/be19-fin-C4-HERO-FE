@@ -24,6 +24,24 @@ const authRoutes: RouteRecordRaw[] = [
       hiddenLayout: true,
     },
   },
+  {
+    path: '/find-password',
+    name: 'FindPassword',
+    component: () => import('@/views/auth/FindPassword.vue'),
+    meta: {
+      title: '비밀번호 찾기',
+      hiddenLayout: true,
+    },
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: () => import('@/views/auth/ResetPassword.vue'),
+    meta: {
+      title: '비밀번호 재설정',
+      hiddenLayout: true,
+    },
+  },
 ];
 
 export default authRoutes;
