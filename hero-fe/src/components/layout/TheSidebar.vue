@@ -14,10 +14,11 @@
   2025/12/15 - 승건 설정 부분 추가, 라우팅 부분 하나의 if문으로 변경
   2025/12/16 - 민철 사이드바 스타일 높이 수정
   2025/12/16 - 동근 사이드바 관련 버그 수정(새로고침 시 active 상태 유지 & 접고 펼칠 때 active 상태 유지)
+  2025/12/27 - 동근 급여 관리 정책&설정 메뉴 제거(설정쪽으로 이동) / 급여 이력 삭제, 사원 급여 조회 네이밍 변경
   </pre>
  
   @author 승건
-  @version 2.0
+  @version 2.1
  -->
 <template>
   <div :class="['sidebar-container', { collapsed: isCollapsed }]">
@@ -247,12 +248,7 @@
         <div class="sub-menu-item"
         :class="{ active: activeSubMenu === 'payrollSearch' }"
         @click="handleSubMenuClick('payrollSearch')">
-        <div class="sub-menu-text">사원 급여 조회</div>
-      </div>
-
-        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'payrollPaymentHistory' }"
-        @click="handleSubMenuClick('payrollPaymentHistory')">
-        <div class="sub-menu-text">지급 이력</div>
+        <div class="sub-menu-text">급여 조회</div>
       </div>
 
         <div class="sub-menu-item" :class="{ active: activeSubMenu === 'payrollItems' }"
@@ -264,12 +260,6 @@
         :class="{ active: activeSubMenu === 'payrollReport' }"
         @click="handleSubMenuClick('payrollReport')">
         <div class="sub-menu-text">급여 보고서</div>
-      </div>
-
-        <div class="sub-menu-item"
-        :class="{ active: activeSubMenu === 'payrollPolicy' }"
-        @click="handleSubMenuClick('payrollPolicy')">
-        <div class="sub-menu-text">급여 정책/설정 관리</div>
       </div>
     </div>
 
@@ -517,9 +507,7 @@ const handleSubMenuClick = (key: string) => {
     router.push('/payroll/admin/items');           // 급여 항목 관리
   } else if (key === 'payrollReport') {
     router.push('/payroll/admin/report');          // 급여 보고서
-  } else if (key === 'payrollPolicy') {
-    router.push('/payroll/admin/policy');          // 급여 정책/설정 관리
-  }
+  } 
 
   // 휴가/연차
   else if (key === 'vacationHistory') {

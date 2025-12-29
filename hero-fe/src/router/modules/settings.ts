@@ -7,10 +7,11 @@
   2025/12/15 - (승건) 최초 작성
   2025/12/18 - (민철) 결재 관리 설정 화면 컴포넌트 생성 
   2025/12/23 - (혜원) 알림 관리 설정 화면 컴포넌트 생성
+  2025/12/26 - (동근) 급여 관리 설정 화면 컴포넌트 생성
   </pre>
 
   @author 이승건
-  @version 1.1
+  @version 1.3
 */
 
 import type { RouteRecordRaw } from 'vue-router';
@@ -21,6 +22,9 @@ import JobTitle from '@/views/settings/JobTitle.vue';
 import Permission from '@/views/settings/Permission.vue';
 import ApprovalSettings from '@/views/settings/ApprovalSettings.vue';
 import NotificationSettings from '@/views/settings/notification/NotificationSettings.vue';
+import PayrollPolicy from '@/views/settings/payroll/PayrollPolicy.vue';
+import PayrollPolicyDetail from '@/views/settings/payroll/PayrollPolicyDetail.vue';
+
 
 const settingsRoutes: RouteRecordRaw[] = [
   {
@@ -60,6 +64,17 @@ const settingsRoutes: RouteRecordRaw[] = [
         path: 'notification',
         name: 'NotificationSettings',
         component: NotificationSettings,
+      },
+      {
+        path: 'payroll-policy',
+        name: 'PayrollPolicySettings',
+        component: PayrollPolicy,
+      },
+      {
+        path: 'payroll-policy/:policyId',
+        name: 'PayrollPolicySettingsDetail',
+        component: PayrollPolicyDetail,
+        props: true,
       }
     ],
   }
