@@ -4,11 +4,11 @@
       <h1 class="title">조직도</h1>
     </div>
 
-    <div v-if="isLoading" class="loading-state">
+    <div v-if="isChartLoading" class="loading-state">
       <p>조직도 정보를 불러오는 중입니다...</p>
     </div>
-    <div v-else-if="error" class="error-state">
-      <p>{{ error }}</p>
+    <div v-else-if="chartError" class="error-state">
+      <p>{{ chartError }}</p>
       <button @click="loadData" class="retry-btn">다시 시도</button>
     </div>
 
@@ -141,7 +141,14 @@
           <button class="close-modal-btn" @click="closeModals">×</button>
         </div>
         <div class="modal-body">
-          <ul v-if="gradeHistoryList.length > 0" class="history-list">
+          <div v-if="isHistoryLoading" class="loading-state" style="height: 200px;">
+            <p>이력을 불러오는 중입니다...</p>
+          </div>
+          <div v-else-if="historyError" class="error-state" style="height: 200px;">
+            <p>{{ historyError }}</p>
+            <button @click="openGradeHistory" class="retry-btn">다시 시도</button>
+          </div>
+          <ul v-else-if="gradeHistoryList.length > 0" class="history-list">
             <li v-for="item in gradeHistoryList" :key="item.employeeHistoryId" class="history-item">
               <span class="history-date">{{ formatDate(item.changedAt) }}</span>
               <div class="history-detail">
@@ -163,7 +170,14 @@
           <button class="close-modal-btn" @click="closeModals">×</button>
         </div>
         <div class="modal-body">
-          <ul v-if="deptHistoryList.length > 0" class="history-list">
+          <div v-if="isHistoryLoading" class="loading-state" style="height: 200px;">
+            <p>이력을 불러오는 중입니다...</p>
+          </div>
+          <div v-else-if="historyError" class="error-state" style="height: 200px;">
+            <p>{{ historyError }}</p>
+            <button @click="openDeptHistory" class="retry-btn">다시 시도</button>
+          </div>
+          <ul v-else-if="deptHistoryList.length > 0" class="history-list">
             <li v-for="item in deptHistoryList" :key="item.employeeHistoryId" class="history-item">
               <span class="history-date">{{ formatDate(item.changedAt) }}</span>
               <div class="history-detail">
@@ -187,7 +201,7 @@ import type { OrganizationNode, OrganizationEmployeeDetail } from '@/types/organ
 import OrganizationTreeNode from './OrganizationTreeNode.vue';
 
 const store = useOrganizationStore();
-const { organizationChart, isLoading, error, deptHistoryList, gradeHistoryList } = storeToRefs(store);
+const { organizationChart, isChartLoading, isHistoryLoading, chartError, historyError, deptHistoryList, gradeHistoryList } = storeToRefs(store);
 
 const selectedDepartment = ref<OrganizationNode | null>(null);
 const selectedEmployee = ref<OrganizationEmployeeDetail | null>(null);
@@ -248,24 +262,14 @@ const onCenterListImageError = (id: number) => {
 
 const openDeptHistory = async () => {
   if (!selectedEmployee.value) return;
-  try {
-    await store.loadDepartmentHistory(selectedEmployee.value.employeeId);
-    showDeptModal.value = true;
-  } catch (e) {
-    console.error(e);
-    alert('부서 이력을 불러오는데 실패했습니다.');
-  }
+  showDeptModal.value = true; // 모달을 먼저 열어서 로딩 상태를 보여줌
+  await store.loadDepartmentHistory(selectedEmployee.value.employeeId);
 };
 
 const openGradeHistory = async () => {
   if (!selectedEmployee.value) return;
-  try {
-    await store.loadGradeHistory(selectedEmployee.value.employeeId);
-    showGradeModal.value = true;
-  } catch (e) {
-    console.error(e);
-    alert('직급 이력을 불러오는데 실패했습니다.');
-  }
+  showGradeModal.value = true; // 모달을 먼저 열어서 로딩 상태를 보여줌
+  await store.loadGradeHistory(selectedEmployee.value.employeeId);
 };
 
 const closeModals = () => {

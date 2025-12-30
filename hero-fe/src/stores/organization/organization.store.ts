@@ -8,36 +8,37 @@ export const useOrganizationStore = defineStore('organization', () => {
   const organizationChart = ref<OrganizationNode[]>([]);
   const deptHistoryList = ref<DepartmentHistoryResponse[]>([]);
   const gradeHistoryList = ref<GradeHistoryResponse[]>([]);
-  const isLoading = ref(false);
-  const error = ref<string | null>(null);
+  const isChartLoading = ref(false);
+  const isHistoryLoading = ref(false);
+  const chartError = ref<string | null>(null);
+  const historyError = ref<string | null>(null);
 
   // Actions
   const loadOrganizationChart = async () => {
-    isLoading.value = true;
-    error.value = null;
+    isChartLoading.value = true;
+    chartError.value = null;
     try {
       const response = await fetchOrganizationChart();
-      // API 응답 구조 대응 (CustomResponse.data 또는 직접 배열)
-      const data: any = response.data;
+      const data = response.data;
       if (data.success && data.data) {
         organizationChart.value = data.data;
-      } else if (Array.isArray(data)) {
-        organizationChart.value = data;
       } else {
         organizationChart.value = [];
       }
     } catch (err) {
-      error.value = '조직도 정보를 불러오는데 실패했습니다.';
+      chartError.value = '조직도 정보를 불러오는데 실패했습니다.';
       console.error(err);
     } finally {
-      isLoading.value = false;
+      isChartLoading.value = false;
     }
   };
 
   const loadDepartmentHistory = async (employeeId: number) => {
+    isHistoryLoading.value = true;
+    historyError.value = null;
     try {
       const response = await fetchDepartmentHistory(employeeId);
-      const data = response.data as ApiResponse<DepartmentHistoryResponse[]>;
+      const data = response.data;
       
       if (data.success && data.data) {
         deptHistoryList.value = data.data;
@@ -45,15 +46,19 @@ export const useOrganizationStore = defineStore('organization', () => {
         deptHistoryList.value = [];
       }
     } catch (err) {
+      historyError.value = '부서 이동 이력을 불러오는데 실패했습니다.';
       console.error(err);
-      throw err;
+    } finally {
+      isHistoryLoading.value = false;
     }
   };
 
   const loadGradeHistory = async (employeeId: number) => {
+    isHistoryLoading.value = true;
+    historyError.value = null;
     try {
       const response = await fetchGradeHistory(employeeId);
-      const data = response.data as ApiResponse<GradeHistoryResponse[]>;
+      const data = response.data;
 
       if (data.success && data.data) {
         gradeHistoryList.value = data.data;
@@ -61,8 +66,10 @@ export const useOrganizationStore = defineStore('organization', () => {
         gradeHistoryList.value = [];
       }
     } catch (err) {
+      historyError.value = '직급 변경 이력을 불러오는데 실패했습니다.';
       console.error(err);
-      throw err;
+    } finally {
+      isHistoryLoading.value = false;
     }
   };
 
@@ -70,8 +77,10 @@ export const useOrganizationStore = defineStore('organization', () => {
     organizationChart,
     deptHistoryList,
     gradeHistoryList,
-    isLoading,
-    error,
+    isChartLoading,
+    isHistoryLoading,
+    chartError,
+    historyError,
     loadOrganizationChart,
     loadDepartmentHistory,
     loadGradeHistory,
