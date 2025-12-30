@@ -421,6 +421,8 @@ const handleParentClick = (key: string) => {
     router.push('/');
   } else if (key === 'settings') {
     router.push('/settings');
+  } else if (key === 'organization') {
+    router.push('/organization');
   }
 
   //클릭한 메뉴만 토글, 나머지는 자동으로 열린 메뉴 닫기

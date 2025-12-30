@@ -35,6 +35,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useSessionStore } from '@/stores/session';
 
 import notificationRoutes from './modules/notification';
+import organizationRoutes from './modules/organization';
 
 
 // 전체 애플리케이션 라우트 정의
@@ -56,6 +57,7 @@ const routes: RouteRecordRaw[] = [
   ...evaluationRoutes,
   ...personnelRoutes,
   ...notificationRoutes,
+  ...organizationRoutes,
   ...settingsRoutes,
 ];
 
