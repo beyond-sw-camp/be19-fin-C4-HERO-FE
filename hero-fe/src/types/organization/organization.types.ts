@@ -19,8 +19,6 @@ export interface OrganizationEmployeeDetail {
   imagePath?: string;     // 프로필 이미지 경로 (Optional)
   
   email: string;          // 이메일
-  phone: string;          // 전화번호
-  address?: string;       // 주소 (Optional)
   birthDate?: string;     // 생년월일 (YYYY-MM-DD)
   gender: string;         // 성별
   hireDate: string;       // 입사일 (YYYY-MM-DD)

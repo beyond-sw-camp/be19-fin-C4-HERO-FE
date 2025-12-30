@@ -119,9 +119,11 @@
               <div class="info-item"><span class="label">부서</span><span class="value">{{ selectedDepartment?.departmentName }}</span></div>
               <div class="info-item"><span class="label">직책</span><span class="value">{{ selectedEmployee.jobTitleName }}</span></div>
               <div class="info-item"><span class="label">사번</span><span class="value">{{ selectedEmployee.employeeNumber }}</span></div>
-              <div class="info-item"><span class="label">이메일</span><span class="value">{{ selectedEmployee.email }}</span></div>
-              <div class="info-item"><span class="label">연락처</span><span class="value">{{ selectedEmployee.phone }}</span></div>
+              <div class="info-item"><span class="label">재직 상태</span><span class="value">{{ selectedEmployee.status }}</span></div>
               <div class="info-item"><span class="label">입사일</span><span class="value">{{ selectedEmployee.hireDate }}</span></div>
+              <div class="info-item"><span class="label">이메일</span><span class="value">{{ selectedEmployee.email }}</span></div>
+              <div class="info-item"><span class="label">생년월일</span><span class="value">{{ selectedEmployee.birthDate || '-' }}</span></div>
+              <div class="info-item"><span class="label">성별</span><span class="value">{{ formatGender(selectedEmployee.gender) }}</span></div>
             </div>
             
             <div class="action-buttons">
@@ -280,6 +282,13 @@ const closeModals = () => {
 const formatDate = (dateStr: string) => {
   if (!dateStr) return '-';
   return new Date(dateStr).toLocaleString();
+};
+
+const formatGender = (gender?: string) => {
+  if (!gender) return '-';
+  if (['M', 'Male', '남', '남자'].includes(gender)) return '남성';
+  if (['F', 'Female', '여', '여자'].includes(gender)) return '여성';
+  return gender;
 };
 
 onMounted(() => {
