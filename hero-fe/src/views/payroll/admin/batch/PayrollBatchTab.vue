@@ -9,12 +9,13 @@
  *  - PayrollAdminStore : 배치 목록 / 선택 / 상세 / 생성 상태 관리
  *
  * History
- *   2025/12/15 - 동근 최초 작성
+ *  2025/12/15 - 동근 최초 작성
+ *  2025/12/29 - 동근 총 공제액/실지급액 컬럼 추가
  * </pre>
  *
  * @module payroll-admin-batch-tab
  * @author 동근
- * @version 1.0
+ * @version 1.1
  -->
 <template>
   <section class="panel">
@@ -42,23 +43,25 @@
       <table>
         <thead>
           <tr class="thead">
-            <th>급여월</th>
-            <th>상태</th>
-            <th>대상 인원</th>
-            <th>총 급여액</th>
-            <th>생성일</th>
-            <th>종료일시</th>
-            <th>작업</th>
+          <th>급여월</th>
+          <th>상태</th>
+          <th>대상 인원</th>
+          <th>총 급여액</th>
+          <th>총 공제액</th>
+          <th>실지급액</th>
+          <th>생성일</th>
+          <th>종료일시</th>
+          <th>작업</th>
           </tr>
         </thead>
 
         <tbody>
           <tr v-if="store.loading" class="empty">
-            <td colspan="7">로딩 중…</td>
+            <td colspan="9">로딩 중…</td>
           </tr>
 
           <tr v-else-if="store.batches.length === 0" class="empty">
-            <td colspan="7">배치가 없습니다. “+ 배치 생성”으로 시작하세요.</td>
+            <td colspan="9">배치가 없습니다. “+ 배치 생성”으로 시작하세요.</td>
           </tr>
 
           <tr
@@ -81,8 +84,9 @@
               }}
             </td>
 
-            <td>-</td>
-
+            <td>{{ formatMoneyOrDash(b.totalGrossPay) }}</td>
+            <td>{{ formatMoneyOrDash(b.totalDeduction) }}</td>
+            <td class="strong">{{ formatMoneyOrDash(b.totalNetPay) }}</td>
             <td>{{ formatDateTime(b.createdAt) }}</td>
             <td>{{ formatDateTime(b.closedAt) }}</td>
 
@@ -171,6 +175,11 @@ const onSubmitCreate = async (month: string) => {
 const formatDateTime = (v: string | null) => {
   if (!v) return '-';
   return v.replace('T', ' ').slice(0, 16);
+};
+
+const formatMoneyOrDash = (v?: number | null) => {
+  if (v === null || v === undefined) return '-';
+  return `${v.toLocaleString()}원`;
 };
 
 const statusLabel = (s: PayrollBatchStatus) => {

@@ -17,11 +17,25 @@ export type PayrollStatus = 'READY' | 'CALCULATED' | 'FAILED' | 'CONFIRMED';
 
 export interface PayrollBatchListResponse {
     batchId: number;
-    salaryMonth: string; // YYYY-MM
+    salaryMonth: string;
     status: PayrollBatchStatus;
     createdAt: string | null;
     updatedAt: string | null;
     closedAt: string | null;
+    totalGrossPay?: number | null;
+    totalDeduction?: number | null;
+    totalNetPay?: number | null;
+
+    createdBy?: number | null;
+    createdByName?: string | null;
+
+    approvedBy?: number | null;
+    approvedByName?: string | null;
+    approvedAt?: string | null;
+
+    paidBy?: number | null;
+    paidByName?: string | null;
+    paidAt?: string | null;
 }
 
 export interface PayrollBatchDetailResponse {

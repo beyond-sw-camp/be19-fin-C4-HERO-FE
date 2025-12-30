@@ -9,12 +9,13 @@
  *
  * History
  *   2025/12/15 - 동근 최초 작성
- *   2025/12/21 - 지급(PAID) 처리 버튼 및 UI 추가
+ *   2025/12/21 - 동근 지급(PAID) 처리 버튼 및 UI 추가
+ *   2025/12/29 - 동근 총 공제액/실지급액 컬럼 추가
  * </pre>
  *
  * @module payroll-admin-batch-confirm-tab
  * @author 동근
- * @version 1.1
+ * @version 1.2
  -->
 <template>
   <section class="panel">
@@ -33,25 +34,27 @@
       <table>
         <thead>
           <tr class="thead">
-            <th>급여월</th>
-            <th>신청자</th>
-            <th>신청일시</th>
-            <th>대상 인원</th>
-            <th>총 급여액</th>
-            <th>상태</th>
-            <th>승인자</th>
-            <th>지급/승인일시</th>
-            <th>작업</th>
+          <th>급여월</th>
+          <th>신청자</th>
+          <th>신청일시</th>
+          <th>대상 인원</th>
+          <th>총 급여액</th>
+          <th>총 공제액</th>
+          <th>실지급액</th>
+          <th>상태</th>
+          <th>승인자</th>
+          <th>지급/승인일시</th>
+          <th>작업</th>
           </tr>
         </thead>
 
         <tbody>
           <tr v-if="store.loading" class="empty">
-            <td colspan="9">로딩 중…</td>
+            <td colspan="11">로딩 중…</td>
           </tr>
 
           <tr v-else-if="store.batches.length === 0" class="empty">
-            <td colspan="9">배치 목록이 없습니다.</td>
+            <td colspan="11">배치 목록이 없습니다.</td>
           </tr>
 
           <tr
@@ -62,7 +65,7 @@
             @click="onSelect(b.batchId)"
           >
             <td>{{ b.salaryMonth }}</td>
-            <td>-</td>
+            <td>{{ displayRequester(b) }}</td>
             <td>{{ formatDateTime(b.createdAt) }}</td>
 
             <td>
@@ -72,14 +75,16 @@
                   : '-'
               }}
             </td>
-            <td>-</td>
+            <td>{{ formatMoneyOrDash(b.totalGrossPay) }}</td>
+            <td>{{ formatMoneyOrDash(b.totalDeduction) }}</td>
+            <td class="strong">{{ formatMoneyOrDash(b.totalNetPay) }}</td>
 
             <td>
               <span :class="['badge', batchBadge(b.status)]">{{ b.status }}</span>
             </td>
 
-            <td>-</td>
-            <td>{{ formatDateTime(b.closedAt) }}</td>
+            <td>{{ displayActor(b) }}</td>
+            <td>{{ displayActionAt(b) }}</td>
 
             <td @click.stop>
               <div class="action-buttons">
@@ -180,6 +185,45 @@ const pay = async (batchId: number) => {
 const formatDateTime = (v: string | null) => {
   if (!v) return '-';
   return v.replace('T', ' ').slice(0, 16);
+};
+// 신청자(배치 생성자)
+const displayRequester = (b: any) => {
+  // b.createdByName를 백엔드에서 내려주면 그걸 우선 사용
+  if (b.createdByName) return b.createdByName;
+  // 이름이 없으면 ID라도 표시
+  if (b.createdBy !== null && b.createdBy !== undefined) return `#${b.createdBy}`;
+  return '-';
+};
+
+// 승인자/지급처리자
+const displayActor = (b: any) => {
+  // PAID면 지급처리자 우선
+  if (b.status === 'PAID') {
+    if (b.paidByName) return b.paidByName;
+    if (b.paidBy !== null && b.paidBy !== undefined) return `#${b.paidBy}`;
+    return '-';
+  }
+  // CONFIRMED면 승인자
+  if (b.status === 'CONFIRMED') {
+    if (b.approvedByName) return b.approvedByName;
+    if (b.approvedBy !== null && b.approvedBy !== undefined) return `#${b.approvedBy}`;
+    return '-';
+  }
+  // CALCULATED(승인대기)면 아직 없음
+  return '-';
+};
+
+// 지급/승인 일시 (상태에 따라 보여줄 값 선택)
+const displayActionAt = (b: any) => {
+  if (b.status === 'PAID') return formatDateTime(b.paidAt ?? null);
+  if (b.status === 'CONFIRMED') return formatDateTime(b.approvedAt ?? null);
+  // 필요하면 CALCULATED에서는 createdAt/closedAt 등으로 변경 가능
+  return '-';
+};
+
+const formatMoneyOrDash = (v?: number | null) => {
+  if (v === null || v === undefined) return '-';
+  return `${v.toLocaleString()}원`;
 };
 
 const batchBadge = (s: PayrollBatchStatus) => {
@@ -394,6 +438,5 @@ th, td {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 12px;
 }
 </style>

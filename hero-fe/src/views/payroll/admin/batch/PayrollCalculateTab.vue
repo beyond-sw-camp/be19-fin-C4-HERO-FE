@@ -9,11 +9,12 @@
  *
  * History
  *   2025/12/15 - 동근 최초 작성
+ *   2025/12/29 - 동근 수당(연장 포함) 컬럼 추가
  * </pre>
  *
  * @module payroll-admin-batch-calculate-tab
  * @author 동근
- * @version 1.0
+ * @version 1.1
  -->
 <template>
   <section class="panel">
@@ -89,7 +90,7 @@
             <th>사원명</th>
             <th>부서</th>
             <th>기본급</th>
-            <th>수당</th>
+            <th>수당(연장 포함)</th>
             <th>공제</th>
             <th>실수령액</th>
             <th>상태</th>
@@ -127,7 +128,7 @@
             <td>{{ e.employeeName }}</td>
             <td>{{ e.departmentName ?? '-' }}</td>
             <td>{{ formatMoney(e.baseSalary) }}</td>
-            <td>{{ formatMoney(e.allowanceTotal) }}</td>
+            <td>{{ formatMoney((e.allowanceTotal ?? 0) + (e.overtimePay ?? 0)) }}</td>
             <td>{{ formatMoney(e.deductionTotal) }}</td>
             <td>{{ formatMoney(e.totalPay) }}</td>
 
@@ -273,7 +274,7 @@ const openError = (e: PayrollEmployeeResultResponse) => {
   errorOpen.value = true;
 };
 
-const formatMoney = (n: number) => `${n.toLocaleString()}원`;
+const formatMoney = (n?: number | null) => `${(n ?? 0).toLocaleString()}원`;
 
 const statusLabel = (s: PayrollStatus) => {
   switch (s) {
