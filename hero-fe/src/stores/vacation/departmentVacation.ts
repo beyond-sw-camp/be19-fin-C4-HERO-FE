@@ -178,7 +178,7 @@ export const useDepartmentVacationStore = defineStore('departmentVacation', {
      * @param {number} month - 조회 월
      * @returns {Promise<void>} 조회 완료 후 상태 업데이트
      */
-    async fetchCalendar(year: number, month: number): Promise<void> {
+    async fetchDepartmentVacation(year: number, month: number): Promise<void> {
       // 본인 식별값을 토큰에서 자동 동기화 (페이지에서 따로 setMyEmployeeId 호출 불필요)
       if (this.myEmployeeId == null) {
         this.syncMyEmployeeIdFromToken();
