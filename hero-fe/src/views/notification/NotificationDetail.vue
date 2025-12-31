@@ -16,7 +16,7 @@
       <div class="header-content">
         <!-- 뒤로가기 버튼 -->
         <button class="back-button" @click="goBack">
-          <img src="@/images/arrow.svg" alt="뒤로가기 아이콘" />
+          <img src="/images/arrow.svg" alt="뒤로가기 아이콘" />
           <span>알림 목록</span>
         </button>
 
