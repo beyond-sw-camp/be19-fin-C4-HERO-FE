@@ -42,7 +42,7 @@ jobs:
     - name: Build project
       run: npm run build
       env:
-        VITE_API_URL: hero-alb-146092404.ap-northeast-2.elb.amazonaws.com/api
+        VITE_API_URL: https://hero-alb-146092404.ap-northeast-2.elb.amazonaws.com/api
 
     - name: Install AWS CLI
       run: |
