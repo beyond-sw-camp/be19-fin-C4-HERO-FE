@@ -66,7 +66,7 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="paneltwo">
       <table class="table">
         <thead>
           <tr class="table-header">
@@ -300,6 +300,13 @@ async function onSearch() {
   padding: 16px 0px;
 }
 
+.paneltwo {
+  background-color: #ffffff;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+  border: 1px solid #e5e7eb;
+  padding: 0 0 16px;
+}
 .field{
   padding: 0 20px;
 }
@@ -398,8 +405,8 @@ async function onSearch() {
 .table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 6px;
   font-size: 13px;
+  padding-top:6px;
 }
 
 .table-header {

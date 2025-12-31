@@ -4,10 +4,14 @@
  *
  * History
  * 2025/12/28 - 동근 최초 작성
+ * 2025/12/31 - 동근 페이지 응답 공통 타입으로 변경
+ *
  *
  * @author 동근
  * @version 1.0
  */
+
+import type { PageResponse as CommonPageResponse } from '@/types/common/pagination.types';
 
 /**
  * 급여 조회 검색 조건 파라미터
@@ -21,23 +25,12 @@ export type PayrollPaymentSearchParams = {
     size?: number;
 };
 
-/**
- * 공통 페이징 응답 타입
- */
-export type PageResponse<T> = {
-    content: T[];
-    page: number;          // 0-based
-    size: number;
-    totalElements: number;
-    totalPages: number;
-    first: boolean;
-    last: boolean;
-};
 
-/**
- * 급여 조회 페이징 응답 타입
- */
-export type PayrollPaymentPageResponse<T> = PageResponse<T>;
+export type PayrollPaymentPageResponse<T> =
+    CommonPageResponse<T> & {
+        first?: boolean;
+        last?: boolean;
+    };
 
 /**
  * 급여 조회 목록 화면에서 사용되는 행(Row) 데이터 타입

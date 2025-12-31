@@ -34,7 +34,7 @@ const payrollAdminRoutes: RouteRecordRaw[] = [
     {
         path: "/payroll/admin/adjust",
         name: "PayrollAdminAdjust",
-        component: () => import("@/views/payroll/admin/Adjust.vue"),
+        component: () => import("@/views/payroll/admin/adjustment/Adjust.vue"),
         meta: { title: "급여 조정" },
     },
     {

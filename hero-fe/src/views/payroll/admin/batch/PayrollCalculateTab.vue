@@ -57,13 +57,29 @@
 </button>
 
 <button
-  class="btn-secondary"
+  class="btn-secondary btn-filter"
   type="button"
   :disabled="!store.selectedBatchId || store.employees.length === 0"
   :title="showFailedOnly ? '전체 보기로 전환' : 'FAILED만 보기'"
   @click="showFailedOnly = !showFailedOnly"
 >
   {{ showFailedOnly ? '전체 보기' : 'FAILED만 보기' }}
+</button>
+
+<button
+  class="btn-secondary btn-filter"
+  type="button"
+  :disabled="!store.selectedBatchId || store.employees.length === 0 || !hasNoAttendance"
+  :title="showNoAttendanceOnly ? '전체 보기로 전환' : '근태 없는 사원만 보기'"
+  @click="showNoAttendanceOnly = !showNoAttendanceOnly"
+>
+<template v-if="showNoAttendanceOnly">
+  전체 보기
+</template>
+<template v-else>
+  근태없는사원
+  <span class="count-danger">{{ noAttendanceCount }}명</span>
+</template>
 </button>
         <span v-if="isConfirmed" class="lock-hint">
           확정된 배치는 재계산할 수 없습니다.
@@ -125,7 +141,16 @@
               />
             </td>
 
-            <td>{{ e.employeeName }}</td>
+                  <td class="employee-name">
+              {{ e.employeeName }}
+              <span
+                v-if="e.attendanceDays === 0"
+                class="badge attendance-warn"
+                title="해당 급여월에 근태 기록이 없어 연장근무 수당은 0원으로 계산되었습니다."
+              >
+                근태없음
+              </span>
+            </td>
             <td>{{ e.departmentName ?? '-' }}</td>
             <td>{{ formatMoney(e.baseSalary) }}</td>
             <td>{{ formatMoney((e.allowanceTotal ?? 0) + (e.overtimePay ?? 0)) }}</td>
@@ -188,11 +213,19 @@ const errorTarget = ref<PayrollEmployeeResultResponse | null>(null);
 
 const isConfirmed = computed(() => store.batchDetail?.status === 'CONFIRMED');
 const showFailedOnly = ref(false);
+const showNoAttendanceOnly = ref(false);
+
+const noAttendanceCount = computed(() =>
+(store.employees ?? []).filter(e => (e.attendanceDays ?? 0) === 0).length
+);
+const hasNoAttendance = computed(() => noAttendanceCount.value > 0);
 
 const filteredEmployees = computed(() => {
   const list = store.employees ?? [];
-  if (!showFailedOnly.value) return list;
-  return list.filter(e => e.status === 'FAILED');
+  let r = list;
+  if (showFailedOnly.value) r = r.filter(e => e.status === 'FAILED');
+  if (showNoAttendanceOnly.value) r = r.filter(e => (e.attendanceDays ?? 0) === 0);
+  return r;
 });
 
 const failedEmployeeIds = computed(() =>
@@ -299,6 +332,7 @@ watch(
   () => store.selectedBatchId,
   () => {
     showFailedOnly.value = false;
+    showNoAttendanceOnly.value = false;
     selectedIds.value = [];
   }
 );
@@ -392,6 +426,17 @@ th, td {
   color: #374151;
 }
 
+ .btn-filter {
+   background: #f8fafc;
+   border: 1px dashed #c7d2fe;
+   color: #3730a3;
+ }
+
+ .btn-filter.active {
+   background: #eef2ff;
+   border-style: solid;
+   font-weight: 600;
+ }
 .btn-primary:disabled,
 .btn-secondary:disabled {
   opacity: 0.6;
@@ -492,4 +537,33 @@ tbody tr:not(.empty):nth-child(even) {
   background-color: #E2E8F0;
 }
 
+.employee-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.badge.attendance-warn {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
+  font-size: 10px;
+  height: 18px;
+  padding: 0 6px;
+  line-height: 18px;
+}
+
+thead th:nth-child(2),
+tbody td:nth-child(2) {
+  width: 160px; 
+  max-width: 160px;
+  white-space: nowrap;
+}
+
+.count-danger {
+  color: #dc2626;
+  font-weight: 700;
+  margin-left: 4px;
+}
 </style>

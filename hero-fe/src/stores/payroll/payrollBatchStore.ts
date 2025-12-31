@@ -39,10 +39,18 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
     const selectedBatch = computed(() =>
         selectedBatchId.value == null
             ? null
-            : batches.value.find(b => b.batchId === selectedBatchId.value) ?? null
+            : batches.value.find(batch => batch.batchId === selectedBatchId.value) ?? null
     );
 
     const resetError = () => (errorMessage.value = null);
+
+    const extractErrorMessage = (e: unknown, fallback: string) => {
+        if (e && typeof e === 'object') {
+            const err = e as any;
+            return err?.response?.data?.message ?? err?.message ?? fallback;
+        }
+        return fallback;
+    };
 
     /* =========================
      * 조회
@@ -52,8 +60,8 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
         resetError();
         try {
             batches.value = await payrollAdminApi.listBatches(filter);
-        } catch (e: any) {
-            errorMessage.value = e?.response?.data?.message ?? e?.message ?? '배치 목록 조회 실패';
+        } catch (e: unknown) {
+            errorMessage.value = extractErrorMessage(e, '배치 목록 조회 실패');
             throw e;
         } finally {
             loading.value = false;
@@ -72,11 +80,8 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
             ]);
             batchDetail.value = detail;
             employees.value = emps;
-        } catch (e: any) {
-            errorMessage.value =
-                e?.response?.data?.message ??
-                e?.message ??
-                '배치 선택 실패';
+        } catch (e: unknown) {
+            errorMessage.value = extractErrorMessage(e, '배치 선택 실패');
             throw e;
         } finally {
             loading.value = false;
@@ -89,8 +94,8 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
         resetError();
         try {
             batchDetail.value = await payrollAdminApi.getBatchDetail(batchId);
-        } catch (e: any) {
-            errorMessage.value = e?.response?.data?.message ?? e?.message ?? '배치 상세 조회 실패';
+        } catch (e: unknown) {
+            errorMessage.value = extractErrorMessage(e, '배치 상세 조회 실패');
             throw e;
         } finally {
             loading.value = false;
@@ -102,8 +107,8 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
         resetError();
         try {
             employees.value = await payrollAdminApi.getBatchEmployees(batchId);
-        } catch (e: any) {
-            errorMessage.value = e?.response?.data?.message ?? e?.message ?? '배치 사원 결과 조회 실패';
+        } catch (e: unknown) {
+            errorMessage.value = extractErrorMessage(e, '배치 사원 결과 조회 실패');
             throw e;
         } finally {
             loading.value = false;
@@ -118,9 +123,8 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
         resetError();
         try {
             targets.value = await payrollAdminApi.listBatchTargets();
-        } catch (e: any) {
-            errorMessage.value =
-                e?.response?.data?.message ?? e?.message ?? '대상 사원 조회 실패';
+        } catch (e: unknown) {
+            errorMessage.value = extractErrorMessage(e, '대상 사원 조회 실패');
             throw e;
         } finally {
             loading.value = false;
@@ -138,8 +142,8 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
             await loadBatches();
             await selectBatch(batchId);
             return batchId;
-        } catch (e: any) {
-            errorMessage.value = e?.response?.data?.message ?? e?.message ?? '배치 생성 실패';
+        } catch (e: unknown) {
+            errorMessage.value = extractErrorMessage(e, '배치 생성 실패');
             throw e;
         } finally {
             loading.value = false;
@@ -163,8 +167,8 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
             await payrollAdminApi.calculateBatchAll(selectedBatchId.value);
             await selectBatch(selectedBatchId.value); // 재조회 타이밍 고정
             await loadBatches(); // 목록 상태 뱃지/정렬 갱신용(선택)
-        } catch (e: any) {
-            errorMessage.value = e?.response?.data?.message ?? e?.message ?? '급여 전체 계산 실패';
+        } catch (e: unknown) {
+            errorMessage.value = extractErrorMessage(e, '급여 전체 계산 실패');
             throw e;
         } finally {
             loading.value = false;
@@ -195,8 +199,8 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
             await payrollAdminApi.calculateBatchSelected(selectedBatchId.value, ids);
             await selectBatch(selectedBatchId.value); // 재조회 타이밍 고정
             await loadBatches(); // 목록 상태 뱃지/정렬 갱신용(선택)
-        } catch (e: any) {
-            errorMessage.value = e?.response?.data?.message ?? e?.message ?? '급여 선택 계산 실패';
+        } catch (e: unknown) {
+            errorMessage.value = extractErrorMessage(e, '급여 선택 계산 실패');
             throw e;
         } finally {
             loading.value = false;
@@ -210,8 +214,8 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
             await payrollAdminApi.confirmBatch(selectedBatchId.value);
             await selectBatch(selectedBatchId.value);
             await loadBatches();
-        } catch (e: any) {
-            errorMessage.value = e?.response?.data?.message ?? e?.message ?? '배치 확정 실패';
+        } catch (e: unknown) {
+            errorMessage.value = extractErrorMessage(e, '배치 확정 실패');
             throw e;
         } finally {
             loading.value = false;
@@ -226,8 +230,8 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
             await payrollAdminApi.payBatch(selectedBatchId.value);
             await selectBatch(selectedBatchId.value);
             await loadBatches();
-        } catch (e: any) {
-            errorMessage.value = e?.response?.data?.message ?? e?.message ?? '지급 처리 실패';
+        } catch (e: unknown) {
+            errorMessage.value = extractErrorMessage(e, '지급 처리 실패');
             throw e;
         } finally {
             loading.value = false;
@@ -253,6 +257,8 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
 
         loadBatches,
         selectBatch,
+        loadBatchDetail,
+        loadBatchEmployees,
         loadTargets,
         createBatch,
         calculateAllBatch,
