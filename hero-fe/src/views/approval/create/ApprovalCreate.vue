@@ -14,7 +14,10 @@
  *   2025/12/25 - 민철 서식 목록에서 서식ID 쿼리스트링으로 전달받기
  *   2025/12/26 - 민철 Composable 사용 및 타입 안정성 개선, 미리보기 주석처리
  *   2025/12/30 - 지윤 지연 출근 수정 로직 관련 함수(preloadModifyWorkRecord) 추가
+<<<<<<< HEAD
  *   2025/12/30 - 지윤 초과 출근 수정 로직 관련 함수(preloadOvertime) 추가
+=======
+>>>>>>> develop
  * </pre>
  *
  * @module approval
