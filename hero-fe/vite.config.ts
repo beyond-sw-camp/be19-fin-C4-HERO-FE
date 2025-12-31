@@ -66,7 +66,7 @@ export default defineConfig({
    * 개발 서버 설정
    */
   server: {
-    port: 5173,  // 프론트엔드 개발 서버 포트
+    port: 8080,  // 배포 서버 포트
 
     /**
      * API 프록시 설정

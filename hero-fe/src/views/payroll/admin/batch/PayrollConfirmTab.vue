@@ -133,13 +133,6 @@
       실패 사유 확인 후 재계산해주세요.
     </p>
     <p v-if="store.errorMessage" class="error">{{ store.errorMessage }}</p>
-
-    <div class="pager">
-      <button class="pager-btn" disabled>이전</button>
-      <button class="pager-btn active">1</button>
-      <button class="pager-btn" disabled>2</button>
-      <button class="pager-btn" disabled>다음</button>
-    </div>
   </section>
 </template>
 
@@ -147,6 +140,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { usePayrollAdminStore } from '@/stores/payroll/payrollBatchStore';
 import type { PayrollBatchStatus } from '@/types/payroll/payroll.batch';
+import type { PayrollBatchListResponse } from '@/types/payroll/payroll.batch';
 
 const store = usePayrollAdminStore();
 
@@ -187,26 +181,23 @@ const formatDateTime = (v: string | null) => {
   return v.replace('T', ' ').slice(0, 16);
 };
 // 신청자(배치 생성자)
-const displayRequester = (b: any) => {
-  // b.createdByName를 백엔드에서 내려주면 그걸 우선 사용
-  if (b.createdByName) return b.createdByName;
-  // 이름이 없으면 ID라도 표시
-  if (b.createdBy !== null && b.createdBy !== undefined) return `#${b.createdBy}`;
+const displayRequester = (batch: PayrollBatchListResponse) => {
+  if (batch.createdByName) return batch.createdByName;
+  if (batch.createdBy != null) return `#${batch.createdBy}`;
   return '-';
 };
 
 // 승인자/지급처리자
-const displayActor = (b: any) => {
-  // PAID면 지급처리자 우선
-  if (b.status === 'PAID') {
-    if (b.paidByName) return b.paidByName;
-    if (b.paidBy !== null && b.paidBy !== undefined) return `#${b.paidBy}`;
+const displayActor = (batch: PayrollBatchListResponse) => {
+  if (batch.status === 'PAID') {
+    if (batch.paidByName) return batch.paidByName;
+    if (batch.paidBy != null) return `#${batch.paidBy}`;
     return '-';
   }
   // CONFIRMED면 승인자
-  if (b.status === 'CONFIRMED') {
-    if (b.approvedByName) return b.approvedByName;
-    if (b.approvedBy !== null && b.approvedBy !== undefined) return `#${b.approvedBy}`;
+  if (batch.status === 'CONFIRMED') {
+    if (batch.approvedByName) return batch.approvedByName;
+    if (batch.approvedBy != null) return `#${batch.approvedBy}`;
     return '-';
   }
   // CALCULATED(승인대기)면 아직 없음
@@ -214,9 +205,9 @@ const displayActor = (b: any) => {
 };
 
 // 지급/승인 일시 (상태에 따라 보여줄 값 선택)
-const displayActionAt = (b: any) => {
-  if (b.status === 'PAID') return formatDateTime(b.paidAt ?? null);
-  if (b.status === 'CONFIRMED') return formatDateTime(b.approvedAt ?? null);
+const displayActionAt = (batch: PayrollBatchListResponse) => {
+  if (batch.status === 'PAID') return formatDateTime(batch.paidAt ?? null);
+  if (batch.status === 'CONFIRMED') return formatDateTime(batch.approvedAt ?? null);
   // 필요하면 CALCULATED에서는 createdAt/closedAt 등으로 변경 가능
   return '-';
 };
@@ -248,10 +239,10 @@ const canConfirm = computed(() => {
   return true;
 });
 
-const canPay = (b: { status: PayrollBatchStatus }) => {
+const canPay = (batch: Pick<PayrollBatchListResponse, 'status'>) => {
   if (store.loading) return false;
-  if (b.status === 'PAID') return false;
-  return b.status === 'CONFIRMED';
+  if (batch.status === 'PAID') return false;
+  return batch.status === 'CONFIRMED';
 };
 </script>
 

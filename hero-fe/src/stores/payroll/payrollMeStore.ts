@@ -43,8 +43,6 @@ import type {
 } from '@/types/payroll/payroll.me';
 
 
-//급여(Payroll) 도메인 상태 및 API 연동을 관리하는 Pinia 스토어
-
 export const usePayrollStore = defineStore('payroll', {
     state: () => ({
 
@@ -52,7 +50,7 @@ export const usePayrollStore = defineStore('payroll', {
         error: null as string | null,
 
         // 내 급여
-        currentMonth: '' as string, // "2025-11" 같은 값
+        currentMonth: '' as string,
         summary: null as MyPaySummary | null,
         payslip: null as PayslipDetail | null,
 
@@ -64,7 +62,13 @@ export const usePayrollStore = defineStore('payroll', {
     }),
 
     actions: {
-
+        extractErrorMessage(e: unknown, fallback: string) {
+            if (e && typeof e === 'object') {
+                const err = e as any;
+                return err?.response?.data?.message ?? err?.message ?? fallback;
+            }
+            return fallback;
+        },
         /**
          * 내 급여 요약 정보를 조회
          * @param month 조회할 급여월
@@ -78,10 +82,10 @@ export const usePayrollStore = defineStore('payroll', {
                 const { data } = await fetchMyPayroll(month);
                 this.summary = data;
                 this.currentMonth = data.salaryMonth;
-            } catch (e: any) {
+            } catch (e: unknown) {
                 this.summary = null;
                 this.payslip = null;
-                this.error = e?.response?.data?.message ?? '급여 정보를 불러오지 못했습니다.';
+                this.error = this.extractErrorMessage(e, '급여 정보를 불러오지 못했습니다.');
             } finally {
                 this.loading = false;
             }
@@ -97,8 +101,8 @@ export const usePayrollStore = defineStore('payroll', {
                 this.error = null;
                 const { data } = await fetchPayslipDetail(month);
                 this.payslip = data;
-            } catch (e: any) {
-                this.error = e?.response?.data?.message ?? '명세서를 불러오지 못했습니다.';
+            } catch (e: unknown) {
+                this.error = this.extractErrorMessage(e, '명세서를 불러오지 못했습니다.');
             } finally {
                 this.loading = false;
             }
@@ -112,8 +116,8 @@ export const usePayrollStore = defineStore('payroll', {
                 this.error = null;
                 const { data } = await fetchPayHistory();
                 this.history = data;
-            } catch (e: any) {
-                this.error = e?.response?.data?.message ?? '급여 이력을 불러오지 못했습니다.';
+            } catch (e: unknown) {
+                this.error = this.extractErrorMessage(e, '급여 이력을 불러오지 못했습니다.');
             } finally {
                 this.loading = false;
             }
@@ -128,10 +132,15 @@ export const usePayrollStore = defineStore('payroll', {
          */
         async loadAccounts() {
             try {
+                this.loading = true;
+                this.error = null;
                 const { data } = await fetchMyBankAccounts();
                 this.accounts = data;
-            } catch (e) {
-                console.error(e);
+            } catch (e: unknown) {
+                this.error = this.extractErrorMessage(e, '계좌 목록을 불러오지 못했습니다.');
+                throw e;
+            } finally {
+                this.loading = false;
             }
         },
 
@@ -171,14 +180,19 @@ export const usePayrollStore = defineStore('payroll', {
          */
         async setPrimaryBankAccount(bankAccountId: number) {
             try {
+                this.loading = true;
+                this.error = null;
                 await apiSetPrimaryBankAccount(bankAccountId);
 
                 this.accounts = this.accounts.map((acc) => ({
                     ...acc,
                     primary: acc.id === bankAccountId
                 }));
-            } catch (e) {
-                console.error(e);
+            } catch (e: unknown) {
+                this.error = this.extractErrorMessage(e, '대표 계좌 설정 중 오류가 발생했습니다.');
+                throw e;
+            } finally {
+                this.loading = false;
             }
         },
 
@@ -211,6 +225,8 @@ export const usePayrollStore = defineStore('payroll', {
          */
         async deleteMyBankAccount(accountId: number) {
             try {
+                this.loading = true;
+                this.error = null;
                 await deleteBankAccount(accountId);
 
                 await this.loadAccounts();
@@ -219,13 +235,15 @@ export const usePayrollStore = defineStore('payroll', {
                 } else {
                     await this.loadMyPayroll();
                 }
-            } catch (e: any) {
-                console.log('DELETE ERROR RESPONSE DATA:', e?.response?.data); // 확인용
-
-                throw {
-                    code: e?.response?.data?.errorCode ?? e?.response?.data?.code,
-                    message: e?.response?.data?.message ?? '계좌 삭제 중 오류가 발생했습니다.',
-                };
+            } catch (e: unknown) {
+                const err = e as any;
+                const code = err?.response?.data?.errorCode ?? err?.response?.data?.code;
+                const message = this.extractErrorMessage(e, '계좌 삭제 중 오류가 발생했습니다.');
+                const wrapped = new Error(message) as Error & { code?: string };
+                wrapped.code = code;
+                throw wrapped;
+            } finally {
+                this.loading = false;
             }
         }
     },

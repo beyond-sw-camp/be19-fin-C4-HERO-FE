@@ -8,7 +8,7 @@
 
     History
     2025/12/11 - 이승건 최초 작성
-    </pre>
+    </pre> 
 
     @이승건
     @version 1.0
@@ -17,7 +17,8 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'ax
 import { useAuthStore } from '@/stores/auth';
 
 // 1. 기본 API 설정
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+// 배포 환경 변수(VITE_API_URL)가 있으면 쓰고, 없으면 로컬(5000)을 씁니다.
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const apiClient: AxiosInstance = axios.create({
     baseURL: BASE_URL,

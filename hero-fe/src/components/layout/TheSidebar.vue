@@ -504,21 +504,17 @@ const handleSubMenuClick = (key: string) => {
   }
       
   // 급여관리(관리자)
-  if (key === 'payrollAdminDash') {
-    router.push('/payroll/admin');                 // 급여 대시보드
-  } else if (key === 'payrollBatch') {
+  if (key === 'payrollBatch') {
     router.push('/payroll/admin/batch');           // 월별 급여 배치
   } else if (key === 'payrollAdjust') {
-    router.push('/payroll/admin/adjust');          // 급여 조정
+   router.push('/payroll/admin/adjust');          // 급여 조정
   } else if (key === 'payrollSearch') {
     router.push('/payroll/admin/search');          // 사원 급여 조회
-  } else if (key === 'payrollPaymentHistory') {
-    router.push('/payroll/admin/payment-history'); // 지급 이력
   } else if (key === 'payrollItems') {
     router.push('/payroll/admin/items');           // 급여 항목 관리
   } else if (key === 'payrollReport') {
     router.push('/payroll/admin/report');          // 급여 보고서
-  } 
+  }
 
   // 휴가/연차
   else if (key === 'vacationHistory') {
@@ -635,14 +631,12 @@ const syncActiveByRoute = (path: string) => {
   if (path.startsWith('/payroll/admin')) {
     activeParent.value = 'payrollAdmin';
     if (!isCollapsed.value) isPayrollAdminOpen.value = true;
-    if (path === '/payroll/admin') activeSubMenu.value = 'payrollAdminDash';
-    else if (path.startsWith('/payroll/admin/batch')) activeSubMenu.value = 'payrollBatch';
+    if (path.startsWith('/payroll/admin/batch')) activeSubMenu.value = 'payrollBatch';
     else if (path.startsWith('/payroll/admin/adjust')) activeSubMenu.value = 'payrollAdjust';
     else if (path.startsWith('/payroll/admin/search')) activeSubMenu.value = 'payrollSearch';
-    else if (path.startsWith('/payroll/admin/payment-history')) activeSubMenu.value = 'payrollPaymentHistory';
     else if (path.startsWith('/payroll/admin/items')) activeSubMenu.value = 'payrollItems';
     else if (path.startsWith('/payroll/admin/report')) activeSubMenu.value = 'payrollReport';
-    else if (path.startsWith('/payroll/admin/policy')) activeSubMenu.value = 'payrollPolicy';
+    
     return;
   }
 

@@ -65,6 +65,7 @@ export interface PayrollEmployeeResultResponse {
     allowanceTotal: number;
     deductionTotal: number;
     totalPay: number;
+    attendanceDays: number;
 
     /**
      * 계산/검증 실패 사유
