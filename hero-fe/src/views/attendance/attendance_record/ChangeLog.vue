@@ -86,7 +86,7 @@
             class="tab"
             :class="{ 'tab-active': isActiveTab('AttendanceCorrection') }"
           >
-            근태 기록 수정 이력
+            지연 근태 수정 이력
           </RouterLink>
 
           <RouterLink
@@ -94,7 +94,7 @@
             class="tab tab-right"
             :class="{ 'tab-active': isActiveTab('AttendanceChangeLog') }"
           >
-            근무제 변경 이력
+            근무 유형 변경 이력
           </RouterLink>
         </div>
 

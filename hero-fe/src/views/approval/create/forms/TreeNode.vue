@@ -292,7 +292,7 @@ const convertToEmployee = (node: OrganizationTreeNodeDTO): OrganizationEmployeeD
 }
 
 .icon-arrow.rotated {
-    transform: rotate(90deg);
+    transform: rotate(180deg);
 }
 
 .node-name {

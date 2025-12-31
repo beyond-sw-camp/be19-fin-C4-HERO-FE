@@ -1,23 +1,28 @@
 <!--
   * <pre>
   * Vue Name        : ApprovalVacationForm.vue
-  * Description     : 휴가신청서
+  * Description     : 휴가신청서 (작성용 + 조회용 통합)
   *
   * 컴포넌트 연계
-  *  - 부모 컴포넌트: ApprovalCreateCommonForm.vue
+  *  - 부모 컴포넌트: ApprovalCreateCommonForm.vue, ApprovalDetailCommonForm.vue
   *
   * History
-  *   2025/12/10 - 민철 최초 작성
-  *   2025/12/14 - 민철 공통 컴포넌트화
-  *   2025/12/23 - 민철 파일명 변경
+  * 2025/12/10 (민철) 최초 작성
+  * 2025/12/14 (민철) 공통 컴포넌트화
+  * 2025/12/23 (민철) 파일명 변경
+  * 2025/12/29 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
+  * 2025/12/29 (민철) 이름/ID 모두 지원하도록 수정
+  * 2025/12/30 (민철) Watch 최적화, Computed 적용
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 2.0
+  * @version 3.2
 -->
 <template>
   <div class="detail-form-section">
+    <div v-if="isDropdownOpen" class="overlay-backdrop" @click="closeDropdown"></div>
+
     <div class="form-row">
       <div class="row-label">
         <span class="label-text">휴가신청정보</span>
@@ -25,62 +30,53 @@
       <div class="row-content">
         <div class="section-body">
           <div class="input-group-row">
-            
-            <!-- 휴가 종류 -->
+
             <div class="input-group col-type">
               <div class="group-label">
-                <span class="label-text">휴가 종류 *</span>
+                <span class="label-text">휴가 종류 {{ readonly ? '' : '*' }}</span>
               </div>
-              
-              <div 
-                class="dropdown-box" 
-                :class="{ 'is-open': isOpen }" 
-                @click="toggleDropdown"
-              >
+
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ formData.vacationType || '-' }}</span>
+              </div>
+
+              <div v-else class="dropdown-box" :class="{ 'is-open': isDropdownOpen }" @click.stop="toggleDropdown">
                 <div class="dropdown-value">
-                  <span 
-                    :class="selectedOption ? 'text-selected' : 'placeholder-text'"
-                  >
-                    {{ selectedOption ? selectedOption.vacationTypeName : '선택하세요' }}
+                  <span :class="formData.vacationType ? 'text-selected' : 'placeholder-text'">
+                    {{ currentVacationTypeName || '선택하세요' }}
                   </span>
                 </div>
-                <img 
-                  class="icon-dropdown" 
-                  :class="{ 'rotate': isOpen }"
-                  src="/images/dropdownarrow.svg" 
-                  alt="dropdown"
-                />
+                <img class="icon-dropdown" :class="{ 'rotate': isDropdownOpen }" src="/images/dropdownarrow.svg"
+                  alt="dropdown" />
 
-                <ul v-if="isOpen" class="dropdown-options">
-                  <li 
-                    v-for="option in vacationTypes" 
-                    :key="option.vacationTypeId" 
-                    class="dropdown-item"
-                    @click.stop="selectOption(option)"
-                  >
+                <ul v-if="isDropdownOpen" class="dropdown-options">
+                  <li v-for="option in vacationTypes" :key="option.vacationTypeId" class="dropdown-item"
+                    @click.stop="selectVacationType(option)">
                     {{ option.vacationTypeName }}
                   </li>
                 </ul>
               </div>
             </div>
 
-            <!-- 휴가 기간 -->
             <div class="input-group col-period">
               <div class="group-label">
-                <span class="label-text">휴가 기간 *</span>
+                <span class="label-text">휴가 기간 {{ readonly ? '' : '*' }}</span>
               </div>
-              <div class="date-range-box">
-                <input
-                  type="date"
-                  v-model="formData.startDate"
-                  class="date-input"
-                />
+
+              <div v-if="readonly" class="date-range-box">
+                <div class="readonly-value date-input">
+                  <span class="value-text">{{ formatReadOnlyDate(formData.startDate) }}</span>
+                </div>
                 <div class="tilde">~</div>
-                <input
-                  type="date"
-                  v-model="formData.endDate"
-                  class="date-input"
-                />
+                <div class="readonly-value date-input">
+                  <span class="value-text">{{ formatReadOnlyDate(formData.endDate) }}</span>
+                </div>
+              </div>
+
+              <div v-else class="date-range-box">
+                <input type="date" v-model="formData.startDate" class="date-input" />
+                <div class="tilde">~</div>
+                <input type="date" v-model="formData.endDate" class="date-input" />
               </div>
             </div>
           </div>
@@ -88,84 +84,136 @@
       </div>
     </div>
 
-    <!-- 사유 -->
     <div class="form-row border-top">
       <div class="row-label label-bottom">
         <span class="label-text">사유</span>
       </div>
       <div class="row-content reason-content">
-        <textarea 
-          v-model="formData.reason"
-          class="input-textarea"
-          placeholder="휴가사유를 입력해 주세요."
-        ></textarea>
+        <div v-if="readonly" class="readonly-textarea">
+          <span class="value-text">{{ formData.reason || '-' }}</span>
+        </div>
+        <textarea v-else v-model="formData.reason" class="input-textarea" placeholder="휴가사유를 입력해 주세요."></textarea>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted } from 'vue';
+import { ref, reactive, watch, onMounted, computed } from 'vue';
 import { useApprovalDataStore } from '@/stores/approval/approval_data.store';
 import { storeToRefs } from 'pinia';
-import { VacationTypeResponseDTO } from '@/types/approval/approval_data.types';
+import type { VacationTypeResponseDTO } from '@/types/approval/approval_data.types';
 
-const approvalDataStore = useApprovalDataStore();
-const { vacationTypes } = storeToRefs(approvalDataStore);
-
-onMounted( async () => {
-  await approvalDataStore.fetchVacationTypes();
-});
-
-// v-model을 위한 Props와 Emits
+// Props & Emits
 const props = defineProps<{
   modelValue?: VacationFormData;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
   'update:modelValue': [value: VacationFormData];
 }>();
 
-// 타입 정의
 export interface VacationFormData {
-  vacationType: string;  // 휴가 종류 (annual, half_am, half_pm, sick, public, special)
-  startDate: string;     // 시작일 (YYYY-MM-DD)
-  endDate: string;       // 종료일 (YYYY-MM-DD)
-  reason: string;        // 사유
+  vacationType: number;  // 휴가 종류 ID (문자열 형태)
+  startDate: string;     // YYYY-MM-DD
+  endDate: string;       // YYYY-MM-DD
+  reason: string;
 }
 
-// 폼 데이터 (reactive로 관리)
+// Store
+const approvalDataStore = useApprovalDataStore();
+const { vacationTypes } = storeToRefs(approvalDataStore);
+
+onMounted(async () => {
+  // 데이터가 없을 때만 호출
+  if (!vacationTypes.value || vacationTypes.value.length === 0) {
+    await approvalDataStore.fetchVacationTypes();
+  }
+});
+
+// --- State Management ---
 const formData = reactive<VacationFormData>({
-  vacationType: props.modelValue?.vacationType || '',
+  vacationType: props.modelValue?.vacationType || 0,
   startDate: props.modelValue?.startDate || '',
   endDate: props.modelValue?.endDate || '',
   reason: props.modelValue?.reason || ''
 });
 
-// 드롭다운 관련 (UI만)
-const isOpen = ref(false);
-const selectedOption = ref<VacationTypeResponseDTO>();
+// [동기화 1] 부모 -> 자식 (API 로딩 등으로 늦게 들어오는 데이터 처리)
+watch(() => props.modelValue, (newVal) => {
+  if (newVal) {
+    Object.assign(formData, newVal);
+  }
+}, { deep: true });
+
+// [동기화 2] 자식 -> 부모 (폼 변경 시 자동 emit)
+watch(formData, (newVal) => {
+  if (!props.readonly) {
+    emit('update:modelValue', { ...newVal });
+  }
+}, { deep: true });
+
+
+// --- Dropdown Logic (Computed 활용) ---
+const isDropdownOpen = ref(false);
 
 const toggleDropdown = () => {
-  isOpen.value = !isOpen.value;
+  if (props.readonly) return;
+  isDropdownOpen.value = !isDropdownOpen.value;
 };
 
-// 옵션 선택 시 formData 업데이트
-const selectOption = (option: { vacationTypeId: number; vacationTypeName: string; }) => {
-  selectedOption.value = option;
-  formData.vacationType = option.vacationTypeName;
-  emit('update:modelValue', { ...formData })  // formData 업데이트
-  isOpen.value = false;
+const closeDropdown = () => {
+  isDropdownOpen.value = false;
 };
 
-// formData 변경 시 부모에게 자동 전달
-watch(
-  formData,
-  (newValue) => {
-    emit('update:modelValue', { ...newValue });
-  },
-  { deep: true }
-);
+const selectVacationType = (option: VacationTypeResponseDTO) => {
+  if (props.readonly) return;
+  formData.vacationType = option.vacationTypeId; // ID 저장
+  isDropdownOpen.value = false;
+};
+
+/**
+ * 현재 선택된 휴가 종류의 '이름'을 계산
+ * (Readonly와 Writable 모드 둘 다 사용)
+ */
+const currentVacationTypeName = computed(() => {
+  const targetId = formData.vacationType;
+
+  // 1. 선택된 값이 없으면 null
+  if (!targetId) return null;
+
+  // 2. 목록이 로드되지 않았으면 기존 값(ID)이라도 잠시 보여줌 (혹은 빈값)
+  if (!vacationTypes.value) return targetId;
+
+  // 3. ID로 매칭 (String 변환 후 비교 권장)
+  const matched = vacationTypes.value.find(v => v.vacationTypeId === targetId);
+
+  // 4. 매칭된 객체가 있으면 이름 반환, 없으면(예외 케이스) 원래 값 반환
+  return matched ? matched.vacationTypeName : targetId;
+});
+
+
+// --- Readonly Helper ---
+const formatDateRange = (startDate: string, endDate: string): string => {
+  if (!startDate || !endDate) return '-';
+
+  const format = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+  };
+
+  return `${format(startDate)} ~ ${format(endDate)}`;
+};
+
+// --- Readonly Formatters ---
+const formatReadOnlyDate = (dateStr: string) => {
+  if (!dateStr) return '-';
+  const [year, month, day] = dateStr.split('-');
+  if (!year || !month || !day) return dateStr;
+  return `${year}년 ${month}월 ${day}일`;
+};
+
 </script>
 
 <style scoped>
@@ -175,8 +223,6 @@ watch(
   border-radius: 0 0 14px 14px;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  font-family: "Inter-Regular", sans-serif;
 }
 
 .form-row {
@@ -242,14 +288,13 @@ watch(
   font-weight: 400;
 }
 
-/* 휴가 종류 드롭다운 */
 .col-type {
   width: 208px;
   flex-shrink: 0;
 }
 
 .dropdown-box {
-  height: 46px; 
+  height: 46px;
   padding: 0 12px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -262,8 +307,12 @@ watch(
   transition: border-color 0.2s;
 }
 
-.dropdown-box:hover, .dropdown-box.is-open {
+.dropdown-box:hover,
+.dropdown-box.is-open {
   border-color: #cbd5e1;
+  z-index: 50;
+  /* 추가: 배경 위로 올라오게 함 */
+  position: relative;
 }
 
 .dropdown-value {
@@ -304,7 +353,7 @@ watch(
   margin-top: 4px;
   padding: 0;
   list-style: none;
-  z-index: 10;
+  z-index: 50;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   max-height: 200px;
   overflow-y: auto;
@@ -368,18 +417,24 @@ watch(
   height: 100%;
 }
 
-.native-date-input::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  opacity: 0.6;
-}
-
-.native-date-input::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
+.date-input:focus {
+  outline: none;
+  border-color: #cbd5e1;
 }
 
 .tilde {
   color: #90a1b9;
   font-size: 16px;
+}
+
+.overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+  z-index: 40;
 }
 
 .reason-content {
@@ -401,11 +456,42 @@ watch(
   transition: border-color 0.2s;
 }
 
+.input-textarea:focus {
+  border-color: #cbd5e1;
+}
+
 .input-textarea::placeholder {
   color: #90a1b9;
 }
 
-.input-textarea:focus {
-  border-color: #cbd5e1;
+/* 읽기 전용 모드 스타일 */
+.readonly-value {
+  /* flex: 1; */
+  padding: 10px 12px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.readonly-textarea {
+  width: 100%;
+  height: 200px;
+  background-color: #f9fafb;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.value-text {
+  flex: 1;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>

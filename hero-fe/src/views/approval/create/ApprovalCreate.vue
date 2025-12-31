@@ -13,6 +13,7 @@
  *   2025/12/24 - 민철 작성 UI 최종 구현(제목/분류/결재선/참고목록 지정)
  *   2025/12/25 - 민철 서식 목록에서 서식ID 쿼리스트링으로 전달받기
  *   2025/12/26 - 민철 Composable 사용 및 타입 안정성 개선, 미리보기 주석처리
+ *   2025/12/30 - 지윤 지연 출근 수정 로직 관련 함수(preloadModifyWorkRecord) 추가
  * </pre>
  *
  * @module approval
@@ -99,6 +100,7 @@ import {
 import { useApprovalTemplateStore } from '@/stores/approval/approval.store';
 import { useAuthStore } from '@/stores/auth';
 import { storeToRefs } from 'pinia';
+import apiClient from '@/api/apiClient';
 
 /* ========================================== */
 /* Router & Composables */
@@ -131,12 +133,42 @@ onMounted(async () => {
     await approvalStore.fetchTemplate(idFromQuery);
   }
   
+  await preloadModifyWorkRecord();
 });
 
 
 
 const commonFormRef = ref<InstanceType<typeof ApprovalCreateCommonForm>>();
 const sectionData = ref<any>({});
+
+// 지연 출근 수정 로직에 사용되는 함수
+// Personal.vue에서 attendanceId를 받기 위해서 사용
+const preloadModifyWorkRecord = async (): Promise<void> => {
+  if (props.formName !== 'modifyworkrecord') return;
+
+  const attendanceId = Number(route.query.attendanceId);
+  if (!attendanceId) return;
+
+  if (sectionData.value?.attendanceId === attendanceId) return;
+
+  try {
+    const { data } = await apiClient.get(`/attendance/${attendanceId}`);
+    const toHHmm = (t?: string | null) => (t ? t.substring(0, 5) : '00:00');
+    const workDate = data.workDate ?? data.work_date ?? '';
+    const start = toHHmm(data.startTime ?? data.start_time);
+    const end = toHHmm(data.endTime ?? data.end_time);
+
+    sectionData.value = {
+      targetDate: workDate,
+      correctedStart: start,
+      correctedEnd: end,
+      reason: '',
+      attendanceId,
+    };
+  } catch (e) {
+    console.error('❌ 근태 단건 조회 실패:', e);
+  }
+};
 
 // 섹션 컴포넌트 매핑
 const sectionMap: Record<string, any> = {
