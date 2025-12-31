@@ -65,6 +65,7 @@ jobs:
         aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         application_name: Hero-hrsystem-front
         environment_name: Hero-hrsystem-front-env
+        use_existing_version_if_available: true
         version_label: github-action-${{ github.sha }}
         region: ap-northeast-2
         deployment_package: hero-fe/deploy/deploy.zip
