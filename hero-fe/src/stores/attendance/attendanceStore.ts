@@ -11,6 +11,7 @@
 
 import { defineStore } from 'pinia'
 import apiClient from '@/api/apiClient'
+import Personal from '@/views/attendance/attendance_record/Personal.vue'
 
 /**
  * 개인 근태 이력 한 건에 대한 DTO
@@ -50,6 +51,13 @@ export interface PageResponse<T> {
   last: boolean
 }
 
+export interface SelectedAttendanceRow {
+  attendanceId: number
+  workDate: string
+  startTime: string   
+  endTime: string    
+}
+
 /**
  * Attendance 스토어 내부 상태 타입
  */
@@ -72,6 +80,7 @@ interface AttendanceState {
   lateCount: number
   absentCount: number
   earlyCount: number
+  selectedRow: SelectedAttendanceRow  | null
 }
 
 /**
@@ -98,6 +107,7 @@ export const useAttendanceStore = defineStore('attendanceStore', {
     lateCount: 0,
     absentCount: 0,
     earlyCount: 0,
+    selectedRow: null
   }),
 
   actions: {
@@ -173,5 +183,13 @@ export const useAttendanceStore = defineStore('attendanceStore', {
         console.error('개인 근태 요약 조회 실패:', error)
       }
     },
+
+    setSelectdRow(row: SelectedAttendanceRow): void{
+      this.selectedRow = row
+    },
+
+    clearSelectedRow(): void{
+      this.selectedRow = null
+    }
   },
 })

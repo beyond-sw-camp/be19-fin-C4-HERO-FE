@@ -8,10 +8,11 @@
 
   History
   2025/12/10 - 이지윤 최초 작성
+  2025/12/30 - (지윤) 디자인 수정
   </pre>
 
   @author 이지윤
-  @version 1.1
+  @version 1.2
 -->
 
 <template>

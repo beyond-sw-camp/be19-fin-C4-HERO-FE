@@ -13,7 +13,7 @@
  *   2025/12/24 - 민철 작성 UI 최종 구현(제목/분류/결재선/참고목록 지정)
  *   2025/12/25 - 민철 서식 목록에서 서식ID 쿼리스트링으로 전달받기
  *   2025/12/26 - 민철 Composable 사용 및 타입 안정성 개선, 미리보기 주석처리
- *   2025/12/30 - 지윤 지연 출근 수정 로직 관련 함수(preloadModifyWorkRecord) 추가
+ *   2025/12/31 - 지윤 지연 근무 신청/초과 근무 신청에 관한 로직 추가 script 부분에 표시
  * </pre>
  *
  * @module approval
@@ -81,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted} from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useApprovalDocument } from '@/composables/approval/useApprovalDocument';
 import { ApprovalDocumentRequestDTO } from '@/types/approval/approval_request.types';
@@ -100,7 +100,11 @@ import {
 import { useApprovalTemplateStore } from '@/stores/approval/approval.store';
 import { useAuthStore } from '@/stores/auth';
 import { storeToRefs } from 'pinia';
-import apiClient from '@/api/apiClient';
+import { useAttendanceStore } from '@/stores/attendance/attendanceStore';
+
+
+const commonFormRef = ref<InstanceType<typeof ApprovalCreateCommonForm>>();
+const sectionData = ref<any>({});
 
 /* ========================================== */
 /* Router & Composables */
@@ -111,8 +115,9 @@ const route = useRoute();
 const { saveDraft, submit } = useApprovalDocument();
 const approvalStore = useApprovalTemplateStore();
 const authStore = useAuthStore();
-
 const { template } = storeToRefs(approvalStore);
+const attendanceStore = useAttendanceStore();
+const { selectedRow } = storeToRefs(attendanceStore);
 
 /* ========================================== */
 /* Props */
@@ -121,6 +126,50 @@ const { template } = storeToRefs(approvalStore);
 const props = defineProps<{
   formName: string;
 }>();
+
+
+/* ========================================== */
+/* (지윤) - 지연근무/초과 근무 로직 관련 함수 */
+/* ========================================== */
+const toHHmm = (t?: string | null) => (t ? String(t).substring(0, 5) : '00:00');
+
+const preloadModifyWorkRecord = (): void => {
+  if (props.formName !== 'modifyworkrecord') return;
+
+  const stored = selectedRow.value;
+  const attendanceId = stored?.attendanceId ?? Number(route.query.attendanceId);
+  if (!attendanceId) return;
+
+  if (stored && stored.attendanceId === attendanceId) {
+    sectionData.value = {
+      attendanceId,
+      targetDate: stored.workDate,
+      correctedStart: toHHmm(stored.startTime),
+      correctedEnd: toHHmm(stored.endTime),
+      reason: '',
+    };
+  }
+};
+
+const preloadOvertime = (): void => {
+  if (props.formName !== 'overtime') return;
+
+  const storedWorkDate = selectedRow.value?.workDate;
+  const workDate = storedWorkDate ?? String(route.query.workDate ?? '');
+  if (!workDate) return;
+
+  sectionData.value = {
+    workDate,
+    startTime: sectionData.value?.startTime ?? '00:00',
+    endTime: sectionData.value?.endTime ?? '00:00',
+    reason: sectionData.value?.reason ?? '',
+  };
+};
+
+const preloadByForm = (): void => {
+  preloadModifyWorkRecord();
+  preloadOvertime();
+};
 
 /* ========================================== */
 /* Lifecycle */
@@ -132,43 +181,11 @@ onMounted(async () => {
   if (idFromQuery) {
     await approvalStore.fetchTemplate(idFromQuery);
   }
+
+  preloadByForm();
   
-  await preloadModifyWorkRecord();
 });
 
-
-
-const commonFormRef = ref<InstanceType<typeof ApprovalCreateCommonForm>>();
-const sectionData = ref<any>({});
-
-// 지연 출근 수정 로직에 사용되는 함수
-// Personal.vue에서 attendanceId를 받기 위해서 사용
-const preloadModifyWorkRecord = async (): Promise<void> => {
-  if (props.formName !== 'modifyworkrecord') return;
-
-  const attendanceId = Number(route.query.attendanceId);
-  if (!attendanceId) return;
-
-  if (sectionData.value?.attendanceId === attendanceId) return;
-
-  try {
-    const { data } = await apiClient.get(`/attendance/${attendanceId}`);
-    const toHHmm = (t?: string | null) => (t ? t.substring(0, 5) : '00:00');
-    const workDate = data.workDate ?? data.work_date ?? '';
-    const start = toHHmm(data.startTime ?? data.start_time);
-    const end = toHHmm(data.endTime ?? data.end_time);
-
-    sectionData.value = {
-      targetDate: workDate,
-      correctedStart: start,
-      correctedEnd: end,
-      reason: '',
-      attendanceId,
-    };
-  } catch (e) {
-    console.error('❌ 근태 단건 조회 실패:', e);
-  }
-};
 
 // 섹션 컴포넌트 매핑
 const sectionMap: Record<string, any> = {
@@ -284,6 +301,7 @@ const handleSubmit = async () => {
     console.error('❌ 상신 에러:', error);
   }
 };
+
 </script>
 
 <style scoped>
