@@ -7,7 +7,7 @@
  * - 부모 컴포넌트: ApprovalDetail.vue
  *
  * History
- *   2025/12/26 - 민철 최초 작성 (ApprovalCreateCommonForm 기반 읽기 전용 버전)
+ *   2025/12/26 (민철) 최초 작성 (ApprovalCreateCommonForm 기반 읽기 전용 버전)
  * </pre>
  *
  * @module approval
@@ -154,7 +154,7 @@
                                                 <div class="card-inner">
                                                     <div class="avatar-circle">
                                                         <span class="avatar-text">{{ approver.approverName?.charAt(0)
-                                                        }}</span>
+                                                            }}</span>
                                                     </div>
                                                     <div class="card-details">
                                                         <div class="detail-row">
@@ -163,7 +163,7 @@
                                                         </div>
                                                         <div class="detail-row">
                                                             <span class="detail-dept">{{ approver.departmentName
-                                                            }}</span>
+                                                                }}</span>
                                                         </div>
                                                         <div class="detail-row">
                                                             <span class="detail-role"

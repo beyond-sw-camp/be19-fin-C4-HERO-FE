@@ -46,7 +46,7 @@ export const useApprovalTemplateStore = defineStore('approvalTemplate', {
                 return data;
             } catch (error) {
                 console.error('서식 목록 조회 실패:', error);
-            } 
+            }
         },
 
         async fetchTemplate(templateId: number) {
@@ -55,7 +55,7 @@ export const useApprovalTemplateStore = defineStore('approvalTemplate', {
                 this.template = data;
             } catch (error) {
                 console.error('서식 상세 조회 실패:', error);
-            } 
+            }
         },
 
         async toggleBookmark(templateId: number) {
@@ -65,7 +65,7 @@ export const useApprovalTemplateStore = defineStore('approvalTemplate', {
             } catch (error) {
                 console.error('즐겨찾기 변경 실패:', error);
                 alert('즐겨찾기 변경 실패');
-            } 
+            }
         },
     }
 });

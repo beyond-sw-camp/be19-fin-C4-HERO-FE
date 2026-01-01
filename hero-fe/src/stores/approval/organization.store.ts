@@ -15,8 +15,8 @@
  *   - removeSelectedEmployee: 직원 선택 해제
  *
  * History
- *   2025/12/26 - 최초 작성
- *   2025/12/26 - toggleDepartment 반응성 수정
+ *   2025/12/26 (민철) 최초 작성
+ *   2025/12/26 (민철) toggleDepartment 반응성 수정
  *
  * </pre>
  *
@@ -192,16 +192,16 @@ export const useOrganizationStore = defineStore('organization', () => {
    */
   const toggleDepartment = (departmentId: number) => {
     const newSet = new Set(expandedDepartments.value);
-    
+
     if (newSet.has(departmentId)) {
       newSet.delete(departmentId);
     } else {
       newSet.add(departmentId);
     }
-    
+
     // ✅ 새 Set으로 재할당 (Vue가 변경 감지)
     expandedDepartments.value = newSet;
-    
+
     console.log('🔄 toggleDepartment:', departmentId, 'expanded:', expandedDepartments.value);
   };
 

@@ -37,3 +37,24 @@ export interface ResignTypeResponseDTO {
 export interface BeforePayrollResponseDTO {
     beforePayroll: number;
 }
+
+export interface PersonnelTypesResponseDTO {
+    departments: Department[],
+    grades: Grade[],
+    jobTitles: JobTitle[]
+}
+
+export interface Department {
+    departmentId: number;
+    departmentName: string;
+}
+
+export interface Grade {
+    gradeId: number;
+    grade: string;
+}
+
+export interface JobTitle {
+    jobTitleId: number;
+    jobTitle: string;
+}

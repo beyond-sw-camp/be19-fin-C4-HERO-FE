@@ -194,18 +194,6 @@ const currentVacationTypeName = computed(() => {
 });
 
 
-// --- Readonly Helper ---
-const formatDateRange = (startDate: string, endDate: string): string => {
-  if (!startDate || !endDate) return '-';
-
-  const format = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
-  };
-
-  return `${format(startDate)} ~ ${format(endDate)}`;
-};
-
 // --- Readonly Formatters ---
 const formatReadOnlyDate = (dateStr: string) => {
   if (!dateStr) return '-';

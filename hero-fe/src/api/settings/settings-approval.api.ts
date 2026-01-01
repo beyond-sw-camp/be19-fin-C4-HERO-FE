@@ -10,6 +10,7 @@
  * History
  * 2025/12/21 (민철) 결재 관리 설정 api (목록조회/서식별설정조회/서식별설정저장)
  * 2025/12/22 (민철) 결재 설정 저장 api 추가
+ * 2025/12/31 (민철) 로그 제거
  * </pre>
  *
  * @author 민철
@@ -33,25 +34,21 @@ import {
 export const settingsApprovalApi = {
     getList: async () => {
         const response = await apiClient.get<SettingsDocumentTemplateResponseDTO[]>('/settings/approvals/templates');
-        console.log('서식',response.data);
         return response.data;
     },
 
     getDepartmentList: async () => {
         const response = await apiClient.get<DepartmentResponseDTO[]>('/settings/approvals/departments');
-        console.log('부서',response.data);
         return response.data;
     },
 
     getDefaultSettings: async (templateId: number) => {
         const response = await apiClient.get<SettingsApprovalResponseDTO>(`/settings/approvals/templates/${templateId}`);
-        console.log('기본설정',response.data);
         return response.data;
     },
-    
+
     saveSettings: async (templateId: number, data: SettingsApprovalRequestDTO) => {
         const response = await apiClient.put<SettingsApprovalResponseDTO>(`/settings/approvals/templates/${templateId}`, data);
-        console.log('저장',response.data);
         return response.data;
     }
 };

@@ -13,8 +13,8 @@
  *   - 선택된 직원 확인
  *
  * History
- *   2025/12/24 - 민철 최초 작성
- *   2025/12/26 - 민철 API 연동 완료
+ *   2025/12/24 (민철) 최초 작성
+ *   2025/12/26 (민철) API 연동 완료
  *
  * </pre>
  *
@@ -24,11 +24,11 @@
 -->
 <template>
   <article class="org-chart-container">
-    
+
     <!-- 헤더 -->
     <header class="header">
       <div class="header-title">
-        <img src="/images/aaaapeople.svg" alt="" width="24" height="24"/>
+        <img src="/images/aaaapeople.svg" alt="" width="24" height="24" />
         <span>조직도</span>
       </div>
       <button aria-label="닫기" @click="handleClose">
@@ -39,12 +39,7 @@
     <!-- 검색 영역 -->
     <section class="search-area">
       <label class="search-box">
-        <input 
-          type="text" 
-          placeholder="이름, 부서, 직책으로 검색..." 
-          v-model="searchInput"
-          @input="handleSearchInput"
-        />
+        <input type="text" placeholder="이름, 부서, 직책으로 검색..." v-model="searchInput" @input="handleSearchInput" />
       </label>
     </section>
 
@@ -55,11 +50,7 @@
         <button @click="orgStore.clearSelectedEmployees">전체 해제</button>
       </div>
       <div class="selected-list">
-        <div 
-          v-for="emp in selectedEmployees" 
-          :key="emp.approverId"
-          class="selected-item"
-        >
+        <div v-for="emp in selectedEmployees" :key="emp.approverId" class="selected-item">
           <span>{{ emp.approverName }} ({{ emp.gradeName }})</span>
           <button @click="orgStore.removeSelectedEmployee(emp.approverId)">×</button>
         </div>
@@ -77,12 +68,8 @@
         <span>검색 결과 ({{ searchResults.length }}명)</span>
       </div>
       <ul class="result-list">
-        <li 
-          v-for="employee in searchResults" 
-          :key="employee.employeeId"
-          @click="handleEmployeeClick(employee)"
-          :class="['user-card', { 'selected': isEmployeeSelected(employee.employeeId) }]"
-        >
+        <li v-for="employee in searchResults" :key="employee.employeeId" @click="handleEmployeeClick(employee)"
+          :class="['user-card', { 'selected': isEmployeeSelected(employee.employeeId) }]">
           <div :class="['avatar', getAvatarColor(employee.employeeName)]">
             {{ getAvatarInitial(employee.employeeName) }}
           </div>
@@ -100,11 +87,7 @@
     <!-- 조직도 트리 -->
     <section v-else class="tree-content">
       <div v-if="organizationTree">
-        <TreeNode 
-          :node="organizationTree" 
-          :depth="1"
-          @employee-click="handleEmployeeClick"
-        />
+        <TreeNode :node="organizationTree" :depth="1" @employee-click="handleEmployeeClick" />
       </div>
       <div v-else class="empty-state">
         <span>조직도를 불러올 수 없습니다.</span>
@@ -144,12 +127,12 @@ const emit = defineEmits<{
 /* ========================================== */
 
 const orgStore = useOrganizationStore();
-const { 
-  organizationTree, 
-  searchResults, 
-  selectedEmployees, 
+const {
+  organizationTree,
+  searchResults,
+  selectedEmployees,
   isLoading,
-  selectedCount 
+  selectedCount
 } = storeToRefs(orgStore);
 
 const {
@@ -175,12 +158,12 @@ const searchInput = ref<string>('');
 onMounted(async () => {
   try {
     await orgStore.fetchOrganizationTree();
-    
+
     // ✅ 루트 노드 자동 확장 (departmentId = 0)
     if (organizationTree.value?.departmentId === 0) {
       toggleDepartment(0);
     }
-    
+
     console.log('✅ 조직도 로딩 완료:', organizationTree.value);
   } catch (error) {
     console.error('❌ 조직도 로딩 실패:', error);
@@ -196,7 +179,7 @@ onMounted(async () => {
  */
 const handleSearchInput = () => {
   const keyword = searchInput.value.trim();
-  
+
   if (keyword) {
     debouncedSearch(keyword);
   } else {
@@ -405,12 +388,29 @@ const handleConfirm = () => {
   font-size: 14px;
 }
 
-.bg-blue { background: #3b82f6; }
-.bg-purple { background: #8b5cf6; }
-.bg-green { background: #10b981; }
-.bg-orange { background: #f59e0b; }
-.bg-pink { background: #ec4899; }
-.bg-indigo { background: #6366f1; }
+.bg-blue {
+  background: #3b82f6;
+}
+
+.bg-purple {
+  background: #8b5cf6;
+}
+
+.bg-green {
+  background: #10b981;
+}
+
+.bg-orange {
+  background: #f59e0b;
+}
+
+.bg-pink {
+  background: #ec4899;
+}
+
+.bg-indigo {
+  background: #6366f1;
+}
 
 .user-info {
   flex: 1;

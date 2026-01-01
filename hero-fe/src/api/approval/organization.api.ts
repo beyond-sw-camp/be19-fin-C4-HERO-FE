@@ -9,7 +9,7 @@
  *   - getDepartmentEmployees: 특정 부서 직원 조회
  *
  * History
- *   2025/12/26 - 최초 작성
+ *   2025/12/26 (민철) 최초 작성
  *
  * </pre>
  *
