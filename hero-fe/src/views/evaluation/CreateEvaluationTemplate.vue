@@ -89,76 +89,79 @@
 
         <!-- 평가 항목 -->
         <h3 class="sub-title">평가 항목</h3>
-        <div
-            class="evaluation-container"
-            v-for="(item, index) in templateItems"
-            :key="index"
-        >
-            <!-- 섹션 헤더 -->
-            <header class="section-header">
-                <div class="number-badge">{{ index + 1 }}</div>
-                <h2 class="section-title">평가 항목</h2>
-                <button class="icon-button" @click="removeEvaluationItem(index)">
-                <img class="icon" src="/images/trashcan.svg" />
-                </button>
-            </header>
 
-            <!-- 항목 제목 -->
-            <section class="field-group">
-                <label>항목 제목</label>
-                <input
-                class="input-field"
-                type="text"
-                v-model="item.title"
-                placeholder="예: 업무 수행 능력"
-                />
-            </section>
+        <div class="evaluation-scroll">
+          <div
+              class="evaluation-container"
+              v-for="(item, index) in templateItems"
+              :key="index"
+          >
+              <!-- 섹션 헤더 -->
+              <header class="section-header">
+                  <div class="number-badge">{{ index + 1 }}</div>
+                  <h2 class="section-title">평가 항목</h2>
+                  <button class="icon-button" @click="removeEvaluationItem(index)">
+                  <img class="icon" src="/images/trashcan.svg" />
+                  </button>
+              </header>
 
-            <!-- 항목 설명 -->
-            <section class="field-group">
-                <label>항목 설명</label>
-                <textarea
-                class="textarea-field"
-                v-model="item.description"
-                placeholder="예: 이 항목은 직원의 업무 능력을 평가합니다"
-                ></textarea>
-            </section>
+              <!-- 항목 제목 -->
+              <section class="field-group">
+                  <label>항목 제목</label>
+                  <input
+                  class="input-field"
+                  type="text"
+                  v-model="item.title"
+                  placeholder="예: 업무 수행 능력"
+                  />
+              </section>
 
-            <!-- 평가 기준 영역 -->
-            <section class="criteria-section">
-                <label>항목별 평가 기준</label>
+              <!-- 항목 설명 -->
+              <section class="field-group">
+                  <label>항목 설명</label>
+                  <textarea
+                  class="textarea-field"
+                  v-model="item.description"
+                  placeholder="예: 이 항목은 직원의 업무 능력을 평가합니다"
+                  ></textarea>
+              </section>
 
-                <div
-                class="criteria-item"
-                v-for="(criteria, cIndex) in item.criteria"
-                :key="cIndex"
-                >
-                <div class="criteria-col">
-                    <label>등급</label>
-                    <input class="criteria-input" v-model="criteria.grade" />
-                </div>
-                <div class="criteria-col">
-                    <label>최소 점수</label>
-                    <input class="criteria-input" type="number" v-model="criteria.minScore" />
-                </div>
-                <div class="criteria-col">
-                    <label>최대 점수</label>
-                    <input class="criteria-input" type="number" v-model="criteria.maxScore" />
-                </div>
-                <div class="criteria-col flex-2">
-                    <label>설명</label>
-                    <input class="criteria-input" v-model="criteria.description" />
-                </div>
+              <!-- 평가 기준 영역 -->
+              <section class="criteria-section">
+                  <label>항목별 평가 기준</label>
 
-                <button class="icon-button small" @click="removeCriteria(index, cIndex)">
-                    <img class="icon" src="/images/trashcan.svg" />
-                </button>
-                </div>
+                  <div
+                  class="criteria-item"
+                  v-for="(criteria, cIndex) in item.criteria"
+                  :key="cIndex"
+                  >
+                  <div class="criteria-col">
+                      <label>등급</label>
+                      <input class="criteria-input" v-model="criteria.grade" />
+                  </div>
+                  <div class="criteria-col">
+                      <label>최소 점수</label>
+                      <input class="criteria-input" type="number" v-model="criteria.minScore" />
+                  </div>
+                  <div class="criteria-col">
+                      <label>최대 점수</label>
+                      <input class="criteria-input" type="number" v-model="criteria.maxScore" />
+                  </div>
+                  <div class="criteria-col flex-2">
+                      <label>설명</label>
+                      <input class="criteria-input" v-model="criteria.description" />
+                  </div>
 
-                <button class="add-criteria-btn" @click="addCriteria(index)">
-                항목별 기준 추가
-                </button>
-            </section>
+                  <button class="icon-button small" @click="removeCriteria(index, cIndex)">
+                      <img class="icon" src="/images/trashcan.svg" />
+                  </button>
+                  </div>
+
+                  <button class="add-criteria-btn" @click="addCriteria(index)">
+                  항목별 기준 추가
+                  </button>
+              </section>
+          </div>
         </div>
 
         <button class="add-box" @click="addEvaluationItem">
@@ -671,5 +674,11 @@ label {
 
 .back-icon {
     cursor: pointer;
+}
+
+.evaluation-scroll {
+  max-height: 500px;        
+  overflow-y: auto;
+  padding-right: 6px;      
 }
 </style>

@@ -189,8 +189,8 @@ const loadPromotionCandidates = async () => {
     dashboardData.value = data;
 
     // Python AI 분석
-    const res = await axios.post(
-      "http://127.0.0.1:8000/api/analyze/promotion",
+    const res = await apiClient.post(
+      "/ai/promotion",
       dashboardData.value
     );
 

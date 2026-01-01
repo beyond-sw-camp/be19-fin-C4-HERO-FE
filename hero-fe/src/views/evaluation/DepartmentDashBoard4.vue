@@ -35,13 +35,13 @@
             부서별 전분기 비교
           </button>
           <button 
-            class="tab"
+            class="tab active"
             @click="goViolation"
           >
             평가 가이드 라인 위반
           </button>
           <button 
-            class="tab active tab-end"
+            class="tab tab-end"
             @click="goRecommendation"
           >
             승진 대상자 추천
@@ -212,8 +212,8 @@ const analyzeViolation = async () => {
     analyzing.value = true;
     violations.value = [];
 
-    const res = await axios.post(
-      "http://127.0.0.1:8000/api/analyze/violation",
+    const res = await apiClient.post(
+      "/ai/violation",
       {
         guide: guideContent,
         template

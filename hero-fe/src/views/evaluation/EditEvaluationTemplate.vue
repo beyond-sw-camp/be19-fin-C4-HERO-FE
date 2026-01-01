@@ -83,62 +83,64 @@
         <!-- 평가 항목 -->
         <h3 class="sub-title">평가 항목</h3>
 
-        <div class="evaluation-container" v-for="(item, index) in templateItems" :key="index">
-          <!-- 헤더 -->
-          <header class="section-header">
-            <div class="number-badge">{{ index + 1 }}</div>
-            <h2 class="section-title">평가 항목</h2>
-            <button class="icon-button" @click="removeItem(index)">
-              <img class="icon" src="/images/trashcan.svg" />
-            </button>
-          </header>
-
-          <!-- 항목 제목 -->
-          <section class="field-group">
-            <label>항목 제목</label>
-            <input class="input-field" type="text" v-model="item.title" />
-          </section>
-
-          <!-- 항목 설명 -->
-          <section class="field-group">
-            <label>항목 설명</label>
-            <textarea class="textarea-field" v-model="item.description"></textarea>
-          </section>
-
-          <!-- 평가 기준 -->
-          <section class="criteria-section">
-            <label>항목별 평가 기준</label>
-
-            <div class="criteria-item" v-for="(criteria, cIdx) in item.criteria" :key="cIdx">
-              <div class="criteria-col">
-                <label>등급</label>
-                <input class="criteria-input" v-model="criteria.grade" />
-              </div>
-
-              <div class="criteria-col">
-                <label>최소 점수</label>
-                <input type="number" class="criteria-input" v-model="criteria.minScore" />
-              </div>
-
-              <div class="criteria-col">
-                <label>최대 점수</label>
-                <input type="number" class="criteria-input" v-model="criteria.maxScore" />
-              </div>
-
-              <div class="criteria-col flex-2">
-                <label>설명</label>
-                <input class="criteria-input" v-model="criteria.description" />
-              </div>
-
-              <button class="icon-button small" @click="removeCriteria(index, cIdx)">
+        <div class="evaluation-scroll">
+          <div class="evaluation-container" v-for="(item, index) in templateItems" :key="index">
+            <!-- 헤더 -->
+            <header class="section-header">
+              <div class="number-badge">{{ index + 1 }}</div>
+              <h2 class="section-title">평가 항목</h2>
+              <button class="icon-button" @click="removeItem(index)">
                 <img class="icon" src="/images/trashcan.svg" />
               </button>
-            </div>
+            </header>
 
-            <button class="add-criteria-btn" @click="addCriteria(index)">
-              + 항목별 기준 추가
-            </button>
-          </section>
+            <!-- 항목 제목 -->
+            <section class="field-group">
+              <label>항목 제목</label>
+              <input class="input-field" type="text" v-model="item.title" />
+            </section>
+
+            <!-- 항목 설명 -->
+            <section class="field-group">
+              <label>항목 설명</label>
+              <textarea class="textarea-field" v-model="item.description"></textarea>
+            </section>
+
+            <!-- 평가 기준 -->
+            <section class="criteria-section">
+              <label>항목별 평가 기준</label>
+
+              <div class="criteria-item" v-for="(criteria, cIdx) in item.criteria" :key="cIdx">
+                <div class="criteria-col">
+                  <label>등급</label>
+                  <input class="criteria-input" v-model="criteria.grade" />
+                </div>
+
+                <div class="criteria-col">
+                  <label>최소 점수</label>
+                  <input type="number" class="criteria-input" v-model="criteria.minScore" />
+                </div>
+
+                <div class="criteria-col">
+                  <label>최대 점수</label>
+                  <input type="number" class="criteria-input" v-model="criteria.maxScore" />
+                </div>
+
+                <div class="criteria-col flex-2">
+                  <label>설명</label>
+                  <input class="criteria-input" v-model="criteria.description" />
+                </div>
+
+                <button class="icon-button small" @click="removeCriteria(index, cIdx)">
+                  <img class="icon" src="/images/trashcan.svg" />
+                </button>
+              </div>
+
+              <button class="add-criteria-btn" @click="addCriteria(index)">
+                + 항목별 기준 추가
+              </button>
+            </section>
+          </div>
         </div>
 
         <!-- 평가 항목 추가 버튼 -->
@@ -650,5 +652,11 @@ label {
 
 .back-icon {
   cursor: pointer;
+}
+
+.evaluation-scroll {
+  max-height: 500px;        
+  overflow-y: auto;
+  padding-right: 6px;      
 }
 </style>

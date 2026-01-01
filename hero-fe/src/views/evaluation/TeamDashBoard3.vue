@@ -240,30 +240,35 @@ const analyzeEvaluatee = async () => {
   analyzing.value = true;
 
   const payload = {
-    template_name: dashboardData.value.find(
+    templateName: dashboardData.value.find(
       t => t.evaluationTemplateId === selectedTemplateId.value
     ).evaluationTemplateName,
-    employee_name: selectedEvaluatee.value.evaluationEvaluateeName,
-    employee_department: selectedEvaluatee.value.evaluationEvaluateeDepartmentName,
-    employee_grade: selectedEvaluatee.value.evaluationEvaluateeGrade,
-    total_score: selectedEvaluatee.value.evaluationEvaluateeTotalScore,
-    total_rank: selectedEvaluatee.value.evaluationEvaluateeTotalRank,
-    form_items: selectedEvaluatee.value.formItems.map((f: any) => ({
-      item_name: f.formItemName,
+
+    employeeName: selectedEvaluatee.value.evaluationEvaluateeName,
+    employeeDepartment: selectedEvaluatee.value.evaluationEvaluateeDepartmentName,
+    employeeGrade: selectedEvaluatee.value.evaluationEvaluateeGrade,
+    totalScore: selectedEvaluatee.value.evaluationEvaluateeTotalScore,
+    totalRank: selectedEvaluatee.value.evaluationEvaluateeTotalRank,
+
+    formItems: selectedEvaluatee.value.formItems.map((f: any) => ({
+      itemName: f.formItemName,
       score: f.formItemScore,
       weight: f.formItemWeight,
       comment: f.formItemComment,
     })),
   };
 
-  const { data } = await axios.post(
-    "http://127.0.0.1:8000/api/analyze/member",
-    payload
-  );
+  const res = await apiClient.post("/ai/analysis/member", payload);
 
-  strengths.value = data.strengths;
-  improvements.value = data.improvements;
-  actionPlan.value = data.action_plan;
+  console.log("RAW RESPONSE:", res);
+  console.log("REAL DATA:", res.data);
+
+  const realData = res.data;
+
+  strengths.value = realData.strengths ?? [];
+  improvements.value = realData.improvements ?? [];
+  actionPlan.value = realData.action_plan ?? [];
+
   analyzing.value = false;
 };
 

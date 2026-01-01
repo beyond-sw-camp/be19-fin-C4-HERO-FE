@@ -83,51 +83,53 @@
         <!-- 평가 항목 -->
         <h3 class="sub-title">평가 항목</h3>
 
-        <div
-          class="evaluation-container"
-          v-for="(item, index) in template?.templateItems"
-          :key="index"
-        >
-          <header class="section-header">
-            <div class="number-badge">{{ index + 1 }}</div>
-          </header>
+        <div class="evaluation-scroll">
+          <div
+            class="evaluation-container"
+            v-for="(item, index) in template?.templateItems"
+            :key="index"
+          >
+            <header class="section-header">
+              <div class="number-badge">{{ index + 1 }}</div>
+            </header>
 
-          <section class="field-group">
-            <label>항목 제목</label>
-            <div class="text-view">{{ item.templateItemItem }}</div>
-          </section>
+            <section class="field-group">
+              <label>항목 제목</label>
+              <div class="text-view">{{ item.templateItemItem }}</div>
+            </section>
 
-          <section class="field-group">
-            <label>항목 설명</label>
-            <div class="text-view">{{ item.templateItemDescription }}</div>
-          </section>
+            <section class="field-group">
+              <label>항목 설명</label>
+              <div class="text-view">{{ item.templateItemDescription }}</div>
+            </section>
 
-          <section class="criteria-section">
-            <label>항목별 평가 기준</label>
+            <section class="criteria-section">
+              <label>항목별 평가 기준</label>
 
-            <div
-              class="criteria-item"
-              v-for="(criteria, cIdx) in item.criterias"
-              :key="cIdx"
-            >
-              <div class="criteria-col">
-                <label>등급</label>
-                <div class="text-view small">{{ criteria.criteriaRank }}</div>
+              <div
+                class="criteria-item"
+                v-for="(criteria, cIdx) in item.criterias"
+                :key="cIdx"
+              >
+                <div class="criteria-col">
+                  <label>등급</label>
+                  <div class="text-view small">{{ criteria.criteriaRank }}</div>
+                </div>
+                <div class="criteria-col">
+                  <label>최소 점수</label>
+                  <div class="text-view small">{{ criteria.criteriaMinScore }}</div>
+                </div>
+                <div class="criteria-col">
+                  <label>최대 점수</label>
+                  <div class="text-view small">{{ criteria.criteriaMaxScore }}</div>
+                </div>
+                <div class="criteria-col flex-2">
+                  <label>설명</label>
+                  <div class="text-view">{{ criteria.criteriaDescription }}</div>
+                </div>
               </div>
-              <div class="criteria-col">
-                <label>최소 점수</label>
-                <div class="text-view small">{{ criteria.criteriaMinScore }}</div>
-              </div>
-              <div class="criteria-col">
-                <label>최대 점수</label>
-                <div class="text-view small">{{ criteria.criteriaMaxScore }}</div>
-              </div>
-              <div class="criteria-col flex-2">
-                <label>설명</label>
-                <div class="text-view">{{ criteria.criteriaDescription }}</div>
-              </div>
-            </div>
-          </section>
+            </section>
+          </div>
         </div>
       </div>
     </div>
@@ -608,5 +610,11 @@ label {
 .btn-container {
   display:flex; 
   gap:10px;
+}
+
+.evaluation-scroll {
+  max-height: 500px;        
+  overflow-y: auto;
+  padding-right: 6px;      
 }
 </style>
