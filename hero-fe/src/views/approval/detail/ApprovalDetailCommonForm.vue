@@ -8,11 +8,12 @@
  *
  * History
  *   2025/12/26 (민철) 최초 작성 (ApprovalCreateCommonForm 기반 읽기 전용 버전)
+ *   2026/01/01 (혜원) 첨부파일 다운로드 기능 구현
  * </pre>
  *
  * @module approval
- * @author 민철
- * @version 1.0
+ * @author 민철, 혜원
+ * @version 1.1
 -->
 <template>
     <div class="form-wrapper">
@@ -200,6 +201,32 @@
                                 </div>
                             </div>
 
+                            <div class="form-row">
+                                <div class="row-label">
+                                    <span class="label-text">첨부파일</span>
+                                </div>
+
+                                <div class="row-content file-content">
+                                    <div v-if="document.attachments && document.attachments.length > 0"
+                                        class="file-list-wrapper">
+                                        <div v-for="file in document.attachments" :key="file.attachmentId"
+                                            class="file-item" @click="onDownload(file)">
+                                            <div class="file-info">
+                                                <span class="file-icon">📎</span>
+                                                <span class="file-name">{{ file.originalFilename }}</span>
+                                                <span class="file-size">{{ formatFileSize(file.fileSize) }}</span>
+                                            </div>
+                                            <button class="btn-download-icon" type="button">
+                                                <i class="fas fa-download"></i> </button>
+                                        </div>
+                                    </div>
+
+                                    <div v-else class="no-file-text">
+                                        첨부된 파일이 없습니다.
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
 
                         <!-- 동적 상세 폼 섹션 (슬롯으로 각 서식별 컴포넌트 주입) -->
@@ -215,7 +242,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { ApprovalDocumentDetailResponseDTO } from '@/types/approval/approval_detail.types';
+import type { ApprovalDocumentDetailResponseDTO, ApprovalAttachmentResponseDTO } from '@/types/approval/approval_detail.types';
 
 const props = defineProps<{
     document: ApprovalDocumentDetailResponseDTO;
@@ -287,6 +314,31 @@ const getStatusLabel = (status: string): string => {
     };
     return labelMap[status] || '대기';
 };
+
+/**
+ * 파일 크기 포맷팅 (Bytes -> KB, MB)
+ */
+const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+/**
+ * 파일 다운로드 핸들러
+ * S3 Presigned URL을 사용하여 다운로드
+ */
+const onDownload = (file: ApprovalAttachmentResponseDTO) => {
+    // downloadUrl이 있으면 바로 다운로드
+    if (file.downloadUrl) {
+        window.open(file.downloadUrl, '_blank');
+    } else {
+        console.error('다운로드 URL이 없습니다:', file);
+        alert('파일 다운로드 URL을 찾을 수 없습니다.');
+    }
+};
 </script>
 
 <style scoped src="@/assets/styles/approval/commonform.css"></style>
@@ -310,5 +362,101 @@ const getStatusLabel = (status: string): string => {
 
 .ref-chip.readonly .btn-ref-delete {
     display: none;
+}
+
+/* 파일 목록 컨테이너 (스크롤 영역) */
+.file-list-wrapper {
+    /* 파일 항목 하나 높이(약 44px) * 3개 = 약 132px + 여유분 */
+    max-height: 140px; 
+    overflow-y: auto; /* 내용이 넘치면 세로 스크롤 생성 */
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+/* 개별 파일 항목 */
+.file-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+/* 마지막 항목은 밑줄 제거 */
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.file-item:hover {
+    background-color: #f8fafc;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    
+    gap: 8px;
+    flex: 1; /* 남은 공간 차지 */
+    min-width: 0; /* 텍스트 말줄임 처리를 위해 필수 */
+}
+
+.file-icon {
+    font-size: 16px;
+}
+
+.file-name {
+    font-size: 14px;
+    color: #334155;
+    font-weight: 500;
+    
+    /* 긴 파일명 말줄임 (...) 처리 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-size {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-left: 4px;
+    white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+.btn-download-icon {
+    border: none;
+    background: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.btn-download-icon:hover {
+    color: #3b82f6;
+}
+
+/* 스크롤바 커스텀 (Chrome, Safari, Edge) - 선택사항 */
+.file-list-wrapper::-webkit-scrollbar {
+    width: 6px;
+}
+.file-list-wrapper::-webkit-scrollbar-track {
+    background: #f1f5f9; 
+    border-radius: 4px;
+}
+.file-list-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1; 
+    border-radius: 4px;
+}
+.file-list-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; 
+}
+
+.no-file-text {
+    color: #94a3b8;
+    font-size: 14px;
+    padding: 12px 0;
 }
 </style>
