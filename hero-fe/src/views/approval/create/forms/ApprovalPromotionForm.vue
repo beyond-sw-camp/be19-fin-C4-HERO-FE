@@ -30,35 +30,28 @@
       <div class="row-content">
         <div class="section-body">
           <div class="input-group-row">
-
             <div class="input-group col-half">
               <div class="group-label">
                 <span class="label-text">추천 마감일 {{ readonly ? '' : '*' }}</span>
               </div>
-
               <div v-if="readonly" class="readonly-value">
                 <span class="value-text">{{ formData.nominationDeadlineAt || '-' }}</span>
               </div>
-
               <div v-else class="date-input-box">
                 <input type="date" v-model="formData.nominationDeadlineAt" class="native-input" />
               </div>
             </div>
-
             <div class="input-group col-half">
               <div class="group-label">
                 <span class="label-text">발령 예정일 {{ readonly ? '' : '*' }}</span>
               </div>
-
               <div v-if="readonly" class="readonly-value">
                 <span class="value-text">{{ formData.appointmentAt || '-' }}</span>
               </div>
-
               <div v-else class="date-input-box">
                 <input type="date" v-model="formData.appointmentAt" class="native-input" />
               </div>
             </div>
-
           </div>
         </div>
       </div>
@@ -105,9 +98,9 @@
                           src="/images/dropdownarrow.svg" alt="arrow" />
 
                         <ul v-if="activeTableDropdown === `${index}-dept`" class="dropdown-options">
-                          <li v-for="dept in deptOptions" :key="dept.value" class="dropdown-item"
-                            @click.stop="selectItem(index, 'departmentId', dept.value)">
-                            {{ dept.label }}
+                          <li v-for="dept in personnelTypes?.departments" :key="dept.departmentId" class="dropdown-item"
+                            @click.stop="selectItem(index, 'departmentId', dept.departmentId)">
+                            {{ dept.departmentName }}
                           </li>
                         </ul>
                       </div>
@@ -132,9 +125,9 @@
                           src="/images/dropdownarrow.svg" alt="arrow" />
 
                         <ul v-if="activeTableDropdown === `${index}-grade`" class="dropdown-options">
-                          <li v-for="grade in gradeOptions" :key="grade.value" class="dropdown-item"
-                            @click.stop="selectItem(index, 'gradeId', grade.value)">
-                            {{ grade.label }}
+                          <li v-for="grade in personnelTypes?.grades" :key="grade.gradeId" class="dropdown-item"
+                            @click.stop="selectItem(index, 'gradeId', grade.gradeId)">
+                            {{ grade.grade }}
                           </li>
                         </ul>
                       </div>
@@ -150,9 +143,7 @@
                   </td>
 
                   <td v-if="!readonly" class="text-center">
-                    <button type="button" class="btn-delete" @click="removeRow(index)">
-                      ✕
-                    </button>
+                    <button type="button" class="btn-delete" @click="removeRow(index)">✕</button>
                   </td>
                 </tr>
 
@@ -166,9 +157,7 @@
           </div>
 
           <div v-if="!readonly" class="button-area">
-            <button type="button" class="btn-add" @click="addRow">
-              + 행 추가
-            </button>
+            <button type="button" class="btn-add" @click="addRow">+ 행 추가</button>
           </div>
 
         </div>
@@ -191,7 +180,23 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, ref } from 'vue';
+import { reactive, watch, ref, onMounted } from 'vue';
+import { useApprovalDataStore } from '@/stores/approval/approval_data.store';
+import { storeToRefs } from 'pinia';
+
+// --- Store ---
+const approvalDataStore = useApprovalDataStore();
+const { personnelTypes } = storeToRefs(approvalDataStore); // departments, grades 등이 들어있음
+
+onMounted(async () => {
+  // 데이터가 없으면 로드 (중복 호출 방지)
+  if (!personnelTypes.value?.departments ||
+    (personnelTypes.value.departments.length === 0 &&
+      personnelTypes.value.grades.length === 0)
+  ) {
+    await approvalDataStore.fetchPersonnelTypes();
+  }
+});
 
 // --- Types ---
 interface DetailPlanItem {
@@ -201,8 +206,8 @@ interface DetailPlanItem {
 }
 
 export interface PromotionPlanFormData {
-  nominationDeadlineAt: string; // YYYY-MM-DD
-  appointmentAt: string;        // YYYY-MM-DD
+  nominationDeadlineAt: string;
+  appointmentAt: string;
   planContent: string;
   detailPlan: DetailPlanItem[];
 }
@@ -217,22 +222,6 @@ const emit = defineEmits<{
   'update:modelValue': [value: PromotionPlanFormData];
 }>();
 
-// --- Options (Mock Data) ---
-const deptOptions = [
-  { label: '기획팀', value: 1 },
-  { label: '인사팀', value: 2 },
-  { label: '영업팀', value: 3 },
-  { label: '개발팀', value: 4 },
-  { label: '디자인팀', value: 5 },
-  { label: '마케팅팀', value: 6 },
-];
-
-const gradeOptions = [
-  { label: '선임', value: 1 },
-  { label: '책임', value: 2 },
-  { label: '수석', value: 3 },
-];
-
 // --- State Management ---
 const formData = reactive<PromotionPlanFormData>({
   nominationDeadlineAt: props.modelValue?.nominationDeadlineAt || '',
@@ -243,17 +232,17 @@ const formData = reactive<PromotionPlanFormData>({
   ])
 });
 
-// [동기화] 부모 -> 자식
+// [동기화]
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
-    formData.nominationDeadlineAt = newVal.nominationDeadlineAt;
-    formData.appointmentAt = newVal.appointmentAt;
-    formData.planContent = newVal.planContent;
-    formData.detailPlan = [...newVal.detailPlan];
+    Object.assign(formData, newVal);
+    // 배열 딥카피
+    if (newVal.detailPlan) {
+      formData.detailPlan = newVal.detailPlan.map(item => ({ ...item }));
+    }
   }
 }, { deep: true });
 
-// [동기화] 자식 -> 부모
 watch(formData, (newVal) => {
   if (!props.readonly) {
     emit('update:modelValue', { ...newVal });
@@ -276,7 +265,6 @@ const removeRow = (index: number) => {
 
 
 // --- Table Dropdown Logic ---
-// 테이블 내 드롭다운은 여러 개이므로, 'rowIndex-colType' 형태의 키로 관리
 const activeTableDropdown = ref<string | null>(null);
 
 const toggleTableDropdown = (index: number, type: 'dept' | 'grade') => {
@@ -291,7 +279,6 @@ const closeDropdown = () => {
 
 const selectItem = (index: number, field: keyof DetailPlanItem, value: number) => {
   if (props.readonly) return;
-  // 해당 행의 데이터 업데이트
   const row = formData.detailPlan[index];
   if (row) {
     // @ts-ignore
@@ -301,12 +288,21 @@ const selectItem = (index: number, field: keyof DetailPlanItem, value: number) =
 };
 
 
-// --- Helper: ID -> Label 변환 ---
+// --- Helper: ID -> Label 변환 (Store 데이터 사용) ---
 const getLabel = (type: 'dept' | 'grade', id: number) => {
-  if (!id) return '-';
-  const options = type === 'dept' ? deptOptions : gradeOptions;
-  const found = options.find(opt => opt.value === id);
-  return found ? found.label : '-';
+  if (!id || !personnelTypes.value) return '-';
+
+  if (type === 'dept' && personnelTypes.value.departments) {
+    const found = personnelTypes.value.departments.find(d => d.departmentId === id);
+    return found ? found.departmentName : '-';
+  }
+
+  if (type === 'grade' && personnelTypes.value.grades) {
+    const found = personnelTypes.value.grades.find(g => g.gradeId === id);
+    return found ? found.grade : '-';
+  }
+
+  return '-';
 };
 
 </script>

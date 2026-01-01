@@ -10,7 +10,7 @@
  * - /approval/create/:formName: 결재 작성
  *
  * History
- *   2025/12/26 - 민철 최초 작성
+ *   2025/12/26 (민철) 최초 작성
  * </pre>
  *
  * @author 민철

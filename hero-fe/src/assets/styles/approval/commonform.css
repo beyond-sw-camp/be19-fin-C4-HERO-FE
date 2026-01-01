@@ -206,6 +206,7 @@
   display: flex;
   justify-content: center;
 }
+
 .stamp-role-label {
   color: #90a1b9;
   font-size: 12px;
@@ -432,6 +433,13 @@
   width: 100%;
   font-family: "Inter-Regular", sans-serif;
   font-size: 14px;
+  color: #0f172b;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-wrapper:focus {
+  border-color: #cbd5e1;
 }
 
 .input-wrapper::placeholder {

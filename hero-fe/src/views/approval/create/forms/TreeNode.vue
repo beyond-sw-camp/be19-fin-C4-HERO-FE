@@ -12,8 +12,8 @@
  *   - 직원 클릭 이벤트 전달
  *
  * History
- *   2025/12/26 - 민철 최초 작성
- *   2025/12/26 - 반응성 수정 (expandedDepartments storeToRefs)
+ *   2025/12/26 (민철) 최초 작성
+ *   2025/12/26 (민철) 반응성 수정 (expandedDepartments storeToRefs)
  *
  * </pre>
  *
@@ -42,10 +42,10 @@
             <template v-if="employeeChildren.length > 0">
                 <!-- 2-1. 하위 부서가 있으면 토글 노드 -->
                 <li v-if="hasDepartmentChildren" :key="`dept-${node.departmentId}-employees`">
-                    <div :class="['tree-row', 'employee-list-toggle', `depth-${depth + 1}`]" 
-                         @click="toggleEmployeeList">
-                        <img :class="['icon', 'icon-arrow', { 'rotated': isEmployeeListExpanded }]" 
-                             src="/images/dropdownarrow.svg" alt="" />
+                    <div :class="['tree-row', 'employee-list-toggle', `depth-${depth + 1}`]"
+                        @click="toggleEmployeeList">
+                        <img :class="['icon', 'icon-arrow', { 'rotated': isEmployeeListExpanded }]"
+                            src="/images/dropdownarrow.svg" alt="" />
                         <img class="icon" src="/images/organization.svg" alt="" />
                         <span class="node-name">{{ node.departmentName }} 소속 직원</span>
                         <span class="node-count">{{ employeeChildren.length }}명</span>
@@ -181,7 +181,7 @@ const hasDepartmentChildren = computed(() => {
 const departmentCountText = computed(() => {
     const deptCount = departmentChildren.value.length;
     const empCount = employeeChildren.value.length;
-    
+
     if (deptCount > 0 && empCount > 0) {
         return `${deptCount}개 팀 ${empCount}명`;
     } else if (deptCount > 0) {
@@ -340,12 +340,29 @@ ul {
     margin-right: 12px;
 }
 
-.bg-blue { background-color: #2196F3; }
-.bg-purple { background-color: #9C27B0; }
-.bg-green { background-color: #4CAF50; }
-.bg-orange { background-color: #FF9800; }
-.bg-pink { background-color: #E91E63; }
-.bg-indigo { background-color: #3F51B5; }
+.bg-blue {
+    background-color: #2196F3;
+}
+
+.bg-purple {
+    background-color: #9C27B0;
+}
+
+.bg-green {
+    background-color: #4CAF50;
+}
+
+.bg-orange {
+    background-color: #FF9800;
+}
+
+.bg-pink {
+    background-color: #E91E63;
+}
+
+.bg-indigo {
+    background-color: #3F51B5;
+}
 
 .user-info {
     flex: 1;
@@ -369,8 +386,19 @@ ul {
     font-weight: bold;
 }
 
-.depth-1 { padding-left: 12px; }
-.depth-2 { padding-left: 24px; }
-.depth-3 { padding-left: 36px; }
-.depth-4 { padding-left: 48px; }
+.depth-1 {
+    padding-left: 12px;
+}
+
+.depth-2 {
+    padding-left: 24px;
+}
+
+.depth-3 {
+    padding-left: 36px;
+}
+
+.depth-4 {
+    padding-left: 48px;
+}
 </style>

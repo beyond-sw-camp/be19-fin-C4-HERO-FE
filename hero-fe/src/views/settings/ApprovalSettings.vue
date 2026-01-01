@@ -7,8 +7,8 @@
   *  - 부모 컴포넌트: Settings.vue
   *
   * History
-  *   2025/12/18 - 민철 결재 관리 탭 UI 구현
-  *   2025/12/22 - 민철 설정 API 연동
+  *   2025/12/18 (민철) 결재 관리 탭 UI 구현
+  *   2025/12/22 (민철) 설정 API 연동
   * </pre>
   *
   * @module settings
@@ -27,22 +27,18 @@
 
       <div class="side-body scroll-area">
         <ul class="template-list">
-          <li 
-            v-for="doc in templateList" 
-            :key="doc.templateId" 
-            @click="selectDoc(doc)" 
-            :class="['template-item', selectedDoc?.templateId === doc.templateId ? 'active' : '']"
-          >
+          <li v-for="doc in templateList" :key="doc.templateId" @click="selectDoc(doc)"
+            :class="['template-item', selectedDoc?.templateId === doc.templateId ? 'active' : '']">
             <span class="col-category">{{ doc.category }}</span>
             <span class="col-name">{{ doc.templateName }}</span>
             <div class="col-step">
-              <span class="step-badge">{{ doc.steps != 0 ? doc.steps : 1}}단계</span>
+              <span class="step-badge">{{ doc.steps != 0 ? doc.steps : 1 }}단계</span>
             </div>
           </li>
         </ul>
-        
+
         <div v-if="templateList.length === 0" style="padding: 20px; text-align: center; color: #999; font-size: 13px;">
-            등록된 서식이 없습니다.
+          등록된 서식이 없습니다.
         </div>
       </div>
     </aside>
@@ -65,7 +61,7 @@
                 <div v-for="(step, index) in lines" :key="index" class="step-wrapper">
                   <div class="step-node" :class="{ 'is-fixed': index === 0 }">
                     <span class="step-number">{{ index + 1 }}단계</span>
-                    
+
                     <div v-if="index === 0" class="node-content">
                       <span class="node-label">기안자 (본인)</span>
                       <span class="node-subtext">DRAFTER</span>
@@ -76,12 +72,9 @@
                         <option value="DRAFTER_DEPT">직속부서장</option>
                         <option value="SPECIFIC_DEPT">담당부서</option>
                       </select>
-                      
-                      <select 
-                        v-if="step.targetType === 'SPECIFIC_DEPT'" 
-                        v-model="step.departmentId" 
-                        class="dept-select"
-                      >
+
+                      <select v-if="step.targetType === 'SPECIFIC_DEPT'" v-model="step.departmentId"
+                        class="dept-select">
                         <option :value="null" disabled>부서 선택</option>
                         <option v-for="dept in departmentList" :key="dept.departmentId" :value="dept.departmentId">
                           {{ dept.departmentName }}
@@ -93,11 +86,7 @@
                   <div v-if="index < lines.length - 1" class="step-line"></div>
                 </div>
 
-                <button 
-                  v-if="lines.length < 3" 
-                  class="btn-add-step" 
-                  @click="addStep"
-                >
+                <button v-if="lines.length < 3" class="btn-add-step" @click="addStep">
                   <span class="plus-icon">+</span>
                   <span>단계 추가</span>
                 </button>
@@ -107,36 +96,32 @@
 
             <section class="settings-card">
               <div class="card-title">참조 지정
-              <button class="btn-add-tag" @click="addReference">
+                <button class="btn-add-tag" @click="addReference">
                   + 참조 부서 추가
-              </button>
+                </button>
               </div>
-              
+
               <div class="reference-setup-container">
                 <div v-for="(refItem, index) in references" :key="index" class="ref-row">
                   <select v-model="refItem.targetType" class="node-select" @change="onTypeChange(refItem)">
                     <option value="DRAFTER_DEPT">직속부서</option>
                     <option value="SPECIFIC_DEPT">특정부서</option>
                   </select>
-                  
-                  <select 
-                    v-if="refItem.targetType === 'SPECIFIC_DEPT'" 
-                    v-model="refItem.departmentId" 
-                    class="dept-select"
-                    placeholder="부서선택"
-                  >
+
+                  <select v-if="refItem.targetType === 'SPECIFIC_DEPT'" v-model="refItem.departmentId"
+                    class="dept-select" placeholder="부서선택">
                     <option v-for="dept in departmentList" :key="dept.departmentId" :value="dept.departmentId">
                       {{ dept.departmentName }}
                     </option>
                   </select>
                   <button class="btn-del-ref" @click="removeReference(index)">삭제</button>
                 </div>
-                
+
                 <div v-if="references.length === 0" class="ref-empty">
                   등록된 참조 부서가 없습니다.
                 </div>
-                
-                
+
+
               </div>
             </section>
           </div>
@@ -190,7 +175,7 @@ const lines = ref<SettingsDefaultLineDTO[]>([
     departmentId: 0,
     approverId: 0
   },
-]); 
+]);
 
 const references = ref<SettingsDefaultRefDTO[]>([]);
 
@@ -204,7 +189,7 @@ const selectDoc = async (doc: any) => {
       approverId: 0
     },
 
-  ];  
+  ];
   references.value = [];
 
   try {
@@ -241,10 +226,10 @@ const addStep = () => {
   if (lines.value.length < 3) {
 
     const nextSeq = lines.value[lines.value.length - 1].seq;
-    lines.value.push({ 
-      seq: nextSeq + 1, 
-      targetType: 'DRAFTER_DEPT', 
-      departmentId: 0, 
+    lines.value.push({
+      seq: nextSeq + 1,
+      targetType: 'DRAFTER_DEPT',
+      departmentId: 0,
       approverId: 0
     });
 
@@ -254,7 +239,7 @@ const addStep = () => {
 const removeStep = (index: number) => {
   console.log('🗑️ removeStep 호출:', index);
   console.log('  - 삭제 전:', JSON.parse(JSON.stringify(lines.value)));
-  
+
   lines.value.splice(index, 1);
 
   lines.value.forEach((line, i) => {
@@ -267,7 +252,7 @@ const removeStep = (index: number) => {
 const addReference = () => {
   references.value.push({
     targetType: 'DRAFTER_DEPT',
-    departmentId: 0 ,
+    departmentId: 0,
     // referenceId: 0,
   });
 };
@@ -294,10 +279,10 @@ const handleSave = () => {
   });
 
   const message = templateStore.setDefaultSettings(
-    selectedDoc.value.templateId, 
+    selectedDoc.value.templateId,
     data.value
   );
-  
+
   alert(`${selectedDoc.value.templateName} ${message}`);
 };
 </script>

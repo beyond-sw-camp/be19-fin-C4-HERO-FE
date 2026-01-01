@@ -30,8 +30,8 @@ import type {
 
 export const useTemplateStore = defineStore('settings-approval', {
     state: () => ({
-       templateList: [] as SettingsDocumentTemplateResponseDTO[],
-       departmentList: [] as DepartmentResponseDTO[],
+        templateList: [] as SettingsDocumentTemplateResponseDTO[],
+        departmentList: [] as DepartmentResponseDTO[],
 
     }),
     actions: {
@@ -70,11 +70,11 @@ export const useTemplateStore = defineStore('settings-approval', {
                 return data;
             } catch (error) {
                 console.error('기본 설정 조회 실패:', error);
-                
+
             }
         },
 
-        setDefaultSettings (templateId: number, data: SettingsApprovalRequestDTO) {
+        setDefaultSettings(templateId: number, data: SettingsApprovalRequestDTO) {
             try {
                 const response = settingsApprovalApi.saveSettings(templateId, data);
                 console.log('기본 설정 저장 성공:', response);
@@ -84,6 +84,6 @@ export const useTemplateStore = defineStore('settings-approval', {
 
             }
         }
-    
+
     }
 });

@@ -17,9 +17,9 @@
 
 import { defineStore } from 'pinia';
 import { getInboxDocuments } from '@/api/approval/inbox.api';
-import type { 
-  DocumentsResponseDTO, 
-  InboxTab, 
+import type {
+  DocumentsResponseDTO,
+  InboxTab,
   InboxSearchParams
 } from '@/types/approval/inbox.types';
 
@@ -27,16 +27,16 @@ export const useInboxStore = defineStore('inbox', {
   state: () => ({
     // 문서 목록
     documents: [] as DocumentsResponseDTO[],
-    
+
     // 페이징 정보
     page: 0,
     size: 10,
     totalPages: 0,
     totalElements: 0,
-    
+
     // 현재 활성 탭
     activeTab: 'all' as InboxTab,
-    
+
     // 검색 조건
     searchParams: {
       fromDate: '',
@@ -44,7 +44,7 @@ export const useInboxStore = defineStore('inbox', {
       sortBy: 'all',
       condition: '',
     } as Omit<InboxSearchParams, 'page' | 'size' | 'tab'>,
-    
+
     // 로딩 상태
     loading: false,
   }),

@@ -7,7 +7,7 @@
  *   - getDocumentDetail: 문서 상세 정보 조회
  *
  * History
- *   2025/12/26 - 민철 최초 작성
+ *   2025/12/26 (민철) 최초 작성
  * </pre>
  *
  * @author 민철

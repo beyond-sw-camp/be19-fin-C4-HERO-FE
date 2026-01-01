@@ -7,8 +7,8 @@
   * - ApprovalCreate.vue: 서식 선택 시 작성화면으로 라우팅
   *
   * History
-  *   2025/12/10 - 민철 최초 작성
-  *   2025/12/23 - 민철 파일명 변경 
+  *   2025/12/10 (민철) 최초 작성
+  *   2025/12/23 (민철) 파일명 변경 
   * </pre>
   *
   * @module approval
@@ -19,37 +19,25 @@
   <div class="formtpl-container">
     <div class="formtpl-page">
       <div class="formtpl-panel">
-  
+
         <div class="formtpl-search-bar">
-          <input 
-            class="formtpl-search-input" 
-            type="text" 
-            v-model="searchKeyword"
-            placeholder="검색..." 
-          />
+          <input class="formtpl-search-input" type="text" v-model="searchKeyword" placeholder="검색..." />
           <button class="formtpl-search-button">검색</button>
         </div>
-  
+
         <div v-if="filteredList.length === 0" class="no-data-msg" style="text-align:center; padding: 20px; color:#666;">
           표시할 서식이 없습니다.
         </div>
 
-        <section 
-          v-if="bookmarkedForms.length > 0"
-          class="formtpl-section" 
-        >
+        <section v-if="bookmarkedForms.length > 0" class="formtpl-section">
           <div class="formtpl-section-header">
             <h2 class="formtpl-section-title">즐겨찾기</h2>
             <span class="formtpl-section-count">({{ bookmarkedForms.length }})</span>
           </div>
-  
+
           <div class="formtpl-list">
-            <button 
-              v-for="form in bookmarkedForms" 
-              :key="'bm-' + form.templateId"
-              class="formtpl-card is-favorite"
-              @click="handleCardClick(form)"
-            >
+            <button v-for="form in bookmarkedForms" :key="'bm-' + form.templateId" class="formtpl-card is-favorite"
+              @click="handleCardClick(form)">
               <div class="formtpl-meta">
                 <div class="formtpl-icon">
                   <img :src="getCategoryIcon(form.category)" :alt="form.category">
@@ -65,25 +53,16 @@
             </button>
           </div>
         </section>
-  
-        <section 
-          v-for="(forms, category) in groupedForms" 
-          :key="category"
-          class="formtpl-section" 
-        >
+
+        <section v-for="(forms, category) in groupedForms" :key="category" class="formtpl-section">
           <div class="formtpl-section-header">
             <h2 class="formtpl-section-title">{{ category }}</h2>
             <span class="formtpl-section-count">({{ forms.length }})</span>
           </div>
-  
+
           <div class="formtpl-list">
-            <button 
-              v-for="form in forms" 
-              :key="form.templateId"
-              class="formtpl-card"
-              :class="{ 'is-favorite': form.bookmarking }"
-              @click="handleCardClick(form)"
-            >
+            <button v-for="form in forms" :key="form.templateId" class="formtpl-card"
+              :class="{ 'is-favorite': form.bookmarking }" @click="handleCardClick(form)">
               <div class="formtpl-meta">
                 <div class="formtpl-icon">
                   <img :src="getCategoryIcon(form.category)" :alt="form.category">
@@ -99,7 +78,7 @@
             </button>
           </div>
         </section>
-  
+
       </div>
     </div>
   </div>
@@ -122,11 +101,11 @@ const { templates, isBookmarked } = storeToRefs(templateStore);
 
 const searchKeyword = ref<string>('');
 
-  
-  onMounted(() => {
-    templateStore.fetchTemplates();
-  });
-  
+
+onMounted(() => {
+  templateStore.fetchTemplates();
+});
+
 // const template = templates;
 
 const toggleBookmark = async (templateId: number) => {
@@ -135,7 +114,7 @@ const toggleBookmark = async (templateId: number) => {
 
   const target = rawForms.value.find(f => f.templateId === templateId);
   if (target) {
-      target.bookmarking = !target.bookmarking;
+    target.bookmarking = !target.bookmarking;
   }
 };
 
@@ -144,9 +123,9 @@ const rawForms = templates;
 const filteredList = computed(() => {
   const keyword = searchKeyword.value.trim();
   if (!keyword) return rawForms.value;
-  
-  return rawForms.value.filter(item => 
-    item.templateKey.includes(keyword) || 
+
+  return rawForms.value.filter(item =>
+    item.templateKey.includes(keyword) ||
     item.category.includes(keyword) ||
     item.templateName.includes(keyword)
   );
@@ -179,10 +158,10 @@ const getCategoryIcon = (category: string): string => {
 
 const handleCardClick = async (form: ApprovalTemplateResponseDTO) => {
   console.log('선택된 양식:', form.templateKey, form.templateId);
-  
+
   await router.push({
     name: 'ApprovalCreate',
-    params: { 
+    params: {
       formName: form.templateKey,
     },
     query: {
