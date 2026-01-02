@@ -17,17 +17,16 @@ import { onMounted } from 'vue';
 
 export const useInboxList = () => {
 
-    // 스토어 인스턴스 생성
     const store = useApprovalDocumentsStore();
 
     // 반응형 상태 추출 (Destructuring 시 반응형 유지를 위해 storeToRefs 사용)
-    const { 
-        documents, 
-        page, 
-        size, 
-        totalPages, 
-        totalElements, 
-        loading 
+    const {
+        documents,
+        page,
+        size,
+        totalPages,
+        totalElements,
+        loading
     } = storeToRefs(store);
 
     // 문서 목록 조회 함수

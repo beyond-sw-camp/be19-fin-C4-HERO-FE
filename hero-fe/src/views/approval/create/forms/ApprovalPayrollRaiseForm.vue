@@ -7,88 +7,84 @@
   *  - 부모 컴포넌트: ApprovalCreateCommonForm.vue
   *
   * History
-  *   2025/12/10 - 민철 최초 작성
-  *   2025/12/14 - 민철 공통 컴포넌트화
-  *   2025/12/23 - 민철 파일명 변경
+  * 2025/12/10 (민철) 최초 작성
+  * 2025/12/14 (민철) 공통 컴포넌트화
+  * 2025/12/23 (민철) 파일명 변경
+  * 2025/12/30 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
+  * 2025/12/30 (민철) 모두 지원하도록 수정
+  * 2025/12/30 (민철) Watch 최적화, Computed 적용
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 2.0
+  * @version 3.1
 -->
 <template>
   <div class="detail-form-section">
     <div class="form-row">
       <div class="row-label">
-        <span class="label-text">급여 인상 신청 정보</span>
+        <span class="label-text">급여인상신청정보</span>
       </div>
       <div class="row-content">
         <div class="section-body">
-          
-          <div class="radio-group-row">
+
+          <div v-if="!readonly" class="radio-group-row">
             <span class="label-text group-title">인상액 입력 방식을 선택하세요:</span>
             <div class="radio-group">
               <label class="radio-label">
-                <input type="radio" name="increaseType" value="direct" v-model="increaseType" />
+                <input type="radio" value="direct" v-model="increaseType" />
                 <span class="radio-text">직접 입력</span>
               </label>
               <label class="radio-label">
-                <input type="radio" name="increaseType" value="rate" v-model="increaseType" />
+                <input type="radio" value="rate" v-model="increaseType" />
                 <span class="radio-text">인상률로 계산</span>
               </label>
             </div>
           </div>
 
           <div class="input-group-row calculation-row">
-            
-            <!-- 인상률 입력 -->
+
             <div class="input-group col-rate">
-              <div class="input-box rate-box">
-                <input 
-                  v-if="increaseType === 'rate'"
-                  type="number" 
-                  class="input-invisible text-right" 
-                  v-model.number="raisePercent"
-                  placeholder="0.0"
-                  step="0.1"
-                  min="0"
-                />
-                <span v-else class="input-invisible text-right">{{ calculatedRate.toFixed(1) }}</span>
+              <span v-if="readonly" class="label-text group-title">인상률</span>
+              <div class="input-box rate-box" :class="{ 'active': increaseType === 'rate' && !readonly }">
+
+                <input v-if="!readonly && increaseType === 'rate'" type="number" class="input-invisible text-right"
+                  v-model.number="formData.raisePercent" placeholder="0.0" step="0.1" min="0" />
+
+                <span v-else class="input-invisible text-right">
+                  {{ formData.raisePercent ? formData.raisePercent.toFixed(1) : '0.0' }}
+                </span>
+
                 <span class="unit-text">%</span>
               </div>
             </div>
 
-            <!-- 기존 기본급 -->
             <div class="input-group col-salary">
               <div class="input-box salary-box disabled">
                 <span class="placeholder-text">기존 기본급</span>
-                <span class="input-value">{{ formatNumber(beforeSalary) }}</span>
+                <span class="input-value">{{ formatNumber(currentBaseSalary) }}</span>
                 <span class="unit-text">원</span>
               </div>
             </div>
 
             <div class="arrow-icon">&gt;</div>
 
-            <!-- ✅ 인상 후 기본급 (콤마 포맷팅 적용) -->
             <div class="input-group col-salary">
-              <div class="input-box salary-box active">
+              <div class="input-box salary-box"
+                :class="{ 'active': increaseType === 'direct' && !readonly, 'disabled': readonly }">
                 <span class="placeholder-text active-placeholder">인상 후 기본급</span>
-                
-                <!-- 직접입력 모드: 콤마 포맷팅 input -->
-                <input 
-                  v-if="increaseType === 'direct'"
-                  type="text"
-                  class="input-invisible text-right input-value active-value"
-                  v-model="displayAfterSalary"
-                  @focus="onFocus"
-                  @blur="onBlur"
-                  placeholder="0"
-                />
-                
-                <!-- 인상률 계산 모드: 계산된 값 표시 -->
-                <span v-else class="input-value active-value">{{ formatNumber(calculatedSalary) }}</span>
-                
-                <span class="unit-text active-unit">원</span>
+
+                <div class="value-wrapper">
+                  <input v-if="!readonly && increaseType === 'direct'" type="text"
+                    class="input-invisible text-right input-value active-value" v-model="displayAfterSalary"
+                    @focus="onFocus" @blur="onBlur" placeholder="0" />
+
+                  <span v-else class="input-value active-value text-right">
+                    {{ formatNumber(formData.afterSalary) }}
+                  </span>
+
+                  <span class="unit-text active-unit">원</span>
+                </div>
               </div>
             </div>
 
@@ -99,14 +95,13 @@
 
     <div class="form-row border-top">
       <div class="row-label label-bottom">
-        <span class="label-text">인상사유</span>
+        <span class="label-text">사유</span>
       </div>
       <div class="row-content reason-content">
-        <textarea 
-          v-model="reason"
-          class="input-textarea"
-          placeholder="인상사유를 입력해 주세요."
-        ></textarea>
+        <div v-if="readonly" class="readonly-textarea">
+          <span class="value-text">{{ formData.reason || '-' }}</span>
+        </div>
+        <textarea v-else v-model="formData.reason" class="input-textarea" placeholder="인상사유를 입력해 주세요."></textarea>
       </div>
     </div>
 
@@ -118,15 +113,10 @@ import { ref, reactive, watch, computed, onMounted } from 'vue';
 import { useApprovalDataStore } from '@/stores/approval/approval_data.store';
 import { storeToRefs } from 'pinia';
 
-const approvalDataStore = useApprovalDataStore();
-const { payroll } = storeToRefs(approvalDataStore);
-
-onMounted(async () => {
-  await approvalDataStore.fetchPayroll();
-});
-
+// Props & Emits
 const props = defineProps<{
   modelValue?: RaisePayrollFormData;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -134,11 +124,24 @@ const emit = defineEmits<{
 }>();
 
 export interface RaisePayrollFormData {
-  raisePercent: number;
-  beforeSalary: number;
-  afterSalary: number;
+  raisePercent: number;  // 인상률
+  beforeSalary: number;  // 인상 전 급여
+  afterSalary: number;   // 인상 후 급여
   reason: string;
 }
+
+// Store
+const approvalDataStore = useApprovalDataStore();
+const { payroll } = storeToRefs(approvalDataStore);
+
+onMounted(async () => {
+  if (!payroll.value) {
+    await approvalDataStore.fetchPayroll();
+  }
+});
+
+// --- State Management ---
+const increaseType = ref<'direct' | 'rate'>('rate'); // 입력 방식 (작성 모드용)
 
 const formData = reactive<RaisePayrollFormData>({
   raisePercent: props.modelValue?.raisePercent || 0,
@@ -147,97 +150,92 @@ const formData = reactive<RaisePayrollFormData>({
   reason: props.modelValue?.reason || ''
 });
 
-const increaseType = ref<'direct' | 'rate'>('rate');
-const raisePercent = ref(formData.raisePercent);
-const afterSalary = ref(formData.afterSalary);
-const reason = ref(formData.reason);
+// [동기화 1] 부모 -> 자식 (초기 로딩)
+watch(() => props.modelValue, (newVal) => {
+  if (newVal) {
+    Object.assign(formData, newVal);
+  }
+}, { deep: true });
 
-const beforeSalary = computed(() => {
-  return payroll.value?.beforePayroll || formData.beforeSalary || 0;
+// [동기화 2] 자식 -> 부모 (변경 시 emit)
+watch(formData, (newVal) => {
+  if (!props.readonly) {
+    emit('update:modelValue', { ...newVal });
+  }
+}, { deep: true });
+
+
+// --- Computed Logic ---
+
+/**
+ * 기존 기본급 계산
+ * 1. 저장된 값(modelValue)이 있으면 우선 사용 (조회 모드)
+ * 2. 없으면 스토어 값 사용 (신규 작성)
+ */
+const currentBaseSalary = computed(() => {
+  if (props.modelValue?.beforeSalary) {
+    return props.modelValue.beforeSalary;
+  }
+
+  const storeVal = payroll.value?.beforePayroll || 0;
+
+  // 작성 모드일 때 formData 동기화
+  if (!props.readonly && formData.beforeSalary !== storeVal) {
+    formData.beforeSalary = storeVal;
+  }
+  return storeVal;
 });
 
-// ✅ 포커스 상태 관리
+
+// --- Calculation Watchers ---
+
+// 1. 인상률 변경 시 -> 급여 자동 계산
+watch(() => formData.raisePercent, (newRate) => {
+  if (increaseType.value === 'rate' && !props.readonly) {
+    const base = currentBaseSalary.value;
+    if (base > 0) {
+      formData.afterSalary = Math.round(base * (1 + newRate / 100));
+    }
+  }
+});
+
+// 2. 급여 변경 시 -> 인상률 자동 계산
+watch(() => formData.afterSalary, (newSalary) => {
+  if (increaseType.value === 'direct' && !props.readonly) {
+    const base = currentBaseSalary.value;
+    if (base > 0 && newSalary > 0) {
+      const rate = ((newSalary - base) / base) * 100;
+      formData.raisePercent = Math.round(rate * 10) / 10; // 소수점 1자리 반올림
+    }
+  }
+});
+
+
+// --- Input Formatting (Comma) ---
 const isFocused = ref(false);
 
-// ✅ 화면에 표시할 포맷팅된 급여 값
 const displayAfterSalary = computed({
   get() {
     if (isFocused.value) {
-      // 포커스 시: 숫자만 표시 (편집하기 쉽게)
-      return afterSalary.value ? afterSalary.value.toString() : '';
+      return formData.afterSalary ? formData.afterSalary.toString() : '';
     } else {
-      // 블러 시: 콤마 포맷팅
-      return formatNumber(afterSalary.value);
+      return formatNumber(formData.afterSalary);
     }
   },
   set(value: string) {
-    // 입력값에서 숫자만 추출
     const numericValue = value.replace(/[^\d]/g, '');
-    afterSalary.value = numericValue ? parseInt(numericValue) : 0;
+    formData.afterSalary = numericValue ? parseInt(numericValue) : 0;
   }
 });
 
-// ✅ 포커스 이벤트 핸들러
-const onFocus = () => {
-  isFocused.value = true;
-};
-
-const onBlur = () => {
-  isFocused.value = false;
-};
-
-// 인상률로 계산된 급여
-const calculatedSalary = computed(() => {
-  if (increaseType.value === 'rate' && raisePercent.value !== null) {
-    return Math.round(beforeSalary.value * (1 + raisePercent.value / 100));
-  }
-  return afterSalary.value || 0;
-});
-
-// 급여로 역산된 인상률
-const calculatedRate = computed(() => {
-  if (increaseType.value === 'direct' && afterSalary.value > 0 && beforeSalary.value > 0) {
-    const rate = ((afterSalary.value - beforeSalary.value) / beforeSalary.value) * 100;
-    return Math.round(rate * 100) / 100;
-  }
-  return raisePercent.value || 0;
-});
+const onFocus = () => isFocused.value = true;
+const onBlur = () => isFocused.value = false;
 
 const formatNumber = (num: number | undefined) => {
-  if (num === undefined || num === null || isNaN(num)) {
-    return '0';
-  }
+  if (num === undefined || num === null || isNaN(num)) return '0';
   return num.toLocaleString('ko-KR');
 };
 
-// 인상률 변경 감지
-watch(raisePercent, (newRate) => {
-  if (increaseType.value === 'rate') {
-    const calculated = Math.round(beforeSalary.value * (1 + newRate / 100));
-    afterSalary.value = calculated;
-  }
-});
-
-// 급여 직접 입력 감지
-watch(afterSalary, (newSalaryValue) => {
-  if (increaseType.value === 'direct' && newSalaryValue > 0 && beforeSalary.value > 0) {
-    const rate = ((newSalaryValue - beforeSalary.value) / beforeSalary.value) * 100;
-    raisePercent.value = Math.round(rate * 100) / 100;
-  }
-});
-
-// formData 변경 시 부모에게 자동 전달
-watch(
-  [raisePercent, beforeSalary, afterSalary, reason],
-  ([newIncreaseRate, newCurrentSalary, newNewSalary, newReason]) => {
-    formData.raisePercent = newIncreaseRate;
-    formData.beforeSalary = newCurrentSalary;
-    formData.afterSalary = newNewSalary;
-    formData.reason = newReason;
-    
-    emit('update:modelValue', { ...formData });
-  }
-);
 </script>
 
 <style scoped>
@@ -358,13 +356,16 @@ watch(
 .input-invisible {
   border: none;
   background: transparent;
-  width: 100%;
+  width: fit-content;
   outline: none;
   font-size: 15px;
   color: #0f172b;
   font-family: inherit;
 }
-.text-right { text-align: right; }
+
+.text-right {
+  text-align: right;
+}
 
 .col-salary {
   flex: 1;
@@ -447,5 +448,35 @@ watch(
 
 .input-textarea:focus {
   border-color: #cbd5e1;
+}
+
+/* 읽기 전용 모드 스타일 */
+.readonly-value {
+  flex: 1;
+  padding: 10px 12px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.readonly-textarea {
+  width: 100%;
+  height: 200px;
+  background-color: #f9fafb;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.value-text {
+  flex: 1;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>

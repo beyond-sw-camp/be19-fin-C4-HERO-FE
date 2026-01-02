@@ -101,7 +101,7 @@ const attendanceRoutes: RouteRecordRaw[] = [
         path: 'dashboard',
         name: 'AttendanceDashboard',
         component: () =>
-          import('@/views/attendance/attendanceDashboard/index.vue'),
+          import('@/views/attendance/attendanceDashBoard/index.vue'),
         meta: {title: '근태 대시 보드'},
       },
     ],

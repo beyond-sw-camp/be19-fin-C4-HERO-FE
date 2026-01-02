@@ -7,14 +7,17 @@
   *  - 부모 컴포넌트: ApprovalCreateCommonForm.vue
   *
   * History
-  *   2025/12/10 - 민철 최초 작성
-  *   2025/12/14 - 민철 공통 컴포넌트화
-  *   2025/12/23 - 민철 파일명 변경
+  * 2025/12/10 (민철) 최초 작성
+  * 2025/12/14 (민철) 공통 컴포넌트화
+  * 2025/12/23 (민철) 파일명 변경
+  * 2025/12/30 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
+  * 2025/12/30 (민철) 모두 지원하도록 수정
+  * 2025/12/30 (민철) Watch 최적화, Computed 적용
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 2.0
+  * @version 3.1
 -->
 <template>
   <div class="detail-form-section">
@@ -25,13 +28,12 @@
       <div class="row-content">
         <div class="section-body">
           <div class="input-group-row">
-            
-          
+
             <div class="input-group col-amount">
               <div class="group-label">
-                <span class="label-text">조정 금액 *</span>
+                <span class="label-text">조정 금액 {{ readonly ? '' : '*' }}</span>
               </div>
-              
+
               <div class="calculation-box">
                 <div class="input-box disabled">
                   <span class="placeholder-text">기존</span>
@@ -43,18 +45,16 @@
 
                 <div class="arrow-icon">&gt;</div>
 
-                <!-- ✅ 콤마 포맷팅 적용된 입력 필드 -->
-                <div class="input-box active">
+                <div class="input-box active" :class="{ 'disabled': readonly }">
                   <span class="placeholder-text text-blue">조정</span>
                   <div class="value-wrapper">
-                    <input 
-                      type="text"
-                      v-model="displayAdjustmentAmount"
-                      @focus="onFocus"
-                      @blur="onBlur"
-                      class="input-invisible text-right" 
-                      placeholder="0"
-                    />
+
+                    <span v-if="readonly" class="input-value text-right text-blue">
+                      {{ formatNumber(formData.adjustmentAmount) }}
+                    </span>
+
+                    <input v-else type="text" v-model="displayAdjustmentAmount" @focus="onFocus" @blur="onBlur"
+                      class="input-invisible text-right" placeholder="0" />
                     <span class="unit-text text-blue">원</span>
                   </div>
                 </div>
@@ -71,11 +71,10 @@
         <span class="label-text">조정사유</span>
       </div>
       <div class="row-content reason-content">
-        <textarea 
-          v-model="reason"
-          class="input-textarea"
-          placeholder="조정사유를 입력해 주세요."
-        ></textarea>
+        <div v-if="readonly" class="readonly-textarea">
+          <span class="value-text">{{ formData.reason || '-' }}</span>
+        </div>
+        <textarea v-else v-model="formData.reason" class="input-textarea" placeholder="조정사유를 입력해 주세요."></textarea>
       </div>
     </div>
   </div>
@@ -86,16 +85,10 @@ import { ref, reactive, watch, computed, onMounted } from 'vue';
 import { useApprovalDataStore } from '@/stores/approval/approval_data.store';
 import { storeToRefs } from 'pinia';
 
-const approvalDataStore = useApprovalDataStore();
-const { payroll } = storeToRefs(approvalDataStore);
-
-onMounted( async () => {
-  await approvalDataStore.fetchPayroll();
-});
-
-// v-model을 위한 Props와 Emits
+// Props & Emits
 const props = defineProps<{
   modelValue?: ModifyPayrollFormData;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -104,37 +97,77 @@ const emit = defineEmits<{
 
 // 타입 정의
 export interface ModifyPayrollFormData {
-  currentAmount: number;      // 현재 금액
-  adjustmentAmount: number;   // 조정 후 금액
+  currentAmount: number;      // 기존 급여
+  adjustmentAmount: number;   // 조정 후 급여
   reason: string;             // 사유
 }
 
-// 폼 데이터 (reactive로 관리)
+// Store
+const approvalDataStore = useApprovalDataStore();
+const { payroll } = storeToRefs(approvalDataStore);
+
+onMounted(async () => {
+  if (!payroll.value) {
+    await approvalDataStore.fetchPayroll();
+  }
+});
+
+// --- State Management ---
 const formData = reactive<ModifyPayrollFormData>({
-  currentAmount: props.modelValue?.currentAmount || 2000000,
-  adjustmentAmount: props.modelValue?.adjustmentAmount || 2000000,
+  currentAmount: props.modelValue?.currentAmount || 0,
+  adjustmentAmount: props.modelValue?.adjustmentAmount || 0,
   reason: props.modelValue?.reason || ''
 });
 
+// [동기화 1] 부모 -> 자식 (초기 데이터 로딩)
+watch(() => props.modelValue, (newVal) => {
+  if (newVal) {
+    Object.assign(formData, newVal);
+  }
+}, { deep: true });
+
+// [동기화 2] 자식 -> 부모 (폼 변경 시 자동 emit)
+watch(formData, (newVal) => {
+  if (!props.readonly) {
+    emit('update:modelValue', { ...newVal });
+  }
+}, { deep: true });
+
+
+
+/**
+ * 기존 급여
+ * 1. API(Store)에서 가져온 값이 있으면 그 값 사용 (신규 작성 시)
+ * 2. 이미 저장된(modelValue) 값이 있으면 그 값 사용 (수정/조회 시)
+ * 3. 없으면 0
+ */
 const currentAmount = computed(() => {
-  return payroll.value?.beforePayroll || formData.currentAmount || 0;
+  if (props.modelValue?.currentAmount) {
+    return props.modelValue.currentAmount;
+  }
+  const storeVal = payroll.value?.beforePayroll || 0;
+
+  if (!props.readonly && formData.currentAmount !== storeVal) {
+    formData.currentAmount = storeVal;
+  }
+
+  return storeVal;
 });
-const adjustmentAmount = ref(formData.adjustmentAmount);
-const reason = ref(formData.reason);
+
 
 const isFocused = ref(false);
 
 const displayAdjustmentAmount = computed({
   get() {
     if (isFocused.value) {
-      return adjustmentAmount.value ? adjustmentAmount.value.toString() : '';
+      return formData.adjustmentAmount ? formData.adjustmentAmount.toString() : '';
     } else {
-      return formatNumber(adjustmentAmount.value);
+      return formatNumber(formData.adjustmentAmount);
     }
   },
   set(value: string) {
     const numericValue = value.replace(/[^\d]/g, '');
-    adjustmentAmount.value = numericValue ? parseInt(numericValue) : 0;
+    formData.adjustmentAmount = numericValue ? parseInt(numericValue) : 0;
   }
 });
 
@@ -146,7 +179,6 @@ const onBlur = () => {
   isFocused.value = false;
 };
 
-
 // 숫자 포맷팅 (천 단위 콤마)
 const formatNumber = (num: number | undefined) => {
   if (num === undefined || num === null || isNaN(num)) {
@@ -155,16 +187,6 @@ const formatNumber = (num: number | undefined) => {
   return num.toLocaleString('ko-KR');
 };
 
-// formData 변경 시 부모에게 자동 전달
-watch(
-  [() => currentAmount.value, adjustmentAmount, reason],
-  ([ newCurrentAmount, newAdjustedAmount, newReason]) => {
-    formData.currentAmount = newCurrentAmount;
-    formData.adjustmentAmount = newAdjustedAmount;
-    formData.reason = newReason;
-    emit('update:modelValue', { ...formData });
-  }
-);
 </script>
 
 <style scoped>
@@ -260,7 +282,8 @@ watch(
   box-sizing: border-box;
 }
 
-.dropdown-box:hover, .dropdown-box.is-open {
+.dropdown-box:hover,
+.dropdown-box.is-open {
   border-color: #cbd5e1;
 }
 
@@ -296,7 +319,7 @@ watch(
   right: 0;
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 6px; 
+  border-radius: 6px;
   margin-top: 4px;
   padding: 0;
   list-style: none;
@@ -366,7 +389,7 @@ watch(
   outline: none;
   font-size: 15px;
   color: #0f172b;
-  width: 100px;
+  width: fit-content;
 }
 
 .text-right {
@@ -412,8 +435,38 @@ watch(
 .input-textarea::placeholder {
   color: #94a3b8;
 }
+
 .input-textarea:focus {
   border-color: #cbd5e1;
 }
 
+/* 읽기 전용 모드 스타일 */
+.readonly-value {
+  flex: 1;
+  padding: 10px 12px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.readonly-textarea {
+  width: 100%;
+  height: 200px;
+  background-color: #f9fafb;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.value-text {
+  flex: 1;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
 </style>

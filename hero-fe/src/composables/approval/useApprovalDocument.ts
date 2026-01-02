@@ -9,26 +9,32 @@
  *   - 상신
  *
  * History
- *   2025/12/26 - 민철 최초 작성
- *   2025/12/27 - 민철 실제 필드명 반영 및 유효성 검사 강화
+ * 2025/12/26 (민철) 최초 작성
+ * 2025/12/27 (민철) 실제 필드명 반영 및 유효성 검사 강화
+ * 2025/12/31 (민철) 임시저장 수정
  *
  * </pre>
  *
  * @author 민철
- * @version 2.0
+ * @version 2.1
  */
 
-import { 
-    saveDraft as apiSaveDraft, 
-    submitDocument as apiSubmitDocument 
+import {
+    saveDraft as apiSaveDraft,
+    submitDocument as apiSubmitDocument,
+    updateDraft as apiUpdateDraft,
+    submitDraftDocument as apiSubmitDraftDocument,
+    cancelDocument as apiCancelDocument,
+    deleteDocument as apiDeleteDocument
+
 } from '@/api/approval/approval_request.api';
-import { 
+import {
     ApprovalDocumentRequestDTO,
-    ApprovalDocumentResponseDTO 
+    ApprovalDocumentResponseDTO
 } from '@/types/approval/approval_request.types';
 
 export function useApprovalDocument() {
-    
+
     /* ========================================== */
     /* 유효성 검사 */
     /* ========================================== */
@@ -88,10 +94,10 @@ export function useApprovalDocument() {
 
     /**
      * 3. 근무변경신청서 (changework) 검증
-     * 필수: workSystemTemplateName, applyDate, startTime, endTime
+     * 필수: workSystemTemplateId, applyDate, startTime, endTime
      */
     const validateWorkChange = (details: any): boolean => {
-        if (!details.workSystemTemplateName) {
+        if (!details.workSystemTemplate) {
             alert('근무제 템플릿을 선택하세요.');
             return false;
         }
@@ -131,11 +137,11 @@ export function useApprovalDocument() {
     };
 
     /**
-     * 5. 인사발령신청서 (personnelappointment) 검증
+     * 5. 인사발령품의서 (personnelappointment) 검증
      * 필수: appointmentType, effectiveDate, targetEmpId
      */
     const validateAppointment = (details: any): boolean => {
-        if (!details.appointmentType) {
+        if (!details.changeType) {
             alert('발령 유형을 선택하세요.');
             return false;
         }
@@ -143,7 +149,7 @@ export function useApprovalDocument() {
             alert('발령 효력 발생일을 선택하세요.');
             return false;
         }
-        if (!details.targetEmpId) {
+        if (!details.employeeNumber) {
             alert('대상 사원을 선택하세요.');
             return false;
         }
@@ -175,10 +181,6 @@ export function useApprovalDocument() {
      * 필수: beforeSalary, afterSalary
      */
     const validatePayrollRaise = (details: any): boolean => {
-        if (!details.beforeSalary || details.beforeSalary <= 0) {
-            alert('현재 급여를 입력하세요.');
-            return false;
-        }
         if (!details.afterSalary || details.afterSalary <= 0) {
             alert('인상 후 급여를 입력하세요.');
             return false;
@@ -207,40 +209,100 @@ export function useApprovalDocument() {
     };
 
     /**
+     * 9. 승진계획서 (promotionplan) 검증
+     * 필수: nominationDeadlineAt
+     *  
+     */
+    const validatePromotion = (details: any): boolean => {
+        // 1. 필수 날짜 및 내용 체크
+        if (!details.nominationDeadlineAt) {
+            alert("추천 마감일을 선택해주세요.");
+            return false;
+        }
+        if (!details.appointmentAt) {
+            alert("발령 예정일을 선택해주세요.");
+            return false;
+        }
+        if (!details.planContent || !details.planContent.trim()) {
+            alert("계획 상세 내용을 입력해주세요.");
+            return false;
+        }
+
+        // 2. 날짜 논리 체크 (추천 마감일이 발령일보다 늦으면 안 됨)
+        if (details.nominationDeadlineAt >= details.appointmentAt) {
+            alert("추천 마감일은 발령 예정일보다 이전이어야 합니다.");
+            return false;
+        }
+
+        // 3. 상세 계획(표) 존재 여부 체크
+        if (!details.detailPlan || !Array.isArray(details.detailPlan) || details.detailPlan.length === 0) {
+            alert("최소 1개 이상의 승진 계획(행)을 추가해주세요.");
+            return false;
+        }
+
+        // 4. 상세 계획(표) 내부 값 체크 (Loop)
+        for (let i = 0; i < details.detailPlan.length; i++) {
+            const row = details.detailPlan[i];
+            const rowNum = i + 1; // 사용자에게 보여줄 행 번호 (1부터 시작)
+
+            // 부서 선택 여부 (0이나 null이면 false)
+            if (!row.departmentId) {
+                alert(`${rowNum}번째 행의 '대상 부서'를 선택해주세요.`);
+                return false;
+            }
+
+            // 직급 선택 여부
+            if (!row.gradeId) {
+                alert(`${rowNum}번째 행의 '승진 후 직급'을 선택해주세요.`);
+                return false;
+            }
+
+            // 대상 수 입력 여부 (0 이하 체크)
+            if (!row.quotaCount || row.quotaCount <= 0) {
+                alert(`${rowNum}번째 행의 '대상 수'를 1명 이상 입력해주세요.`);
+                return false;
+            }
+        }
+
+        // 모든 검증 통과
+        return true;
+    };
+
+    /**
      * 서식별 유효성 검사 라우터
      */
     const validateByFormType = (formType: string, details: any): boolean => {
         switch (formType) {
             case 'vacation':
                 return validateVacation(details);
-            
+
             case 'overtime':
                 return validateOvertime(details);
-            
+
             case 'changework':
                 return validateWorkChange(details);
-            
+
             case 'modifyworkrecord':
                 return validateAttendanceFix(details);
-            
+
             case 'personnelappointment':
                 return validateAppointment(details);
-            
+
             case 'promotionplan':
-                // 승진신청서 (추후 구현)
-                return true;
-            
+
+                return validatePromotion(details);
+
             case 'resign':
                 return validateResign(details);
-            
+
             case 'raisepayroll':
                 return validatePayrollRaise(details);
-            
+
             case 'modifypayroll':
                 return validatePayrollAdjust(details);
-            
+
             default:
-                console.warn('⚠️ 알 수 없는 서식 타입:', formType);
+                console.warn('알 수 없는 서식 타입:', formType);
                 return true;
         }
     };
@@ -262,7 +324,7 @@ export function useApprovalDocument() {
             const details = JSON.parse(data.details);
             return validateByFormType(formType, details);
         } catch (error) {
-            console.error('❌ details JSON 파싱 실패:', error);
+            console.error('details JSON 파싱 실패:', error);
             alert('문서 데이터가 올바르지 않습니다.');
             return false;
         }
@@ -284,8 +346,56 @@ export function useApprovalDocument() {
             alert('임시저장되었습니다.');
             return response;
         } catch (error) {
-            console.error('❌ 임시저장 실패:', error);
+            console.error('임시저장 실패:', error);
             alert('임시저장에 실패했습니다.');
+            throw error;
+        }
+    };
+
+    /* ========================================== */
+    /* 임시저장 수정 */
+    /* ========================================== */
+
+    /**
+     * 임시저장 문서 수정
+     */
+    const updateDraft = async (
+        docId: number,
+        data: ApprovalDocumentRequestDTO,
+        files?: File[]
+    ): Promise<ApprovalDocumentResponseDTO | null> => {
+        try {
+            const response = await apiUpdateDraft(docId, data, files);
+            alert('저장되었습니다.');
+            return response;
+        } catch (error) {
+            console.error('저장 실패:', error);
+            alert('저장에 실패했습니다.');
+            throw error;
+        }
+    };
+
+    /**
+     * 임시저장 문서를 상신으로 변경
+     */
+    const submitDraft = async (
+        docId: number,
+        data: ApprovalDocumentRequestDTO,
+        files: File[] | undefined,
+        formType: string
+    ): Promise<ApprovalDocumentResponseDTO | null> => {
+        // 유효성 검사
+        if (!validateDocument(data, formType)) {
+            return null;
+        }
+
+        try {
+            const response = await apiSubmitDraftDocument(docId, data, files);
+            alert('상신되었습니다.');
+            return response;
+        } catch (error) {
+            console.error('상신 실패:', error);
+            alert('상신에 실패했습니다.');
             throw error;
         }
     };
@@ -312,12 +422,35 @@ export function useApprovalDocument() {
             alert('상신되었습니다.');
             return response;
         } catch (error) {
-            console.error('❌ 상신 실패:', error);
+            console.error('상신 실패:', error);
             alert('상신에 실패했습니다.');
             throw error;
         }
     };
 
+    const cancelDocument = async (docId: number) => {
+        try {
+            const response = await apiCancelDocument(docId);
+            alert('회수되었습니다.');
+            return response;
+        } catch (error) {
+            console.error('회수 실패:', error);
+            alert('회수에 실패했습니다.');
+            throw error;
+        }
+    };
+
+    const deleteDocument = async (docId: number) => {
+        try {
+            const response = await apiDeleteDocument(docId);
+            alert('삭제되었습니다.');
+            return response;
+        } catch (error) {
+            console.error('삭제 실패:', error);
+            alert('삭제에 실패했습니다.');
+            throw error;
+        }
+    };
     /* ========================================== */
     /* Return */
     /* ========================================== */
@@ -325,6 +458,10 @@ export function useApprovalDocument() {
     return {
         validateDocument,
         saveDraft,
+        updateDraft,
+        submitDraft,
         submit,
+        cancelDocument,
+        deleteDocument,
     };
-}
+};

@@ -131,6 +131,20 @@ export const usePayrollItemsStore = defineStore('payrollItems', {
 
     actions: {
         /**
+         * 공통 에러 메시지 추출
+         * - axios 응답 메시지 우선
+         * - 없으면 Error.message
+         * - 그래도 없으면 fallback
+         */
+        extractErrorMessage(e: unknown, fallback: string) {
+            if (e && typeof e === 'object') {
+                const err = e as any;
+                return err?.response?.data?.message ?? err?.message ?? fallback;
+            }
+            return fallback;
+        },
+
+        /**
          * 수당 활성 여부 필터 변경
          */
         setAllowanceFilter(v: '' | Yn) {
@@ -183,8 +197,8 @@ export const usePayrollItemsStore = defineStore('payrollItems', {
                 const params = this.allowanceActiveFilter ? { activeYn: this.allowanceActiveFilter } : undefined;
                 this.allowances = await payrollAdminApi.listAllowances(params);
                 this.setAllowancePage(this.allowancePage);
-            } catch (e: any) {
-                this.errorMessage = e?.response?.data?.message ?? '수당 목록 조회에 실패했습니다.';
+            } catch (e: unknown) {
+                this.errorMessage = this.extractErrorMessage(e, '수당 목록 조회에 실패했습니다.');
             } finally {
                 this.loading = false;
             }
@@ -200,8 +214,8 @@ export const usePayrollItemsStore = defineStore('payrollItems', {
                 const params = this.deductionActiveFilter ? { activeYn: this.deductionActiveFilter } : undefined;
                 this.deductions = await payrollAdminApi.listDeductions(params);
                 this.setDeductionPage(this.deductionPage);
-            } catch (e: any) {
-                this.errorMessage = e?.response?.data?.message ?? '공제 목록 조회에 실패했습니다.';
+            } catch (e: unknown) {
+                this.errorMessage = this.extractErrorMessage(e, '공제 목록 조회에 실패했습니다.');
             } finally {
                 this.loading = false;
             }
@@ -217,8 +231,8 @@ export const usePayrollItemsStore = defineStore('payrollItems', {
                 if (payload.defaultAmount == null) payload.defaultAmount = 0;
                 await payrollAdminApi.createAllowance(payload);
                 await this.loadAllowances();
-            } catch (e: any) {
-                this.errorMessage = e?.response?.data?.message ?? '수당 생성에 실패했습니다.';
+            } catch (e: unknown) {
+                this.errorMessage = this.extractErrorMessage(e, '수당 생성에 실패했습니다.');
                 throw e;
             } finally {
                 this.loading = false;
@@ -235,8 +249,8 @@ export const usePayrollItemsStore = defineStore('payrollItems', {
                 if (payload.defaultAmount == null) payload.defaultAmount = 0;
                 await payrollAdminApi.updateAllowance(allowanceId, payload);
                 await this.loadAllowances();
-            } catch (e: any) {
-                this.errorMessage = e?.response?.data?.message ?? '수당 수정에 실패했습니다.';
+            } catch (e: unknown) {
+                this.errorMessage = this.extractErrorMessage(e, '수당 수정에 실패했습니다.');
                 throw e;
             } finally {
                 this.loading = false;
@@ -252,8 +266,8 @@ export const usePayrollItemsStore = defineStore('payrollItems', {
             try {
                 await payrollAdminApi.activateAllowance(allowanceId);
                 await this.loadAllowances();
-            } catch (e: any) {
-                this.errorMessage = e?.response?.data?.message ?? '수당 활성화에 실패했습니다.';
+            } catch (e: unknown) {
+                this.errorMessage = this.extractErrorMessage(e, '수당 활성화에 실패했습니다.');
             } finally {
                 this.loading = false;
             }
@@ -268,8 +282,8 @@ export const usePayrollItemsStore = defineStore('payrollItems', {
             try {
                 await payrollAdminApi.deactivateAllowance(allowanceId);
                 await this.loadAllowances();
-            } catch (e: any) {
-                this.errorMessage = e?.response?.data?.message ?? '수당 비활성화에 실패했습니다.';
+            } catch (e: unknown) {
+                this.errorMessage = this.extractErrorMessage(e, '수당 비활성화에 실패했습니다.');
             } finally {
                 this.loading = false;
             }
@@ -292,8 +306,8 @@ export const usePayrollItemsStore = defineStore('payrollItems', {
 
                 await payrollAdminApi.createDeduction(payload);
                 await this.loadDeductions();
-            } catch (e: any) {
-                this.errorMessage = e?.response?.data?.message ?? '공제 생성에 실패했습니다.';
+            } catch (e: unknown) {
+                this.errorMessage = this.extractErrorMessage(e, '공제 생성에 실패했습니다.');
                 throw e;
             } finally {
                 this.loading = false;
@@ -317,8 +331,8 @@ export const usePayrollItemsStore = defineStore('payrollItems', {
 
                 await payrollAdminApi.updateDeduction(deductionId, payload);
                 await this.loadDeductions();
-            } catch (e: any) {
-                this.errorMessage = e?.response?.data?.message ?? '공제 수정에 실패했습니다.';
+            } catch (e: unknown) {
+                this.errorMessage = this.extractErrorMessage(e, '공제 수정에 실패했습니다.');
                 throw e;
             } finally {
                 this.loading = false;
@@ -334,8 +348,8 @@ export const usePayrollItemsStore = defineStore('payrollItems', {
             try {
                 await payrollAdminApi.activateDeduction(deductionId);
                 await this.loadDeductions();
-            } catch (e: any) {
-                this.errorMessage = e?.response?.data?.message ?? '공제 활성화에 실패했습니다.';
+            } catch (e: unknown) {
+                this.errorMessage = this.extractErrorMessage(e, '공제 활성화에 실패했습니다.');
             } finally {
                 this.loading = false;
             }
@@ -350,8 +364,8 @@ export const usePayrollItemsStore = defineStore('payrollItems', {
             try {
                 await payrollAdminApi.deactivateDeduction(deductionId);
                 await this.loadDeductions();
-            } catch (e: any) {
-                this.errorMessage = e?.response?.data?.message ?? '공제 비활성화에 실패했습니다.';
+            } catch (e: unknown) {
+                this.errorMessage = this.extractErrorMessage(e, '공제 비활성화에 실패했습니다.');
             } finally {
                 this.loading = false;
             }

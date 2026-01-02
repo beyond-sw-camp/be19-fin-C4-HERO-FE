@@ -34,12 +34,44 @@
                 </button>
 
                 <div class="action-group" v-if="document">
-                    <div class="status-badge" :class="getStatusClass(document.docStatus)">
+                    <!-- 임시저장 문서이고 편집 모드가 아닐 때 수정 버튼 표시 -->
+                    <template v-if="isDraftDocument && !isEditMode">
+                        <button class="btn-edit" @click="goToEdit">
+                            <img class="btn-icon" src="/images/approval-white.svg" alt="수정" />
+                            <span class="btn-text-white">수정</span>
+                        </button>
+                        <button class="btn-edit" @click="goToDelete(document.docId)">
+                            <img class="btn-icon" src="/images/cancel-white.svg" alt="삭제" />
+                            <span class="btn-text-white">삭제</span>
+                        </button>
+                    </template>
+                    <div v-if="document.docStatus === 'INPROGRESS'">
+                        <button class="btn-primary-header" @click="handleCancel(document.docId)">
+                            <img class="btn-icon" src="/images/cancel-white.svg" alt="회수">
+                            <span class="btn-text-white">회수</span>
+                        </button>
+                    </div>
+                    <div v-if="!(document.docStatus === 'DRAFT')" class="status-badge"
+                        :class="getStatusClass(document.docStatus)">
                         {{ getStatusText(document.docStatus) }}
                     </div>
 
+
+
+                    <!-- 편집 모드일 때 저장/상신 버튼 표시 -->
+                    <template v-if="isEditMode && isDraftDocument">
+                        <button class="btn-secondary-header" @click="handleSaveEdit">
+                            <img class="btn-icon" src="/images/file.svg" alt="저장" />
+                            <span class="btn-text">저장</span>
+                        </button>
+                        <button class="btn-primary-header" @click="handleSubmitEdit">
+                            <img class="btn-icon" src="/images/submit.svg" alt="상신" />
+                            <span class="btn-text-white">상신</span>
+                        </button>
+                    </template>
+
                     <!-- 결재 권한이 있는 경우 승인/반려 버튼 표시 (순차 결재) -->
-                    <template v-if="canApprove">
+                    <template v-if="canApprove && !isEditMode">
                         <button class="btn-reject" @click="openRejectModal">
                             <img class="btn-icon" src="/images/cancel-white.svg" alt="반려" />
                             <span class="btn-text-white">반려</span>
@@ -68,12 +100,25 @@
                         <div class="error-text">{{ error }}</div>
                     </div>
 
-                    <!-- 문서 내용 -->
-                    <ApprovalDetailCommonForm v-else-if="document" :document="document" :parsedDetails="parsedDetails">
+                    <!-- 문서 내용 - 읽기 모드 -->
+                    <ApprovalDetailCommonForm v-else-if="document && !isEditMode" :document="document"
+                        :parsedDetails="parsedDetails">
                         <template #detail-section>
                             <component :is="currentDetailSection" :modelValue="parsedDetails" :readonly="true" />
                         </template>
                     </ApprovalDetailCommonForm>
+
+                    <!-- 문서 내용 - 편집 모드 -->
+                    <ApprovalCreateCommonForm v-else-if="document && isEditMode" ref="commonFormRef"
+                        :templateId="document.templateId" :templateName="document.templateName"
+                        :category="document.category" :empName="authStore.user?.employeeName || ''"
+                        :empDept="authStore.user?.departmentName || ''" :empGrade="authStore.user?.gradeName || ''"
+                        :initialTitle="document.title" :initialLines="formattedLines"
+                        :initialReferences="formattedReferences" :document="document" :hideActions="true">
+                        <template #detail-section>
+                            <component :is="currentDetailSection" v-model="sectionData" />
+                        </template>
+                    </ApprovalCreateCommonForm>
 
                 </div>
             </div>
@@ -87,12 +132,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useApprovalDetail } from '@/composables/approval/useApprovalDetail';
+import { useApprovalDocument } from '@/composables/approval/useApprovalDocument';
 import { processApproval } from '@/api/approval/approval_action.api';
 import { useAuthStore } from '@/stores/auth';
-import ApprovalDetailCommonForm from './ApprovalDetailCommonForm.vue';
+import ApprovalDetailCommonForm from '@/views/approval/detail/ApprovalDetailCommonForm.vue';
+import ApprovalCreateCommonForm from '@/views/approval/create/ApprovalCreateCommonForm.vue';
 import ApprovalRejectModal from './ApprovalRejectModal.vue';
 import {
     ApprovalVacationForm,
@@ -105,6 +152,10 @@ import {
     ApprovalPayrollRaiseForm,
     ApprovalPayrollAdjustForm,
 } from '@/views/approval/create/forms';
+import {
+    ApprovalDefaultLineDTO,
+    ApprovalDefaultReferenceDTO
+} from '@/types/approval/template.types';
 
 /* ========================================== */
 /* Router & Route */
@@ -117,17 +168,129 @@ const authStore = useAuthStore();
 // docId를 route params에서 가져옴
 const docId = computed(() => Number(route.params.docId));
 
+// 편집 모드 확인 (쿼리 파라미터 edit=true)
+const isEditMode = computed(() => route.query.edit === 'true');
+
 /* ========================================== */
 /* Composable */
 /* ========================================== */
 
 const { document, parsedDetails, loading, error, fetchDocument } = useApprovalDetail(docId.value);
+const { updateDraft, submitDraft, cancelDocument, deleteDocument } = useApprovalDocument();
+
+/* ========================================== */
+/* 편집 모드 관련 */
+/* ========================================== */
+
+const commonFormRef = ref<InstanceType<typeof ApprovalCreateCommonForm>>();
+const sectionData = ref<any>({});
+
+// 편집 모드 진입 시 sectionData 초기화
+watch(() => isEditMode.value, (newValue) => {
+    if (newValue && parsedDetails.value) {
+        sectionData.value = { ...parsedDetails.value };
+    }
+}, { immediate: true });
+
+watch(() => parsedDetails.value, (newValue) => {
+    if (isEditMode.value && newValue) {
+        sectionData.value = { ...newValue };
+    }
+}, { immediate: true });
+
+const currentDate = computed(() => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+});
+
+/**
+ * DTO 생성 (편집 모드용)
+ */
+const createRequestDTO = (status: 'draft' | 'submitted') => {
+    const commonFormData = commonFormRef.value?.getCommonData();
+    const detailsJsonString = JSON.stringify(sectionData.value);
+
+    if (!document.value) {
+        throw new Error('문서 정보가 없습니다.');
+    }
+
+    return {
+        formType: document.value.templateKey,
+        documentType: document.value.category,
+        title: commonFormData?.title || '',
+        drafter: authStore.user?.employeeName || '',
+        department: authStore.user?.departmentName || '',
+        grade: authStore.user?.gradeName || '',
+        draftDate: currentDate.value,
+        status: status,
+        submittedAt: status === 'submitted' ? new Date().toISOString() : null,
+        lines: commonFormData?.lines || [],
+        references: commonFormData?.references || [],
+        details: detailsJsonString
+    };
+};
+
+/**
+ * 저장 (편집 모드)
+ */
+const handleSaveEdit = async () => {
+    try {
+        const requestDTO = createRequestDTO('draft');
+        const commonFormData = commonFormRef.value?.getCommonData();
+        const files = commonFormData?.attachments || [];
+
+        await updateDraft(docId.value, requestDTO, files);
+
+        // 편집 모드 종료
+        router.push(`/approval/documents/${docId.value}`);
+    } catch (error) {
+        console.error('저장 에러:', error);
+    }
+};
+
+/**
+ * 상신 (편집 모드 - 임시저장 문서를 상신으로 변경)
+ */
+const handleSubmitEdit = async () => {
+    try {
+        const requestDTO = createRequestDTO('submitted');
+        const commonFormData = commonFormRef.value?.getCommonData();
+        const files = commonFormData?.attachments || [];
+
+        if (!document.value) {
+            throw new Error('문서 정보가 없습니다.');
+        }
+
+        // 임시저장 문서를 상신으로 변경 (새 문서 생성 X)
+        const response = await submitDraft(docId.value, requestDTO, files, document.value.templateKey);
+
+        if (response) {
+            router.push('/approval/inbox');
+        }
+    } catch (error) {
+        console.error('❌ 상신 에러:', error);
+    }
+};
 
 /* ========================================== */
 /* 결재 처리 관련 */
 /* ========================================== */
 
 const isRejectModalOpen = ref(false);
+
+/**
+ * 임시저장 문서 여부 확인
+ */
+const isDraftDocument = computed(() => {
+    if (!document.value || !authStore.user) return false;
+
+    // DRAFT 상태이면서 본인이 기안자인 경우에만 수정 가능
+    return document.value.docStatus === 'DRAFT' &&
+        document.value.drafterId === authStore.user.employeeId;
+});
 
 /**
  * 현재 사용자의 결재선 정보
@@ -142,125 +305,40 @@ const myLine = computed(() => {
 });
 
 /**
- * 디버깅 정보
+ * 결재 권한 확인 (순차 결재)
+ * 조건:
+ * 1. 본인이 결재자(Approver)에 포함되어야 함
+ * 2. 본인의 결재 상태가 'PENDING'(대기)여야 함
+ * 3. 문서 전체 상태가 'INPROGRESS'(진행중)이어야 함
+ * 4. 내 앞 순서(seq가 더 낮은) 결재자들이 모두 'APPROVED'(승인) 상태여야 함
  */
-const debugInfo = computed(() => {
-    if (!document.value || !authStore.user || !myLine.value) return '';
+const canApprove = computed(() => {
+    // 1. 기본 데이터 유효성 검사
+    if (!document.value || !authStore.user || !myLine.value) {
+        return false;
+    }
 
+    // 2. 문서 및 본인 상태 검사
+    if (document.value.docStatus !== 'INPROGRESS' || myLine.value.status !== 'PENDING') {
+        return false;
+    }
+
+    // 3. 순차 결재 검증 (내 앞 순서 확인)
+    // seq > 1 조건은 기안자(보통 seq 1)를 제외하기 위함입니다.
+    // 만약 기안자도 승인 상태가 필요하다면 && line.seq > 1 조건을 제거하세요.
     const previousLines = document.value.lines.filter(
         line => line.seq < myLine.value!.seq && line.seq > 1
     );
 
-    return `앞순서 결재자: ${previousLines.length}명, 승인완료: ${previousLines.filter(l => l.status === 'APPROVED').length}명`;
-});
-
-/**
- * 결재 권한 확인 (순차 결재)
- * - 본인이 결재자이고
- * - 결재 상태가 PENDING이고
- * - 문서 상태가 INPROGRESS이고
- * - 내 앞 순서의 결재자들이 모두 승인 완료한 경우
- */
-/**
- * 결재 권한 확인 (순차 결재) - 슈퍼 디버깅 버전
- */
-const canApprove = computed(() => {
-    console.log('========== canApprove 계산 시작 ==========');
-
-    if (!document.value || !authStore.user) {
-        console.log('🔍 canApprove = false: document 또는 user 없음');
-        console.log('document.value:', document.value);
-        console.log('authStore.user:', authStore.user);
-        return false;
+    // 앞 순서 결재자가 없으면(내가 첫 번째 결재자면) 승인 가능
+    if (previousLines.length === 0) {
+        return true;
     }
 
-    console.log('📋 전체 결재선:', document.value.lines);
-
-    const currentEmployeeId = authStore.user.employeeId;
-    console.log('👤 현재 사용자 ID:', currentEmployeeId, 'type:', typeof currentEmployeeId);
-
-    // 각 결재선의 approverId 타입 확인
-    document.value.lines.forEach((line, idx) => {
-        console.log(`결재선[${idx}]:`, {
-            lineId: line.lineId,
-            approverId: line.approverId,
-            approverIdType: typeof line.approverId,
-            seq: line.seq,
-            status: line.status,
-            approverName: line.approverName
-        });
-    });
-
-    const myLine = document.value.lines.find(
-        line => {
-            console.log(`비교: ${line.approverId} === ${currentEmployeeId}?`, line.approverId === currentEmployeeId);
-            return line.approverId === currentEmployeeId;
-        }
-    );
-
-    console.log('🎯 내 결재선:', myLine);
-
-    if (!myLine) {
-        console.log('🔍 canApprove = false: 내 결재선 없음');
-        return false;
-    }
-
-    console.log('📊 내 결재선 상세:', {
-        lineId: myLine.lineId,
-        seq: myLine.seq,
-        status: myLine.status,
-        statusType: typeof myLine.status,
-        statusLength: myLine.status?.length,
-        statusEmpty: myLine.status === '',
-        statusNull: myLine.status === null,
-        statusUndefined: myLine.status === undefined
-    });
-
-    // 기본 조건: PENDING 상태
-    if (myLine.status !== 'PENDING') {
-        console.log('🔍 canApprove = false: 내 상태가 PENDING 아님');
-        console.log('실제 상태:', `"${myLine.status}"`, 'PENDING과 비교:', myLine.status === 'PENDING');
-        return false;
-    }
-
-    // 문서 상태
-    if (document.value.docStatus !== 'INPROGRESS') {
-        console.log('🔍 canApprove = false: 문서 상태가 INPROGRESS 아님');
-        console.log('실제 docStatus:', document.value.docStatus);
-        return false;
-    }
-
-    // 순차 결재 확인
-    console.log('🔍 순차 결재 체크 시작');
-    console.log('내 seq:', myLine.seq);
-
-    const previousLines = document.value.lines.filter(
-        line => {
-            const isPrevious = line.seq < myLine.seq && line.seq > 1;
-            console.log(`seq=${line.seq}: 내 앞순서? ${isPrevious} (seq < ${myLine.seq} && seq > 1)`);
-            return isPrevious;
-        }
-    );
-
-    console.log('🔍 앞 순서 결재자:', previousLines);
-    console.log('🔍 앞 순서 결재자 수:', previousLines.length);
-
-    previousLines.forEach((line, idx) => {
-        console.log(`앞순서[${idx}]:`, {
-            seq: line.seq,
-            status: line.status,
-            isApproved: line.status === 'APPROVED',
-            approverName: line.approverName
-        });
-    });
-
+    // 앞 순서 결재자가 모두 승인했는지 확인
     const allPreviousApproved = previousLines.every(
         line => line.status === 'APPROVED'
     );
-
-    console.log('🔍 모든 앞 순서 승인 완료?', allPreviousApproved);
-    console.log('🔍 최종 canApprove =', allPreviousApproved);
-    console.log('========== canApprove 계산 종료 ==========');
 
     return allPreviousApproved;
 });
@@ -344,6 +422,21 @@ const handleReject = async (comment: string) => {
     }
 };
 
+const handleCancel = async (docId: number) => {
+    if (!confirm('이 문서를 회수하시겠습니까?')) {
+        return;
+    }
+    try {
+        await cancelDocument(docId);
+
+        await fetchDocument(docId);
+    } catch (error) {
+        console.error('회수 처리 에러:', error);
+        alert('회수 처리 중 오류가 발생했습니다.');
+    }
+
+};
+
 /* ========================================== */
 /* 섹션 컴포넌트 매핑 */
 /* ========================================== */
@@ -399,213 +492,61 @@ const getStatusClass = (status: string): string => {
 const backToInbox = () => {
     router.push('/approval/inbox');
 };
+
+/**
+ * 수정 모드로 전환
+ */
+const goToEdit = () => {
+    router.push(`/approval/documents/${docId.value}?edit=true`);
+};
+
+const goToDelete = async (docId: number) => {
+    if (!confirm('이 문서를 삭제하시겠습니까?')) {
+        return;
+    }
+
+    try {
+        await deleteDocument(docId);
+        router.push('/approval/inbox');
+    } catch (error) {
+        console.error('삭제 처리 에러:', error);
+    }
+};
+
+const formattedLines = computed<ApprovalDefaultLineDTO[]>(() => {
+    // 데이터가 아직 로드되지 않았으면 빈 배열 반환
+    if (!document.value || !document.value.lines) {
+        return [];
+    }
+
+    // ResponseDTO -> DefaultLineDTO 로 변환
+    return document.value.lines.map(line => ({
+        seq: line.seq,
+        approverId: line.approverId,
+        approverName: line.approverName,
+        departmentId: 0,
+        departmentName: line.departmentName,
+        gradeName: line.gradeName,
+        jobTitleName: line.jobTitleName
+    }));
+});
+
+const formattedReferences = computed<ApprovalDefaultReferenceDTO[]>(() => {
+    if (!document.value || !document.value.references) {
+        return [];
+    }
+
+    return document.value.references.map(ref => ({
+        referencerId: ref.referencerId,
+        referencerName: ref.referencerName,
+        departmentId: 0,
+        departmentName: ref.departmentName,
+        gradeName: ref.gradeName,
+        jobTitleName: ref.jobTitleName
+    }));
+});
 </script>
 
 <style scoped>
-.page-wrapper {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
-}
-
-.page-header {
-    width: 100%;
-    background: #ffffff;
-    border-style: solid;
-    border-color: #e2e8f0;
-    border-width: 0px 0px 2px 0px;
-    padding: 6px 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex-shrink: 0;
-    min-height: 38px;
-    justify-content: center;
-}
-
-.header-inner {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.btn-back {
-    border-style: solid;
-    border-color: #bfc2c7;
-    border-width: 0px 0px 1px 0px;
-    display: flex;
-    flex-direction: row;
-    gap: 0px;
-    align-items: center;
-    justify-content: flex-start;
-    flex-shrink: 0;
-    position: relative;
-    width: fit-content;
-    background: none;
-    padding: 0;
-}
-
-.icon-arrow {
-    flex-shrink: 0;
-    width: 19px;
-    height: 19px;
-    position: relative;
-    overflow: visible;
-}
-
-.back-label-wrap {
-    flex-shrink: 0;
-    width: 55px;
-    height: 24px;
-    position: relative;
-}
-
-.back-label {
-    color: #0f172b;
-    text-align: left;
-    font-family: "Inter-Regular", sans-serif;
-    font-size: 14px;
-    line-height: 24px;
-    letter-spacing: 0.07px;
-    font-weight: 400;
-    position: absolute;
-    left: 0px;
-    top: 0px;
-}
-
-.action-group {
-    display: flex;
-    flex-direction: row;
-    gap: 8px;
-    align-items: center;
-    justify-content: flex-start;
-    flex-shrink: 0;
-    position: relative;
-    overflow: hidden;
-}
-
-.status-badge {
-    padding: 6px 16px;
-    border-radius: 10px;
-    font-family: "Inter-Regular", sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-}
-
-.status-draft {
-    background-color: #f1f5f9;
-    color: #64748b;
-}
-
-.status-inprogress {
-    background-color: #dbeafe;
-    color: #1e40af;
-}
-
-.status-approved {
-    background-color: #d1fae5;
-    color: #065f46;
-}
-
-.status-rejected {
-    background-color: #fee2e2;
-    color: #991b1b;
-}
-
-.btn-approve,
-.btn-reject {
-    border-radius: 8px;
-    border: none;
-    padding: 6px 18px;
-    display: flex;
-    flex-direction: row;
-    gap: 7px;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: opacity 0.2s;
-}
-
-.btn-approve {
-    background: linear-gradient(180deg, #16a34a 0%, #15803d 100%);
-}
-
-.btn-reject {
-    background: linear-gradient(180deg, #dc2626 0%, #991b1b 100%);
-}
-
-.btn-approve:hover,
-.btn-reject:hover {
-    opacity: 0.9;
-}
-
-.btn-icon {
-    flex-shrink: 0;
-    width: 12px;
-    height: 12px;
-}
-
-.btn-text-white {
-    color: #ffffff;
-    text-align: center;
-    font-family: "Inter-Regular", sans-serif;
-    font-size: 12px;
-    line-height: 18px;
-    letter-spacing: -0.31px;
-    font-weight: 400;
-}
-
-.page-body {
-    display: flex;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow-y: auto;
-    height: 100%;
-}
-
-.form-wrapper {
-    padding: 0px 100px 0px 100px;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow-y: auto;
-}
-
-.form-container {
-    display: flex;
-    height: 100%;
-    width: 100%;
-    padding: 0;
-    background-color: #ffff;
-    overflow-y: auto;
-}
-
-.loading-container,
-.error-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    width: 100%;
-}
-
-.loading-text,
-.error-text {
-    font-family: "Inter-Regular", sans-serif;
-    font-size: 16px;
-    color: #64748b;
-}
-
-.error-text {
-    color: #dc2626;
-}
-
-.debug-info {
-    max-width: 400px;
-    word-break: break-all;
-}
+@import "@/assets/styles/approval/approval-detail.css";
 </style>

@@ -51,6 +51,14 @@ export const usePayrollPaymentStore = defineStore('payrollPaymentStore', () => {
 
     const resetError = () => (errorMessage.value = null);
 
+    const extractErrorMessage = (e: unknown, fallback: string) => {
+        if (e && typeof e === 'object') {
+            const err = e as any;
+            return err?.response?.data?.message ?? err?.message ?? fallback;
+        }
+        return fallback;
+    };
+
     /**
      * 급여 조회 검색 파라미터를 구성한다.
      * 
@@ -69,6 +77,7 @@ export const usePayrollPaymentStore = defineStore('payrollPaymentStore', () => {
         };
     }
 
+
     /**
      * 급여 조회 목록을 조회한다.
      *
@@ -86,8 +95,9 @@ export const usePayrollPaymentStore = defineStore('payrollPaymentStore', () => {
         try {
             const data = await payrollAdminApi.searchPayments(buildParams(overrides));
             result.value = data;
-        } catch (e: any) {
-            errorMessage.value = e?.response?.data?.message ?? e?.message ?? '급여조회 실패';
+            page.value = (data?.page ?? 0) + 1;
+        } catch (e: unknown) {
+            errorMessage.value = extractErrorMessage(e, '급여조회 실패');
             throw e;
         } finally {
             loading.value = false;
@@ -118,8 +128,8 @@ export const usePayrollPaymentStore = defineStore('payrollPaymentStore', () => {
         resetError();
         try {
             detail.value = await payrollAdminApi.getPaymentDetail(payrollId);
-        } catch (e: any) {
-            errorMessage.value = e?.response?.data?.message ?? e?.message ?? '급여 상세 조회 실패';
+        } catch (e: unknown) {
+            errorMessage.value = extractErrorMessage(e, '급여 상세 조회 실패');
             throw e;
         } finally {
             loading.value = false;

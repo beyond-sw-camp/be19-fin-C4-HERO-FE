@@ -8,6 +8,7 @@
   2025/12/18 - (민철) 결재 관리 설정 화면 컴포넌트 생성 
   2025/12/23 - (혜원) 알림 관리 설정 화면 컴포넌트 생성
   2025/12/26 - (동근) 급여 관리 설정 화면 컴포넌트 생성
+  2025/12/29 - (지윤) 근태 관리 설정 화면 컴포넌트 생성
   </pre>
 
   @author 이승건
@@ -24,6 +25,7 @@ import ApprovalSettings from '@/views/settings/ApprovalSettings.vue';
 import NotificationSettings from '@/views/settings/notification/NotificationSettings.vue';
 import PayrollPolicy from '@/views/settings/payroll/PayrollPolicy.vue';
 import PayrollPolicyDetail from '@/views/settings/payroll/PayrollPolicyDetail.vue';
+import AttendancePolicy from '@/views/settings/AttendancePolicy.vue';
 
 
 const settingsRoutes: RouteRecordRaw[] = [
@@ -75,7 +77,12 @@ const settingsRoutes: RouteRecordRaw[] = [
         name: 'PayrollPolicySettingsDetail',
         component: PayrollPolicyDetail,
         props: true,
-      }
+      },
+      {
+        path: 'attendance-policy',
+        name: 'AttendancePolicySettings',
+        component: AttendancePolicy,
+      },
     ],
   }
 ];

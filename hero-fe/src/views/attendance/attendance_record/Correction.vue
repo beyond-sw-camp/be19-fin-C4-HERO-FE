@@ -8,10 +8,11 @@
 
   History
   2025/12/10 - 이지윤 최초 작성
+  2025/12/30 - (지윤) 디자인 수정
   </pre>
 
   @author 이지윤
-  @version 1.1
+  @version 1.2
 -->
 
 <template>
@@ -86,7 +87,7 @@
             class="tab"
             :class="{ 'tab-active': isActiveTab('AttendanceCorrection') }"
           >
-            근태 기록 수정 이력
+            지연 근무 수정 이력
           </RouterLink>
 
           <RouterLink
@@ -94,7 +95,7 @@
             class="tab tab-right"
             :class="{ 'tab-active': isActiveTab('AttendanceChangeLog') }"
           >
-            근무제 변경 이력
+            근무 유형 변경 이력
           </RouterLink>
         </div>
 
@@ -576,6 +577,31 @@ const formatTime = (time?: string | null): string => {
 .attendance-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed; 
+}
+.attendance-table th:nth-child(1),
+.attendance-table td:nth-child(1) {
+  width: 16%;
+}
+
+.attendance-table th:nth-child(2),
+.attendance-table td:nth-child(2),
+.attendance-table th:nth-child(3),
+.attendance-table td:nth-child(3),
+.attendance-table th:nth-child(4),
+.attendance-table td:nth-child(4),
+.attendance-table th:nth-child(5),
+.attendance-table td:nth-child(5) {
+  width: 17%;
+  text-align: center;
+  white-space: nowrap; 
+}
+
+.attendance-table th:nth-child(6),
+.attendance-table td:nth-child(6) {
+  width: 16%;
+  text-align: left;
+  word-break: break-word; 
 }
 
 .attendance-table thead tr {
@@ -597,9 +623,10 @@ const formatTime = (time?: string | null): string => {
 
 /* 시간 칸 전용 */
 .attendance-table td.time-cell {
-  text-align: center; 
-  padding-left: 0;    
-  padding-right: 42px;
+  text-align: center;
+  padding-left: 16px;   
+  padding-right: 16px;  
+  font-variant-numeric: tabular-nums;
 }
 
 .attendance-table tbody tr {

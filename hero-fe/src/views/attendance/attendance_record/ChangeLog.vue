@@ -8,10 +8,11 @@
 
   History
   2025/12/10 - 이지윤 최초 작성
+  2025/12/30 - (지윤) 디자인 수정
   </pre>
 
   @author 이지윤
-  @version 1.0
+  @version 1.1
 -->
 
 <template>
@@ -86,7 +87,7 @@
             class="tab"
             :class="{ 'tab-active': isActiveTab('AttendanceCorrection') }"
           >
-            근태 기록 수정 이력
+            지연 근태 수정 이력
           </RouterLink>
 
           <RouterLink
@@ -94,7 +95,7 @@
             class="tab tab-right"
             :class="{ 'tab-active': isActiveTab('AttendanceChangeLog') }"
           >
-            근무제 변경 이력
+            근무 유형 변경 이력
           </RouterLink>
         </div>
 

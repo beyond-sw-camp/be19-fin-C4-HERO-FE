@@ -150,6 +150,6 @@ const goToCalculate = () => {
 }
 
 .panel-body {
-  padding: 20px 0px 24px;
+  padding: 20px 0 12px;
 }
 </style>

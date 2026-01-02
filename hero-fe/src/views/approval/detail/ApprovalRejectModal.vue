@@ -7,7 +7,7 @@
  * - 부모 컴포넌트: ApprovalDetail.vue
  *
  * History
- *   2025/12/26 - 민철 최초 작성
+ *   2025/12/26 (민철) 최초 작성
  * </pre>
  *
  * @module approval

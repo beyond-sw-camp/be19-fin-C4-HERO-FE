@@ -162,3 +162,7 @@ export interface PromotionPlanForReviewResponseDTO {
     planContent: string;
     detailPlan: PromotionDetailForReviewResponseDTO[];
 }
+
+/**
+ * 승진 타입
+ */

@@ -141,5 +141,9 @@ export const useAuthStore = defineStore('auth', () => {
         return user.value?.auth?.includes(role) ?? false;
     }
 
-    return { accessToken, user, isAuthenticated, employeeId, login, logout, refresh, hasRole };
+    function hasAnyRole(roles: string[]): boolean {
+        return roles.some((role) => user.value?.auth?.includes(role));
+    }
+
+    return { accessToken, user, isAuthenticated, employeeId, login, logout, refresh, hasRole, hasAnyRole };
 });

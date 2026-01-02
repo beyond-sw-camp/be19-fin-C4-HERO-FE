@@ -35,7 +35,7 @@ import type { PageResponse } from '@/types/common/pagination.types';
  * - 참조자 지정
  */
 export const approvalTemplateApi = {
-    
+
     /**
      * 서식 목록 조회 API
      * 

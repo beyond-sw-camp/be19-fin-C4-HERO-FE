@@ -7,22 +7,21 @@
   *  - 부모 컴포넌트: ApprovalCreateCommonForm.vue
   *
   * History
-  *   2025/12/10 - 민철 최초 작성
-  *   2025/12/14 - 민철 공통 컴포넌트화
-  *   2025/12/23 - 민철 파일명 변경
+  * 2025/12/10 (민철) 최초 작성
+  * 2025/12/14 (민철) 공통 컴포넌트화
+  * 2025/12/23 (민철) 파일명 변경
+  * 2025/12/30 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
+  * 2025/12/30 (민철) 모두 지원하도록 수정
+  * 2025/12/30 (민철) Watch 최적화, Computed 적용
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 2.0
+  * @version 3.1
 -->
 <template>
   <div class="detail-form-section">
-    <div 
-      v-if="isDropdownOpen" 
-      class="overlay-backdrop" 
-      @click="isDropdownOpen = false"
-    ></div>
+    <div v-if="isDropdownOpen" class="overlay-backdrop" @click="closeAllPickers"></div>
 
     <div class="form-row">
       <div class="row-label">
@@ -30,21 +29,14 @@
       </div>
       <div class="row-content">
         <div class="section-body">
-          
+
           <div class="input-group-row">
-            
             <div class="input-group col-quarter">
               <div class="group-label">
-                <span class="label-text">사번</span>
+                <span class="value-text">사번</span>
               </div>
-              <div class="text-input-box readonly">
-                <input 
-                  type="text" 
-                  :value="user?.employeeId" 
-                  class="native-input" 
-                  readonly 
-                  tabindex="-1"
-                />
+              <div class="text-input-box readonly-value">
+                <input type="text" :value="formData.employeeNumber" class="native-input" readonly tabindex="-1" />
               </div>
             </div>
 
@@ -52,14 +44,8 @@
               <div class="group-label">
                 <span class="label-text">부서</span>
               </div>
-              <div class="text-input-box readonly">
-                <input 
-                  type="text" 
-                  :value="user?.departmentName" 
-                  class="native-input" 
-                  readonly 
-                  tabindex="-1"
-                />
+              <div class="text-input-box readonly-value">
+                <input type="text" :value="formData.department" class="native-input" readonly tabindex="-1" />
               </div>
             </div>
 
@@ -67,14 +53,8 @@
               <div class="group-label">
                 <span class="label-text">직급</span>
               </div>
-              <div class="text-input-box readonly">
-                <input 
-                  type="text" 
-                  :value="user?.gradeName" 
-                  class="native-input" 
-                  readonly 
-                  tabindex="-1"
-                />
+              <div class="text-input-box readonly-value">
+                <input type="text" :value="formData.grade" class="native-input" readonly tabindex="-1" />
               </div>
             </div>
 
@@ -82,64 +62,60 @@
               <div class="group-label">
                 <span class="label-text">이름</span>
               </div>
-              <div class="text-input-box readonly">
-                <input 
-                  type="text" 
-                  :value="user?.employeeName" 
-                  class="native-input" 
-                  readonly 
-                  tabindex="-1"
-                />
+              <div class="text-input-box readonly-value">
+                <input type="text" :value="formData.employeeName" class="native-input" readonly tabindex="-1" />
               </div>
             </div>
 
             <div class="input-group col-quarter">
               <div class="group-label group-label-with-icon">
                 <img class="icon-label" src="/images/vacation.svg" alt="date" />
-                <span class="label-text">입사일자</span>
+                <span class="label-text">입사일자 {{ readonly ? '' : '*' }}</span>
               </div>
-              <div class="date-input-box">
-                <input type="date" v-model="hireDate" class="native-input" />
+
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ formatReadOnlyDate(formData.hireDate) }}</span>
+              </div>
+              <div v-else class="date-input-box">
+                <input type="date" v-model="formData.hireDate" class="native-input" />
               </div>
             </div>
 
             <div class="input-group col-quarter">
               <div class="group-label group-label-with-icon">
                 <img class="icon-label" src="/images/vacation.svg" alt="date" />
-                <span class="label-text">퇴사일자</span>
+                <span class="label-text">퇴사일자 {{ readonly ? '' : '*' }}</span>
               </div>
-              <div class="date-input-box">
-                <input type="date" v-model="terminationDate" class="native-input" />
+
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ formatReadOnlyDate(formData.terminationDate) }}</span>
+              </div>
+              <div v-else class="date-input-box">
+                <input type="date" v-model="formData.terminationDate" class="native-input" />
               </div>
             </div>
 
             <div class="input-group col-quarter">
               <div class="group-label">
-                <span class="label-text">퇴직사유</span>
+                <span class="label-text">퇴직사유 {{ readonly ? '' : '*' }}</span>
               </div>
-              <div 
-                class="dropdown-box" 
-                :class="{ 'is-open': isDropdownOpen }" 
-                @click="toggleDropdown"
-              >
+
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ currentResignReasonName || '-' }}</span>
+              </div>
+
+              <div v-else class="dropdown-box" :class="{ 'is-open': isDropdownOpen }" @click.stop="toggleDropdown">
                 <div class="dropdown-value">
-                  <span :class="selectedReason ? 'text-selected' : 'placeholder-text'">
-                    {{ selectedReason ? selectedReason.resignTypeName : '선택하세요' }}
+                  <span :class="formData.terminateReason ? 'text-selected' : 'placeholder-text'">
+                    {{ currentResignReasonName || '선택하세요' }}
                   </span>
                 </div>
-                <img 
-                  class="icon-dropdown" 
-                  :class="{ 'rotate': isDropdownOpen }"
-                  src="/images/dropdownarrow.svg" 
-                  alt="arrow"
-                />
+                <img class="icon-dropdown" :class="{ 'rotate': isDropdownOpen }" src="/images/dropdownarrow.svg"
+                  alt="arrow" />
+
                 <ul v-if="isDropdownOpen" class="dropdown-options">
-                  <li 
-                    v-for="option in resignTypes" 
-                    :key="option.resignTypeId" 
-                    class="dropdown-item"
-                    @click.stop="selectReason(option)"
-                  >
+                  <li v-for="option in resignTypes" :key="option.resignTypeId" class="dropdown-item"
+                    @click.stop="selectReason(option)">
                     {{ option.resignTypeName }}
                   </li>
                 </ul>
@@ -153,107 +129,131 @@
 
     <div class="form-row border-top">
       <div class="row-label label-bottom">
-        <span class="label-text">퇴직사유상세</span>
+        <span class="label-text">상세퇴직사유</span>
       </div>
       <div class="row-content reason-content">
-        <textarea 
-          v-model="terminateReasonDetail"
-          class="input-textarea"
-          placeholder="퇴직사유에 대한 상세 내용을 입력해 주세요."
-        ></textarea>
+        <div v-if="readonly" class="readonly-textarea">
+          <span class="value-text">{{ formData.terminateReasonDetail || '-' }}</span>
+        </div>
+        <textarea v-else v-model="formData.terminateReasonDetail" class="input-textarea"
+          placeholder="퇴직사유에 대한 상세 내용을 입력해 주세요."></textarea>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted } from 'vue';
+import { ref, reactive, watch, onMounted, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/stores/auth';
 import { useApprovalDataStore } from '@/stores/approval/approval_data.store';
-import { ResignTypeResponseDTO } from '@/types/approval/approval_data.types';
+import type { ResignTypeResponseDTO } from '@/types/approval/approval_data.types';
 
+// Store
 const approvalDataStore = useApprovalDataStore();
 const { resignTypes } = storeToRefs(approvalDataStore);
+const userStore = useAuthStore();
+const { user } = storeToRefs(userStore);
 
-onMounted( async () => {
-  await approvalDataStore.fetchResignTypes();
-});
-
-
-
-// v-model을 위한 Props와 Emits
+// Props & Emits
 const props = defineProps<{
   modelValue?: ResignFormData;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
   'update:modelValue': [value: ResignFormData];
 }>();
 
-// 타입 정의
 export interface ResignFormData {
-  employeeName: string;      // 사원명
-  employeeNumber: number;         // 사원 ID
-  department: string;     // 부서명
-  grade: string;          // 직급명
-  hireDate: string;          // 입사일 (YYYY-MM-DD)
-  terminationDate: string;   // 퇴직일 (YYYY-MM-DD)
-  terminateReason: string;      // 퇴직 사유 (드롭다운)
-  terminateReasonDetail: string;      // 상세 사유
+  employeeName: string;
+  employeeNumber: number | string; // 문자로 올 수도 있으므로 유연하게
+  department: string;
+  grade: string;
+  hireDate: string;        // YYYY-MM-DD
+  terminationDate: string; // YYYY-MM-DD
+  terminateReason: number; // 퇴직 사유 (이름 or ID)
+  terminateReasonDetail: string;
 }
 
-// Store 데이터 연결
-const userStore = useAuthStore();
-const { user } = storeToRefs(userStore);
+onMounted(async () => {
+  // 데이터가 없을 때만 호출
+  if (!resignTypes.value || resignTypes.value.length === 0) {
+    await approvalDataStore.fetchResignTypes();
+  }
+});
 
-// 폼 데이터 (reactive로 관리)
+// --- State Management ---
+// 초기값 설정: modelValue(저장된 값)가 있으면 우선 사용, 없으면 userStore(현재 로그인 정보) 사용
 const formData = reactive<ResignFormData>({
-  employeeName: props.modelValue?.employeeName || user.value?.employeeName || '',
-  employeeNumber: props.modelValue?.employeeNumber ?? (user.value?.employeeId ? Number(user.value.employeeId) : 0),
-  department: props.modelValue?.department || user.value?.departmentName || '',
-  grade: props.modelValue?.grade || user.value?.gradeName || '',
+  employeeName: props.modelValue?.employeeName || user.value?.employeeName || '-',
+  employeeNumber: props.modelValue?.employeeNumber ?? (user.value?.employeeNumber || 0),
+  department: props.modelValue?.department || user.value?.departmentName || '-',
+  grade: props.modelValue?.grade || user.value?.gradeName || '-',
   hireDate: props.modelValue?.hireDate || '',
   terminationDate: props.modelValue?.terminationDate || '',
-  terminateReason: props.modelValue?.terminateReason || '',
+  terminateReason: props.modelValue?.terminateReason || 0,
   terminateReasonDetail: props.modelValue?.terminateReasonDetail || ''
 });
 
-const hireDate = ref(formData.hireDate);
-const terminationDate = ref(formData.terminationDate);
-const terminateReasonDetail = ref(formData.terminateReasonDetail);
+// [동기화 1] 부모 -> 자식 (API 조회 데이터 등)
+watch(() => props.modelValue, (newVal) => {
+  if (newVal) {
+    Object.assign(formData, newVal);
+  }
+}, { deep: true });
 
-// 드롭다운 로직
+// [동기화 2] 자식 -> 부모 (폼 변경 시 자동 emit)
+watch(formData, (newVal) => {
+  if (!props.readonly) {
+    emit('update:modelValue', { ...newVal });
+  }
+}, { deep: true });
+
+
+// --- Dropdown Logic ---
 const isDropdownOpen = ref(false);
-const selectedReason = ref<ResignTypeResponseDTO | null>(null);
-
 
 const toggleDropdown = () => {
+  if (props.readonly) return;
   isDropdownOpen.value = !isDropdownOpen.value;
 };
 
-const selectReason = (option: ResignTypeResponseDTO) => {
-  selectedReason.value = option;
-  formData.terminateReason = option.resignTypeName;
+const closeAllPickers = () => {
   isDropdownOpen.value = false;
 };
 
-// formData 변경 시 부모에게 자동 전달
-watch(
-  [() => formData.terminateReason, hireDate, terminationDate, terminateReasonDetail],
-  ([newResignReason, newJoinDate, newResignationDate, newDetailReason]) => {
-    formData.terminateReason = newResignReason;
-    formData.hireDate = newJoinDate;
-    formData.terminationDate = newResignationDate;
-    formData.terminateReasonDetail = newDetailReason;
-    // Store 값도 항상 최신으로 유지
-    formData.employeeNumber = user.value?.employeeId ? Number(user.value.employeeId) : 0;
-    formData.department = user.value?.departmentName || '';
-    formData.grade = user.value?.gradeName || '';
-    formData.employeeName = user.value?.employeeName || '';
-    emit('update:modelValue', { ...formData });
-  }
-);
+const selectReason = (option: ResignTypeResponseDTO) => {
+  if (props.readonly) return;
+  formData.terminateReason = option.resignTypeId;
+  isDropdownOpen.value = false;
+};
+
+/**
+ * 선택된 사유 이름 (Computed)
+ * - 데이터가 늦게 로딩되거나, 이미 저장된 값을 보여줄 때 유용함
+ */
+const currentResignReasonName = computed(() => {
+  const val = formData.terminateReason;
+  if (!val) return null;
+
+  if (!resignTypes.value || resignTypes.value.length === 0) return val;
+
+  // 만약 formData에 ID가 저장된다면 찾아서 이름 반환
+  const matched = resignTypes.value.find(r => r.resignTypeId === val);
+  return matched ? matched.resignTypeName : val;
+
+  // return val;
+});
+
+
+// --- Readonly Formatters ---
+const formatReadOnlyDate = (dateStr: string) => {
+  if (!dateStr) return '-';
+  const [year, month, day] = dateStr.split('-');
+  if (!year || !month || !day) return dateStr;
+  return `${year}년 ${month}월 ${day}일`;
+};
 </script>
 
 <style scoped>
@@ -320,15 +320,18 @@ watch(
 
 /* 4열 컬럼 스타일 (25% 너비에서 gap 고려) */
 .col-quarter {
-  flex: 0 0 calc(25% - 12px); /* 16px gap * 3 / 4 = 12px */
-  min-width: 150px; /* 반응형 최소 너비 */
+  flex: 0 0 calc(25% - 12px);
+  /* 16px gap * 3 / 4 = 12px */
+  min-width: 150px;
+  /* 반응형 최소 너비 */
 }
 
 /* 라벨 스타일 */
 .group-label {
   display: flex;
   align-items: center;
-  height: 20px; /* 라벨 높이 통일 */
+  height: 20px;
+  /* 라벨 높이 통일 */
 }
 
 .group-label-with-icon {
@@ -448,7 +451,10 @@ watch(
 /* 오버레이 */
 .overlay-backdrop {
   position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background: transparent;
   z-index: 40;
 }
@@ -476,7 +482,38 @@ watch(
 .input-textarea:focus {
   border-color: #cbd5e1;
 }
+
 .input-textarea::placeholder {
   color: #90a1b9;
+}
+
+/* 읽기 전용 모드 스타일 */
+.readonly-value {
+  flex: 1;
+  padding: 10px 12px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.readonly-textarea {
+  width: 100%;
+  height: 200px;
+  background-color: #f9fafb;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.value-text {
+  flex: 1;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>

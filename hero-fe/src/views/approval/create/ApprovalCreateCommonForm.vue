@@ -7,18 +7,18 @@
  * - 부모 컴포넌트: ApprovalCreate.vue
  *
  * History
- *   2025/12/10 - 민철 최초작성
- *   2025/12/11 - props 데이터 및 동적컴포넌트 추가
- *   2025/12/14 - 공통 컴포넌트화
- *   2025/12/23 - 민철 파일명 변경
- *   2025/12/24 - 민철 작성 UI 최종 구현(제목/분류/결재선/참고목록 지정)
- *   2025/12/26 - 민철 조직도 모달 통합
+ *   2025/12/10 (민철) 최초작성
+ *   2025/12/11 (민철) props 데이터 및 동적컴포넌트 추가
+ *   2025/12/14 (민철) 공통 컴포넌트화
+ *   2025/12/23 (민철) 파일명 변경
+ *   2025/12/24 (민철) 작성 UI 최종 구현(제목/분류/결재선/참고목록 지정)
+ *   2025/12/26 (민철) 조직도 모달 통합
  * </pre>
  *
  * @module approval
  * @author 민철
  * @version 2.2
- -->
+-->
 <template>
   <div class="form-wrapper">
     <div class="paper-sheet">
@@ -81,7 +81,7 @@
             <div class="stamp-area">
               <div class="stamp-group">
 
-                <!-- ✅ 1. 기안자 도장 -->
+                <!-- 1. 기안자 도장 -->
                 <div class="stamp-box">
                   <div class="stamp-header">
                     <span class="stamp-role-label">기안</span>
@@ -89,10 +89,13 @@
                   <div class="stamp-body">
                     <div class="approver-info-vertical">
                       <div class="approver-name-row">
-                        <span class="approver-name">{{ commonData.lines[0]?.approverName || authStore.user?.employeeName }}</span>
-                        <span class="approver-rank">{{ commonData.lines[0]?.gradeName || authStore.user?.gradeName }}</span>
+                        <span class="approver-name">{{ commonData.lines[0]?.approverName || authStore.user?.employeeName
+                        }}</span>
+                        <span class="approver-rank">{{ commonData.lines[0]?.gradeName || authStore.user?.gradeName
+                        }}</span>
                       </div>
-                      <span class="approver-dept">{{ commonData.lines[0]?.departmentName || authStore.user?.departmentName }}</span>
+                      <span class="approver-dept">{{ commonData.lines[0]?.departmentName ||
+                        authStore.user?.departmentName }}</span>
                     </div>
                     <div class="stamp-signature approved">
                       <div class="signature-text">
@@ -105,7 +108,7 @@
                   </div>
                 </div>
 
-                <!-- ✅ 2. 1차 결재자 도장 -->
+                <!-- 2. 1차 결재자 도장 -->
                 <div class="stamp-box">
                   <div class="stamp-header">
                     <span class="stamp-role-label">결재</span>
@@ -137,11 +140,11 @@
                     </template>
                   </div>
                   <div class="stamp-footer">
-                    <span class="stamp-date">{{ commonData.lines[1] ? '-' : '' }} -</span>
+                    <span class="stamp-date">{{ commonData.lines[1] ? '-' : '' }}</span>
                   </div>
                 </div>
 
-                <!-- ✅ 3. 2차 결재자 도장 -->
+                <!-- 3. 2차 결재자 도장 -->
                 <div class="stamp-box">
                   <div class="stamp-header">
                     <span class="stamp-role-label">결재</span>
@@ -255,17 +258,18 @@
                 <div class="row-content ref-content">
                   <div class="reference-wrapper">
 
-                    <!-- ✅ 참조 칩 리스트 -->
+                    <!-- 참조 칩 리스트 -->
                     <div v-if="commonData.references.length > 0" class="ref-chip-list">
                       <div v-for="(refMember, index) in commonData.references" :key="index" class="ref-chip">
-                        <span class="ref-name">{{ refMember.referencerName }} {{ refMember.gradeName }} {{ refMember.departmentName }}</span>
+                        <span class="ref-name">{{ refMember.referencerName }} {{ refMember.gradeName }} {{
+                          refMember.departmentName }}</span>
                         <button class="btn-ref-delete" @click="removeReference(index)" type="button">
                           <img src="/images/deletebutton.svg" alt="삭제" width="10" height="10" />
                         </button>
                       </div>
                     </div>
 
-                    <!-- ✅ 참조 추가 버튼 -->
+                    <!-- 참조 추가 버튼 -->
                     <button class="btn-add-ref" @click="openModal('REF')" type="button">
                       <img src="/images/plus-dark.svg" alt="추가" width="12" height="12" />
                       <span class="btn-text-sm">참조 추가</span>
@@ -275,14 +279,10 @@
                 </div>
               </div>
 
-              <!-- ✅ 조직도 모달 (Teleport) -->
+              <!-- 조직도 모달 (Teleport) -->
               <Teleport to="body">
                 <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
-                  <ApprovalLineModal 
-                    :type="modalType" 
-                    @close="closeModal" 
-                    @confirm="handleModalConfirm" 
-                  />
+                  <ApprovalLineModal :type="modalType" @close="closeModal" @confirm="handleModalConfirm" />
                 </div>
               </Teleport>
 
@@ -331,8 +331,8 @@
           </div>
         </div>
 
-        <!-- 하단 버튼 -->
-        <div class="action-buttons">
+        <!-- 하단 버튼 (hideActions가 false일 때만 표시) -->
+        <div v-if="!props.hideActions" class="action-buttons">
           <button class="btn-secondary" @click="onSave">
             <img class="btn-icon" src="/images/file.svg" />
             <span class="btn-text">임시저장</span>
@@ -375,6 +375,10 @@ const props = defineProps<{
   empName: string;
   empDept: string;
   empGrade: string;
+  initialTitle?: string;  // 초기 제목
+  initialLines?: ApprovalDefaultLineDTO[];  // 초기 결재선
+  initialReferences?: ApprovalDefaultReferenceDTO[];  // 초기 참조자
+  hideActions?: boolean;  // 하단 버튼 숨김 여부
 }>();
 
 // emit
@@ -396,7 +400,7 @@ onMounted(async () => {
   await initializeData();
 });
 
-// ✅ watch로 template 변경 감지
+// watch로 template 변경 감지
 watch(
   () => template.value,
   (newTemplate) => {
@@ -412,53 +416,71 @@ watch(
  * - 기안자 정보를 첫 번째 결재선으로 설정
  * - API에서 받은 기본결재선을 2차 결재선부터 추가
  * - API에서 받은 참조자 목록 설정
+ * - 수정 모드일 경우 initialTitle, initialLines, initialReferences 사용
  */
 const initializeData = async () => {
   try {
-    // 1. 기안자 정보 설정
-    const currentUser = authStore.user || {
-      employeeId: 0,
-      employeeName: props.empName,
-      departmentId: 0,
-      departmentName: props.empDept,
-      gradeName: props.empGrade,
-      jobTitleName: ''
-    };
-
-    const drafterLine: ApprovalDefaultLineDTO = {
-      seq: 1,
-      approverId: currentUser.employeeId,
-      approverName: currentUser.employeeName,
-      departmentId: currentUser.departmentId,
-      departmentName: currentUser.departmentName,
-      gradeName: currentUser.gradeName,
-      jobTitleName: currentUser.jobTitleName,
-    };
-
-    // 2. API 응답 데이터 확인
-    if (!template.value || !template.value.lines) {
-      console.warn('⚠️ 기본결재선 정보가 없음. 빈 결재선으로 초기화.');
-      commonData.lines = [drafterLine];
-      commonData.references = [];
-      return;
+    // 수정 모드: 초기값 사용
+    if (props.initialTitle) {
+      commonData.title = props.initialTitle;
     }
 
-    // 3. API에서 받은 기본결재선 데이터 사용
-    // template.value는 ApprovalCreate.vue의 onMounted에서 
-    // fetchTemplate(templateId)로 이미 조회된 상태
-    const defaultLines = template.value.lines;
+    if (props.initialLines && props.initialLines.length > 0) {
+      commonData.lines = props.initialLines;
+      console.log('초기 결재선 로드:', commonData.lines);
+    } else {
+      // 신규 작성 모드: 기본결재선 설정
+      // 1. 기안자 정보 설정
+      const currentUser = authStore.user || {
+        employeeId: 0,
+        employeeName: props.empName,
+        departmentId: 0,
+        departmentName: props.empDept,
+        gradeName: props.empGrade,
+        jobTitleName: ''
+      };
 
-    // 4. 기안자 + API 기본결재선 병합
-    commonData.lines = [drafterLine, ...defaultLines];
+      const drafterLine: ApprovalDefaultLineDTO = {
+        seq: 1,
+        approverId: currentUser.employeeId,
+        approverName: currentUser.employeeName,
+        departmentId: currentUser.departmentId,
+        departmentName: currentUser.departmentName,
+        gradeName: currentUser.gradeName,
+        jobTitleName: currentUser.jobTitleName,
+      };
 
-    // 5. API에서 받은 참조자 목록 설정
-    commonData.references = template.value.references || [];
+      // 2. API 응답 데이터 확인
+      if (!template.value || !template.value.lines) {
+        console.warn('⚠️ 기본결재선 정보가 없음. 빈 결재선으로 초기화.');
+        commonData.lines = [drafterLine];
+        commonData.references = [];
+        return;
+      }
 
-    console.log('✅ 결재선 초기화 완료:', {
-      총결재선: commonData.lines.length,
-      결재자: commonData.lines.map(l => l.approverName),
-      참조자: commonData.references.map(r => r.referencerName)
-    });
+      // 3. API에서 받은 기본결재선 데이터 사용
+      const defaultLines = template.value.lines;
+
+      // 4. 기안자 + API 기본결재선 병합
+      commonData.lines = [drafterLine, ...defaultLines];
+
+      console.log('결재선 초기화 완료:', {
+        총결재선: commonData.lines.length,
+        결재자: commonData.lines.map(l => l.approverName)
+      });
+    }
+
+    // 참조자 설정
+    if (props.initialReferences && props.initialReferences.length > 0) {
+      commonData.references = props.initialReferences;
+      console.log('초기 참조자 로드:', commonData.references);
+    } else if (template.value && template.value.references) {
+      // 5. API에서 받은 참조자 목록 설정
+      commonData.references = template.value.references || [];
+      console.log('참조자 초기화 완료:', {
+        참조자: commonData.references.map(r => r.referencerName)
+      });
+    }
 
   } catch (error) {
     console.error('❌ 결재선 초기화 중 오류:', error);
@@ -497,7 +519,7 @@ const removeApprover = (index: number) => {
 
   commonData.lines.splice(index, 1);
 
-  // ✅ seq 재정렬 (1부터 시작)
+  // seq 재정렬 (1부터 시작)
   commonData.lines.forEach((line, idx) => {
     line.seq = idx + 1;
   });
@@ -533,10 +555,10 @@ const closeModal = () => {
 };
 
 /**
- * ✅ 모달 확인 처리 (조직도에서 선택 완료)
+ * 모달 확인 처리 (조직도에서 선택 완료)
  */
 const handleModalConfirm = (selectedEmployees: SelectedApproverDTO[]) => {
-  console.log('✅ 선택된 직원:', selectedEmployees);
+  console.log('선택된 직원:', selectedEmployees);
 
   if (modalType.value === 'LINE') {
     // 결재선 추가

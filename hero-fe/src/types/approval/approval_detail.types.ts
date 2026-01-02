@@ -10,10 +10,11 @@
  *
  * History
  * 2025/12/26 (민철) 최초 작성
+ * 2026/01/01 (민철) downloadUrl 필드 추가
  * </pre>
  *
  * @author 민철
- * @version 1.0
+ * @version 1.1
  */
 
 /**
@@ -57,6 +58,7 @@ export interface ApprovalAttachmentResponseDTO {
     fileSize: number;
     fileUrl: string;
     uploadedAt: string;
+    downloadUrl?: string;  // S3 Presigned URL (7일 유효)
 }
 
 /**

@@ -7,22 +7,21 @@
   *  - 부모 컴포넌트: ApprovalCreateCommonForm.vue
   *
   * History
-  *   2025/12/10 - 민철 최초 작성
-  *   2025/12/14 - 민철 공통 컴포넌트화
-  *   2025/12/23 - 민철 파일명 변경
+  * 2025/12/10 (민철) 최초 작성
+  * 2025/12/14 (민철) 공통 컴포넌트화
+  * 2025/12/23 (민철) 파일명 변경
+  * 2025/12/30 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
+  * 2025/12/30 (민철) 모두 지원하도록 수정
+  * 2025/12/30 (민철) Watch 최적화, Computed 적용, 서식명 변경 근태기록수정신청서 -> 지연출근신청서
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 2.0
+  * @version 3.1
 -->
 <template>
   <div class="detail-form-section">
-    <div 
-      v-if="activeDropdown" 
-      class="overlay-backdrop" 
-      @click="closeDropdown"
-    ></div>
+    <div v-if="activeDropdown" class="overlay-backdrop" @click="closeDropdown"></div>
 
     <div class="form-row">
       <div class="row-label label-bottom">
@@ -30,36 +29,28 @@
       </div>
       <div class="row-content">
         <div class="section-body">
-          
+
           <div class="input-group-row">
             <div class="input-group col-half">
               <div class="group-label">
-                <span class="label-text">발령 유형</span>
+                <span class="label-text">발령 유형 {{ readonly ? '' : '*' }}</span>
               </div>
-              <div 
-                class="dropdown-box" 
-                :class="{ 'is-open': activeDropdown === 'type' }" 
-                @click.stop="toggleDropdown('type')"
-              >
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ getLabel('type', formData.changeType) }}</span>
+              </div>
+              <div v-else class="dropdown-box" :class="{ 'is-open': activeDropdown === 'type' }"
+                @click.stop="toggleDropdown('type')">
                 <div class="dropdown-value">
-                  <span :class="selectedType ? 'text-selected' : 'placeholder-text'">
-                    {{ selectedType ? selectedType.label : '선택하세요' }}
+                  <span :class="formData.changeType ? 'text-selected' : 'placeholder-text'">
+                    {{ getLabel('type', formData.changeType) || '선택하세요' }}
                   </span>
                 </div>
-                <img 
-                  class="icon-dropdown" 
-                  :class="{ 'rotate': activeDropdown === 'type' }"
-                  src="/images/dropdownarrow.svg" 
-                  alt="arrow" 
-                />
+                <img class="icon-dropdown" :class="{ 'rotate': activeDropdown === 'type' }"
+                  src="/images/dropdownarrow.svg" alt="arrow" />
                 <ul v-if="activeDropdown === 'type'" class="dropdown-options">
-                  <li 
-                    v-for="option in typeOptions" 
-                    :key="option.value" 
-                    class="dropdown-item" 
-                    @click.stop="selectOption('type', option)"
-                  >
-                    {{ option.label }}
+                  <li v-for="opt in typeOptions" :key="opt.value" class="dropdown-item"
+                    @click.stop="selectOption('changeType', opt.value)">
+                    {{ opt.label }}
                   </li>
                 </ul>
               </div>
@@ -68,10 +59,13 @@
             <div class="input-group col-half">
               <div class="group-label group-label-with-icon">
                 <img class="icon-label" src="/images/vacation.svg" alt="date" />
-                <span class="label-text">발령시행일자</span>
+                <span class="label-text">발령시행일자 {{ readonly ? '' : '*' }}</span>
               </div>
-              <div class="date-input-box">
-                <input type="date" v-model="effectiveDate" class="native-input" />
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ formData.effectiveDate || '-' }}</span>
+              </div>
+              <div v-else class="date-input-box">
+                <input type="date" v-model="formData.effectiveDate" class="native-input" />
               </div>
             </div>
           </div>
@@ -79,290 +73,278 @@
           <div class="input-group-row mt-20">
             <div class="input-group col-half">
               <div class="group-label">
-                <span class="label-text">대상 직원 사번</span>
+                <span class="label-text">대상 직원 사번 {{ readonly ? '' : '*' }}</span>
               </div>
-              <div class="text-input-box">
-                <input 
-                  type="text" 
-                  v-model="employeeId" 
-                  class="native-input" 
-                  placeholder="사번 입력" 
-                />
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ formData.employeeNumber || '-' }}</span>
+              </div>
+              <div v-else class="text-input-box">
+                <input type="text" v-model="formData.employeeNumber" class="native-input" placeholder="사번 입력" />
               </div>
             </div>
-
             <div class="input-group col-half">
               <div class="group-label">
-                <span class="label-text">대상 직원 이름</span>
+                <span class="label-text">대상 직원 이름 {{ readonly ? '' : '*' }}</span>
               </div>
-              <div class="text-input-box">
-                <input 
-                  type="text" 
-                  v-model="employeeName" 
-                  class="native-input" 
-                  placeholder="이름 입력" 
-                />
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ formData.employeeName || '-' }}</span>
+              </div>
+              <div v-else class="text-input-box">
+                <input type="text" v-model="formData.employeeName" class="native-input" placeholder="이름 입력" />
               </div>
             </div>
           </div>
 
-          <div class="section-title mt-30">현재 정보</div>
+          <div class="section-title mt-30">현재 정보 (발령 전)</div>
           <div class="input-group-row">
             <div class="input-group col-quarter">
               <div class="group-label"><span class="label-text">현재 부서</span></div>
-              <div class="text-input-box readonly">
-                <input type="text" :value="currentInfo.dept" class="native-input" readonly />
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ getLabel('dept', formData.departmentBefore) }}</span>
+              </div>
+              <div v-else class="dropdown-box" :class="{ 'is-open': activeDropdown === 'deptBefore' }"
+                @click.stop="toggleDropdown('deptBefore')">
+                <div class="dropdown-value">
+                  <span :class="formData.departmentBefore ? 'text-selected' : 'placeholder-text'">
+                    {{ getLabel('dept', formData.departmentBefore) || '선택하세요' }}
+                  </span>
+                </div>
+                <img class="icon-dropdown" :class="{ 'rotate': activeDropdown === 'deptBefore' }"
+                  src="/images/dropdownarrow.svg" alt="arrow" />
+                <ul v-if="activeDropdown === 'deptBefore'" class="dropdown-options">
+                  <li v-for="opt in personnelTypes?.departments" :key="opt.departmentId" class="dropdown-item"
+                    @click.stop="selectOption('departmentBefore', opt.departmentId)">
+                    {{ opt.departmentName }}
+                  </li>
+                </ul>
               </div>
             </div>
             <div class="input-group col-quarter">
               <div class="group-label"><span class="label-text">현재 직책</span></div>
-              <div class="text-input-box readonly">
-                <input type="text" :value="currentInfo.duty" class="native-input" readonly />
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ getLabel('duty', formData.jobTitleBefore) }}</span>
+              </div>
+              <div v-else class="dropdown-box" :class="{ 'is-open': activeDropdown === 'dutyBefore' }"
+                @click.stop="toggleDropdown('dutyBefore')">
+                <div class="dropdown-value">
+                  <span :class="formData.jobTitleBefore ? 'text-selected' : 'placeholder-text'">
+                    {{ getLabel('duty', formData.jobTitleBefore) || '선택하세요' }}
+                  </span>
+                </div>
+                <img class="icon-dropdown" :class="{ 'rotate': activeDropdown === 'dutyBefore' }"
+                  src="/images/dropdownarrow.svg" alt="arrow" />
+                <ul v-if="activeDropdown === 'dutyBefore'" class="dropdown-options">
+                  <li v-for="opt in personnelTypes?.jobTitles" :key="opt.jobTitleId" class="dropdown-item"
+                    @click.stop="selectOption('jobTitleBefore', opt.jobTitleId)">
+                    {{ opt.jobTitle }}
+                  </li>
+                </ul>
               </div>
             </div>
             <div class="input-group col-quarter">
               <div class="group-label"><span class="label-text">현재 직급</span></div>
-              <div class="text-input-box readonly">
-                <input type="text" :value="currentInfo.position" class="native-input" readonly />
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ getLabel('position', formData.gradeBefore) }}</span>
+              </div>
+              <div v-else class="dropdown-box" :class="{ 'is-open': activeDropdown === 'gradeBefore' }"
+                @click.stop="toggleDropdown('gradeBefore')">
+                <div class="dropdown-value">
+                  <span :class="formData.gradeBefore ? 'text-selected' : 'placeholder-text'">
+                    {{ getLabel('position', formData.gradeBefore) || '선택하세요' }}
+                  </span>
+                </div>
+                <img class="icon-dropdown" :class="{ 'rotate': activeDropdown === 'gradeBefore' }"
+                  src="/images/dropdownarrow.svg" alt="arrow" />
+                <ul v-if="activeDropdown === 'gradeBefore'" class="dropdown-options">
+                  <li v-for="opt in personnelTypes?.grades" :key="opt.gradeId" class="dropdown-item"
+                    @click.stop="selectOption('gradeBefore', opt.gradeId)">
+                    {{ opt.grade }}
+                  </li>
+                </ul>
               </div>
             </div>
-            <div class="input-group col-quarter"></div>
           </div>
 
           <div class="section-title mt-30">발령 후 정보</div>
           <div class="input-group-row">
-            
             <div class="input-group col-quarter">
-              <div class="group-label"><span class="label-text">발령 부서</span></div>
-              <div 
-                class="dropdown-box" 
-                :class="{ 'is-open': activeDropdown === 'newDept' }"
-                @click.stop="toggleDropdown('newDept')"
-              >
+              <div class="group-label"><span class="label-text">발령 부서 {{ readonly ? '' : '*' }}</span></div>
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ getLabel('dept', formData.departmentAfter) }}</span>
+              </div>
+              <div v-else class="dropdown-box" :class="{ 'is-open': activeDropdown === 'deptAfter' }"
+                @click.stop="toggleDropdown('deptAfter')">
                 <div class="dropdown-value">
-                  <span :class="newInfo.dept ? 'text-selected' : 'placeholder-text'">
-                    {{ newInfo.dept ? newInfo.dept.label : '선택하세요' }}
+                  <span :class="formData.departmentAfter ? 'text-selected' : 'placeholder-text'">
+                    {{ getLabel('dept', formData.departmentAfter) || '선택하세요' }}
                   </span>
                 </div>
-                <img 
-                  class="icon-dropdown" 
-                  :class="{ 'rotate': activeDropdown === 'newDept' }" 
-                  src="/images/dropdownarrow.svg" 
-                  alt="arrow" 
-                />
-                <ul v-if="activeDropdown === 'newDept'" class="dropdown-options">
-                  <li 
-                    v-for="opt in deptOptions" 
-                    :key="opt.value" 
-                    class="dropdown-item" 
-                    @click.stop="selectOption('newDept', opt)"
-                  >
-                    {{ opt.label }}
+                <img class="icon-dropdown" :class="{ 'rotate': activeDropdown === 'deptAfter' }"
+                  src="/images/dropdownarrow.svg" alt="arrow" />
+                <ul v-if="activeDropdown === 'deptAfter'" class="dropdown-options">
+                  <li v-for="opt in personnelTypes?.departments" :key="opt.departmentId" class="dropdown-item"
+                    @click.stop="selectOption('departmentAfter', opt.departmentId)">
+                    {{ opt.departmentName }}
                   </li>
                 </ul>
               </div>
             </div>
-
             <div class="input-group col-quarter">
-              <div class="group-label"><span class="label-text">발령 직책</span></div>
-              <div 
-                class="dropdown-box" 
-                :class="{ 'is-open': activeDropdown === 'gradeAfter' }" 
-                @click.stop="toggleDropdown('gradeAfter')"
-              >
+              <div class="group-label"><span class="label-text">발령 직책 {{ readonly ? '' : '*' }}</span></div>
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ getLabel('duty', formData.jobTitleAfter) }}</span>
+              </div>
+              <div v-else class="dropdown-box" :class="{ 'is-open': activeDropdown === 'dutyAfter' }"
+                @click.stop="toggleDropdown('dutyAfter')">
                 <div class="dropdown-value">
-                  <span :class="newInfo.duty ? 'text-selected' : 'placeholder-text'">
-                    {{ newInfo.duty ? newInfo.duty.label : '선택하세요' }}
+                  <span :class="formData.jobTitleAfter ? 'text-selected' : 'placeholder-text'">
+                    {{ getLabel('duty', formData.jobTitleAfter) || '선택하세요' }}
                   </span>
                 </div>
-                <img 
-                  class="icon-dropdown" 
-                  :class="{ 'rotate': activeDropdown === 'gradeAfter' }" 
-                  src="/images/dropdownarrow.svg" 
-                  alt="arrow" 
-                />
+                <img class="icon-dropdown" :class="{ 'rotate': activeDropdown === 'dutyAfter' }"
+                  src="/images/dropdownarrow.svg" alt="arrow" />
+                <ul v-if="activeDropdown === 'dutyAfter'" class="dropdown-options">
+                  <li v-for="opt in personnelTypes?.jobTitles" :key="opt.jobTitleId" class="dropdown-item"
+                    @click.stop="selectOption('jobTitleAfter', opt.jobTitleId)">
+                    {{ opt.jobTitle }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="input-group col-quarter">
+              <div class="group-label"><span class="label-text">발령 직급 {{ readonly ? '' : '*' }}</span></div>
+              <div v-if="readonly" class="readonly-value">
+                <span class="value-text">{{ getLabel('position', formData.gradeAfter) }}</span>
+              </div>
+              <div v-else class="dropdown-box" :class="{ 'is-open': activeDropdown === 'gradeAfter' }"
+                @click.stop="toggleDropdown('gradeAfter')">
+                <div class="dropdown-value">
+                  <span :class="formData.gradeAfter ? 'text-selected' : 'placeholder-text'">
+                    {{ getLabel('position', formData.gradeAfter) || '선택하세요' }}
+                  </span>
+                </div>
+                <img class="icon-dropdown" :class="{ 'rotate': activeDropdown === 'gradeAfter' }"
+                  src="/images/dropdownarrow.svg" alt="arrow" />
                 <ul v-if="activeDropdown === 'gradeAfter'" class="dropdown-options">
-                  <li 
-                    v-for="opt in dutyOptions" 
-                    :key="opt.value" 
-                    class="dropdown-item" 
-                    @click.stop="selectOption('gradeAfter', opt)"
-                  >
-                    {{ opt.label }}
+                  <li v-for="opt in personnelTypes?.grades" :key="opt.gradeId" class="dropdown-item"
+                    @click.stop="selectOption('gradeAfter', opt.gradeId)">
+                    {{ opt.grade }}
                   </li>
                 </ul>
               </div>
             </div>
-
-            <div class="input-group col-quarter">
-              <div class="group-label"><span class="label-text">발령 직급</span></div>
-              <div 
-                class="dropdown-box" 
-                :class="{ 'is-open': activeDropdown === 'newPosition' }" 
-                @click.stop="toggleDropdown('newPosition')"
-              >
-                <div class="dropdown-value">
-                  <span :class="newInfo.position ? 'text-selected' : 'placeholder-text'">
-                    {{ newInfo.position ? newInfo.position.label : '선택하세요' }}
-                  </span>
-                </div>
-                <img 
-                  class="icon-dropdown" 
-                  :class="{ 'rotate': activeDropdown === 'newPosition' }" 
-                  src="/images/dropdownarrow.svg" 
-                  alt="arrow" 
-                />
-                <ul v-if="activeDropdown === 'newPosition'" class="dropdown-options">
-                  <li 
-                    v-for="opt in positionOptions" 
-                    :key="opt.value" 
-                    class="dropdown-item" 
-                    @click.stop="selectOption('newPosition', opt)"
-                  >
-                    {{ opt.label }}
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div class="input-group col-quarter">
-              <div class="group-label"><span class="label-text">근무상태</span></div>
-              <div 
-                class="dropdown-box" 
-                :class="{ 'is-open': activeDropdown === 'status' }" 
-                @click.stop="toggleDropdown('status')"
-              >
-                <div class="dropdown-value">
-                  <span :class="newInfo.status ? 'text-selected' : 'placeholder-text'">
-                    {{ newInfo.status ? newInfo.status.label : '선택하세요' }}
-                  </span>
-                </div>
-                <img 
-                  class="icon-dropdown" 
-                  :class="{ 'rotate': activeDropdown === 'status' }" 
-                  src="/images/dropdownarrow.svg" 
-                  alt="arrow" 
-                />
-                <ul v-if="activeDropdown === 'status'" class="dropdown-options">
-                  <li 
-                    v-for="opt in statusOptions" 
-                    :key="opt.value" 
-                    class="dropdown-item" 
-                    @click.stop="selectOption('status', opt)"
-                  >
-                    {{ opt.label }}
-                  </li>
-                </ul>
-              </div>
-            </div>
-
           </div>
 
         </div>
       </div>
     </div>
+
+    <div class="form-row border-top">
+      <div class="row-label label-bottom">
+        <span class="label-text">내용</span>
+      </div>
+      <div class="row-content reason-content">
+        <div v-if="readonly" class="readonly-textarea">
+          <span class="value-text">{{ formData.reason || '-' }}</span>
+        </div>
+        <textarea v-else v-model="formData.reason" class="input-textarea" placeholder="내용을 입력하세요"></textarea>
+      </div>
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, computed, onMounted} from 'vue';
+import { ref, reactive, watch, computed, onMounted } from 'vue';
+import { useApprovalDataStore } from '@/stores/approval/approval_data.store';
 import { storeToRefs } from 'pinia';
-import { useAuthStore } from '@/stores/auth';
 
-// v-model을 위한 Props와 Emits
+const approvalDataStore = useApprovalDataStore();
+const { personnelTypes } = storeToRefs(approvalDataStore);
+
+onMounted(async () => {
+  // 데이터가 없을 때만 호출
+  if (!personnelTypes.value ||
+    personnelTypes.value.departments.length === 0 &&
+    personnelTypes.value.jobTitles.length === 0 &&
+    personnelTypes.value.grades.length === 0
+  ) {
+    await approvalDataStore.fetchPersonnelTypes();
+  }
+});
+
+// Props & Emits
 const props = defineProps<{
   modelValue?: PersonnelAppointmentFormData;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
   'update:modelValue': [value: PersonnelAppointmentFormData];
 }>();
 
-// 타입 정의
+// 타입 정의: number 타입으로 변경
 export interface PersonnelAppointmentFormData {
-  changeType: string;         // 발령 유형
-  employeeId: number;         // 대상 사원 ID
-  employeeName: string;       // 대상 사원 이름
-  effectiveDate: string;      // 발령 효력 발생일
-  departmentBefore: string;   // 현재 부서
-  gradeBefore: string;        // 현재 직급
-  jobTitleBefore: string;     // 현재 직책
-  departmentAfter: string;    // 신규 부서
-  gradeAfter: string;         // 신규 직급
-  jobTitleAfter: string;        // 신규 직책
-  status: string;             // 근무상태
-  auditDate: string;          // 기안일
+  changeType: string;
+  employeeNumber: string;
+  employeeName: string;
+  effectiveDate: string;
+
+  departmentBefore: number; // 변경: string -> number
+  gradeBefore: number;      // 변경: string -> number
+  jobTitleBefore: number;   // 변경: string -> number
+
+  departmentAfter: number;  // 변경: string -> number
+  gradeAfter: number;       // 변경: string -> number
+  jobTitleAfter: number;    // 변경: string -> number
+
+  status: string;
+  auditDate: string;
+  reason: string;
 }
 
-const userStore = useAuthStore();
-const { user } = storeToRefs(userStore);
+// --- Data Options (고정값) ---
+const typeOptions = [
+  { label: '정기 승진', value: 'REGULAR' },
+  { label: '특별 승진', value: 'SPECIAL' }
+];
 
-// 폼 데이터 (reactive로 관리)
+// --- State Management ---
+// 초기값 0으로 설정 (선택 안 됨을 의미)
 const formData = reactive<PersonnelAppointmentFormData>({
   changeType: props.modelValue?.changeType || '',
-  effectiveDate: props.modelValue?.effectiveDate || '',
-  employeeId: props.modelValue?.employeeId || 0,
+  employeeNumber: props.modelValue?.employeeNumber || '',
   employeeName: props.modelValue?.employeeName || '',
-  departmentBefore: props.modelValue?.departmentBefore || user.value?.departmentName || '',
-  gradeBefore: props.modelValue?.gradeBefore || user.value?.gradeName || '',
-  jobTitleBefore: props.modelValue?.jobTitleBefore || user.value?.jobTitleName || '',
-  departmentAfter: props.modelValue?.departmentAfter || '',
-  gradeAfter: props.modelValue?.gradeAfter || '',
-  jobTitleAfter: props.modelValue?.jobTitleAfter || '',
+  effectiveDate: props.modelValue?.effectiveDate || '',
+  departmentBefore: props.modelValue?.departmentBefore || 0,
+  gradeBefore: props.modelValue?.gradeBefore || 0,
+  jobTitleBefore: props.modelValue?.jobTitleBefore || 0,
+  departmentAfter: props.modelValue?.departmentAfter || 0,
+  gradeAfter: props.modelValue?.gradeAfter || 0,
+  jobTitleAfter: props.modelValue?.jobTitleAfter || 0,
   status: props.modelValue?.status || '',
-  auditDate: props.modelValue?.auditDate || ''
+  auditDate: props.modelValue?.auditDate || new Date().toISOString().split('T')[0],
+  reason: props.modelValue?.reason || '',
 });
 
-const effectiveDate = ref(formData.effectiveDate);
-const employeeId = ref(formData.employeeId);
-const employeeName = ref(formData.employeeName);
-const selectedType = ref<{ label: string, value: string } | null>(null);
-const auditDate = computed(() => {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-});
+// [동기화]
+watch(() => props.modelValue, (newVal) => {
+  if (newVal) {
+    Object.assign(formData, newVal);
+  }
+}, { deep: true });
 
-const typeOptions = [
-  { label: '정기 인사', value: 'regular' },
-  { label: '수시 인사', value: 'spot' }
-];
+watch(formData, (newVal) => {
+  if (!props.readonly) {
+    emit('update:modelValue', { ...newVal });
+  }
+}, { deep: true });
 
-const currentInfo = reactive({
-  dept: user?.value?.departmentName, 
-  duty: user?.value?.gradeName, 
-  position: user?.value?.jobTitleName 
-});
 
-const newInfo = reactive({
-  dept: null as { label: string, value: string } | null,
-  duty: null as { label: string, value: string } | null,
-  position: null as { label: string, value: string } | null,
-  status: null as { label: string, value: string } | null,
-});
-
-const deptOptions = [
-  { label: '기획팀', value: 'planning' }, 
-  { label: '영업팀', value: 'sales' }
-];
-const dutyOptions = [
-  { label: '팀장', value: 'leader' }, 
-  { label: '파트장', value: 'part_leader' }
-];
-const positionOptions = [
-  { label: '책임', value: 'senior' }, 
-  { label: '수석', value: 'principal' }
-];
-const statusOptions = [
-  { label: '재직', value: 'working' }, 
-  { label: '휴직', value: 'leave' }
-];
-
+// --- Dropdown Helpers ---
 const activeDropdown = ref<string | null>(null);
 
 const toggleDropdown = (key: string) => {
+  if (props.readonly) return;
   activeDropdown.value = activeDropdown.value === key ? null : key;
 };
 
@@ -370,55 +352,43 @@ const closeDropdown = () => {
   activeDropdown.value = null;
 };
 
-const selectOption = (key: string, option: { label: string, value: string }) => {
-  if (key === 'type') {
-    selectedType.value = option;
-    formData.changeType = option.value;
-  } else if (key === 'departmentAfter') {
-    newInfo.dept = option;
-    formData.departmentAfter = option.value;
-  } else if (key === 'gradeAfter') {
-    newInfo.duty = option;
-    formData.gradeAfter = option.value;
-  } else if (key === 'jobTitleAfter') {
-    newInfo.position = option;
-    formData.jobTitleAfter = option.value;
-  } else if (key === 'status') {
-    newInfo.status = option;
-    formData.status = option.value;
-  }
-  
+// 선택 로직: value를 number로 받아서 저장
+const selectOption = (field: keyof PersonnelAppointmentFormData, value: string | number) => {
+  if (props.readonly) return;
+  // @ts-ignore
+  formData[field] = value;
   closeDropdown();
 };
 
-// formData 변경 시 부모에게 자동 전달
-watch(
-  [
-    () => formData.changeType,
-    effectiveDate,
-    employeeId,
-    employeeName,
-    () => formData.departmentAfter,
-    () => formData.gradeAfter,
-    () => formData.jobTitleAfter,
-    () => formData.status
-  ],
-  ([newType, newEffectiveDate, newemployeeId, newTargetEmpName, departmentAfter, gradeAfter, jobTitleAfter, newStatus]) => {
-    formData.effectiveDate = newEffectiveDate;
-    formData.employeeId = newemployeeId;
-    formData.employeeName = newTargetEmpName;
-    formData.departmentBefore = user.value?.departmentName || '';
-    formData.gradeBefore = user.value?.gradeName || '';
-    formData.jobTitleBefore = user.value  ?.jobTitleName || '';
-    formData.departmentAfter = departmentAfter;
-    formData.gradeAfter = gradeAfter;
-    formData.jobTitleAfter = jobTitleAfter;
-    formData.status = newStatus;
-    formData.auditDate = auditDate.value;
-    
-    emit('update:modelValue', { ...formData });
+/**
+ * 라벨 조회 로직 수정
+ * ID(number)를 받아서 이름(string)을 반환
+ */
+const getLabel = (type: 'type' | 'dept' | 'duty' | 'position', value: string | number) => {
+  if (!value) return '';
+
+  if (type === 'type') {
+    const found = typeOptions.find(o => o.value === value);
+    return found ? found.label : String(value);
   }
-);
+
+  // Store 데이터에서 조회
+  if (type === 'dept' && personnelTypes.value?.departments) {
+    const found = personnelTypes.value.departments.find(d => d.departmentId === value);
+    return found ? found.departmentName : '';
+  }
+  if (type === 'duty' && personnelTypes.value?.jobTitles) {
+    const found = personnelTypes.value.jobTitles.find(j => j.jobTitleId === value);
+    return found ? found.jobTitle : '';
+  }
+  if (type === 'position' && personnelTypes.value?.grades) {
+    const found = personnelTypes.value.grades.find(g => g.gradeId === value);
+    return found ? found.grade : '';
+  }
+
+  return String(value);
+};
+
 </script>
 
 <style scoped>
@@ -439,6 +409,10 @@ watch(
   flex-wrap: wrap;
 }
 
+.border-top {
+  border-top: 1px solid #e2e8f0;
+}
+
 .row-label {
   background: #f8fafc;
   border-right: 1px solid #e2e8f0;
@@ -457,8 +431,6 @@ watch(
   padding: 16px 20px;
   flex: 1;
   min-width: 200px;
-  display: flex;
-  align-items: center;
 }
 
 .section-body {
@@ -470,6 +442,7 @@ watch(
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+  flex-direction: row;
 }
 
 .input-group {
@@ -499,14 +472,16 @@ watch(
   font-weight: 400;
 }
 
+/* 그리드 시스템 */
 .col-half {
   flex: 0 0 calc(50% - 8px);
   min-width: 200px;
 }
 
 .col-quarter {
-  flex: 0 0 calc(25% - 12px);
-  min-width: 150px;
+  /* flex: 0 0 calc(25% - 12px); */
+  flex: 1;
+  min-width: 140px;
 }
 
 .mt-20 {
@@ -524,10 +499,11 @@ watch(
   margin-bottom: 12px;
 }
 
-/* 입력 박스 공통 스타일 */
+/* 입력 박스 공통 */
 .text-input-box,
 .date-input-box,
-.dropdown-box {
+.dropdown-box,
+.readonly-value {
   height: 46px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -541,14 +517,8 @@ watch(
 }
 
 .text-input-box:focus-within,
-.date-input-box:focus-within,
-.dropdown-box.is-open {
+.date-input-box:focus-within {
   border-color: #cbd5e1;
-}
-
-.text-input-box.readonly {
-  background: #f8fafc;
-  cursor: not-allowed;
 }
 
 .native-input {
@@ -566,15 +536,16 @@ watch(
   color: #90a1b9;
 }
 
-.native-input:read-only {
-  cursor: not-allowed;
-}
 
-/* 드롭다운 스타일 */
 .dropdown-box {
   justify-content: space-between;
   cursor: pointer;
   position: relative;
+}
+
+.dropdown-box.is-open {
+  border-color: #cbd5e1;
+  z-index: 50;
 }
 
 .dropdown-value {
@@ -638,5 +609,62 @@ watch(
   height: 100vh;
   background: transparent;
   z-index: 40;
+}
+
+.reason-content {
+  flex-direction: column;
+  padding: 16px 20px;
+}
+
+.input-textarea {
+  width: 100%;
+  height: 200px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  resize: vertical;
+  font-family: "Inter-Regular", sans-serif;
+  font-size: 14px;
+  color: #0f172b;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input-textarea:focus {
+  border-color: #cbd5e1;
+}
+
+.input-textarea::placeholder {
+  color: #90a1b9;
+}
+
+.readonly-value {
+  /* flex: 1; */
+  padding: 10px 12px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.readonly-textarea {
+  width: 100%;
+  height: 200px;
+  background-color: #f9fafb;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.value-text {
+  flex: 1;
+  font-size: 14px;
+  color: #374151;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 </style>
