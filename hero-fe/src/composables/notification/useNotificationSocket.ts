@@ -62,7 +62,9 @@ export function useNotificationSocket(): UseNotificationSocket {
 
     // SockJS 소켓 생성
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    const baseUrl = apiUrl.replace('/api', '');
+    const baseUrl = apiUrl.endsWith('/api') 
+                ? apiUrl.slice(0, -4) 
+                : apiUrl;
     const socket = new SockJS(`${baseUrl}/ws/notifications`);
     
     // STOMP 클라이언트 설정
