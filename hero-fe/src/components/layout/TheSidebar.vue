@@ -503,7 +503,7 @@ const handleSubMenuClick = (key: string) => {
   if (key === 'employeeList') {
     router.push('/personnel/list');
   } else if (key === 'turnover') {
-    router.push('/personnel/turnover'); // 이직률
+    router.push('/personnel/retirement/turnover'); // 이직률
   } else if (key === 'plan') {
     router.push('/personnel/promotion/plan');
   } else if (key === 'recommend') {

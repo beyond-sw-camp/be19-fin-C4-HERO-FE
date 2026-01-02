@@ -101,15 +101,7 @@ const handleNodeClick = () => {
 
 // 프로필 이미지 URL 처리 (TheHeader.vue 로직 재사용)
 const getProfileImageUrl = (path?: string) => {
-  if (!path) return '/images/default-profile.png'; // 기본 이미지 경로 확인 필요
-  if (path.startsWith('http')) return path;
-  
-  const baseUrl = 'http://localhost:8080';
-  let resourcePath = path.startsWith('/') ? path : `/${path}`;
-  if (!resourcePath.startsWith('/uploads')) {
-    resourcePath = `/uploads${resourcePath}`;
-  }
-  return `${baseUrl}${resourcePath}`;
+  return path || '';
 };
 
 const onImageError = (id: number) => {

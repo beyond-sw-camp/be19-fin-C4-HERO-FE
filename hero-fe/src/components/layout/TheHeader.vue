@@ -110,19 +110,7 @@ watch(() => user.value?.imagePath, () => {
 
 // 프로필 이미지 URL 계산
 const profileImageUrl = computed(() => {
-  const path = user.value?.imagePath;
-  if (!path) return '';
-
-  // http로 시작하는 외부 링크는 그대로 사용
-  if (path.startsWith('http')) return path;
-
-  // 상대 경로인 경우 백엔드 주소와 /uploads 프리픽스 조합
-  const baseUrl = 'http://localhost:8080';
-  let resourcePath = path.startsWith('/') ? path : `/${path}`;
-  if (!resourcePath.startsWith('/uploads')) {
-    resourcePath = `/uploads${resourcePath}`;
-  }
-  return `${baseUrl}${resourcePath}`;
+  return user.value?.imagePath || '';
 });
 
 // 메인 로고 버튼 클릭 시 대시보드 이동

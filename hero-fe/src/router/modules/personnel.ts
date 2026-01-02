@@ -61,6 +61,14 @@ const personnelRoutes: RouteRecordRaw[] = [
           title: '사원 프로필',
         },
       },
+      {
+        path: 'retirement/turnover',
+        name: 'Turnover',
+        component: () => import('@/views/personnel/retirement/Turnover.vue'),
+        meta: {
+          title: '이직률',
+        },
+      },
     ],
   },
   {
