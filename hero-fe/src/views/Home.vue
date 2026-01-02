@@ -344,7 +344,7 @@ const checkAndGenerateSeal = async (): Promise<void> => {
       await generateMySeal();
       console.log('직인 자동 생성 완료');
     } else {
-      console.log('직인이 이미 존재합니다:', profile.sealImageUrl);
+      console.log('직인이 이미 존재합니다:');
     }
   } catch (error) {
     console.warn('직인 생성 중 오류 발생 (무시):', error);
