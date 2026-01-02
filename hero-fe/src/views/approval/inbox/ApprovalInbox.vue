@@ -88,7 +88,9 @@
               <template v-if="!loading && documents.length > 0">
                 <tr v-for="doc in documents" :key="doc.docId" class="clickable-row"
                   @click="toDocumentDetail(doc.docId)">
-                  <td class="cell docNo">{{ doc.docNo || '생성중' }}</td>
+                  <td v-if="['임시저장', '진행중'].includes(doc.docStatus)" class="cell docNo doc-rejected">생성중</td>
+                  <td v-else-if="doc.docNo === null" class="cell docNo doc-rejected">-</td>
+                  <td v-else class="cell docNo">{{ doc.docNo }}</td>
                   <td class="cell docStatus">
                     <div class="status-badge" :class="getStatusClass(doc.docStatus)">
                       {{ getStatusText(doc.docStatus) }}
