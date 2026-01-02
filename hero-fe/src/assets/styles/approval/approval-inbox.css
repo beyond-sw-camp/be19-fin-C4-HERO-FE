@@ -166,6 +166,10 @@ td {
     width: 200px;
 }
 
+.docNo.doc-rejected {
+    color: #62748E;
+}
+
 .docStatus {
     width: 150px;
 }

@@ -431,7 +431,7 @@ export function useApprovalDocument() {
     const cancelDocument = async (docId: number) => {
         try {
             const response = await apiCancelDocument(docId);
-            alert('회수되었습니다.');
+            alert(`${response}`);
             return response;
         } catch (error) {
             console.error('회수 실패:', error);
@@ -443,7 +443,7 @@ export function useApprovalDocument() {
     const deleteDocument = async (docId: number) => {
         try {
             const response = await apiDeleteDocument(docId);
-            alert('삭제되었습니다.');
+            alert(`${response}`);
             return response;
         } catch (error) {
             console.error('삭제 실패:', error);

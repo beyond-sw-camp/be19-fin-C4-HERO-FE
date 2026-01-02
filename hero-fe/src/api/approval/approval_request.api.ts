@@ -179,16 +179,18 @@ export const cancelDocument = async (
         {
             headers: { 'Content-Type': 'application/json' }
         }
-    )
+    );
+    return response.data;
 };
 
 export const deleteDocument = async (
     docId: number
 ): Promise<any> => {
-    const response = await apiClient.delete<any>(
+    const response = await apiClient.delete<string>(
         `/approval/${docId}`,
         {
             headers: { 'Content-Type': 'application/json' }
         }
-    )
+    );
+    return response.data;
 };

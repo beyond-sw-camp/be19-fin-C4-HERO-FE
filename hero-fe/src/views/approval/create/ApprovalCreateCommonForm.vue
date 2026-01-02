@@ -361,7 +361,7 @@ import {
   ApprovalDefaultLineDTO,
   ApprovalDefaultReferenceDTO
 } from '@/types/approval/template.types';
-import { SelectedApproverDTO } from '@/types/approval/organization.types';  // ✅ 추가
+import { SelectedApproverDTO } from '@/types/approval/organization.types';
 import ApprovalLineModal from '@/views/approval/create/forms/ApprovalLineModal.vue';
 
 const templateStore = useApprovalTemplateStore();
@@ -375,10 +375,10 @@ const props = defineProps<{
   empName: string;
   empDept: string;
   empGrade: string;
-  initialTitle?: string;  // 초기 제목
-  initialLines?: ApprovalDefaultLineDTO[];  // 초기 결재선
-  initialReferences?: ApprovalDefaultReferenceDTO[];  // 초기 참조자
-  hideActions?: boolean;  // 하단 버튼 숨김 여부
+  initialTitle?: string;
+  initialLines?: ApprovalDefaultLineDTO[];
+  initialReferences?: ApprovalDefaultReferenceDTO[];
+  hideActions?: boolean;
 }>();
 
 // emit
@@ -452,7 +452,7 @@ const initializeData = async () => {
 
       // 2. API 응답 데이터 확인
       if (!template.value || !template.value.lines) {
-        console.warn('⚠️ 기본결재선 정보가 없음. 빈 결재선으로 초기화.');
+        console.warn('기본결재선 정보가 없음. 빈 결재선으로 초기화.');
         commonData.lines = [drafterLine];
         commonData.references = [];
         return;
@@ -483,7 +483,7 @@ const initializeData = async () => {
     }
 
   } catch (error) {
-    console.error('❌ 결재선 초기화 중 오류:', error);
+    console.error('결재선 초기화 중 오류:', error);
 
     // 최소한 기안자만이라도 설정
     const currentUser = authStore.user || {
@@ -588,7 +588,7 @@ const handleModalConfirm = (selectedEmployees: SelectedApproverDTO[]) => {
       commonData.lines.push(newLine);
     });
 
-    console.log('✅ 업데이트된 결재선:', commonData.lines);
+    console.log('업데이트된 결재선:', commonData.lines);
 
   } else {
     // 참조 추가
@@ -609,7 +609,7 @@ const handleModalConfirm = (selectedEmployees: SelectedApproverDTO[]) => {
       }
     });
 
-    console.log('✅ 업데이트된 참조:', commonData.references);
+    console.log('업데이트된 참조:', commonData.references);
   }
 
   closeModal();
