@@ -144,12 +144,17 @@
 
           <!-- Tab 3: 신입 통계 -->
           <div v-if="activeTab === 'newHire'" class="chart-panel full-height">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div class="panel-header">분기별 신입 사원 정착률 및 이직률</div>
-              <div class="tooltip-wrapper">
-                <span class="info-icon">i</span>
-                <span class="tooltip-text" style="text-align: left;">정착률: 3개월 이상 재직 신입<br>이직률: 1년 내 퇴사 신입</span>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="panel-header">분기별 신입 사원 정착률 및 이직률</div>
+                <div class="tooltip-wrapper">
+                  <span class="info-icon">i</span>
+                  <span class="tooltip-text" style="text-align: left;">정착률: 3개월 이상 재직 신입<br>이직률: 1년 내 퇴사 신입</span>
+                </div>
               </div>
+              <select v-if="availableYears.length > 0" v-model="selectedYear" class="year-select">
+                <option v-for="year in availableYears" :key="year" :value="year">{{ year }}년</option>
+              </select>
             </div>
             <div class="chart-container">
               <Bar v-if="newHireChartData" :data="newHireChartData" :options="newHireOptions" />
@@ -196,7 +201,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, computed, ref } from 'vue';
+import { onMounted, computed, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import {
   Chart as ChartJS,
@@ -224,6 +229,21 @@ const { summary, reasonStats, tenureStats, newHireStats, departmentStats } = sto
 
 // --- Tab State ---
 const activeTab = ref('reason'); // 'reason' | 'tenure' | 'newHire' | 'department'
+
+// --- Year Filter State ---
+const selectedYear = ref('');
+
+const availableYears = computed(() => {
+  if (!newHireStats.value.length) return [];
+  const years = new Set(newHireStats.value.map(item => item.quarter.split('년')[0]));
+  return Array.from(years).sort((a, b) => Number(b) - Number(a));
+});
+
+watch(availableYears, (years) => {
+  if (years.length > 0 && !selectedYear.value) {
+    selectedYear.value = years[0];
+  }
+}, { immediate: true });
 
 // --- API Call ---
 onMounted(() => {
@@ -254,20 +274,34 @@ const tenureData = computed(() => tenureStats.value.map(item => item.retentionRa
 
 // 3. 신입 정착률/이직률 (Bar - Multi Dataset)
 const newHireChartData = computed(() => {
-  if (!newHireStats.value.length) return null;
+  if (!selectedYear.value) return null;
+
+  // 1~4분기 고정 레이블 생성 (오름차순)
+  const quarters = ['1분기', '2분기', '3분기', '4분기'];
+  const labels = quarters.map(q => `${selectedYear.value}년 ${q}`);
+
+  // 해당 연도 데이터 필터링
+  const yearStats = newHireStats.value.filter(item => item.quarter.startsWith(selectedYear.value));
+
   return {
-    labels: newHireStats.value.map(item => item.quarter),
+    labels,
     datasets: [
       {
         label: '정착률 (%)',
         backgroundColor: '#16a34a', // Green
-        data: newHireStats.value.map(item => item.settlementRate),
+        data: labels.map(label => {
+          const stat = yearStats.find(item => item.quarter === label);
+          return stat ? stat.settlementRate : 0;
+        }),
         borderRadius: 4,
       },
       {
         label: '이직률 (%)',
         backgroundColor: '#ef4444', // Red
-        data: newHireStats.value.map(item => item.turnoverRate),
+        data: labels.map(label => {
+          const stat = yearStats.find(item => item.quarter === label);
+          return stat ? stat.turnoverRate : 0;
+        }),
         borderRadius: 4,
       }
     ]
@@ -626,5 +660,16 @@ const getTurnoverClass = (rate: number) => {
 .text-success {
   color: #16a34a;
   font-weight: 600;
+}
+
+.year-select {
+  padding: 6px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #334155;
+  background-color: #fff;
+  cursor: pointer;
+  outline: none;
 }
 </style>
