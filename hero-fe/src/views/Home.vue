@@ -194,10 +194,20 @@ const updateCurrentDateTime = (): void => {
 const updateWorkDuration = (): void => {
   if (todayAttendance.value?.startTime && !todayAttendance.value?.endTime) {
     const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const startDateTime = new Date(`${today}T${todayAttendance.value.startTime}`);
-    const diffMs = now.getTime() - startDateTime.getTime();
-    currentWorkDuration.value = Math.floor(diffMs / 60000);
+    
+    // 1. 서버에서 받은 startTime(HH:mm:ss)을 오늘 날짜의 Date 객체로 생성
+    const [hours, minutes, seconds] = todayAttendance.value.startTime.split(':').map(Number);
+    const startDateTime = new Date();
+    startDateTime.setHours(hours, minutes, seconds, 0);
+
+    // 2. 만약 계산된 시작 시간이 현재보다 미래라면 (서버-클라이언트 시간차) 
+    // 시간대 보정을 하거나 0으로 처리
+    let diffMs = now.getTime() - startDateTime.getTime();
+    
+    // 배포 환경에서 9시간 차이가 발생할 경우 강제 보정 로직 (선택)
+    // if (diffMs < 0) { startDateTime.setHours(startDateTime.getHours() - 9); diffMs = ... }
+
+    currentWorkDuration.value = diffMs > 0 ? Math.floor(diffMs / 60000) : 0;
   } else {
     currentWorkDuration.value = 0;
   }
