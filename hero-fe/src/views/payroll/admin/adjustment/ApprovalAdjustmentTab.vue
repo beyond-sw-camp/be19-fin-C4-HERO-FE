@@ -29,7 +29,6 @@
       <table class="table">
         <thead>
           <tr>
-            <th class="col-empno">사번</th>
             <th class="col-emp">사원명(직급)</th>
             <th class="col-dept">부서</th>
             <th>사유</th>
@@ -41,8 +40,7 @@
         </thead>
 
         <tbody>
-          <tr v-for="row in pagedRows" :key="row.adjustmentId">
-            <td class="mono">{{ row.employeeNumber }}</td>
+          <tr v-for="row in pagedRows" :key="row.docId">
             <td class="emp">
               <div class="emp-wrap">
                 <span class="emp-name">{{ row.employeeName }}</span>
@@ -58,7 +56,7 @@
 
             <td>
   <div class="date-only">
-    {{ row.createdAt.slice(0, 10) }}
+    {{ (row.createdAt || '').slice(0, 10) }}
   </div>
             </td>
 
@@ -79,7 +77,7 @@
           </tr>
 
           <tr v-if="filtered.length === 0">
-            <td colspan="8" class="empty">
+            <td colspan="7" class="empty">
               조건에 해당하는 조정 요청이 없습니다.
             </td>
           </tr>
@@ -121,68 +119,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { usePayrollAdjustmentStore } from '@/stores/payroll/payrollAdjustment.store';
+import type { AdjustmentStatus, ApprovalAdjustmentRow } from '@/types/payroll/payroll-adjustment.types';
 
-type AdjustmentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
-
-interface AdjustmentRow {
-  adjustmentId: number;
-  employeeNumber: string;      // 사번
-  employeeName: string;        // 사원명
-  jobTitle: string;            // 직급/직책 (표시용)
-  departmentName: string;      // 부서
-  reason: string;
-  sign: '+' | '-';
-  amount: number;
-  status: AdjustmentStatus;
-  createdAt: string; // YYYY-MM-DD HH:mm:ss
-}
 
 const statusFilter = ref<string>('');
+const router = useRouter();
+const store = usePayrollAdjustmentStore();
 
-// 목데이터(MVP)
-const rows = ref<AdjustmentRow[]>([
-  {
-    adjustmentId: 1,
-    employeeNumber: 'E001',
-    employeeName: '김다우',
-    jobTitle: '대리',
-    departmentName: '애플리케이션 개발3팀',
-    reason: '프로젝트 성과 보너스',
-    sign: '+',
-    amount: 650000,
-    status: 'APPROVED',
-    createdAt: '2025-11-10 14:00:00',
-  },
-  {
-    adjustmentId: 2,
-    employeeNumber: 'E003',
-    employeeName: '박영희',
-    jobTitle: '주임',
-    departmentName: '디자인팀',
-    reason: '지각 정산',
-    sign: '-',
-    amount: 305000,
-    status: 'PENDING',
-    createdAt: '2025-11-15 10:00:00',
-  },
-  {
-    adjustmentId: 3,
-    employeeNumber: 'E002',
-    employeeName: '이철수',
-    jobTitle: '사원',
-    departmentName: '인프라팀',
-    reason: '무단 결근 3일',
-    sign: '-',
-    amount: 155000,
-    status: 'APPROVED',
-    createdAt: '2025-11-18 16:00:00',
-  },
-]);
+
+onMounted(store.fetchList);
 
 const filtered = computed(() => {
-  if (!statusFilter.value) return rows.value;
-  return rows.value.filter(r => r.status === statusFilter.value);
+  if (!statusFilter.value) return store.rows;
+  return store.rows.filter((r) => r.status === statusFilter.value);
 });
 
 const page = ref(1);       
@@ -214,22 +166,21 @@ const goPage = (p: number) => {
 watch(statusFilter, () => {
   page.value = 1;
 });
+
+watch(
+  pagedRows,
+  (rows) => {
+    store.hydrateRows(rows.map((r) => r.docId));
+  },
+  { immediate: true }
+);
+
 const statusLabel = (s: AdjustmentStatus) => {
-  switch (s) {
-    case 'PENDING': return '승인대기';
-    case 'APPROVED': return '승인완료';
-    case 'REJECTED': return '반려';
-    case 'CANCELED': return '취소';
-  }
+return store.statusLabel(s);
 };
 
 const badgeClass = (s: AdjustmentStatus) => {
-  switch (s) {
-    case 'PENDING': return 'badge-yellow';
-    case 'APPROVED': return 'badge-green';
-    case 'REJECTED': return 'badge-red';
-    case 'CANCELED': return 'badge-gray';
-  }
+return store.badgeClass(s);
 };
 
 const formatSignedAmount = (sign: '+' | '-', amount: number) => {
@@ -237,9 +188,9 @@ const formatSignedAmount = (sign: '+' | '-', amount: number) => {
   return `${sign}${formatted}`;
 };
 
-const openApproval = (row: AdjustmentRow) => {
-  console.log('open approval doc:', row.adjustmentId);
-  alert(`(MVP) 조정요청 #${row.adjustmentId} 상세(결재함 링크)`);
+const openApproval = (row: ApprovalAdjustmentRow) => {
+  // 결재 상세 페이지로 이동
+  router.push(`/approval/documents/${row.docId}`);
 };
 </script>
 
@@ -317,14 +268,12 @@ const openApproval = (row: AdjustmentRow) => {
 }
 
 .mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   color: #334155;
 }
 
 .reason {
   color: #0f172a;
 }
-.col-empno { width: 90px; }
 .col-emp { width: 130px; }
 .col-dept { width: 160px; }
 .col-amount { width: 140px; }

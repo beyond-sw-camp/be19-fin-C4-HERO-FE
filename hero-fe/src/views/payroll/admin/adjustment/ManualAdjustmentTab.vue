@@ -223,10 +223,21 @@ const statusFilter = ref<string>('');
 const formError = ref<string>('');
 
 const employees = ref<EmployeeDirectoryRow[]>([
-  { employeeNumber: 'E001', employeeName: '김다우', jobTitle: '대리', departmentName: '애플리케이션 개발3팀' },
-  { employeeNumber: 'E002', employeeName: '이철수', jobTitle: '사원', departmentName: '인프라팀' },
-  { employeeNumber: 'E003', employeeName: '박영희', jobTitle: '주임', departmentName: '디자인팀' },
-  { employeeNumber: 'E004', employeeName: '최민준', jobTitle: '과장', departmentName: '재무팀' },
+  { employeeNumber: 'D2-MGR',  employeeName: '김인사', jobTitle: '팀장', departmentName: '인사팀' },
+  { employeeNumber: 'D2-EMP1', employeeName: '박지윤', jobTitle: '팀원', departmentName: '인사팀' },
+  { employeeNumber: 'D2-EMP2', employeeName: '이준호', jobTitle: '팀원', departmentName: '인사팀' },
+  { employeeNumber: 'D2-EMP3', employeeName: '최은비', jobTitle: '팀원', departmentName: '인사팀' },
+  { employeeNumber: 'D2-EMP4', employeeName: '장민석', jobTitle: '팀원', departmentName: '인사팀' },
+  { employeeNumber: 'D2-EMP5', employeeName: '유승민', jobTitle: '팀원', departmentName: '인사팀' },
+  { employeeNumber: 'D3-MGR',  employeeName: '박총무', jobTitle: '팀장', departmentName: '총무팀' },
+  { employeeNumber: 'D3-EMP1', employeeName: '홍지훈', jobTitle: '팀원', departmentName: '총무팀' },
+  { employeeNumber: 'D3-EMP2', employeeName: '서민지', jobTitle: '팀원', departmentName: '총무팀' },
+  { employeeNumber: 'D3-EMP3', employeeName: '정우빈', jobTitle: '팀원', departmentName: '총무팀' },
+  { employeeNumber: 'D3-EMP4', employeeName: '한수아', jobTitle: '팀원', departmentName: '총무팀' },
+  { employeeNumber: 'D3-EMP5', employeeName: '오상혁', jobTitle: '팀원', departmentName: '총무팀' },
+  { employeeNumber: 'D4-MGR',  employeeName: '이재무', jobTitle: '팀장', departmentName: '재무팀' },
+  { employeeNumber: 'D4-EMP1', employeeName: '김세무', jobTitle: '팀원', departmentName: '재무팀' },
+  { employeeNumber: 'D4-EMP2', employeeName: '박회계', jobTitle: '팀원', departmentName: '재무팀' },
 ]);
 
 const form = ref({
@@ -245,7 +256,6 @@ const selectedEmployee = computed(() => {
 });
 
 const showSuggest = ref(false);
-const suggestMode = ref<'number' | 'name'>('number');
 const activeIndex = ref(0);
 let closeTimer: any = null;
 
@@ -306,31 +316,44 @@ watch(
 );
 
 const rows = ref<ManualRow[]>([
-  {
-    manualId: 101,
-    employeeNumber: 'E001',
-    employeeName: '김다우',
-    jobTitle: '대리',
-    departmentName: '애플리케이션 개발3팀',
-    reason: '야근 수당 수기 반영',
+    {
+    manualId: 201,
+    employeeNumber: 'D2-EMP1',
+    employeeName: '박지윤',
+    jobTitle: '팀원',
+    departmentName: '인사팀',
+    reason: '연장근무 수기 반영',
     sign: '+',
-    amount: 120000,
+    amount: 80000,
     applyMonth: '2025-12',
     status: 'DONE',
-    createdAt: '2025-12-10 09:30:00',
+    createdAt: '2025-12-12 10:20:00',
   },
   {
-    manualId: 102,
-    employeeNumber: 'E003',
-    employeeName: '박영희',
-    jobTitle: '주임',
-    departmentName: '디자인팀',
-    reason: '지각 정산(수기)',
+    manualId: 202,
+    employeeNumber: 'D3-EMP2',
+    employeeName: '서민지',
+    jobTitle: '팀원',
+    departmentName: '총무팀',
+    reason: '식대 공제 정정',
     sign: '-',
-    amount: 50000,
+    amount: 30000,
     applyMonth: '2025-12',
     status: 'PENDING',
-    createdAt: '2025-12-11 11:00:00',
+    createdAt: '2025-12-13 14:05:00',
+  },
+  {
+    manualId: 203,
+    employeeNumber: 'D4-MGR',
+    employeeName: '이재무',
+    jobTitle: '팀장',
+    departmentName: '재무팀',
+    reason: '성과급 일부 수기 반영',
+    sign: '+',
+    amount: 150000,
+    applyMonth: '2025-12',
+    status: 'DONE',
+    createdAt: '2025-12-14 09:00:00',
   },
 ]);
 

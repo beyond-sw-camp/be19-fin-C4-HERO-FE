@@ -89,6 +89,7 @@ export const settingsPayrollApi = {
     async listAllowances(activeYn: Yn = 'Y'): Promise<AllowanceMaster[]> {
         const res = await apiClient.get<ApiResponse<AllowanceMaster[]>>(`${REF_URL}/allowances`, {
             params: { activeYn },
+            headers: { 'Cache-Control': 'no-cache' },
         });
         return unwrap(res);
     },
@@ -96,6 +97,7 @@ export const settingsPayrollApi = {
     async listDeductions(activeYn: Yn = 'Y'): Promise<DeductionMaster[]> {
         const res = await apiClient.get<ApiResponse<DeductionMaster[]>>(`${REF_URL}/deductions`, {
             params: { activeYn },
+            headers: { 'Cache-Control': 'no-cache' },
         });
         return unwrap(res);
     },

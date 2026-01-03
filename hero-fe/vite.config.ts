@@ -61,7 +61,6 @@ export default defineConfig({
       }
     }
   },
-  
   /**
    * 개발 서버 설정
    */

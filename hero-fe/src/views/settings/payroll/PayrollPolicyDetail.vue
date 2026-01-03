@@ -392,7 +392,14 @@
 import { computed, onMounted, reactive, ref, watch,nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSettingsPayrollStore } from '@/stores/settings/settings-payroll.store';
-import type { PolicyActivateRequest, PolicyConfigUpsertRequest } from '@/types/settings/settings-payroll.types';
+import type {
+  PolicyActivateRequest,
+  PolicyConfigUpsertRequest,
+  ItemType,
+  ItemPolicyUpsertRequest,
+} from '@/types/settings/settings-payroll.types';
+import { settingsPayrollApi } from '@/api/settings/settings-payroll.api';
+
 
 const route = useRoute();
 const router = useRouter();
@@ -457,7 +464,8 @@ function targetSummary(row: ItemPolicyRow) {
     type === 'POSITION' ? '직급' :
     type === 'EMPLOYEE' ? '사원' : '대상';
   const cnt = targets.filter((t) => t.payrollTargetType === type).length;
-  return `${label} ${cnt}명`;
+  const unit = type === 'EMPLOYEE' ? '명' : '개';
+  return `${label} ${cnt}${unit}`;
 }
 
 type ItemPolicyRow = {
@@ -678,22 +686,7 @@ function applyTargetsModal() {
   }));
   closeTargetsModal();
 }
-async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const isDev = import.meta.env.DEV;
-  const base =
-    (import.meta as any).env?.VITE_API_BASE_URL ||
-    (isDev ? 'http://localhost:8080' : '');
-  const finalUrl = url.startsWith('http') ? url : `${base}${url}`;
-  const res = await fetch(finalUrl, {
-    headers: { 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
-    credentials: 'include',
-    ...init,
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const body = await res.json();
-  if (body && typeof body === 'object' && 'data' in body) return body.data as T;
-  return body as T;
-}
+
 function normalizeTargetsFromDetail(targets: any[]): Array<{ payrollTargetType: PayrollTargetTypeUi; targetValue: string | null }> {
   if (!targets || targets.length === 0) return [{ payrollTargetType: 'ALL', targetValue: null }];
   return targets.map((t) => ({
@@ -735,12 +728,12 @@ async function loadMasters() {
   try {
     mastersError.value = null;
     const [allow, ded] = await Promise.all([
-      api<MasterItem[]>('/api/admin/payroll/allowances?activeYn=Y'),
-      api<MasterItem[]>('/api/admin/payroll/deductions?activeYn=Y'),
+      settingsPayrollApi.listAllowances('Y'),
+      settingsPayrollApi.listDeductions('Y'),
     ]);
     masters.allowances =
       (allow as any[]).map((a) => ({
-        code: a.allowanceId ?? a.code ?? a.itemCode ?? '',
+        code: (a.code ?? a.allowanceCode ?? a.itemCode ?? a.itemCodeName ?? '') || String(a.allowanceId ?? ''),
         name: a.allowanceName ?? a.name ?? a.itemName ?? '',
                 description: a.description ?? null,
         defaultAmount: a.defaultAmount ?? null,
@@ -748,7 +741,7 @@ async function loadMasters() {
       })) ?? [];
     masters.deductions =
       (ded as any[]).map((d) => ({
-        code: d.deductionId ?? d.code ?? d.itemCode ?? '',
+        code: (d.code ?? d.deductionCode ?? d.itemCode ?? d.itemCodeName ?? '') || String(d.deductionId ?? ''),
         name: d.deductionName ?? d.name ?? d.itemName ?? '',
                 description: d.description ?? null,
         deductionType: d.deductionType ?? null,
@@ -790,23 +783,23 @@ function validateYm(s: string, allowBlank: boolean) {
   if (!v) return allowBlank;
   return /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
 }
-function buildItemUpsertPayload(rows: ItemPolicyRow[]) {
+function buildItemUpsertPayload(type: ItemType, rows: ItemPolicyRow[]): ItemPolicyUpsertRequest[] {
   return rows.map((r) => ({
-    itemPolicyId: r.itemPolicyId,
-    itemType: r.itemType === 'ALLOWANCE' ? 'ALLOWANCE' : 'DEDUCTION',
+    itemPolicyId: r.itemPolicyId ?? null,
+    itemType: type,
     itemCode: (r.itemCode ?? '').trim(),
-    calcMethod: r.calcMethod,
-    fixedAmount: r.calcMethod === 'FIXED' ? r.fixedAmount ?? 0 : null,
+    calcMethod: r.calcMethod as any,
+    fixedAmount: r.calcMethod === 'FIXED' ? (r.fixedAmount ?? 0) : null,
     rate: r.calcMethod === 'RATE' ? (r.rate ?? 0) : null,
-    baseAmountType: null,
-    roundingUnit: null,
-    roundingMode: null,
+    baseAmountType: null as any,
+    roundingUnit: null as any,
+    roundingMode: null as any,
     salaryMonthFrom: (r.salaryMonthFrom ?? '').trim(),
     salaryMonthTo: normalizeBlankToNull(r.salaryMonthTo) as any,
     priority: r.priority ?? 0,
     activeYn: r.activeYn,
     targets: (r.targets ?? []).map((t) => ({
-      payrollTargetType: t.payrollTargetType,
+      payrollTargetType: t.payrollTargetType as any,
       targetValue: t.targetValue ?? null,
     })),
   }));
@@ -835,12 +828,9 @@ async function saveItems() {
   }
   savingItems.value = true;
   try {
-    const type = basicItemType.value;
-    const payload = buildItemUpsertPayload(rows);
-    await api<void>(`/api/settings/payroll/policies/${policyId.value}/items?type=${type}`, {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    });
+    const type = basicItemType.value as unknown as ItemType;
+    const payload = buildItemUpsertPayload(type, rows);
+    await settingsPayrollApi.upsertItemPolicies(policyId.value!, type, payload);
     await store.fetchPolicyDetail(policyId.value);
     loadItemsFromDetail();
     itemSnap.allowance = snapshotRows(itemUi.allowanceRows);
@@ -873,6 +863,7 @@ const calcForm = reactive({
   baseAmountType: '',
   memo: '',
 });
+
 watch(
   () => store.detail,
   async () => {
@@ -883,6 +874,8 @@ watch(
   },
   { deep: false }
 );
+
+
 watch(
   calcForm,
   () => {
@@ -895,6 +888,9 @@ watch(
   },
   { deep: true }
 );
+
+
+
 onMounted(async () => {
   if (!hasValidPolicyId.value) {
     router.replace('/settings/payroll-policy');
@@ -1040,6 +1036,15 @@ function applyScheduleToConfigs() {
   if (scheduleForm.holidayRule) upsertLocalConfig('HOLIDAY_RULE', 'STRING', scheduleForm.holidayRule, '휴일 처리 규칙');
   if (scheduleForm.payslipSendDay !== null) upsertLocalConfig('PAYSLIP_SEND_DAY', 'NUMBER', scheduleForm.payslipSendDay, '명세서 발송일(1~31)');
 }
+
+watch(
+  scheduleForm,
+  () => {
+    if (isHydrating.value) return;
+    applyScheduleToConfigs();
+  },
+  { deep: true }
+);
 const basicForm = reactive({
   defaultItemActiveYn: '',
   defaultItemVisibleYn: '',

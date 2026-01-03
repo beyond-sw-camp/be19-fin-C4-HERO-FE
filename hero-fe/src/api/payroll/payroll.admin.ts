@@ -42,6 +42,15 @@ import type {
     PayrollPaymentDetailResponse,
 } from '@/types/payroll/payroll.payment';
 
+import type {
+    PayrollAnalyticsOverviewResponse,
+    PayrollAnalyticsOrgResponse,
+    PayrollAnalyticsCompositionResponse,
+    AnalyticsOverviewQuery,
+    AnalyticsOrganizationQuery,
+    AnalyticsCompositionQuery,
+} from '@/types/payroll/payroll-analytics.types';
+
 type CustomResponse<T> = {
     success: boolean;
     data: T;
@@ -53,6 +62,7 @@ const BASE = '/admin/payroll/batches';
 const ALLOWANCE_BASE = '/admin/payroll/allowances';
 const DEDUCTION_BASE = '/admin/payroll/deductions';
 const PAYMENT_BASE = '/admin/payroll/payments';
+const ANALYTICS_BASE = '/payroll/admin/analytics';
 
 export const payrollAdminApi = {
     // GET /api/admin/payroll/batches?month=&status=
@@ -171,5 +181,29 @@ export const payrollAdminApi = {
             `${PAYMENT_BASE}/${payrollId}`
         );
         return res.data.data;
+    },
+
+    async getAnalyticsOverview(params: AnalyticsOverviewQuery) {
+        const res = await client.get<PayrollAnalyticsOverviewResponse>(
+            `${ANALYTICS_BASE}/overview`,
+            { params }
+        );
+        return res.data;
+    },
+
+    async getAnalyticsOrganization(params: AnalyticsOrganizationQuery) {
+        const res = await client.get<PayrollAnalyticsOrgResponse>(
+            `${ANALYTICS_BASE}/organization`,
+            { params }
+        );
+        return res.data;
+    },
+
+    async getAnalyticsComposition(params: AnalyticsCompositionQuery) {
+        const res = await client.get<PayrollAnalyticsCompositionResponse>(
+            `${ANALYTICS_BASE}/composition`,
+            { params }
+        );
+        return res.data;
     },
 };

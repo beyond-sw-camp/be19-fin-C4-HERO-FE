@@ -13,6 +13,7 @@
  *
  * History
  *   2025/12/09 - 동근 최초 작성
+ *   2026/01/01 - 급여 조정 요청 버튼 추가
  * </pre>
  *
  * @module payroll-main
@@ -36,6 +37,9 @@
         </select>
 
         <div class="payroll-header__buttons">
+          <button class="btn-danger" @click="goPayrollAdjustmentRequest">
+            급여 조정 요청
+          </button>
           <button class="btn-secondary" @click="openPayslip">
             상세 보기
           </button>
@@ -189,12 +193,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { usePayrollStore } from '@/stores/payroll/payrollMeStore';
 import AccountModal from '@/views/payroll/me/BankAccountModal.vue';
 import PayslipModal from '@/views/payroll/me/PayslipModal.vue';
 
 // 급여 도메인 Pinia Store (summary, payslip, accounts 등 상태 및 API 호출 제공)
 const store = usePayrollStore();
+const router = useRouter();
 
 /**
  * payslipModalOpen - 급여 명세서 모달
@@ -285,6 +291,17 @@ const onAccountSaved = async () => {
 
 // 금액 포맷 (₩표기 + 3자리 끊어서)
 const formatMoney = (value: number) => `₩${value.toLocaleString()}`;
+
+// 급여조정요청(결재 작성 화면으로 이동)
+const goPayrollAdjustmentRequest = () => {
+  // payrollId가 있다면 들고 가는 게 베스트. (현재 summary 구조에 payrollId가 없어서, 일단 salaryMonth만 query로 넘김)
+  // ApprovalCreate.vue에서 route.query.salaryMonth로 기본값 세팅 가능
+  router.push({
+    path: '/approval/create/modifypayroll',
+    query: { templateId: 8 }
+  });
+};
+
 </script>
 
 <style scoped>
@@ -339,6 +356,16 @@ const formatMoney = (value: number) => `₩${value.toLocaleString()}`;
 .btn-secondary {
   background-color: #eef2ff;
   color: #374151;
+}
+
+.btn-danger {
+  border-radius: 999px;
+  font-size: 13px;
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .pay-detail {

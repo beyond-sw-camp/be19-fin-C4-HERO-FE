@@ -50,6 +50,7 @@ import ManualAdjustmentTab from './ManualAdjustmentTab.vue';
 type TabKey = 'approval' | 'manual';
 
 const activeTab = ref<TabKey>('approval');
+
 </script>
 
 <style scoped>
