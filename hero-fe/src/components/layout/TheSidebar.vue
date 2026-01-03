@@ -324,6 +324,7 @@
 
       <!-- 설정 관리 -->
       <div class="menu-item"
+          v-if="canSeeSettings"
           :class="{ 'active-parent': activeParent === 'settings' }"
           @click="handleParentClick('settings')">
         <div class="menu-content">
@@ -411,6 +412,11 @@ const canSeePersonnelParent = computed(() =>
 // 조직도 (EMPLOYEE)
 const canSeeOrganization = computed(() =>
   authStore.hasAnyRole(['ROLE_EMPLOYEE', 'ROLE_SYSTEM_ADMIN'])
+);
+
+// 설정 (SYSTEM_ADMIN, HR_MANAGER)
+const canSeeSettings = computed(() =>
+  authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN', 'ROLE_HR_MANAGER'])
 );
 
 const router = useRouter();
