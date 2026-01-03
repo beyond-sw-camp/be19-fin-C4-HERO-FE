@@ -41,7 +41,7 @@
         <p class="description">{{ notification.message }}</p>
         
         <!-- 상대 시간 표시 (예: 방금 전, 3분 전) -->
-        <span class="time">{{ notification.timeAgo }}</span>
+        <span class="time">{{ displayTime }}</span>
       </div>
 
       <!-- 삭제 버튼 (우측 상단 고정) -->
@@ -70,6 +70,8 @@
 // 1. Import 구문 
 import { useRouter } from 'vue-router';
 import type { Notification, NotificationCategory } from '@/types/notification/notification.types';
+import { getRelativeTime } from '@/utils/timeUtils';
+import { computed } from 'vue'; 
 
 // 2. Composables
 /**
@@ -229,6 +231,15 @@ const getLinkText = (type: NotificationCategory): string => {
   
   return linkTextMap[type] || '자세히 보기';
 };
+
+/**
+ * 템플릿에서 사용할 변환된 시간 계산
+ * 만약 notification 객체 안에 createdAt 같은 원본 날짜 필드가 있다면 그걸 사용하세요.
+ */
+const displayTime = computed(() => {
+  // notification.createdAt이 원본 날짜 문자열이라고 가정합니다.
+  return getRelativeTime(props.notification.createdAt || props.notification.timeAgo);
+});
 </script>
 
 <style scoped>
