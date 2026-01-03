@@ -54,6 +54,7 @@ const props = defineProps<{
   data: number[];
   tooltipLabelPrefix?: string; // 툴팁 앞에 붙는 텍스트 (예: '실수령액: ')
   currency?: boolean;          // 통화 표기(₩) 여부
+  color?: string;              // 선 색상
 }>();
 
 const chartRef = ref<HTMLCanvasElement | null>(null);
@@ -79,6 +80,8 @@ const buildChart = () => {
           data: props.data,
           tension: 0.3,
           fill: false,
+          borderColor: props.color || '#3b82f6',
+          backgroundColor: props.color || '#3b82f6',
         },
       ],
     },

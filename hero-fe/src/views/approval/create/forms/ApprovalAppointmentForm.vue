@@ -263,10 +263,12 @@ const { personnelTypes } = storeToRefs(approvalDataStore);
 
 onMounted(async () => {
   // 데이터가 없을 때만 호출
-  if (!personnelTypes.value ||
-    personnelTypes.value.departments.length === 0 &&
-    personnelTypes.value.jobTitles.length === 0 &&
-    personnelTypes.value.grades.length === 0
+  if (!personnelTypes.value.departments ||
+    !personnelTypes.value.jobTitles ||
+    !personnelTypes.value.grades ||
+    personnelTypes.value.departments?.length === 0 ||
+    personnelTypes.value.jobTitles?.length === 0 ||
+    personnelTypes.value.grades?.length === 0
   ) {
     await approvalDataStore.fetchPersonnelTypes();
   }

@@ -9,18 +9,25 @@
 
 <!--template-->
 <template>
-  <div class="container">
+  <div class="container" :class="{ 'modal-container': isModal }">
 
     <!-- ===== Header ===== -->
-    <div class="header">
+    <div class="header" v-if="!isModal">
       <div class="title-wrapper">
         <img class="back-icon" src="/images/backArrow.svg" @click="goBack" />
         <h1 class="title">평가서 상세</h1>
       </div>
     </div>
+    
+    <!-- ===== Modal Header (Back Button) ===== -->
+    <div class="modal-header-bar" v-else>
+      <button class="btn-back-modal" @click="goBack">
+        <span class="arrow">←</span> 목록으로 돌아가기
+      </button>
+    </div>
 
     <div class="content">
-      <div class="form-box">
+      <div class="form-box" :class="{ 'modal-form-box': isModal }">
 
         <!-- ===== 평가명 ===== -->
         <h2 class="section-title">
@@ -214,13 +221,24 @@ import Chart from "chart.js/auto";
 const route = useRoute();
 const router = useRouter();
 
+const props = defineProps<{
+  isModal?: boolean;
+  modalEvaluationId?: number;
+  modalEmployeeId?: number;
+}>();
+
+const emit = defineEmits(['close']);
+
 /**
  * 설명: 이전 페이지 이동하는 메소드
  */
-const goBack = () => router.back();
+const goBack = () => {
+  if (props.isModal) emit('close');
+  else router.back();
+};
 
-const evaluationId = Number(route.params.id);
-const employeeId = Number(route.query.employeeId);
+const evaluationId = props.isModal ? (props.modalEvaluationId ?? 0) : Number(route.params.id);
+const employeeId = props.isModal ? (props.modalEmployeeId ?? 0) : Number(route.query.employeeId);
 
 //Reactive 데이터
 const evaluation = ref<any>({});
@@ -292,19 +310,31 @@ const renderChart = async () => {
  * 설명: 평가서 데이터 조회 메소드
  */
 const loadDetail = async () => {
-  const { data } = await apiClient.get(
-    `/evaluation/evaluation-form/${evaluationId}/${employeeId}`
-  );
+  if (!evaluationId || !employeeId) {
+    console.warn('유효하지 않은 평가 ID 또는 사원 ID입니다.', { evaluationId, employeeId });
+    return;
+  }
 
-  evaluation.value = {
-    ...data,
-    evaluationFormEvaluationPeriodStart:
-      data.evaluationFormEvaluationPeriodStart?.slice(0, 10),
-    evaluationFormEvaluationPeriodEnd:
-      data.evaluationFormEvaluationPeriodEnd?.slice(0, 10),
-  };
+  try {
+    const response = await apiClient.get(
+      `/evaluation/evaluation-form/${evaluationId}/${employeeId}`
+    );
 
-  renderChart();
+    // API 응답 구조에 따라 데이터 추출 (CustomResponse 대응)
+    const data = response.data.data || response.data;
+
+    evaluation.value = {
+      ...data,
+      evaluationFormEvaluationPeriodStart:
+        data.evaluationFormEvaluationPeriodStart?.slice(0, 10),
+      evaluationFormEvaluationPeriodEnd:
+        data.evaluationFormEvaluationPeriodEnd?.slice(0, 10),
+    };
+
+    renderChart();
+  } catch (error) {
+    console.error('평가 상세 조회 실패:', error);
+  }
 };
 
 /**
@@ -324,6 +354,11 @@ onMounted(loadDetail);
   background: #f5f6fa;
 }
 
+.container.modal-container {
+  min-height: auto;
+  height: 100%;
+}
+
 .content {
   padding: 24px;
   flex: 1;
@@ -340,6 +375,12 @@ onMounted(loadDetail);
   display: flex;
   flex-direction: column;
   gap: 32px;
+}
+
+.form-box.modal-form-box {
+  border: none;
+  padding: 0;
+  max-width: none;
 }
 
 /* ================= Header ================= */
@@ -371,6 +412,26 @@ onMounted(loadDetail);
   height: 24px;
   cursor: pointer;
 }
+
+/* ================= Modal Header ================= */
+.modal-header-bar {
+  padding: 16px 24px 0 24px;
+  display: flex;
+  align-items: center;
+}
+
+.btn-back-modal {
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-back-modal:hover { color: #334155; }
 
 /* ================= Typography ================= */
 .section-title {

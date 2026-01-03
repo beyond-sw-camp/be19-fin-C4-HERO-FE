@@ -15,11 +15,12 @@
   *   2025/12/29 (민철) 결재 상태별 뱃지 색상 구분 및 고정 크기 적용
   *   2025/12/29 (민철) 테이블 열 너비 조정 및 좌우 균형 배치
   *   2025/12/29 (민철) 전체 검색 기능 개선 (모든 필드에서 검색)
+  *   2026/01/01 (민철) 페이징 버튼 3개씩 표시하도록 개선
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 3.4
+  * @version 3.5
 -->
 <template>
   <div class="inbox-container">
@@ -61,7 +62,7 @@
                 <option value="name">문서서식</option>
                 <option value="title">제목</option>
                 <option value="dept">부서</option>
-                <option value="drafter">상신자</option>
+                <option value="drafter">작성자</option>
               </select>
               <input type="text" placeholder="검색어를 입력하세요" class="input-box" v-model="searchKeyword"
                 @keyup.enter="onSearchChange">
@@ -73,21 +74,23 @@
           <table>
             <thead>
               <tr>
-                <td class="cell docNo">문서번호</td>
-                <td class="cell docStatus">결재상태</td>
-                <td class="cell docCategory">문서분류</td>
-                <td class="cell docName">문서서식</td>
-                <td class="cell docTitle">문서제목</td>
-                <td class="cell drafterDept">부서</td>
-                <td class="cell drafter">상신자</td>
-                <td class="cell drafterDate">상신일시</td>
+                <th class="cell docNo">문서번호</th>
+                <th class="cell docStatus">결재상태</th>
+                <th class="cell docCategory">문서분류</th>
+                <th class="cell docName">문서서식</th>
+                <th class="cell docTitle">문서제목</th>
+                <th class="cell drafterDept">부서</th>
+                <th class="cell drafter">작성자</th>
+                <th class="cell drafterDate">작성일시</th>
               </tr>
             </thead>
             <tbody>
               <template v-if="!loading && documents.length > 0">
                 <tr v-for="doc in documents" :key="doc.docId" class="clickable-row"
                   @click="toDocumentDetail(doc.docId)">
-                  <td class="cell docNo">{{ doc.docNo }}</td>
+                  <td v-if="['임시저장', '진행중'].includes(doc.docStatus)" class="cell docNo doc-rejected">생성중</td>
+                  <td v-else-if="doc.docNo === null" class="cell docNo doc-rejected">-</td>
+                  <td v-else class="cell docNo">{{ doc.docNo }}</td>
                   <td class="cell docStatus">
                     <div class="status-badge" :class="getStatusClass(doc.docStatus)">
                       {{ getStatusText(doc.docStatus) }}
@@ -119,12 +122,19 @@
 
         <div class="inbox-body-bottom">
           <div class="inbox-body-buttons">
-            <button class="inbox-button button-seq" @click="handlePageChange(page - 1)"
+            <button class="inbox-button" @click="handlePageChange(page - 1)"
               :disabled="page === 0">이전</button>
 
-            <button class="inbox-button button-page active">{{ page + 1 }}</button>
+            <button 
+              v-for="pageNum in visiblePages" 
+              :key="pageNum"
+              class="inbox-button button-page" 
+              :class="{ active: page === pageNum }"
+              @click="handlePageChange(pageNum)">
+              {{ pageNum + 1 }}
+            </button>
 
-            <button class="inbox-button button-seq" @click="handlePageChange(page + 1)"
+            <button class="inbox-button" @click="handlePageChange(page + 1)"
               :disabled="page >= totalPages - 1">다음</button>
           </div>
         </div>
@@ -136,7 +146,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useInbox } from '@/composables/approval/useInbox';
 
@@ -159,6 +169,46 @@ const fromDate = ref('');
 const toDate = ref('');
 const sortBy = ref('all');
 const searchKeyword = ref('');
+
+/**
+ * 보이는 페이지 번호 계산 (최대 3개)
+ * 현재 페이지를 중심으로 좌우 페이지 표시
+ */
+const visiblePages = computed(() => {
+  const total = totalPages.value;
+  const current = page.value;
+  const pages: number[] = [];
+
+  if (total === 0) return pages;
+
+  // 전체 페이지가 3개 이하인 경우
+  if (total <= 3) {
+    for (let i = 0; i < total; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  // 전체 페이지가 3개 초과인 경우
+  // 현재 페이지를 중심으로 좌우 1개씩 표시
+  let start = Math.max(0, current - 1);
+  let end = Math.min(total - 1, current + 1);
+
+  // 시작이 0이면 끝을 조정
+  if (start === 0) {
+    end = Math.min(total - 1, 2);
+  }
+  // 끝이 마지막이면 시작을 조정
+  else if (end === total - 1) {
+    start = Math.max(0, total - 3);
+  }
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i);
+  }
+
+  return pages;
+});
 
 /**
  * 검색 조건 변경 핸들러
@@ -215,6 +265,4 @@ const getStatusText = (status: string): string => {
 
 </script>
 
-<style scoped>
-@import "@/assets/styles/approval/approval-inbox.css";
-</style>
+<style scoped src="@/assets/styles/approval/approval-inbox.css"></style>

@@ -131,6 +131,12 @@ const tabs: Ref<Tab[]> = ref([
   { id: 'deleted', label: '삭제된 알림', count: 0 }
 ]);
 
+onMounted(async () => {
+  // 새로고침해도 데이터를 다시 채울 수 있도록 강제 호출
+  await notificationStore.fetchDeletedNotifications();
+});
+
+
 /**
  * 알림 목록 데이터 (Store에서 관리)
  * @type {ComputedRef<Array<Notification>>}

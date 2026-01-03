@@ -140,6 +140,15 @@ thead {
     background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
 }
 
+th {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 td {
     padding: 12px 16px;
     border-bottom: 1px solid #e2e8f0;
@@ -155,6 +164,10 @@ td {
 /* 테이블 열 너비 설정 */
 .docNo {
     width: 200px;
+}
+
+.docNo.doc-rejected {
+    color: #62748E;
 }
 
 .docStatus {
@@ -232,21 +245,21 @@ td {
 }
 
 .inbox-button {
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-}
-
-.button-seq {
-    padding: 8px 15px;
-}
-
-.button-page {
-    padding: 7px 10px;
+    /* border: 1px solid #e2e8f0;
+    border-radius: 10px; */
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid #CAD5E2;
+    color: #62748E;
+    font-size: 14px;
+    cursor: pointer;
 }
 
 .button-page.active {
-    color: #ffff;
-    background-color: #155dfc;
+
+    background: #155DFC;
+    border: none;
+    color: #fff;
 }
 
 /* 클릭 가능한 행 스타일 */

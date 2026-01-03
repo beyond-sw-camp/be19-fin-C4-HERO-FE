@@ -17,6 +17,7 @@
                 <option :value="0">재직자 전원</option>
                 <option :value="1">재직자</option>
                 <option :value="2">퇴사예정자</option>
+                <option :value="3">퇴사자</option>
             </select>
             <select v-model="searchParams.departmentName" class="filter-select">
               <option value="">부서 전체</option>
@@ -169,7 +170,7 @@ const loadSearchOptions = async () => {
     const response = await fetchEmployeeSearchOptions();
     if (response.data.success) {
       const { department, grade, jobTitle } = response.data.data;
-      departmentOptions.value = department;
+      departmentOptions.value = department.sort();
       gradeOptions.value = grade;
       jobTitleOptions.value = jobTitle;
     }

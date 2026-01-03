@@ -45,7 +45,7 @@
                             <span class="btn-text-white">삭제</span>
                         </button>
                     </template>
-                    <div v-if="document.docStatus === 'INPROGRESS'">
+                    <div v-if="(document.docStatus === 'INPROGRESS' && (document.drafterId === authStore.user?.employeeId))">
                         <button class="btn-primary-header" @click="handleCancel(document.docId)">
                             <img class="btn-icon" src="/images/cancel-white.svg" alt="회수">
                             <span class="btn-text-white">회수</span>

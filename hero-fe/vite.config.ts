@@ -68,17 +68,5 @@ export default defineConfig({
   server: {
     port: 8080,  // 배포 서버 포트
 
-    /**
-     * API 프록시 설정
-     * WebSocket 연결을 백엔드 서버로 프록시
-     */
-    proxy: {
-      '/ws': {
-        target: 'ws://localhost:8080',  // 백엔드 WebSocket 서버
-        ws: true,                        // WebSocket 프록시 활성화
-        changeOrigin: true,              // Origin 헤더 변경
-        secure: false,                   // HTTPS 검증 비활성화 (개발 환경)
-      }
-    }
   }
 })

@@ -247,15 +247,7 @@ const getRecursiveMemberCount = (node: OrganizationNode): number => {
 };
 
 const getProfileImageUrl = (path?: string) => {
-  if (!path) return '/images/default-profile.png';
-  if (path.startsWith('http')) return path;
-  
-  const baseUrl = 'http://localhost:8080';
-  let resourcePath = path.startsWith('/') ? path : `/${path}`;
-  if (!resourcePath.startsWith('/uploads')) {
-    resourcePath = `/uploads${resourcePath}`;
-  }
-  return `${baseUrl}${resourcePath}`;
+  return path || '';
 };
 
 const onCenterListImageError = (id: number) => {

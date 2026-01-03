@@ -12,6 +12,7 @@
  * History
  * 2025/12/14 (혜원) 최초 작성
  * 2025/12/25 (혜원) JWT 토큰 인증 추가
+ * 2026/01/02 (혜원) 환경 변수 기반 WebSocket URL 설정 (VITE_API_URL 재사용)
  * </pre>
 */
 
@@ -60,7 +61,9 @@ export function useNotificationSocket(): UseNotificationSocket {
     console.log('[WebSocket] 토큰 확인:', token ? '토큰 존재' : '토큰 없음');
 
     // SockJS 소켓 생성
-    const socket = new SockJS('http://localhost:8080/ws/notifications');
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const baseUrl = apiUrl.replace('/api', '');
+    const socket = new SockJS(`${baseUrl}/ws/notifications`);
     
     // STOMP 클라이언트 설정
     stompClient = new Client({

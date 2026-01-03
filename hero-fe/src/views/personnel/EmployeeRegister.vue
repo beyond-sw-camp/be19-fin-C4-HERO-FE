@@ -193,6 +193,26 @@ const handleSalaryInput = (event: Event) => {
   }
 };
 
+// 타입 가드: 객체가 message 속성(문자열)을 가지고 있는지 확인
+const hasMessage = (data: unknown): data is { message: string } => {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'message' in data &&
+    typeof (data as any).message === 'string'
+  );
+};
+
+// 타입 가드: 에러 객체가 response.data.message 구조를 가지고 있는지 확인
+const isErrorWithResponse = (error: unknown): error is { response: { data: { message: string } } } => {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    hasMessage((error as any).response?.data)
+  );
+};
+
 const handleSave = async () => {
   if (registrationType.value !== 'single') return;
 
@@ -229,10 +249,20 @@ const handleSave = async () => {
     if (response.data.success) {
       alert('사원이 성공적으로 등록되었습니다.');
       router.push('/personnel/list');
+    } else {
+      if (hasMessage(response.data)) {
+        alert(response.data.message);
+      } else {
+        alert('사원 등록에 실패했습니다.');
+      }
     }
   } catch (error) {
     console.error('사원 등록 오류:', error);
-    alert('사원 등록 중 오류가 발생했습니다.');
+    if (isErrorWithResponse(error)) {
+      alert(error.response.data.message);
+    } else {
+      alert('사원 등록 중 오류가 발생했습니다.');
+    }
   }
 };
 </script>

@@ -166,11 +166,6 @@
               </div>
             </div>
 
-            <div class="extra-actions">
-                <button class="btn-extra">근태 관련</button>
-                <button class="btn-extra">평가 관련</button>
-            </div>
-
             <div class="member-action">
               <button 
                 v-if="!candidate.nominatorName && !candidate.nominationReason"
