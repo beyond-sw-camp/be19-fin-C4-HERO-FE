@@ -66,8 +66,8 @@
               <div class="col action">
                 <button
                   class="btn-create"
-                  :disabled="authGradeId !== 6"
-                  @click="authGradeId === 6 && goToCreate(item.evaluationTemplateTemplateId)"
+                  :disabled="!authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_DEPT_MANAGER'])"
+                  @click="authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_DEPT_MANAGER']) && goToCreate(item.evaluationTemplateTemplateId)"
                 >
                   <img class="document-icon" src="/images/document.svg" />
                   평가 생성

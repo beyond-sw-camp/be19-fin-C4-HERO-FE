@@ -212,7 +212,7 @@ authGradeId.value = authStore.user?.gradeId
 authGradeName.value = authStore.user?.gradeName
 
 onMounted(() => {
-  if(authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_HR_EVALUATION'])){
+  if(!authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_HR_EVALUATION'])){
     alert("인사팀이 아닙니다.");
     goBack();
   }
