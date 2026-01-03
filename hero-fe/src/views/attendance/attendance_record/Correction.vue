@@ -9,6 +9,7 @@
   History
   2025/12/10 - 이지윤 최초 작성
   2025/12/30 - (지윤) 페이지네이션 디자인 수정 및 필터링 부분 수정
+  2026/01/03 - (지윤) 그래프 표시 부분 수정
   </pre>
 
   @author 이지윤
@@ -246,12 +247,27 @@ const route = useRoute();
 const attendanceStore = useAttendanceStore();
 const correctionStore = useCorrectionStore();
 
-/**
- * 오늘 날짜 (date input 최대값 제한용)
- * 예: '2025-12-18'
- */
-const today = new Date().toISOString().slice(0, 10);
+// 오늘(로컬) 기준 YYYY-MM-DD 포맷터
+const formatDate = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const now = new Date();
+
+// 오늘 날짜 (YYYY-MM-DD) – date input max에 사용
+const today = formatDate(now);
+
+// 2025-01-01부터 선택 가능
 const minDate = '2025-01-01';
+
+// 이번 달 1일 (YYYY-MM-DD)
+const firstDayOfMonth = formatDate(
+  new Date(now.getFullYear(), now.getMonth(), 1),
+);
+
 
 /**
  * 현재 활성화된 탭인지 확인합니다.
@@ -294,11 +310,17 @@ const {
  * - 1 페이지 데이터를 조회합니다.
  */
 onMounted(() => {
-  startDate.value = correctionStore.startDate || '';
-  endDate.value = correctionStore.endDate || '';
+  // 기본 기간: 이번 달 1일 ~ 오늘
+  startDate.value = firstDayOfMonth;
+  endDate.value = today;
 
+  // 스토어 필터에도 반영
+  correctionStore.setFilterDates(firstDayOfMonth, today);
+
+  // 1 페이지 데이터 조회
   correctionStore.fetchCorrections(1);
 });
+
 
 /**
  * 검색 버튼 클릭 시 실행되는 핸들러입니다.
@@ -316,12 +338,17 @@ const onSearch = (): void => {
  *   1 페이지부터 근태 기록 수정 이력을 다시 조회합니다.
  */
 const onReset = (): void => {
-  startDate.value = '';
-  endDate.value = '';
+  // 인풋 값을 이번 달 1일 ~ 오늘로 초기화
+  startDate.value = firstDayOfMonth;
+  endDate.value = today;
 
-  correctionStore.resetFilters();
+  // 스토어 필터도 동일하게 세팅
+  correctionStore.setFilterDates(firstDayOfMonth, today);
+
+  // 1 페이지부터 다시 조회
   correctionStore.fetchCorrections(1);
 };
+
 
 const prevPage = computed<number | null>(() => {
   return currentPage.value > 1 ? currentPage.value - 1 : null

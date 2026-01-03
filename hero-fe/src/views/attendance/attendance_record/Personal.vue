@@ -6,11 +6,15 @@
                 - 기간 필터 + 페이지네이션을 통한 개인 근태 이력 조회
 
   History
-  2025/12/10 - 이지윤 최초 작성
-  2025/12/29 - 행 간격/테이블 정렬 및 근무시간 표시 형식 개선
-  2025/12/30 - 이지윤 지연 근무 로직 추가 및 디자인 수정
-  2025/12/30 - 이지윤 초과 근무 로직 추가
-  2026/01/01 - 이지윤 페이지네이션 디자인 수정 및 필터링 부분 수정
+  2025/12/10 - (지윤) 최초 작성
+  2025/12/29 - (지윤) 행 간격/테이블 정렬 및 근무시간 표시 형식 개선
+  2025/12/30 - (지윤) 지연 근무 로직 추가 및 디자인 수정
+  2025/12/30 - (지윤) 초과 근무 로직 추가
+  2026/01/01 - (지윤) 페이지네이션 디자인 수정 및 필터링 부분 수정
+  2026/01/03 - (지윤) 그래프 표시 부분 수정
+
+  @author 이지윤
+  @version 1.6
 -->
 
 <template>
@@ -157,7 +161,7 @@
 
                 <tbody>
                     <tr
-                      v-for="(row, index) in filteredPersonalList"
+                      v-for="(row, index) in personalList"
                       :key="row.attendanceId"
                       :class="{ 'row-striped': index % 2 === 1 }"
                     >
@@ -280,8 +284,23 @@ const attendanceStore = useAttendanceStore();
 const route = useRoute();
 const router = useRouter();
 
-const today = new Date().toISOString().slice(0, 10);
+// 오늘 날짜
+const now = new Date();
+const formatDate = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+const today = formatDate(now);
+
+// 2025-01-01부터 선택 가능
 const minDate = '2025-01-01';
+
+// 이번 달 1일 (YYYY-MM-DD)
+const firstDayOfMonth = formatDate(
+  new Date(now.getFullYear(), now.getMonth(), 1),
+);
 
 const {
   personalList,
@@ -296,47 +315,7 @@ const {
   earlyCount,
 } = storeToRefs(attendanceStore);
 
-/**
- * 화면에 실제로 보여줄 개인 근태 리스트
- *
- * - startDate, endDate 를 사용자가 직접 입력해서 검색한 경우
- *   → 백엔드가 이미 그 기간으로 필터링해서 내려주므로 personalList 그대로 사용
- *
- * - 둘 다 비어 있는 경우(초기 상태 / 초기화 후)
- *   → 프론트에서 "이번 달 1일 ~ 오늘 날짜까지"만 한 번 더 필터링해서 보여줌
- */
-const filteredPersonalList = computed(() => {
-  const list = personalList.value ?? [];
 
-  // 사용자가 기간을 직접 설정해 검색한 경우에는 추가 필터링 없이 그대로 사용
-  if (startDate.value && endDate.value) {
-    return list;
-  }
-
-  // 이번 달 1일 ~ 오늘 날짜까지 범위 계산
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth(); // 0-based (0 = 1월)
-
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month, now.getDate());
-
-  const startMs = firstDay.getTime();
-  const endMs = lastDay.getTime();
-
-  return list.filter((row) => {
-    if (!row.workDate) return false;
-
-    // workDate가 'YYYY-MM-DD' 문자열이라고 가정
-    const d =
-      typeof row.workDate === 'string'
-        ? new Date(row.workDate)
-        : (row.workDate as unknown as Date);
-
-    const t = d.getTime();
-    return t >= startMs && t <= endMs;
-  });
-});
 
 const isActiveTab = (name: string): boolean => {
   return route.name === name;
@@ -362,15 +341,17 @@ const goPage = (page: number): void => {
 };
 
 const onSearch = (): void => {
-  // startDate / endDate 는 v-model 로 store와 이미 묶여 있음
+  // 사용자가 입력한 기간을 그대로 store 필터에 반영
+  attendanceStore.setFilterDates(startDate.value, endDate.value);
   attendanceStore.fetchPersonal(1);
 };
 
 const onReset = (): void => {
-  // 기간 필터 초기화
-  startDate.value = '';
-  endDate.value = '';
-  attendanceStore.setFilterDates('', '');
+  // 필터를 이번 달 1일 ~ 오늘로 되돌림
+  startDate.value = firstDayOfMonth;
+  endDate.value = today;
+
+  attendanceStore.setFilterDates(firstDayOfMonth, today);
   attendanceStore.fetchPersonal(1);
 };
 
@@ -385,10 +366,14 @@ const formatWorkDuration = (minutes?: number | null): string => {
 };
 
 onMounted(() => {
-  attendanceStore.fetchPersonal(1);
-  attendanceStore.fetchPersonalSummary();
-});
+  // 최초 진입 시 기본 기간: 이번 달 1일 ~ 오늘
+  startDate.value = firstDayOfMonth;
+  endDate.value = today;
 
+  attendanceStore.setFilterDates(firstDayOfMonth, today);
+  attendanceStore.fetchPersonal(1);        // 기간에 맞는 개인 근태 이력
+  attendanceStore.fetchPersonalSummary();  // 상단 요약 카드
+});
 type PersonalRow = {
   attendanceId: number;
   workDate: string;

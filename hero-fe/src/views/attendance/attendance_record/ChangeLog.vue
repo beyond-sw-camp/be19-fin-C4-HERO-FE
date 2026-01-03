@@ -10,6 +10,7 @@
   2025/12/10 - 이지윤 최초 작성
   2025/12/30 - (지윤) 디자인 수정
   2026/01/01 - (지윤) 페이지네이션 디자인 수정 및 필터링 부분 수정
+  2026/01/03 - (지윤) 그래프 표시 부분 수정
   </pre>
 
   @author 이지윤
@@ -257,9 +258,26 @@ const isActiveTab = (name: string): boolean => {
   return route.name === name;
 };
 
-// 오늘 날짜 (date input max 제한용: 오늘 이후 선택 불가)
-const today = new Date().toISOString().slice(0, 10);
+// 오늘(로컬) 기준 YYYY-MM-DD 포맷터
+const formatDate = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const now = new Date();
+
+// 오늘 날짜 (YYYY-MM-DD) – date input max에 사용
+const today = formatDate(now);
+
+// 2025-01-01부터 선택 가능
 const minDate = '2025-01-01';
+
+// 이번 달 1일 (YYYY-MM-DD)
+const firstDayOfMonth = formatDate(
+  new Date(now.getFullYear(), now.getMonth(), 1),
+);
 
 // --- 상단 요약 카드 상태 (AttendanceStore에서 가져옴) ---
 const {
@@ -284,16 +302,15 @@ const totalPages = computed(() => changeLogStore.totalPages);
  * - 변경 이력 필터(startDate, endDate)는 store 값과 동기화
  * - 1 페이지 데이터를 조회합니다.
  */
-onMounted(async () => {
-  // 상단 요약 카드: 이번 달 기준(검색/필터와 무관)
-  // 이미 다른 페이지에서 불러왔다면 다시 호출해도 문제 없음
-  await attendanceStore.fetchPersonalSummary?.(); // 메서드 이름이 다르면 여기를 맞춰주세요
+onMounted(() => {
+  // 기본 기간: 이번 달 1일 ~ 오늘
+  startDate.value = firstDayOfMonth;
+  endDate.value = today;
 
-  // 변경 이력 필터 인풋 초기값 세팅
-  startDate.value = changeLogStore.startDate || '';
-  endDate.value = changeLogStore.endDate || '';
+  // 스토어 필터에도 반영
+  changeLogStore.setFilterDates(firstDayOfMonth, today);
 
-  // 1페이지 데이터 조회 (기간 필터는 store에 들어있는 값 기준)
+  // 1 페이지 데이터 조회
   changeLogStore.fetchChangeLogs(1);
 });
 
@@ -315,13 +332,16 @@ const onSearch = (): void => {
  * - 상단 요약 카드는 여전히 이번 달 기준으로 유지됩니다.
  */
 const onReset = (): void => {
-  startDate.value = '';
-  endDate.value = '';
+  // 인풋 값을 이번 달 1일 ~ 오늘로 초기화
+  startDate.value = firstDayOfMonth;
+  endDate.value = today;
 
-  changeLogStore.resetFilters();
+  // 스토어 필터도 동일하게 세팅
+  changeLogStore.setFilterDates(firstDayOfMonth, today);
+
+  // 1 페이지부터 다시 조회
   changeLogStore.fetchChangeLogs(1);
 };
-
 const prevPage = computed<number | null>(() => {
   return currentPage.value > 1 ? currentPage.value - 1 : null
 })

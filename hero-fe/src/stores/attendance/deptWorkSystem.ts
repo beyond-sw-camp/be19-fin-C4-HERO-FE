@@ -128,43 +128,46 @@ export const useDeptWorkSystemStore = defineStore('deptWorkSystem', {
      * @param {number} [page=1] - 조회할 페이지 번호 (1부터 시작)
      * @returns {Promise<void>} 조회 완료 후 상태 반영
      */
-    async fetchDeptWorkSystem(page = 1): Promise<void> {
-      this.loading = true;
+      async fetchDeptWorkSystem(page = 1): Promise<void> {
+        this.loading = true;
 
-      try {
-        // workDate가 비어 있다면 오늘 날짜로 기본값 세팅
-        if (!this.workDate) {
-          const today = new Date();
-          this.workDate = today.toISOString().slice(0, 10); // yyyy-MM-dd
+        try {
+          if (!this.workDate) {
+            const today = new Date();
+            this.workDate = today.toISOString().slice(0, 10);
+          }
+
+          // ✅ 1-based → 0-based 변환
+          const zeroBasedPage = Math.max(page - 1, 0);
+
+          const params: Record<string, unknown> = {
+            page: zeroBasedPage,
+            size: this.pageSize,
+            workDate: this.workDate,
+          };
+
+          if (this.departmentId != null) {
+            params.departmentId = this.departmentId;
+          }
+
+          const { data } = await apiClient.get<SpringPage<DeptWorkSystemRowDTO>>(
+            '/attendance/deptworksystem',
+            { params },
+          );
+
+          this.rows = data.content;
+
+          // ✅ 응답의 page(0-based)를 화면용 1-based로 변환
+          this.currentPage = (data.page ?? 0) + 1;
+          this.pageSize = data.size;
+          this.totalPages = data.totalPages;
+          this.totalElements = data.totalElements;
+        } catch (error) {
+          console.error('부서 근태 현황 조회 실패:', error);
+        } finally {
+          this.loading = false;
         }
-
-        const params: Record<string, unknown> = {
-          page,
-          size: this.pageSize,
-          workDate: this.workDate,
-        };
-
-        // 부서 ID는 FE에서 authStore.user?.departmentId 를 세팅해 줄 예정
-        if (this.departmentId != null) {
-          params.departmentId = this.departmentId;
-        }
-
-        const { data } = await apiClient.get<SpringPage<DeptWorkSystemRowDTO>>(
-          '/attendance/deptworksystem',
-          { params },
-        );
-
-        this.rows = data.content;
-        this.currentPage = data.page;
-        this.pageSize = data.size;
-        this.totalPages = data.totalPages;
-        this.totalElements = data.totalElements;
-      } catch (error) {
-        console.error('부서 근태 현황 조회 실패:', error);
-      } finally {
-        this.loading = false;
-      }
-    },
+      },
 
     /**
      * 필터 초기화 + 1페이지 재조회

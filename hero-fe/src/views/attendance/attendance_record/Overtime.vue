@@ -10,10 +10,12 @@
   2025/12/10 - 이지윤 최초 작성
   2025/12/30 - (지윤) 디자인 수정
   2026/01/01 - (지윤) 페이지네이션 디자인 수정 및 필터링 부분 수정
+  2026/01/01 - (지윤) 그래프 표시 부분 수정
+  2026/01/03 - (지윤) 그래프 표시 부분 수정
   </pre>
 
   @author 이지윤
-  @version 1.2
+  @version 1.5
 -->
 
 <template>
@@ -243,9 +245,30 @@ const route = useRoute();
 const attendanceStore = useAttendanceStore();
 const overtimeStore = useOvertimeStore();
 
+/* =========================
+   날짜 관련 상수 (이번 달 1일 ~ 오늘)
+   ========================= */
+
+// 오늘(로컬) 기준 YYYY-MM-DD 포맷터
+const formatDate = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const now = new Date();
+
 // 오늘 날짜 (YYYY-MM-DD) – date input max에 사용
-const today = new Date().toISOString().slice(0, 10);
+const today = formatDate(now);
+
+// 최소 선택 가능 날짜
 const minDate = '2025-01-01';
+
+// 이번 달 1일 (YYYY-MM-DD)
+const firstDayOfMonth = formatDate(
+  new Date(now.getFullYear(), now.getMonth(), 1),
+);
 
 /**
  * 현재 활성화된 탭인지 확인합니다.
@@ -282,34 +305,45 @@ const {
 // TODO: 키워드 검색 입력 UI 추가 예정 (사유/날짜 등 검색)
 const keyword = ref<string>('');
 
-// 키워드 필터 (현재 페이지 데이터에 대해 추가 필터링)
+/* =========================
+   화면 표시용 목록 (키워드 필터)
+   ========================= */
 const displayList = computed(() => {
   const k = keyword.value.trim();
-  const base = overtimeList.value;
+  const base = overtimeList.value ?? [];
 
   if (!k) {
     return base;
   }
 
   return base.filter((row) => {
+    const date = row.date ?? '';
+    const start = row.startTime ?? '';
+    const end = row.endTime ?? '';
+    const hours = row.overtimeHours != null ? String(row.overtimeHours) : '';
+    const reason = row.reason ?? '';
+
     return (
-      row.date.includes(k) ||
-      row.startTime.includes(k) ||
-      row.endTime.includes(k) ||
-      String(row.overtimeHours).includes(k) ||
-      row.reason.includes(k)
+      date.includes(k) ||
+      start.includes(k) ||
+      end.includes(k) ||
+      hours.includes(k) ||
+      reason.includes(k)
     );
   });
 });
 
 
+/* =========================
+   페이지네이션
+   ========================= */
 const prevPage = computed<number | null>(() => {
-  return currentPage.value > 1 ? currentPage.value - 1 : null
-})
+  return currentPage.value > 1 ? currentPage.value - 1 : null;
+});
 
 const nextPage = computed<number | null>(() => {
-  return currentPage.value < totalPages.value ? currentPage.value + 1 : null
-})
+  return currentPage.value < totalPages.value ? currentPage.value + 1 : null;
+});
 
 /**
  * 페이지를 이동합니다.
@@ -327,28 +361,37 @@ const goPage = (page: number): void => {
   overtimeStore.fetchOvertime(page);
 };
 
+/* =========================
+   검색 / 초기화
+   ========================= */
+
 /**
  * 검색 버튼 클릭 시 실행되는 핸들러입니다.
- * - startDate / endDate는 v-model로 이미 store와 묶여 있으므로
- *   그대로 1페이지부터 조회만 하면 됩니다.
+ * - date input(v-model)로 선택한 startDate / endDate를
+ *   store 필터에 반영한 뒤 1페이지부터 재조회
  */
 const onSearch = (): void => {
+  overtimeStore.setFilterDates(startDate.value, endDate.value);
   overtimeStore.fetchOvertime(1);
 };
 
 /**
  * 초기화 버튼 클릭 시 실행되는 핸들러입니다.
- * - 기간 필터/키워드를 초기화하고
- *   1 페이지부터 다시 초과 근무 이력을 조회합니다.
+ * - 기간 필터/키워드를
+ *   "이번 달 1일 ~ 오늘"로 되돌리고 1페이지 재조회
  */
 const onReset = (): void => {
-  startDate.value = '';
-  endDate.value = '';
+  startDate.value = firstDayOfMonth;
+  endDate.value = today;
   keyword.value = '';
 
-  overtimeStore.setFilterDates('', '');
+  overtimeStore.setFilterDates(firstDayOfMonth, today);
   overtimeStore.fetchOvertime(1);
 };
+
+/* =========================
+   표시 포맷터
+   ========================= */
 
 /**
  * 시간 문자열을 'HH:mm' 형식으로 변환합니다.
@@ -374,12 +417,23 @@ const formatOvertime = (hours?: number | null): string => {
   return `${hours}시간`;
 };
 
-// 최초 진입 시: 상단 요약 + 1페이지 데이터 조회
+/* =========================
+   초기 진입 시: 상단 요약 + 이번 달 1일~오늘 데이터 조회
+   ========================= */
 onMounted(() => {
-  attendanceStore.fetchPersonalSummary();  // personal.vue에서 사용하던 요약 API
+  // 요약 카드
+  attendanceStore.fetchPersonalSummary();
+
+  // 기본 기간: 이번 달 1일 ~ 오늘
+  startDate.value = firstDayOfMonth;
+  endDate.value = today;
+  overtimeStore.setFilterDates(firstDayOfMonth, today);
+
+  // 초과 근무 이력 1페이지 조회
   overtimeStore.fetchOvertime(1);
 });
 </script>
+
 
 <style scoped>
 * {

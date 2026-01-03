@@ -196,6 +196,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 
+
 import {
   useDeptWorkSystemStore,
   type DeptWorkSystemRowDTO,
@@ -233,6 +234,10 @@ const { workDate } = storeToRefs(deptWorkStore);
 
 /** 인증 스토어 (TODO: departmentId 연동 시 사용) */
 const authStore = useAuthStore();
+const { user } = storeToRefs(authStore);
+const getMyDepartmentId = (): number | null => {
+  return user.value?.departmentId ?? null;
+};
 
 /* =========================
    화면 상태 (필터/페이지)
@@ -308,18 +313,14 @@ const pagedList = computed<EmployeeWorkSystemRow[]>(() => {
  * - 선택한 날짜 기준으로 부서 근태 현황 조회
  */
 const onSearch = async (): Promise<void> => {
-  if (!selectedDate.value) {
-    return;
-  }
+  if (!selectedDate.value) return;
 
   isSearching.value = true;
-
   try {
     currentPage.value = 1;
     workDate.value = selectedDate.value;
 
-    // TODO: authStore.user?.departmentId 등으로 실제 로그인 사용자 부서 연결
-    const departmentId = 1;
+    const departmentId = getMyDepartmentId();  
 
     deptWorkStore.setFilters(departmentId, workDate.value);
     await deptWorkStore.fetchDeptWorkSystem(1);
@@ -334,17 +335,14 @@ const onSearch = async (): Promise<void> => {
  */
 const onReset = async (): Promise<void> => {
   isResetting.value = true;
-
   try {
-    const todayDate = new Date();
-    const iso = todayDate.toISOString().slice(0, 10);
+    const iso = new Date().toISOString().slice(0, 10);
 
     selectedDate.value = iso;
     workDate.value = iso;
     currentPage.value = 1;
 
-    // TODO: authStore.user?.departmentId 로 교체 예정
-    const departmentId = 1;
+    const departmentId = getMyDepartmentId();  // ← 여기
 
     deptWorkStore.setFilters(departmentId, iso);
     await deptWorkStore.fetchDeptWorkSystem(1);
