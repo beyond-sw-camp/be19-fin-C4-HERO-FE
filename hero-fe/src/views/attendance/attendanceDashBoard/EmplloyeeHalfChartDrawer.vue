@@ -9,10 +9,11 @@
 
   History
   2025/12/26 - 이지윤 최초 작성
+  2026/01/02 - (지윤) 년도 필터링 부분 수정
   </pre>
 
   @author 이지윤
-  @version 1.0
+  @version 1.1
 -->
 
 <template>
@@ -407,18 +408,23 @@ const {
 /* =========================
    필터 상태(연도, 반기)
    ========================= */
-
+const selectedHalf = ref<HalfType>('H1');
 /** 현재 시점 기준 연도/반기 초기값 */
 const now = new Date();
 const selectedYear = ref<number>(now.getFullYear());
-const selectedHalf = ref<HalfType>('H1');
 
-/**
- * 연도 선택 옵션 (현재 연도 ~ 5년 전)
- */
+// ✅ 2025년부터 현재 연도까지만 표시
+const BASE_YEAR = 2025;
+
 const yearOptions = computed<number[]>(() => {
   const cur = now.getFullYear();
-  return Array.from({ length: 6 }, (_, i) => cur - i);
+  const years: number[] = [];
+
+  for (let y = cur; y >= BASE_YEAR; y--) {
+    years.push(y);
+  }
+
+  return years;
 });
 
 /**
