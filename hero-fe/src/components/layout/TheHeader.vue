@@ -11,10 +11,11 @@
   2025/12/11 (승건) 프로필 드롭다운 및 로그아웃 기능 추가
   2025/12/11 (동근) 로고 클릭 시 대시보드 이동 기능 추가, 로그인 세션 남은 시간 표시 & JSDoc 추가
   2025/12/16 (동근) logo-area 스타일 수정(border 제거)
+  2025/01/04 (혜원) 알림 뱃지 99+ 표시 처리 및 알림 UI 개선
   </pre>
  
   @author 동근
-  @version 1.6
+  @version 2.0
  -->
 <template>
   <div class="header-container">
@@ -34,6 +35,10 @@
             <div class="folder-icon">
               <img class="alarm" src="/images/alarm.svg" />
             </div>
+            <!-- 안읽은 알림 뱃지 -->
+            <span v-if="unreadCount > 0" class="alarm-badge">
+            {{ unreadCount > 99 ? '99+' : unreadCount }}
+            </span>
           </div>
         </div>
 
@@ -81,13 +86,14 @@
 
 <script setup lang="ts">
 
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 //세션 관리
 import { useSessionStore } from '@/stores/session';
 //인증 관리
 import { useAuthStore } from '@/stores/auth';
+import { useNotificationStore } from '@/stores/notification/notification.store';
 
 const router = useRouter();
 const session = useSessionStore(); // 로그인 세션 관리하는 Pinia 스토어
@@ -124,6 +130,9 @@ const goToNotifications = () => {
   router.push('/notifications')
 }
 
+const notificationStore = useNotificationStore();
+const { unreadCount } = storeToRefs(notificationStore);
+
 // 남은 세션 시간 포맷팅 (MM:SS)
 const formattedTime = computed(() => {
   const minutes = Math.floor(session.remainingSeconds / 60)
@@ -155,6 +164,11 @@ const handleLogout = async () => {
   // 상태가 모두 초기화된 후, 로그인 페이지로 이동합니다.
   router.push('/login');
 };
+
+// 헤더는 새로고침 때도 값이 있어야 하니까 한번 불러오기
+onMounted(() => {
+  notificationStore.fetchNotifications(); 
+});
 </script>
 
 <style scoped>
@@ -423,5 +437,32 @@ const handleLogout = async () => {
 
 .dropdown-item:hover {
   background-color: #f1f3f5;
+}
+.folder-wrap {
+  position: relative;
+  overflow: visible; /* 배지가 잘리지 않게 */
+}
+
+.alarm-badge {
+  position: absolute;
+  top: -6px;        /* 위로 살짝 */
+  right: -8px;      /* 종 옆에 딱 붙게 */
+
+  min-width: 20px;
+  height: 20px;
+  padding: 0 7px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #EF4444;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 999px;
+
+  border: 2px solid #fff;     /* 흰 테두리로 또렷하게 */
+  line-height: 1;
 }
 </style>

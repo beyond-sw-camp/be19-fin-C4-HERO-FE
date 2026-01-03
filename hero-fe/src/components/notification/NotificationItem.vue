@@ -6,11 +6,12 @@
                 - 읽음/안 읽음 상태 스타일 구분
                 - 클릭 시 상세 페이지 이동
                 - 액션 버튼 및 삭제 버튼 제공
-  
+
   History
   2025/12/09 (혜원) 최초작성
   2025/12/14 (혜원) TypeScript 변환 및 타입 정의
   2025/12/16 (혜원) Notification 타입 맞춤 수정, 링크 버튼 추가
+  2026/01/04 (혜원) 알림 디자인 수정
   </pre>
 
   @author 혜원
@@ -19,15 +20,15 @@
 
 <template>
   <!-- 알림 아이템 최상위 컨테이너 -->
-  <div 
+  <div
     class="notification-item"
-    :class="{ 'unread': !notification.isRead }"
+    :class="{ unread: !notification.isRead }"
   >
     <!-- 알림 헤더 영역 (클릭 가능) -->
     <div class="notification-header" @click="handleClick">
       <!-- 알림 타입 아이콘 -->
-      <img 
-        :src="getIcon(notification.type)" 
+      <img
+        :src="getIcon(notification.type)"
         :alt="`${notification.type} 아이콘`"
         class="notification-icon"
       />
@@ -36,38 +37,47 @@
       <div class="content">
         <!-- 알림 제목 -->
         <h3 class="title">{{ notification.title }}</h3>
-        
+
         <!-- 알림 메시지 (2줄 말줄임) -->
         <p class="description">{{ notification.message }}</p>
-        
-        <!-- 상대 시간 표시 (예: 방금 전, 3분 전) -->
-        <span class="time">{{ notification.timeAgo }}</span>
+
+        <!-- ✅ 시간 + 링크버튼을 같은 줄로 -->
+        <div class="meta-row">
+          <span class="time">{{ notification.timeAgo }}</span>
+
+          <!-- ✅ 원래 있던 링크 버튼 로직 유지 (link 있을 때만) -->
+          <button
+            v-if="notification.link"
+            class="link-btn inline"
+            type="button"
+            @click.stop="handleLinkClick"
+          >
+            {{ getLinkText(notification.type) }}
+          </button>
+        </div>
       </div>
 
       <!-- 삭제 버튼 (우측 상단 고정) -->
-      <button 
+      <button
         class="delete-btn"
+        type="button"
         @click.stop="handleDeleteClick"
         title="삭제"
       >
         ✕
       </button>
-      
+
       <!-- 링크 버튼 영역 (link가 있을 때만 표시) -->
+      <!-- ✅ 기존 구조는 남겨두되, '같은 줄' 요구사항 때문에 실제 버튼은 meta-row에 배치 -->
       <div v-if="notification.link" class="notification-footer">
-        <button 
-          class="link-btn"
-          @click.stop="handleLinkClick"
-        >
-        {{ getLinkText(notification.type) }}
-      </button>
-    </div>
+        <!-- (기존 자리 유지용 / 필요하면 여기 스타일로 다른 액션 넣어도 됨) -->
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// 1. Import 구문 
+// 1. Import 구문
 import { useRouter } from 'vue-router';
 import type { Notification, NotificationCategory } from '@/types/notification/notification.types';
 
@@ -81,7 +91,7 @@ const router = useRouter();
 // 3. Props 정의
 /**
  * 컴포넌트 Props
- * 
+ *
  * @property {Notification} notification - 표시할 알림 데이터 객체
  * @property {number} notification.notificationId - 알림 고유 ID
  * @property {string} notification.title - 알림 제목
@@ -98,11 +108,11 @@ const props = defineProps<{
 // 4. Emits 정의
 /**
  * 컴포넌트 이벤트 정의
- * 
+ *
  * @event click - 알림 아이템 클릭 시 발생
  *                부모 컴포넌트에서 읽음 처리 및 상세 로직 실행
  *                @param {Notification} notification - 클릭된 알림 객체
- * 
+ *
  * @event delete - 삭제 버튼 클릭 시 발생
  *                 부모 컴포넌트에서 소프트 삭제 처리
  *                 @param {number} id - 삭제할 알림 ID
@@ -112,17 +122,10 @@ const emit = defineEmits<{
   delete: [id: number];
 }>();
 
-// 5. 이벤트 핸들러 
+// 5. 이벤트 핸들러
 
 /**
  * 알림 아이템 클릭 핸들러
- * 
- * @description
- * 알림 헤더 영역(아이콘 + 내용)을 클릭했을 때 실행
- * 부모 컴포넌트로 click 이벤트를 발행하여 읽음 처리 요청
- * 
- * @fires click - 알림 클릭 이벤트 발행
- * @returns {void}
  */
 const handleClick = (): void => {
   emit('click', props.notification);
@@ -130,15 +133,6 @@ const handleClick = (): void => {
 
 /**
  * 삭제 버튼 클릭 핸들러
- * 
- * @description
- * 우측 상단 X 버튼 클릭 시 실행
- * 이벤트 전파를 중단하여 알림 클릭 이벤트가 발생하지 않도록 함
- * 부모 컴포넌트로 delete 이벤트를 발행하여 소프트 삭제 요청
- * 
- * @param {Event} event - 클릭 이벤트 객체
- * @fires delete - 알림 삭제 이벤트 발행
- * @returns {void}
  */
 const handleDeleteClick = (event: Event): void => {
   event.stopPropagation(); // 부모 요소로 이벤트 전파 방지 (핵심!)
@@ -147,20 +141,12 @@ const handleDeleteClick = (event: Event): void => {
 
 /**
  * 링크 버튼 클릭 핸들러
- * 
- * @description
- * 하단의 "명세서 보기", "결재 상세보기" 등의 버튼 클릭 시 실행
- * 1. 알림을 읽음 처리 (click 이벤트 발행)
- * 2. 관련 페이지로 이동 (router.push)
- * 
- * @fires click - 읽음 처리를 위한 클릭 이벤트 발행
- * @returns {void}
  */
 const handleLinkClick = (): void => {
   if (props.notification.link) {
     // 1. 읽음 처리 요청 (부모 컴포넌트에 위임)
     emit('click', props.notification);
-    
+
     // 2. 페이지 이동
     router.push(props.notification.link);
   }
@@ -170,63 +156,31 @@ const handleLinkClick = (): void => {
 
 /**
  * 알림 타입에 따른 아이콘 경로 반환
- * 
- * @description
- * 알림 카테고리별로 다른 아이콘을 표시하기 위한 경로 매핑
- * 
- * 아이콘 종류:
- * - attendance: 근태 (체크 아이콘)
- * - payroll: 급여 (돈 아이콘)
- * - approval: 결재 (문서 아이콘)
- * - leave: 휴가 (달력 아이콘)
- * - evaluation: 평가 (문서 아이콘)
- * - system: 시스템 (설정 아이콘)
- * 
- * @param {string} type - 알림 카테고리 타입
- * @returns {string} 아이콘 이미지 경로
  */
 const getIcon = (type: string): string => {
   const iconMap: Record<string, string> = {
-    'attendance': '/images/alarm/alarm-check.svg',
-    'payroll': '/images/alarm/alarm-money.svg',
-    'approval': '/images/alarm/alarm-paper.svg',
-    'evaluation': '/images/alarm/alarm-paper.svg',
-    'system': '/images/alarm/alarmsetting.svg'
+    attendance: '/images/alarm/alarm-check.svg',
+    payroll: '/images/alarm/alarm-money.svg',
+    approval: '/images/alarm/alarm-paper.svg',
+    evaluation: '/images/alarm/alarm-paper.svg',
+    system: '/images/alarm/alarmsetting.svg',
   };
-  
+
   return iconMap[type] || '/images/alarm/alarmsetting.svg';
 };
 
 /**
  * 알림 타입에 따른 링크 버튼 텍스트 반환
- * 
- * @description
- * 알림 카테고리별로 다른 버튼 텍스트를 표시하기 위한 매핑
- * 
- * 버튼 텍스트 종류:
- * - attendance: '근태 확인하기'
- * - payroll: '명세서 보기'
- * - approval: '결재 상세보기'
- * - leave: '휴가 확인하기'
- * - evaluation: '평가 보기'
- * - system: '자세히 보기'
- * 
- * @param {NotificationCategory} type - 알림 카테고리 타입
- * @returns {string} 버튼에 표시될 텍스트
- * 
- * @example
- * getLinkText('payroll') // returns '명세서 보기'
- * getLinkText('approval') // returns '결재 상세보기'
  */
 const getLinkText = (type: NotificationCategory): string => {
   const linkTextMap: Record<NotificationCategory, string> = {
-    'attendance': '근태 확인하기',
-    'payroll': '명세서 보기',
-    'approval': '결재 상세보기',
-    'evaluation': '평가 보기',
-    'system': '자세히 보기'
+    attendance: '근태 확인하기',
+    payroll: '명세서 보기',
+    approval: '결재 상세보기',
+    evaluation: '평가 보기',
+    system: '자세히 보기',
   };
-  
+
   return linkTextMap[type] || '자세히 보기';
 };
 </script>
@@ -236,22 +190,29 @@ const getLinkText = (type: NotificationCategory): string => {
  * 알림 아이템 최상위 컨테이너
  */
 .notification-item {
+  position: relative;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: #EFF6FF; /* 카드 배경 통일 */
   border-radius: 8px;
-  transition: all 0.2s ease;
   margin-bottom: 12px;
-  border-left: 4px solid transparent; /* 읽음 상태 구분용 */
   overflow: hidden;
 }
 
-/**
- * 읽지 않은 알림 시각적 강조
- */
-.notification-item.unread {
-  background: #EFF6FF !important;
-  border-left: 4px solid #3B82F6;
+/* 공통 띠 */
+.notification-item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;          /* 항상 동일 */
+  height: 100%;
+  background: #CBD5E1; /* 읽음 = 회색 */
+}
+
+/* 안 읽은 알림 */
+.notification-item.unread::before {
+  background: #3B82F6; /* 안 읽음 = 파랑 */
 }
 
 .notification-item.unread .title {
@@ -259,10 +220,20 @@ const getLinkText = (type: NotificationCategory): string => {
   color: #1E40AF;
 }
 
-.notification-item.unread .description {
+.notification-item .title {
   color: #1E293B;
 }
 
+/**
+ * 읽지 않은 알림 시각적 강조
+ */
+.notification-item.unread {
+  background: #EFF6FF !important;
+}
+
+.notification-item.unread .description {
+  color: #1E293B;
+}
 
 /**
  * 알림 헤더 (아이콘 + 내용 + 삭제 버튼)
@@ -296,7 +267,7 @@ const getLinkText = (type: NotificationCategory): string => {
 .content {
   flex: 1;
   min-width: 0;
-  padding-right: 32px;
+  padding-right: 52px; /* 삭제 버튼이랑 겹침 방지(기존 32px -> 52px) */
 }
 
 /**
@@ -306,7 +277,6 @@ const getLinkText = (type: NotificationCategory): string => {
   font-size: 16px;
   font-weight: 600;
   margin: 0 0 4px 0;
-  color: #1e293b;
   line-height: 1.4;
 }
 
@@ -325,18 +295,25 @@ const getLinkText = (type: NotificationCategory): string => {
   text-overflow: ellipsis;
 }
 
+/* 시간 + 링크버튼 같은 줄 */
+.meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 /**
  * 상대 시간 표시
- * - 예: "방금 전", "3분 전"
  */
 .time {
   font-size: 12px;
   color: #94a3b8;
+  white-space: nowrap;
 }
 
 /**
  * 삭제 버튼 (우측 상단 고정)
- * - 클릭 시: 이벤트 전파 중단 (stopPropagation)
  */
 .delete-btn {
   position: absolute;
@@ -363,13 +340,14 @@ const getLinkText = (type: NotificationCategory): string => {
 }
 
 /**
- * 링크 버튼 컨테이너
+ * 링크 버튼 컨테이너 (기존 유지)
  */
 .notification-footer {
   margin-top: 20px;
   padding: 0 16px 16px 16px;
   border-top: 1px solid #F1F5F9;
   padding-top: 12px;
+  display: none; /* "같은 줄"로 올렸으니 화면에는 안 보이게(구조는 유지) */
 }
 
 /**
@@ -388,6 +366,15 @@ const getLinkText = (type: NotificationCategory): string => {
   transition: all 0.2s ease;
 }
 
+/* 같은 줄에서 쓰는 버튼은 width 100%면 깨져서 override */
+.link-btn.inline {
+  width: auto;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .link-btn:hover {
   background: #3B82F6;
   color: white;
@@ -398,19 +385,18 @@ const getLinkText = (type: NotificationCategory): string => {
 /**
  * 읽지 않은 알림의 링크 버튼 스타일
  */
-.notification-item.unread .link-btn {
+.notification-item.unread .link-btn.inline {
   background: #DBEAFE;
   border-color: #3B82F6;
   color: #1E40AF;
-  font-weight: 600;
 }
 
-.notification-item.unread .link-btn:hover {
+.notification-item.unread .link-btn.inline:hover {
   background: #3B82F6;
   color: white;
 }
 
-/* 반응형 스타일  */
+/* 반응형 스타일 */
 @media (max-width: 768px) {
   .notification-header {
     gap: 12px;
@@ -436,10 +422,6 @@ const getLinkText = (type: NotificationCategory): string => {
     width: 24px;
     height: 24px;
     font-size: 14px;
-  }
-
-  .notification-footer {
-    padding: 0 12px 12px 12px;
   }
 }
 </style>

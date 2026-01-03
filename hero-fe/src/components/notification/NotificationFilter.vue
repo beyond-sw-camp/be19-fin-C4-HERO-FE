@@ -8,7 +8,8 @@
                - 반응형 디자인: 모바일에서는 스크롤 가능한 탭
 
   History
-  2025/12/09 (최혜원) 최초 작성
+  2025/12/09 (혜원) 최초 작성
+  2026/01/04 (혜원) 디자인 수정
   </pre>
 
   @author 최혜원
@@ -145,11 +146,15 @@ const emit = defineEmits<{
   background: #F8FAFC;
 }
 
+
 /* 활성화된 탭 버튼 스타일 */
 .tab-button.active {
-  background: linear-gradient(135deg, #1E40AF 0%, #1E3A8A 100%);
-  /* border-color: #1E40AF; */
-  color: white;
+  background: linear-gradient(180deg, #1E3A8A 0%, #0B1B4D 100%); /* 전자결재 느낌 네이비 */
+  border-color: transparent; /* 또는 #1E3A8A */
+  color: #fff;}
+
+.tab-button.active:hover {
+  filter: brightness(1.03);
 }
 
 /* 알림 개수 배지 */
@@ -169,13 +174,15 @@ const emit = defineEmits<{
 
 /* 활성 탭의 배지 스타일 */
 .tab-button.active .badge {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
 }
+
 
 /* 비활성 탭의 배지 스타일 (강조를 위한 빨간색) */
 .tab-button:not(.active) .badge {
-  background: #EF4444;
-  color: white;
+  background:ghostwhite;
+  color: black;
 }
 
 /* 모든 알림 읽음 처리 버튼 */
@@ -195,11 +202,11 @@ const emit = defineEmits<{
   white-space: nowrap;
 }
 
-/* 모두 읽음 버튼 호버 효과 */
+/* 모두 읽음 버튼 호버 효과 (탭이랑 통일) */
 .mark-all-read-btn:hover {
   background: #F8FAFC;
-  border-color: #1E40AF;
-  color: #1E40AF;
+  border-color: #CBD5E1; /* 회색으로 통일 */
+  color: #64748B;       /* 텍스트도 탭처럼 유지 */
 }
 
 .mark-all-read-btn img {

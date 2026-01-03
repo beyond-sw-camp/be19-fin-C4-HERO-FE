@@ -12,6 +12,7 @@
   2025/12/09 (혜원) 컴포넌트 분리 및 통합
   2025/12/12 (혜원) TypeScript 변환 및 Store 연동
   2025/12/16 (혜원) 삭제/복구 기능 추가
+  2026/01/04 (혜원) 스타일 수정
   </pre>
 
   @author 혜원
@@ -395,8 +396,9 @@ onMounted(async () => {
 }
 
 .notification-icon img {
-  width: 40px;
-  height: 40px;
+  width: 20px;
+  height: 20px;
+  margin-bottom: 25px;     
 }
 
 .notification-content {

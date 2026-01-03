@@ -7,10 +7,11 @@
                 - 브라우저 알림 권한 설정
                 - 이메일 알림 설정
                 - SMS 문자 알림 설정
-  
+
   History
   2025/12/16 (혜원) 최초 작성
   2025/12/17 (혜원) 알림 마운트 수정
+  2026/01/04 (혜원) 스타일 수정
   </pre>
 
   @author 혜원
@@ -18,20 +19,22 @@
 -->
 <template>
   <div class="notification-settings-page">
-    <div class="settings-header">
+    <header class="settings-header">
       <button
         class="back-btn"
         type="button"
         @click="goBack"
+        aria-label="뒤로가기"
       >
         <img
           src="/images/backArrow.svg"
-          alt="뒤로가기"
+          alt=""
           class="back-icon"
         />
       </button>
-      <h1>알림 설정</h1>
-    </div>
+
+      <h1 class="settings-title">알림 설정</h1>
+    </header>
 
     <div class="settings-container">
       <section class="settings-section master-toggle-section">
@@ -180,22 +183,14 @@
 </template>
 
 <script setup lang="ts">
-// 1. Import 구문
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotificationSettingsStore } from '@/stores/notification/notificationSettings.store';
 import type { NotificationSettingItem } from '@/types/notification/notification.types';
 
-// 2. Composables (외부 로직)
 const router = useRouter();
-const settingsStore = useNotificationSettingsStore(); // Pinia Store 인스턴스
+const settingsStore = useNotificationSettingsStore();
 
-// 3. Reactive 데이터 및 상수 정의
-
-/**
- * 알림 타입 섹션을 구성하기 위한 상수 데이터
- * Pinia Store의 settings 객체 키와 연결
- */
 const notificationTypes: NotificationSettingItem[] = [
   {
     id: 'attendanceEnabled',
@@ -229,133 +224,113 @@ const notificationTypes: NotificationSettingItem[] = [
   },
 ];
 
-// 4. 메소드 (일반 함수)
-
-/**
- * 뒤로가기 동작을 수행
- */
 const goBack = () => {
   router.back();
 };
 
-/**
- * 브라우저 알림 설정 변경을 처리
- * 알림이 ON 상태로 변경될 경우 브라우저 권한을 요청
- */
-/**
- * 브라우저 알림 토글 변경 시
- */
 const handleBrowserNotificationChange = async () => {
   if (settingsStore.settings.browserNotification) {
-    // 켜려고 시도할 때만 권한 요청
     if ('Notification' in window) {
       const permission = await Notification.requestPermission();
-      
+
       if (permission === 'granted') {
-        // 권한 받음 → DB에 true 저장
         console.log('브라우저 알림 권한 허용됨');
       } else {
-        // 권한 거부 → 토글 다시 OFF
         settingsStore.settings.browserNotification = false;
         alert('브라우저 알림 권한이 거부되었습니다. 브라우저 설정에서 알림을 허용해주세요.');
       }
     }
   } else {
-    // 권한 체크 안 함, 그냥 DB에 false 저장
     console.log('브라우저 알림 OFF');
-    // 브라우저 권한은 그대로 두고, DB만 false로 저장
   }
 };
 
-/**
- * 설정 저장 동작을 Pinia Store 액션에 위임
- */
 const handleSaveSettings = async () => {
   const result = await settingsStore.saveSettings();
 
   if (result.success) {
     alert('설정이 저장되었습니다.');
-    // 저장 성공 후 알림 페이지로 이동 (UX 개선)
     router.push('/notifications');
   } else {
     alert('설정 저장에 실패했습니다.');
   }
 };
 
-/**
- * 설정을 기본값으로 되돌리고 저장
- */
 const handleResetSettings = () => {
   if (confirm('설정을 기본값(모두 ON)으로 되돌리시겠습니까?')) {
     settingsStore.resetSettings();
-    // 기본값으로 되돌린 후 저장 액션 호출
-    handleSaveSettings(); 
+    handleSaveSettings();
   }
 };
 
-// 5. 생명주기 훅
-
-/**
- * 컴포넌트 마운트 시 Pinia Store에서 기존 설정 값을 불러옴
- */
 onMounted(async () => {
   await settingsStore.loadSettings();
 });
 </script>
 
 <style scoped>
-/*
- * 6. Style (CSS)
- * - 설정 페이지의 레이아웃, 섹션 구분, 토글 스위치, 버튼 스타일 정의
- */
-
 .notification-settings-page {
   width: 100%;
   min-height: 100vh;
   background: #f8fafc;
 }
 
-/* 헤더 스타일 */
+/* 헤더 스타일: NotificationHeader 규격과 동일 */
 .settings-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  height: 55px;
-  padding: 20px 32px;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
   position: sticky;
   top: 0;
   z-index: 10;
+
+  width: 100%;
+  height: 56px;                 /* 고정 높이 */
+  padding: 0 16px;              /* 과한 padding 제거 */
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+
+  display: flex;
+  align-items: center;          /* 수직 가운데 */
+  gap: 12px;
+  box-sizing: border-box;
+  overflow: hidden;            
 }
 
 .back-btn {
   width: 40px;
   height: 40px;
+
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  display: flex;
+
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+
+  background: transparent;
+  padding: 0;
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .back-btn:hover {
-  color: #1e40af;
   transform: translateX(-2px);
+  background: #F1F5F9;
 }
 
 .back-icon {
   width: 20px;
   height: 20px;
+  display: block;            
 }
 
-.settings-header h1 {
+.settings-title {
+  margin: 0;
   font-size: 20px;
   font-weight: 700;
   color: #1f2937;
-  margin: 0;
+  line-height: 1;             
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 /* 메인 컨테이너 */
@@ -434,6 +409,7 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  display: block;              
 }
 
 .setting-content {
@@ -550,7 +526,22 @@ input:checked + .slider:before {
 /* 미디어 쿼리 (모바일 대응) */
 @media (max-width: 768px) {
   .settings-header {
-    padding: 16px 20px;
+    height: 52px;
+    padding: 0 12px;
+  }
+
+  .settings-title {
+    font-size: 18px;
+  }
+
+  .back-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .back-icon {
+    width: 18px;
+    height: 18px;
   }
 
   .settings-container {
