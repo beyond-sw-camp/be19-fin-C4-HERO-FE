@@ -17,8 +17,8 @@
         <div class="header">
           <button 
             class="btn-new"
-            :class="{ disabled: authDepartmentId !== 2 }"
-            :disabled="authDepartmentId !== 2" 
+            :class="{ disabled: !authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_HR_EVALUATION']) }"
+            :disabled="!authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_HR_EVALUATION'])" 
             @click="createGuide"
           >
             + 새 평가 가이드 작성

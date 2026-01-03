@@ -163,6 +163,11 @@ const saveGuide = async () => {
  * 설명 : 페이지 마운트 시, 평가 가이드의 내용을 기입하기 위한 에디터 객체를 생성하는 생명주기(onMounted) 훅
  */
 onMounted(async () => {
+  if(!authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_HR_EVALUATION'])){
+    alert("인사팀이 아닙니다.");
+    goBack();
+  }
+
   employeeId.value = authEmployeeId.value
   creator.value = authEmployeeName.value
   departmentId.value = authDepartmentId.value
