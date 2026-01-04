@@ -15,6 +15,13 @@
  */
 import type { RouteRecordRaw } from "vue-router";
 
+const PAYROLL_ADMIN_ROLES = [
+    "ROLE_SYSTEM_ADMIN",
+    "ROLE_HR_MANAGER",
+    "ROLE_HR_PAYROLL",
+] as const;
+
+
 /**
  * 급여 도메인 라우트 설정 (관리자용)
  * @module payroll-admin
@@ -29,32 +36,32 @@ const payrollAdminRoutes: RouteRecordRaw[] = [
         path: "/payroll/admin/batch",
         name: "PayrollAdminBatch",
         component: () => import("@/views/payroll/admin/batch/BatchPage.vue"),
-        meta: { title: "월별 급여 배치" },
+        meta: { title: "월별 급여 배치", roles: [...PAYROLL_ADMIN_ROLES] },
     },
     {
         path: "/payroll/admin/adjust",
         name: "PayrollAdminAdjust",
         component: () => import("@/views/payroll/admin/adjustment/Adjust.vue"),
-        meta: { title: "급여 조정" },
+        meta: { title: "급여 조정", roles: [...PAYROLL_ADMIN_ROLES] },
     },
     {
         path: "/payroll/admin/search",
         name: "PayrollAdminSearch",
         component: () => import("@/views/payroll/admin/Search.vue"),
-        meta: { title: "급여 조회(검색)" },
+        meta: { title: "급여 조회(검색)", roles: [...PAYROLL_ADMIN_ROLES] },
     },
     {
         path: "/payroll/admin/items",
         name: "PayrollAdminItems",
         component: () => import("@/views/payroll/admin/items/Items.vue"),
-        meta: { title: "급여 항목 관리" },
+        meta: { title: "급여 항목 관리", roles: [...PAYROLL_ADMIN_ROLES] },
     },
-    // {
-    //     path: "/payroll/admin/report",
-    //     name: "PayrollAdminReport",
-    //     component: () => import("@/views/payroll/admin/Analytics/Analytics.vue"),
-    //     meta: { title: "급여 보고서" },
-    // },
+    {
+        path: "/payroll/admin/report",
+        name: "PayrollAdminReport",
+        component: () => import("@/views/payroll/admin/Analytics/Analytics.vue"),
+        meta: { title: "급여 보고서", roles: [...PAYROLL_ADMIN_ROLES] },
+    },
 ];
 
 export default payrollAdminRoutes;
