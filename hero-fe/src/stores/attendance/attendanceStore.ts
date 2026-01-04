@@ -7,81 +7,22 @@
  * History
  * 2025/12/10 - 이지윤 최초 작성
  * 2025/12/18 - 개인 근태 요약 카드 상태/액션 추가
+ * 2026/01/01 - 이지윤 type 분리
+ * 
+ * @author 이지윤
+ * @version 1.2
  */
 
 import { defineStore } from 'pinia'
 import apiClient from '@/api/apiClient'
-import Personal from '@/views/attendance/attendance_record/Personal.vue'
+import type { PersonalSummaryDTO } from '@/types/attendance/attendance-summary.types'
+import type { PageResponse } from '@/types/common/pagination.types' 
+import type {
+  AttendanceState,
+  PersonalDTO,
+  SelectedAttendanceRow,
+} from '@/types/attendance/attendanceStore.types'
 
-/**
- * 개인 근태 이력 한 건에 대한 DTO
- */
-export interface PersonalDTO {
-  attendanceId: number
-  workDate: string
-  state: string
-  startTime: string
-  endTime: string
-  workDuration: number
-  workSystemName: string
-}
-
-/**
- * 상단 요약 카드 DTO (백엔드 PersonalSummaryDTO와 매칭)
- */
-export interface PersonalSummaryDTO {
-  workDays: number
-  todayWorkSystemName: string
-  lateCount: number
-  absentCount: number
-  earlyCount: number
-}
-
-/**
- * 개인 근태 이력 페이지 응답 DTO
- * - 백엔드 공통 PageResponse<T>와 필드명 맞춤
- */
-export interface PageResponse<T> {
-  content: T[]
-  page: number          // 0-based
-  size: number
-  totalElements: number
-  totalPages: number
-  first: boolean
-  last: boolean
-}
-
-export interface SelectedAttendanceRow {
-  attendanceId: number
-  workDate: string
-  startTime: string   
-  endTime: string    
-}
-
-/**
- * Attendance 스토어 내부 상태 타입
- */
-interface AttendanceState {
-  // 리스트 / 페이징
-  personalList: PersonalDTO[]
-  currentPage: number
-  pageSize: number
-  totalPages: number
-  totalCount: number
-  loading: boolean
-
-  // 기간 필터
-  startDate: string
-  endDate: string
-
-  // 상단 요약 카드
-  workDays: number
-  todayWorkSystemName: string
-  lateCount: number
-  absentCount: number
-  earlyCount: number
-  selectedRow: SelectedAttendanceRow  | null
-}
 
 /**
  * 근태(Attendance) 도메인 Pinia 스토어
@@ -151,7 +92,7 @@ export const useAttendanceStore = defineStore('attendanceStore', {
 
         this.personalList = data.content
         this.currentPage = data.page + 1 // 0-based → 1-based
-        this.totalCount = data.totalElements
+        this.totalCount = data.totalElements ?? 0
         this.totalPages = data.totalPages
       } catch (error) {
         console.error('개인 근태 이력 조회 실패:', error)

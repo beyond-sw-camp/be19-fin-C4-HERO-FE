@@ -6,10 +6,15 @@
                 - 기간 필터 + 페이지네이션을 통한 개인 근태 이력 조회
 
   History
-  2025/12/10 - 이지윤 최초 작성
-  2025/12/29 - 행 간격/테이블 정렬 및 근무시간 표시 형식 개선
-  2025/12/30 - 이지윤 지연 근무 로직 추가 및 디자인 수정
-  2025/12/30 - 이지윤 초과 근무 로직 추가
+  2025/12/10 - (지윤) 최초 작성
+  2025/12/29 - (지윤) 행 간격/테이블 정렬 및 근무시간 표시 형식 개선
+  2025/12/30 - (지윤) 지연 근무 로직 추가 및 디자인 수정
+  2025/12/30 - (지윤) 초과 근무 로직 추가
+  2026/01/01 - (지윤) 페이지네이션 디자인 수정 및 필터링 부분 수정
+  2026/01/03 - (지윤) 그래프 표시 부분 수정
+
+  @author 이지윤
+  @version 1.6
 -->
 
 <template>
@@ -100,32 +105,43 @@
           <!-- 검색 영역 (기간 필터) -->
           <div class="panel-search">
             <div class="panel-search-inner">
-              <div class="filter-row">
-                <span class="filter-label">조회기간</span>
-
-                <input
-                  v-model="startDate"
-                  type="date"
-                  class="filter-input"
-                  :max="today"
-                />
-
-                <span class="filter-separator">~</span>
-
-                <input
-                  v-model="endDate"
-                  type="date"
-                  class="filter-input"
-                  :max="today"
-                />
+              <!-- 왼쪽 : 안내 문구 -->
+              <div class="search-info">
+                이번 달 기준으로 표시됩니다.
               </div>
 
-              <div class="search-button-group">
-                <button class="btn-search" @click="onSearch">검색</button>
-                <button class="btn-reset" @click="onReset">초기화</button>
+              <!-- 오른쪽 : 조회기간 + 날짜 + 검색/초기화 버튼 -->
+              <div class="filter-group">
+                <div class="filter-row">
+                  <span class="filter-label">조회기간</span>
+
+                  <input
+                    v-model="startDate"
+                    type="date"
+                    class="filter-input"
+                    :min="minDate"
+                    :max="today"
+                  />
+
+                  <span class="filter-separator">~</span>
+
+                  <input
+                    v-model="endDate"
+                    type="date"
+                    class="filter-input"
+                    :min="minDate"
+                    :max="today"
+                  />
+                </div>
+
+                <div class="search-button-group">
+                  <button class="btn-search" @click="onSearch">검색</button>
+                  <button class="btn-reset" @click="onReset">초기화</button>
+                </div>
               </div>
             </div>
           </div>
+
 
           <!-- 테이블 영역 -->
           <div class="panel-table-wrapper">
@@ -144,11 +160,11 @@
                 </thead>
 
                 <tbody>
-                  <tr
-                    v-for="(row, index) in personalList"
-                    :key="row.attendanceId"
-                    :class="{ 'row-striped': index % 2 === 1 }"
-                  >
+                    <tr
+                      v-for="(row, index) in personalList"
+                      :key="row.attendanceId"
+                      :class="{ 'row-striped': index % 2 === 1 }"
+                    >
                     <td>{{ row.workDate }}</td>
 
                     <td>
@@ -205,31 +221,50 @@
             </div>
 
             <!-- 페이지네이션 -->
-            <div class="pagination">
+            <div v-if="totalPages > 0" class="pagination">
+              <!-- 이전 화살표 -->
               <button
-                class="page-button"
+                type="button"
+                class="page-button arrow-button"
                 :disabled="currentPage === 1"
                 @click="goPage(currentPage - 1)"
               >
-                이전
+                ‹
               </button>
 
+              <!-- 이전 페이지(있을 때만) -->
               <button
-                v-for="page in totalPages"
-                :key="page"
+                v-if="prevPage !== null"
+                type="button"
                 class="page-button"
-                :class="{ 'page-active': page === currentPage }"
-                @click="goPage(page)"
+                @click="goPage(prevPage)"
               >
-                {{ page }}
+                {{ prevPage }}
               </button>
 
+              <!-- 현재 페이지(disabled + active) -->
+              <button type="button" class="page-button page-active" disabled>
+                {{ currentPage }}
+              </button>
+
+              <!-- 다음 페이지(있을 때만) -->
               <button
+                v-if="nextPage !== null"
+                type="button"
                 class="page-button"
-                :disabled="currentPage === totalPages"
+                @click="goPage(nextPage)"
+              >
+                {{ nextPage }}
+              </button>
+
+              <!-- 다음 화살표 -->
+              <button
+                type="button"
+                class="page-button arrow-button"
+                :disabled="currentPage >= totalPages"
                 @click="goPage(currentPage + 1)"
               >
-                다음
+                ›
               </button>
             </div>
           </div>
@@ -240,7 +275,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, computed } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { useAttendanceStore } from '@/stores/attendance/attendanceStore';
@@ -249,7 +284,23 @@ const attendanceStore = useAttendanceStore();
 const route = useRoute();
 const router = useRouter();
 
-const today = new Date().toISOString().slice(0, 10);
+// 오늘 날짜
+const now = new Date();
+const formatDate = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+const today = formatDate(now);
+
+// 2025-01-01부터 선택 가능
+const minDate = '2025-01-01';
+
+// 이번 달 1일 (YYYY-MM-DD)
+const firstDayOfMonth = formatDate(
+  new Date(now.getFullYear(), now.getMonth(), 1),
+);
 
 const {
   personalList,
@@ -264,6 +315,8 @@ const {
   earlyCount,
 } = storeToRefs(attendanceStore);
 
+
+
 const isActiveTab = (name: string): boolean => {
   return route.name === name;
 };
@@ -271,6 +324,14 @@ const isActiveTab = (name: string): boolean => {
 const formatTime = (time?: string | null): string => {
   return time ? time.substring(0, 5) : '';
 };
+
+const prevPage = computed<number | null>(() => {
+  return currentPage.value > 1 ? currentPage.value - 1 : null;
+});
+
+const nextPage = computed<number | null>(() => {
+  return currentPage.value < totalPages.value ? currentPage.value + 1 : null;
+});
 
 const goPage = (page: number): void => {
   const maxPage = totalPages.value || 1;
@@ -280,11 +341,17 @@ const goPage = (page: number): void => {
 };
 
 const onSearch = (): void => {
+  // 사용자가 입력한 기간을 그대로 store 필터에 반영
+  attendanceStore.setFilterDates(startDate.value, endDate.value);
   attendanceStore.fetchPersonal(1);
 };
 
 const onReset = (): void => {
-  attendanceStore.setFilterDates('', '');
+  // 필터를 이번 달 1일 ~ 오늘로 되돌림
+  startDate.value = firstDayOfMonth;
+  endDate.value = today;
+
+  attendanceStore.setFilterDates(firstDayOfMonth, today);
   attendanceStore.fetchPersonal(1);
 };
 
@@ -299,10 +366,14 @@ const formatWorkDuration = (minutes?: number | null): string => {
 };
 
 onMounted(() => {
-  attendanceStore.fetchPersonal(1);
-  attendanceStore.fetchPersonalSummary();
-});
+  // 최초 진입 시 기본 기간: 이번 달 1일 ~ 오늘
+  startDate.value = firstDayOfMonth;
+  endDate.value = today;
 
+  attendanceStore.setFilterDates(firstDayOfMonth, today);
+  attendanceStore.fetchPersonal(1);        // 기간에 맞는 개인 근태 이력
+  attendanceStore.fetchPersonalSummary();  // 상단 요약 카드
+});
 type PersonalRow = {
   attendanceId: number;
   workDate: string;
@@ -328,7 +399,6 @@ const goToLateRequest = (row: any): void => {
   });
 };
 
-
 const goToOvertimeRequest = (row: any): void => {
   attendanceStore.setSelectdRow({
     attendanceId: row.attendanceId,
@@ -347,6 +417,7 @@ const goToOvertimeRequest = (row: any): void => {
   });
 };
 </script>
+
 
 <style scoped>
 * {
@@ -472,13 +543,29 @@ const goToOvertimeRequest = (row: any): void => {
 .panel-search {
   border-left: 1px solid #e2e8f0;
   border-right: 1px solid #e2e8f0;
-  padding: 14px 18px;
+  padding:14px 18px;
 }
 
 .panel-search-inner {
   display: flex;
-  justify-content: flex-end;
-  align-items: flex-end; /* 인풋/버튼 하단 정렬 */
+  justify-content: space-between;
+  align-items: flex-end;           
+  gap: 8px;
+}
+
+
+.search-info {
+  font-size: 18px;
+  color: #94a3b8;
+  margin: 0;
+
+  position: relative;
+  top: -8px;   
+}
+
+.filter-group {
+  display: flex;
+  align-items: flex-end;   
   gap: 8px;
 }
 
@@ -627,28 +714,58 @@ const goToOvertimeRequest = (row: any): void => {
 
 /* 페이지네이션 */
 .pagination {
+  width: 100%;
+  padding: 16px 0;
+  background: #f8fafc;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 16px 0;
   gap: 10px;
 }
 
 .page-button {
-  min-width: 32px;
-  height: 28px;
+  min-width: 34px;
+  height: 29px;
+  padding: 4px 10px;
   border-radius: 4px;
   border: 0.67px solid #cad5e2;
-  color: #62748e;
   background: #ffffff;
+  font-size: 14px;
+  color: #62748e;
   cursor: pointer;
+}
+
+/* 현재 페이지는 disabled여도 흐려지지 않게 */
+.page-button.page-active:disabled {
+  opacity: 1;
+}
+
+/* 나머지 disabled만 흐리게 */
+.page-button:disabled:not(.page-active) {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .page-active {
   background: #155dfc;
-  color: #ffffff;
   border-color: #155dfc;
+  color: #ffffff;
+  font-weight: 700;
 }
+
+/* 표준: 현재 버튼 hover 시 #2b6bff */
+.page-button.page-active:disabled:hover {
+  background: #2b6bff;
+  border-color: #2b6bff;
+}
+
+/* 화살표 버튼 */
+.arrow-button {
+  min-width: 34px;
+  font-size: 18px;
+  line-height: 1;
+}
+
 
 /* 검색 버튼 그룹 */
 .search-button-group {

@@ -7,98 +7,24 @@
  * 2025/12/17 - 이지윤 최초 작성
  * 2025/12/23 - 상단 요약(summary) 조회 기능 추가
  * 2025/12/24 - 월/부서/정렬 필터 + 부서 옵션 조회 + refreshDashboard 개선
+ * 2026/01/01 - 이지윤 type 분리
  *
  * @author 이지윤
- * @version 1.2
+ * @version 1.3
  */
 
 import { defineStore } from 'pinia'
 import apiClient from '@/api/apiClient'
 
-/** 점수 정렬 타입 */
-export type ScoreSort = 'DESC' | 'ASC'
 
-/**
- * 백엔드 AttendanceDashboardDTO 와 1:1 대응되는 DTO
- */
-export interface AttendanceDashboardDTO {
-  employeeId: number
-  employeeNumber: string
-  employeeName: string
-  departmentId: number
-  departmentName: string
-  tardyCount: number
-  absenceCount: number
-  score: number
-}
-
-
-/**
- * 공통 PageResponse DTO
- * - attendanceStore.ts 의 PageResponse 와 동일 구조
- */
-export interface PageResponse<T> {
-  content: T[]
-  page: number
-  size: number
-  totalElements: number
-  totalPages?: number
-  first?: boolean
-  last?: boolean
-}
-
-/**
- * 상단 요약 카드 DTO (BE /attendance/dashboard/summary 응답과 매칭)
- */
-export interface AttendanceDashboardSummaryDTO {
-  totalEmployees: number
-  excellentEmployees: number
-  riskyEmployees: number
-}
-
-export interface DepartmentOptionDTO {
-  departmentId: number
-  departmentName: string
-}
-
-/**
- * 근태 대시보드 스토어 내부 상태 타입
- */
-interface AttendanceDashboardState {
-  /** 직원별 근태 점수 리스트 */
-  dashboardList: AttendanceDashboardDTO[]
-
-  /** 현재 페이지(프론트 기준) */
-  currentPage: number
-
-  /** 페이지당 개수 */
-  pageSize: number
-
-  /** 전체 페이지 수 */
-  totalPages: number
-
-  /** 전체 데이터 개수 */
-  totalCount: number
-
-  /** 로딩 여부 */
-  loading: boolean
-
-  /** 부서 필터 (null이면 전체 부서) */
-  departmentId: number | null
-
-  /** 점수 정렬 */
-  scoreSort: ScoreSort
-
-  /** 월 필터 */
-  month: string
-
-  /** ✅ 부서 드롭다운 옵션 */
-  departmentOptions: DepartmentOptionDTO[]
-  deptLoading: boolean
-
-  /** 상단 요약 카드 데이터 */
-  summary: AttendanceDashboardSummaryDTO
-}
+import type {
+  AttendanceDashboardDTO,
+  AttendanceDashboardPage,
+  AttendanceDashboardState,
+  AttendanceDashboardSummaryDTO,
+  DepartmentOptionDTO,
+  ScoreSort,
+} from '@/types/attendance/dashboard.types'
 
 /**
  * 근태 점수 대시보드 Pinia 스토어
@@ -191,11 +117,10 @@ export const useAttendanceDashboardStore = defineStore(
             params.departmentId = this.departmentId
           }
 
-          const response = await apiClient.get<
-            PageResponse<AttendanceDashboardDTO>
-          >('/attendance/dashboard', {
-            params,
-          })
+          const response = await apiClient.get<AttendanceDashboardPage>(
+            '/attendance/dashboard',
+            { params },
+          )
 
           const data = response.data
 

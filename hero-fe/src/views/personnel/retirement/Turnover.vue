@@ -115,7 +115,25 @@
         <div class="panel-body">
           <!-- Tab 1: 퇴사 사유 -->
           <div v-if="activeTab === 'reason'" class="chart-panel full-height">
-            <div class="panel-header">퇴사 사유별 통계</div>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div class="panel-header">퇴사 사유별 통계</div>
+              <div class="toggle-group">
+                <button
+                  class="toggle-btn"
+                  :class="{ active: reasonMode === 'early' }"
+                  @click="reasonMode = 'early'"
+                >
+                  1년 미만
+                </button>
+                <button
+                  class="toggle-btn"
+                  :class="{ active: reasonMode === 'total' }"
+                  @click="reasonMode = 'total'"
+                >
+                  전체
+                </button>
+              </div>
+            </div>
             <div class="chart-container">
               <Doughnut v-if="reasonChartData" :data="reasonChartData" :options="doughnutOptions" />
             </div>
@@ -124,10 +142,10 @@
           <!-- Tab 2: 근속 기간 -->
           <div v-if="activeTab === 'tenure'" class="chart-panel full-height">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <div class="panel-header">근속 기간별 잔존율</div>
+              <div class="panel-header">근속 연수별 인력 분포</div>
               <div class="tooltip-wrapper">
                 <span class="info-icon">i</span>
-                <span class="tooltip-text">해당 근속 연수에 도달할 수 있었던 입사자 중 실제 재직 중인 인원의 비율</span>
+                <span class="tooltip-text">전체 재직 인원 중 해당 연차에 해당하는 인원의 비율</span>
               </div>
             </div>
             <div class="chart-container">
@@ -136,7 +154,7 @@
                 :labels="tenureLabels"
                 :data="tenureData"
                 color="#1c398e"
-                tooltip-label-prefix="잔존율: "
+                tooltip-label-prefix="비율: "
                 tooltip-label-suffix="%"
                 y-axis-title="비율 (%)" />
             </div>
@@ -219,23 +237,27 @@ import { Bar, Doughnut } from 'vue-chartjs';
 
 import { useRetirementStore } from '@/stores/retirement/retirement.store';
 import BaseLineChart from '@/components/charts/BaseLineChart.vue';
+import type { ExitReasonStatDTO, TenureDistributionDTO, NewHireStatDTO } from '@/types/retirement/retirement.types';
 
 // Chart.js 등록
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, ArcElement);
 
 // --- State ---
 const store = useRetirementStore();
-const { summary, reasonStats, tenureStats, newHireStats, departmentStats } = storeToRefs(store);
+const { summary, earlyLeavers, totalLeavers, tenureStats, newHireStats, departmentStats } = storeToRefs(store);
 
 // --- Tab State ---
 const activeTab = ref('reason'); // 'reason' | 'tenure' | 'newHire' | 'department'
+
+// --- Reason Chart Mode ---
+const reasonMode = ref<'early' | 'total'>('early');
 
 // --- Year Filter State ---
 const selectedYear = ref('');
 
 const availableYears = computed(() => {
   if (!newHireStats.value.length) return [];
-  const years = new Set(newHireStats.value.map(item => item.quarter.split('년')[0]));
+  const years = new Set(newHireStats.value.map((item: NewHireStatDTO) => item.quarter.split('년')[0]));
   return Array.from(years).sort((a, b) => Number(b) - Number(a));
 });
 
@@ -254,14 +276,15 @@ onMounted(() => {
 
 // 1. 사유별 퇴직 통계 (Doughnut)
 const reasonChartData = computed(() => {
-  if (!reasonStats.value.length) return null;
+  const data = reasonMode.value === 'early' ? earlyLeavers.value : totalLeavers.value;
+  if (!data || !data.length) return null;
   const colors = ['#1c398e', '#16a34a', '#eab308', '#ef4444', '#6366f1', '#8b5cf6', '#ec4899', '#f97316'];
   return {
-    labels: reasonStats.value.map(item => `${item.reasonName} (${item.count}명)`),
+    labels: data.map((item: ExitReasonStatDTO) => `${item.reasonName} (${item.count}명)`),
     datasets: [
       {
-        backgroundColor: reasonStats.value.map((_, i) => colors[i % colors.length]),
-        data: reasonStats.value.map(item => item.count),
+        backgroundColor: data.map((_: ExitReasonStatDTO, i: number) => colors[i % colors.length]),
+        data: data.map((item: ExitReasonStatDTO) => item.count),
         hoverOffset: 4
       }
     ]
@@ -269,8 +292,8 @@ const reasonChartData = computed(() => {
 });
 
 // 2. 근속 기간별 잔존율 (BaseLineChart용 데이터)
-const tenureLabels = computed(() => tenureStats.value.map(item => item.tenureRange));
-const tenureData = computed(() => tenureStats.value.map(item => item.retentionRate));
+const tenureLabels = computed(() => tenureStats.value.map((item: TenureDistributionDTO) => item.tenureRange));
+const tenureData = computed(() => tenureStats.value.map((item: TenureDistributionDTO) => item.percentage));
 
 // 3. 신입 정착률/이직률 (Bar - Multi Dataset)
 const newHireChartData = computed(() => {
@@ -281,7 +304,7 @@ const newHireChartData = computed(() => {
   const labels = quarters.map(q => `${selectedYear.value}년 ${q}`);
 
   // 해당 연도 데이터 필터링
-  const yearStats = newHireStats.value.filter(item => item.quarter.startsWith(selectedYear.value));
+  const yearStats = newHireStats.value.filter((item: NewHireStatDTO) => item.quarter.startsWith(selectedYear.value));
 
   return {
     labels,
@@ -290,7 +313,7 @@ const newHireChartData = computed(() => {
         label: '정착률 (%)',
         backgroundColor: '#16a34a', // Green
         data: labels.map(label => {
-          const stat = yearStats.find(item => item.quarter === label);
+          const stat = yearStats.find((item: NewHireStatDTO) => item.quarter === label);
           return stat ? stat.settlementRate : 0;
         }),
         borderRadius: 4,
@@ -299,7 +322,7 @@ const newHireChartData = computed(() => {
         label: '이직률 (%)',
         backgroundColor: '#ef4444', // Red
         data: labels.map(label => {
-          const stat = yearStats.find(item => item.quarter === label);
+          const stat = yearStats.find((item: NewHireStatDTO) => item.quarter === label);
           return stat ? stat.turnoverRate : 0;
         }),
         borderRadius: 4,
@@ -671,5 +694,33 @@ const getTurnoverClass = (rate: number) => {
   background-color: #fff;
   cursor: pointer;
   outline: none;
+}
+
+/* 토글 버튼 스타일 */
+.toggle-group {
+  display: flex;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.toggle-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-btn.active {
+  background-color: #ffffff;
+  color: #1c398e;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 </style>

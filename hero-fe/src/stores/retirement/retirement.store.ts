@@ -3,14 +3,14 @@ import { ref } from 'vue';
 import {
   getRetirementSummary,
   getExitReasonStats,
-  getTenureRetentionStats,
+  getTenureDistributionStats,
   getNewHireStats,
   getDepartmentTurnoverStats,
 } from '@/api/retirement/retirement.api';
 import type {
   RetirementSummaryDTO,
   ExitReasonStatDTO,
-  TenureRetentionDTO,
+  TenureDistributionDTO,
   NewHireStatDTO,
   DepartmentTurnoverDTO,
 } from '@/types/retirement/retirement.types';
@@ -18,8 +18,9 @@ import type {
 export const useRetirementStore = defineStore('retirement', () => {
   // State
   const summary = ref<RetirementSummaryDTO | null>(null);
-  const reasonStats = ref<ExitReasonStatDTO[]>([]);
-  const tenureStats = ref<TenureRetentionDTO[]>([]);
+  const earlyLeavers = ref<ExitReasonStatDTO[]>([]);
+  const totalLeavers = ref<ExitReasonStatDTO[]>([]);
+  const tenureStats = ref<TenureDistributionDTO[]>([]);
   const newHireStats = ref<NewHireStatDTO[]>([]);
   const departmentStats = ref<DepartmentTurnoverDTO[]>([]);
   const loading = ref(false);
@@ -31,13 +32,14 @@ export const useRetirementStore = defineStore('retirement', () => {
       const [sumRes, reasonRes, tenureRes, newHireRes, deptRes] = await Promise.all([
         getRetirementSummary(),
         getExitReasonStats(),
-        getTenureRetentionStats(),
+        getTenureDistributionStats(),
         getNewHireStats(),
         getDepartmentTurnoverStats(),
       ]);
 
       summary.value = sumRes.data;
-      reasonStats.value = reasonRes.data;
+      earlyLeavers.value = reasonRes.data.earlyLeavers;
+      totalLeavers.value = reasonRes.data.totalLeavers;
       tenureStats.value = tenureRes.data;
       newHireStats.value = newHireRes.data;
       departmentStats.value = deptRes.data;
@@ -50,11 +52,12 @@ export const useRetirementStore = defineStore('retirement', () => {
 
   return {
     summary,
-    reasonStats,
+    earlyLeavers,
+    totalLeavers,
     tenureStats,
     newHireStats,
     departmentStats,
-    loading,
+    loading,  
     fetchRetirementData,
   };
 });

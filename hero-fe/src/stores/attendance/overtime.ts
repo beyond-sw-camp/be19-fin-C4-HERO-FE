@@ -5,70 +5,18 @@
  *
  * History
  * 2025/12/10 - 이지윤 최초 작성
+ * 2026/01/01 - 이지윤 type 분리
  *
  * @author 이지윤
- * @version 1.0
+ * @version 1.1
  */
 
 import { defineStore } from 'pinia';
 import apiClient from '@/api/apiClient';
+import type { OvertimeDTO, OvertimeState } from '@/types/attendance/overtime.types';
+import type { PersonalSummaryDTO } from '@/types/attendance/attendance-summary.types'
+import type { PageResponse } from '@/types/common/pagination.types' 
 
-/**
- * 초과 근무 한 건에 대한 DTO
- */
-export interface OvertimeDTO {
-  overtimeId: number;
-  date: string;
-  startTime: string;
-  endTime: string;
-  overtimeHours: number;
-  reason: string;
-}
-
-/**
- * 상단 요약 카드 DTO (백엔드 PersonalSummaryDTO와 매칭)
- */
-export interface PersonalSummaryDTO {
-  workDays: number
-  todayWorkSystemName: string
-  lateCount: number
-  absentCount: number
-  earlyCount: number
-}
-
-/**
- * 공통 페이지 응답 DTO (백엔드 PageResponseDTO<T>와 매칭)
- */
-export interface PageResponse<T> {
-  content: T[]
-  page: number          // 0-based
-  size: number
-  totalElements: number
-  totalPages: number
-  first: boolean
-  last: boolean
-}
-
-/**
- * Overtime 스토어 상태 타입
- */
-interface OvertimeState {
-  overtimeList: OvertimeDTO[];
-  currentPage: number;
-  pageSize: number;
-  totalPages: number;
-  totalCount: number;
-  loading: boolean;
-  startDate: string;
-  endDate: string;
-
-    // 상단 요약 카드
-  workDays: number
-  todayWorkSystemName: string
-  lateCount: number
-  absentCount: number
-  earlyCount: number
-}
 
 /**
  * 초과 근무(Overtime) 도메인 Pinia 스토어
@@ -138,7 +86,7 @@ export const useOvertimeStore = defineStore('overtimeStore', {
         this.overtimeList = data.content;
         this.currentPage = data.page + 1;
         this.pageSize = data.size;
-        this.totalCount = data.totalElements;
+        this.totalCount = data.totalElements ?? 0;
         this.totalPages = data.totalPages;
       } catch (error) {
         // TODO: 필요 시 에러 상태 필드(errorMessage 등)를 추가하여 UI와 연동

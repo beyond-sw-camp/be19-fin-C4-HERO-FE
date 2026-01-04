@@ -6,38 +6,16 @@
  *
  * History
  * 2025/12/21 (이지윤) 최초 작성
+ * 2026/01/01 - 이지윤 type 분리
  *
  * @author 이지윤
- * @version 1.0
+ * @version 1.1
  */
 
-import { defineStore } from 'pinia';
-import apiClient from '@/api/apiClient';
+import { defineStore } from 'pinia'
+import apiClient from '@/api/apiClient'
 
-/**
- * 백엔드 VacationSummaryDTO 와 매칭되는 타입
- */
-export interface VacationSummaryDTO {
-  /** 연차 ID (PK) */
-  leaveId: number | null;
-  /** 부여 연차 */
-  grantDays: number;
-  /** 사용 연차 */
-  usedDays: number;
-  /** 남은 연차 */
-  remainingDays: number;
-}
-
-/**
- * VacationSummary 스토어 상태 타입
- */
-interface VacationSummaryState {
-  /** 휴가 요약 데이터 (없으면 null) */
-  summary: VacationSummaryDTO | null;
-
-  /** 로딩 여부 */
-  loading: boolean;
-}
+import type { VacationSummaryDTO, VacationSummaryState } from '@/types/vacation/vacationSummary.types'
 
 /**
  * 휴가 요약(VacationSummary) 도메인 Pinia 스토어

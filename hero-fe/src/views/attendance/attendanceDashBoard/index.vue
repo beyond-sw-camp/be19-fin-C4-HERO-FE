@@ -8,11 +8,12 @@
                 - 서버 페이지네이션 기반 조회
 
   History
-  2025/12/17(이지윤) 최초 작성
+  2025/12/17 (이지윤) 최초 작성
+  2026/01/01 (이지윤) 페이지네이션 디자인 수정 및 필터링 부분 수정
   </pre>
 
   @author 이지윤
-  @version 1.0
+  @version 1.1
 -->
 
 <template>
@@ -66,6 +67,7 @@
               v-model="selectedMonth"
               type="month"
               class="filter-select"
+              :min="minMonth"
               :max="currentMonth"
             />
 
@@ -151,36 +153,54 @@
       </div>
 
       <!-- 페이지네이션 -->
-      <div class="pagination">
+      <div class="pagination" v-if="totalPages > 0">
+        <!-- 이전 화살표 -->
         <button
           type="button"
-          class="page-button"
+          class="page-button arrow-button"
           :disabled="currentPage === 1"
           @click="goPage(currentPage - 1)"
         >
-          이전
+          ‹
         </button>
 
+        <!-- 이전 페이지 숫자(있을 때만) -->
         <button
-          v-for="page in totalPages"
-          :key="page"
+          v-if="prevPage !== null"
           type="button"
           class="page-button"
-          :class="{ 'page-active': page === currentPage }"
-          @click="goPage(page)"
+          @click="goPage(prevPage)"
         >
-          {{ page }}
+          {{ prevPage }}
         </button>
 
+        <!-- 현재 페이지(가운데 고정 역할) -->
+        <button type="button" class="page-button page-active" disabled>
+          {{ currentPage }}
+        </button>
+
+        <!-- 다음 페이지 숫자(있을 때만) -->
         <button
+          v-if="nextPage !== null"
           type="button"
           class="page-button"
-          :disabled="totalPages === 0 || currentPage >= totalPages"
+          @click="goPage(nextPage)"
+        >
+          {{ nextPage }}
+        </button>
+
+        <!-- 다음 화살표 -->
+        <button
+          type="button"
+          class="page-button arrow-button"
+          :disabled="currentPage >= totalPages"
           @click="goPage(currentPage + 1)"
         >
-          다음
+          ›
         </button>
       </div>
+
+
     </div>
     <EmployeeHalfChart
       :open="employeeDashboardOpen"
@@ -193,19 +213,19 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import EmployeeHalfChart from '@/views/attendance/attendanceDashBoard/EmplloyeeHalfChartDrawer.vue'
+import EmployeeHalfChart from '@/views/attendance/attendanceDashboard/EmplloyeeHalfChartDrawer.vue'
+
 import { useAttendanceEmployeeDashboardStore } from '@/stores/attendance/attendanceEmployeeDashboard'
-import {
-  useAttendanceDashboardStore,
-  type AttendanceDashboardDTO,
-  type ScoreSort,
-} from '@/stores/attendance/dashboard'
+import { useAttendanceDashboardStore } from '@/stores/attendance/dashboard'
+
+import type { AttendanceDashboardDTO, ScoreSort } from '@/types/attendance/dashboard.types'
 
 const employeeDashboardStore = useAttendanceEmployeeDashboardStore()
 const { open: employeeDashboardOpen, selectedEmployeeId } = storeToRefs(employeeDashboardStore)
 
 /** YYYY-MM (month input용) */
 const currentMonth = new Date().toISOString().slice(0, 7)
+const minMonth = '2025-01'
 
 /** 필터 로컬 상태 */
 const selectedMonth = ref<string>(currentMonth)
@@ -245,6 +265,15 @@ const onReset = (): void => {
   dashboardStore.setScoreSort('DESC')
   dashboardStore.refreshDashboard(1)
 }
+
+/** 이전/다음 페이지 숫자(없으면 null) */
+const prevPage = computed<number | null>(() => {
+  return currentPage.value > 1 ? currentPage.value - 1 : null
+})
+
+const nextPage = computed<number | null>(() => {
+  return currentPage.value < totalPages.value ? currentPage.value + 1 : null
+})
 
 /** 페이지 이동 */
 const goPage = (page: number): void => {
@@ -557,6 +586,44 @@ onMounted(async () => {
   color: #62748e;
   cursor: pointer;
 }
+
+.page-button.page-active:disabled {
+  opacity: 1;
+}
+
+.page-button:disabled:not(.page-active) {
+  opacity: 0.5;
+  cursor: default;
+}
+
+
+.pagination .page-button.page-active {
+  background: #155dfc;     
+  border-color: #155dfc;   
+  color: #ffffff;
+  font-weight: 700;        
+}
+
+
+.pagination .page-button.page-active:hover {
+  background: #2b6bff;
+  border-color: #2b6bff;
+}
+
+/* 화살표 버튼은 살짝 큼직하게 */
+.arrow-button {
+  min-width: 34px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* 이전/다음 숫자가 없을 때도 자리를 유지해서 "현재"가 가운데 고정되게 */
+.page-placeholder {
+  display: inline-block;
+  min-width: 34px;
+  height: 29px;
+}
+
 
 .page-button:disabled {
   opacity: 0.5;

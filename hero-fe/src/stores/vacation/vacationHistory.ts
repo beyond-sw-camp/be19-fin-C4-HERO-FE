@@ -7,74 +7,17 @@
  *
  * History
  * 2025/12/16(이지윤) 최초 작성
+ * 2026/01/01 - 이지윤 type 분리
  *
  * @author 이지윤
- * @version 1.0
+ * @version 1.1
  */
 
 import { defineStore } from 'pinia';
 
 import apiClient from '@/api/apiClient';
-
-/**
- * 휴가 이력 한 건에 대한 DTO
- * - 백엔드 VacationHistoryDTO와 필드 이름을 맞춤
- */
-export interface VacationHistoryDTO {
-  /** 휴가 시작일 (yyyy-MM-dd) */
-  startDate: string;
-  /** 휴가 종료일 (yyyy-MM-dd) */
-  endDate: string;
-  /** 휴가 종류명 (연차 / 반차 / 병가 등) */
-  vacationTypeName: string;
-  /** 휴가 사유 */
-  reason: string;
-  /** 승인 상태 (APPROVED / REJECTED / PENDING 등) */
-  approvalStatus: string;
-}
-
-/**
- * 공통 페이지 응답 DTO
- * - 백엔드 PageResponse<T>와 매칭 (Overtime 스토어와 동일 구조)
- */
-export interface PageResponse<T> {
-  content: T[];
-  page: number;
-  size: number;
-  totalElements: number;
-  totalPages: number;
-  first: boolean;
-  last: boolean;
-}
-
-
-/**
- * VacationHistory 스토어 상태 타입
- */
-interface VacationHistoryState {
-  /** 휴가 이력 목록 */
-  vacationList: VacationHistoryDTO[];
-
-  /** 페이징 정보 */
-  currentPage: number;
-  pageSize: number;
-  totalPages: number;
-  totalCount: number;
-
-  /** 기간 필터 */
-  startDate: string;
-  endDate: string;
-
-  /**
-   * (임시) employeeId
-   * - 로그인 연동 전까지 쿼리 파라미터로 넘기기 위해 보관
-   * - 추후 토큰 기반으로 대체 가능
-   */
-  employeeId: number | null;
-
-  /** 로딩 상태 */
-  loading: boolean;
-}
+import type { PageResponse } from '@/types/common/pagination.types'
+import type { VacationHistoryDTO, VacationHistoryState } from '@/types/vacation/vacationHistory.types'
 
 /**
  * 휴가 이력(VacationHistory) 도메인 Pinia 스토어
@@ -174,7 +117,7 @@ export const useVacationHistoryStore = defineStore('vacationHistory', {
         this.vacationList = data.content;
         this.currentPage = data.page;
         this.pageSize = data.size;
-        this.totalCount = data.totalElements;
+        this.totalCount = data.totalElements ?? 0;
         this.totalPages = data.totalPages;
       } catch (error) {
         // TODO: 필요 시 에러 상태 필드(errorMessage 등)를 두고 UI와 연동

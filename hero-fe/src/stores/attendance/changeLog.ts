@@ -7,69 +7,18 @@
  *
  * History
  * 2025/12/11 - 이지윤 최초 작성
+ * 2026/01/01 - 이지윤 type 분리
+ * 
+ * @author 이지윤
+ * @version 1.2
  */
 
 import { defineStore } from 'pinia'
 import apiClient from '@/api/apiClient'
+import type { ChangeLogDTO, ChangeLogState} from '@/types/attendance/changeLog.types'
+import type { PersonalSummaryDTO } from '@/types/attendance/attendance-summary.types'
+import type { PageResponse } from '@/types/common/pagination.types' 
 
-/**
- * 근무제 변경 이력 한 건에 대한 DTO
- * (백엔드 ChangeLogDTO와 필드명을 camelCase 기준으로 맞춤)
- */
-export interface ChangeLogDTO {
-  workSystemChangeLogId: number  // 변경 이력 PK
-  date: string                   // 날짜
-  changeReason: string           // 변경 사유
-  startTime: string              // 출근 시간
-  endTime: string                // 퇴근 시간
-  workSystemName: string         // 근무제 이름(템플릿 이름)
-}
-
-/**
- * 상단 요약 카드 DTO (백엔드 PersonalSummaryDTO와 매칭)
- */
-export interface PersonalSummaryDTO {
-  workDays: number
-  todayWorkSystemName: string
-  lateCount: number
-  absentCount: number
-  earlyCount: number
-}
-
-/**
- * 공통 페이지 응답 DTO (PageResponseDTO<T> 대응)
- */
-export interface PageResponse<T> {
-  content: T[]
-  page: number          // 0-based
-  size: number
-  totalElements: number
-  totalPages: number
-  first: boolean
-  last: boolean
-}
-
-
-/**
- * ChangeLog 스토어 내부 상태 타입
- */
-interface ChangeLogState {
-  changeLogList: ChangeLogDTO[]
-  currentPage: number
-  pageSize: number
-  totalPages: number
-  totalCount: number
-  loading: boolean
-  startDate: string   // yyyy-MM-dd
-  endDate: string     // yyyy-MM-dd
-
-  // 상단 요약 카드
-  workDays: number
-  todayWorkSystemName: string
-  lateCount: number
-  absentCount: number
-  earlyCount: number
-}
 
 /**
  * 근무제 변경 이력(ChangeLog) 도메인 Pinia 스토어
@@ -139,7 +88,7 @@ export const useChangeLogStore = defineStore('changeLogStore', {
         this.changeLogList = data.content
         this.currentPage = data.page + 1
         this.pageSize = data.size
-        this.totalCount = data.totalElements
+        this.totalCount = data.totalElements ?? 0
         this.totalPages = data.totalPages
       } catch (error) {
         console.error('근무제 변경 이력 조회 실패:', error)

@@ -7,70 +7,18 @@
  *
  * History
  * 2025/12/11 - 이지윤 최초 작성
+ * 2026/01/01 - 이지윤 type 분리
+ * 
+ * @author 이지윤
+ * @version 1.2
  */
 
 import { defineStore } from 'pinia'
 import apiClient from '@/api/apiClient'
+import type { CorrectionDTO, CorrectionState } from '@/types/attendance/correction.types';
+import type { PersonalSummaryDTO } from '@/types/attendance/attendance-summary.types'
+import type { PageResponse } from '@/types/common/pagination.types' 
 
-/**
- * 근태 수정 이력 한 건에 대한 DTO
- * 백엔드 CorrectionDTO(JSON) 필드명에 맞춰서 이름을 맞춰줘야 한다.
- * (아래는 권장 형태: camelCase 기준)
- */
-export interface CorrectionDTO {
-  correctionId: number          // 정정 요청 PK
-  date: string                  // 대상 날짜 (target_date)
-  prevStartTime: string         // 수정 전 출근 시간 (att.start_time)
-  prevEndTime: string           // 수정 전 퇴근 시간 (att.end_time)
-  newStartTime: string          // 수정 후 출근 시간 (cor.corrected_start)
-  newEndTime: string            // 수정 후 퇴근 시간 (cor.corrected_end)
-  reason: string                // 정정 사유
-}
-
-/**
- * 상단 요약 카드 DTO (백엔드 PersonalSummaryDTO와 매칭)
- */
-export interface PersonalSummaryDTO {
-  workDays: number
-  todayWorkSystemName: string
-  lateCount: number
-  absentCount: number
-  earlyCount: number
-}
-
-/**
- * 공통 페이지 응답 DTO (PageResponseDTO<T>)
- */
-export interface PageResponse<T> {
-  content: T[]
-  page: number          // 0-based
-  size: number
-  totalElements: number
-  totalPages: number
-  first: boolean
-  last: boolean
-}
-
-/**
- * Correction 스토어 내부 상태 타입
- */
-interface CorrectionState {
-  correctionList: CorrectionDTO[]
-  currentPage: number
-  pageSize: number
-  totalPages: number
-  totalCount: number
-  loading: boolean
-  startDate: string   
-  endDate: string     
-
-  // 상단 요약 카드
-  workDays: number
-  todayWorkSystemName: string
-  lateCount: number
-  absentCount: number
-  earlyCount: number
-}
 
 /**
  * 근태 기록 수정 이력(Correction) 도메인 Pinia 스토어
@@ -139,7 +87,7 @@ export const useCorrectionStore = defineStore('correctionStore', {
         this.correctionList = data.content
         this.currentPage = data.page + 1
         this.pageSize = data.size
-        this.totalCount = data.totalElements
+        this.totalCount = data.totalElements ?? 0
         this.totalPages = data.totalPages
       } catch (error) {
         console.error('근태 수정 이력 조회 실패:', error)

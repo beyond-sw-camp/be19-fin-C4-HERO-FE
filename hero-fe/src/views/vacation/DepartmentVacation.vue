@@ -9,10 +9,11 @@
   History
   2025/12/16(이지윤) 최초 작성
   2025/12/30(리팩토링) Google Calendar → DB 연동 + 내부 캘린더 렌더링
+  2026/01/02 - (지윤) 날짜 필터링 수정
   </pre>
 
   @author 이지윤
-  @version 1.2
+  @version 1.3
 -->
 
 <template>
@@ -157,6 +158,12 @@ const today = new Date()
 const currentYear = ref(today.getFullYear())
 const currentMonth = ref(today.getMonth()) // 0-based
 
+const MIN_YEAR = 2025
+const MIN_MONTH = 0 // 0 = 1월
+
+const MAX_YEAR = today.getFullYear()
+const MAX_MONTH = today.getMonth()
+
 const monthStart = computed(() => new Date(currentYear.value, currentMonth.value, 1))
 const monthEnd = computed(() => new Date(currentYear.value, currentMonth.value + 1, 0))
 
@@ -272,8 +279,27 @@ const loadCurrentMonth = async () => {
 
 const changeMonth = async (diff: number) => {
   const newDate = new Date(currentYear.value, currentMonth.value + diff, 1)
-  currentYear.value = newDate.getFullYear()
-  currentMonth.value = newDate.getMonth()
+  const newYear = newDate.getFullYear()
+  const newMonth = newDate.getMonth() // 0-based
+
+  // 🔒 2025-01 이전으로는 이동 금지
+  if (
+    newYear < MIN_YEAR ||
+    (newYear === MIN_YEAR && newMonth < MIN_MONTH)
+  ) {
+    return
+  }
+
+  // 🔒 오늘 기준 연·월 이후로는 이동 금지
+  if (
+    newYear > MAX_YEAR ||
+    (newYear === MAX_YEAR && newMonth > MAX_MONTH)
+  ) {
+    return
+  }
+
+  currentYear.value = newYear
+  currentMonth.value = newMonth
 
   await loadCurrentMonth()
 }
