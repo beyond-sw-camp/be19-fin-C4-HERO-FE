@@ -7,96 +7,20 @@
  *
  * History
  * 2025/12/26 - 이지윤 최초 작성
+ * 2026/01/01 - 이지윤 type 분리
  *
  * @author 이지윤
- * @version 1.0
+ * @version 1.2
  */
 
-import type { AxiosError } from 'axios';
-import { defineStore } from 'pinia';
-
-import apiClient from '@/api/apiClient';
-
-/**
- * 반기(Half) 구분 타입
- * - H1 : 상반기
- * - H2 : 하반기
- */
-export type AttendanceHalfType = 'H1' | 'H2';
-
-/**
- * 직원 반기 근태 요약 DTO
- *
- * - totalWorkDays    : 반기 전체 근무일 수
- * - totalTardyCount  : 반기 전체 지각 횟수
- * - totalAbsenceCount: 반기 전체 결근 횟수
- */
-export interface AttendanceEmployeeHalfSummaryDTO {
-  totalWorkDays: number;
-  totalTardyCount: number;
-  totalAbsenceCount: number;
-}
-
-/**
- * 직원 월별 근태 통계 DTO
- *
- * - month        : 월(1~12)
- * - workDays     : 근무일 수
- * - tardyCount   : 지각 횟수
- * - absenceCount : 결근 횟수
- */
-export interface AttendanceEmployeeMonthlyStatDTO {
-  month: number;
-  workDays: number;
-  tardyCount: number;
-  absenceCount: number;
-}
-
-/**
- * 직원 반기 근태 대시보드 DTO
- *
- * - employeeId      : 직원 ID
- * - employeeNumber  : 사번
- * - employeeName    : 직원명
- * - year            : 기준 연도
- * - half            : 반기(H1/H2)
- * - summary         : 반기 근태 요약
- * - monthlyStats    : 월별 근태 통계 리스트
- */
-export interface AttendanceEmployeeHalfDashboardDTO {
-  employeeId: number;
-  employeeNumber: string;
-  employeeName: string;
-  year: number;
-  half: AttendanceHalfType;
-  summary: AttendanceEmployeeHalfSummaryDTO;
-  monthlyStats: AttendanceEmployeeMonthlyStatDTO[];
-}
-
-/**
- * 직원 반기 근태 대시보드 Drawer 스토어 상태
- *
- * - open               : Drawer 열림 여부
- * - loading            : API 로딩 상태
- * - errorMessage       : 에러 메시지 (없으면 null)
- * - selectedEmployeeId : 현재 선택된 직원 ID
- * - year               : 선택 연도
- * - half               : 선택 반기(H1/H2)
- * - dashboard          : 서버에서 조회한 대시보드 데이터
- */
-interface State {
-  open: boolean;
-  loading: boolean;
-  errorMessage: string | null;
-
-  // 현재 선택 상태(필터/탭)
-  selectedEmployeeId: number | null;
-  year: number;
-  half: AttendanceHalfType;
-
-  // 서버 응답 데이터
-  dashboard: AttendanceEmployeeHalfDashboardDTO | null;
-}
+import type { AxiosError } from 'axios'
+import { defineStore } from 'pinia'
+import apiClient from '@/api/apiClient'
+import type {
+  AttendanceEmployeeHalfDashboardDTO,
+  AttendanceEmployeeDashboardState,
+  AttendanceHalfType,
+} from '@/types/attendance/attendanceEmployeeDashboard.types'
 
 /**
  * 직원 반기 근태 대시보드 Pinia 스토어
@@ -106,7 +30,7 @@ interface State {
 export const useAttendanceEmployeeDashboardStore = defineStore(
   'attendanceEmployeeDashboard',
   {
-    state: (): State => ({
+    state: (): AttendanceEmployeeDashboardState  => ({
       open: false,
       loading: false,
       errorMessage: null,

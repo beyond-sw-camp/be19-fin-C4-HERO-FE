@@ -8,10 +8,11 @@
 
   History
   2025/12/16(이지윤) 최초 작성
+  2026/01/01 - (지윤) 페이지네이션 디자인 수정
   </pre>
 
   @author 이지윤
-  @version 1.1
+  @version 1.2
 -->
 
 <template>
@@ -55,36 +56,44 @@
       <!-- 하단 패널 (테이블 + 페이징) -->
       <div class="vacation-panel">
        <!-- 검색 영역 (기간 필터 UI) -->
-        <div class="panel-search">
-          <div class="panel-search-inner">
-            <!-- 기간(시작) -->
-            <div class="date-filter-group">
-              <span class="date-label">조회기간</span>
-              <input
-                v-model="startDate"
-                type="date"
-                class="filter-input"
-                :max="today"
-              />
+          <div class="panel-search">
+            <div class="panel-search-inner">
+              <!-- 왼쪽 : 안내 문구 -->
+              <div class="search-info">
+                이번 달 기준으로 표시됩니다.
+              </div>
 
-              <span class="filter-separator">~</span>
+              <!-- 오른쪽 : 조회기간 + 날짜 + 검색/초기화 버튼 -->
+              <div class="filter-group">
+                <div class="filter-row">
+                  <span class="filter-label">조회기간</span>
 
-              <input
-                v-model="endDate"
-                type="date"
-                class="filter-input"
-                :max="today"
-              />
-            </div>
+                  <input
+                    v-model="startDate"
+                    type="date"
+                    class="filter-input"
+                    :min="minDate"
+                    :max="today"
+                  />
 
+                  <span class="filter-separator">~</span>
 
-            <!-- 버튼 -->
-            <div class="search-button-group">
-              <button class="btn-search" @click="onSearch">검색</button>
-              <button class="btn-reset" @click="onReset">초기화</button>
+                  <input
+                    v-model="endDate"
+                    type="date"
+                    class="filter-input"
+                    :min="minDate"
+                    :max="today"
+                  />
+                </div>
+
+                <div class="search-button-group">
+                  <button class="btn-search" @click="onSearch">검색</button>
+                  <button class="btn-reset" @click="onReset">초기화</button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
         <!-- 테이블 영역 -->
         <div class="panel-table-wrapper">
@@ -131,35 +140,50 @@
           </div>
 
           <!-- 페이지네이션 -->
-          <div class="pagination">
-            <!-- 이전 -->
+          <div v-if="totalPages > 0" class="pagination">
+            <!-- 이전 화살표 -->
             <button
-              class="page-button"
-              :disabled="loading || currentPage === 1"
+              type="button"
+              class="page-button arrow-button"
+              :disabled="currentPage === 1"
               @click="goPage(currentPage - 1)"
             >
-              이전
+              ‹
             </button>
 
-            <!-- 숫자 버튼 -->
+            <!-- 이전 페이지(있을 때만) -->
             <button
-              v-for="p in safeTotalPages"
-              :key="p"
+              v-if="prevPage !== null"
+              type="button"
               class="page-button"
-              :class="{ 'page-active': p === currentPage }"
-              :disabled="loading"
-              @click="goPage(p)"
+              @click="goPage(prevPage)"
             >
-              {{ p }}
+              {{ prevPage }}
             </button>
 
-            <!-- 다음 -->
+            <!-- 현재 페이지(disabled + active) -->
+            <button type="button" class="page-button page-active" disabled>
+              {{ currentPage }}
+            </button>
+
+            <!-- 다음 페이지(있을 때만) -->
             <button
+              v-if="nextPage !== null"
+              type="button"
               class="page-button"
-              :disabled="loading || currentPage === safeTotalPages"
+              @click="goPage(nextPage)"
+            >
+              {{ nextPage }}
+            </button>
+
+            <!-- 다음 화살표 -->
+            <button
+              type="button"
+              class="page-button arrow-button"
+              :disabled="currentPage >= totalPages"
               @click="goPage(currentPage + 1)"
             >
-              다음
+              ›
             </button>
           </div>
         </div>
@@ -176,6 +200,7 @@ import { useVacationHistoryStore } from '@/stores/vacation/vacationHistory';
 import { useVacationSummaryStore } from '@/stores/vacation/vacationSummary';
 
 const today = new Date().toISOString().slice(0, 10);
+const minDate = '2025-01-01';
 
 const vacationStore = useVacationHistoryStore();
 const {
@@ -296,6 +321,14 @@ const onReset = async (): Promise<void> => {
   await vacationStore.resetFilters();
 };
 
+const prevPage = computed<number | null>(() => {
+  return currentPage.value > 1 ? currentPage.value - 1 : null
+})
+
+const nextPage = computed<number | null>(() => {
+  return currentPage.value < totalPages.value ? currentPage.value + 1 : null
+})
+
 /**
  * 페이지 이동 핸들러입니다.
  * - 1보다 작거나 전체 페이지 수를 초과하는 경우 이동하지 않습니다.
@@ -398,8 +431,30 @@ const goPage = async (page: number): Promise<void> => {
 
 .panel-search-inner {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: flex-end;
+  gap: 8px;
+}
+
+.search-info {
+  font-size: 18px;
+  color: #94a3b8;
+  margin: 0;
+
+  position: relative;
+  top: -8px;   
+}
+
+.filter-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: flex-end;   
   gap: 8px;
 }
 
@@ -554,34 +609,58 @@ const goPage = async (page: number): Promise<void> => {
 
 /* 페이지네이션 – Personal.vue와 동일 느낌 */
 .pagination {
+  width: 100%;
+  padding: 16px 0;
+  background: #f8fafc;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 16px 0;
   gap: 10px;
 }
 
 .page-button {
-  min-width: 32px;
-  height: 28px;
+  min-width: 34px;
+  height: 29px;
+  padding: 4px 10px;
   border-radius: 4px;
   border: 0.67px solid #cad5e2;
+  background: #ffffff;
   font-size: 14px;
   color: #62748e;
-  background: #ffffff;
   cursor: pointer;
+}
+
+/* 현재 페이지는 disabled여도 흐려지지 않게 */
+.page-button.page-active:disabled {
+  opacity: 1;
+}
+
+/* 나머지 disabled만 흐리게 */
+.page-button:disabled:not(.page-active) {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .page-active {
   background: #155dfc;
   color: #ffffff;
   border-color: #155dfc;
+  font-weight: 700;
 }
 
-.page-button:disabled {
-  opacity: 0.5;
-  cursor: default;
+/* 표준: 현재 버튼 hover 시 #2b6bff */
+.page-button.page-active:disabled:hover {
+  background: #2b6bff;
+  border-color: #2b6bff;
 }
+
+/* 화살표 버튼 */
+.arrow-button {
+  min-width: 34px;
+  font-size: 18px;
+  line-height: 1;
+}
+
 
 .attendance-table tbody tr:last-child td {
   border-bottom: 1px solid #e2e8f0;

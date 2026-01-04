@@ -7,10 +7,11 @@
                 - 프론트 단 페이지네이션
   History
   2025/12/26 - 이지윤 최초 작성
+  2026/01/01 - (지윤) 페이지네이션 디자인 수정 및 필터링 부분 수정
   </pre>
 
   @author 이지윤
-  @version 1.0
+  @version 1.1
 -->
 
 <template>
@@ -20,38 +21,48 @@
         <!-- 검색 영역 : 단일 날짜 -->
         <div class="panel-search">
           <div class="panel-search-inner">
-            <!-- 날짜 -->
-            <div class="date-filter-group">
-              <span class="date-label">날짜</span>
-              <div class="date-input-wrapper">
-                <input
-                  v-model="selectedDate"
-                  type="date"
-                  class="date-input"
-                  :max="today"
-                />
-              </div>
-            </div>
+            <!-- 왼쪽 안내 문구 -->
+            <p class="search-info">
+              오늘 날짜 기준으로 표시됩니다.
+            </p>
 
-            <!-- 검색 / 초기화 버튼 -->
-            <div class="search-button-group">
-              <button
-                class="btn-search"
-                :class="{ 'btn-search--active': isSearching }"
-                @click="onSearch"
-              >
-                검색
-              </button>
-              <button
-                class="btn-reset"
-                :class="{ 'btn-search--active': isSearching }"
-                @click="onReset"
-              >
-                초기화
-              </button>
+            <!-- 오른쪽 : 날짜 + 버튼 묶음 -->
+            <div class="filter-group">
+              <!-- 날짜 -->
+              <div class="date-filter-group">
+                <span class="date-label">날짜</span>
+                <div class="date-input-wrapper">
+                  <input
+                    v-model="selectedDate"
+                    type="date"
+                    class="date-input"
+                    :min="minDate"
+                    :max="today"
+                  />
+                </div>
+              </div>
+
+              <!-- 검색 / 초기화 버튼 -->
+              <div class="search-button-group">
+                <button
+                  class="btn-search"
+                  :class="{ 'btn-search--active': isSearching }"
+                  @click="onSearch"
+                >
+                  검색
+                </button>
+                <button
+                  class="btn-reset"
+                  :class="{ 'btn-search--active': isSearching }"
+                  @click="onReset"
+                >
+                  초기화
+                </button>
+              </div>
             </div>
           </div>
         </div>
+
 
         <!-- 테이블 영역 -->
         <div class="panel-table-wrapper">
@@ -121,36 +132,53 @@
           </div>
 
           <!-- 페이지네이션 -->
-          <div
-            v-if="totalPages > 0"
-            class="pagination"
-          >
+          <div v-if="totalPages > 0" class="pagination">
+            <!-- 이전 화살표 -->
             <button
-              class="page-button"
+              type="button"
+              class="page-button arrow-button"
               :disabled="currentPage === 1"
               @click="goPage(currentPage - 1)"
             >
-              이전
+              ‹
             </button>
 
+            <!-- 이전 페이지(있을 때만) -->
             <button
-              v-for="page in totalPages"
-              :key="page"
+              v-if="prevPage !== null"
+              type="button"
               class="page-button"
-              :class="{ 'page-active': page === currentPage }"
-              @click="goPage(page)"
+              @click="goPage(prevPage)"
             >
-              {{ page }}
+              {{ prevPage }}
             </button>
 
+            <!-- 현재 페이지(가운데 고정 역할, disabled + active) -->
+            <button type="button" class="page-button page-active" disabled>
+              {{ currentPage }}
+            </button>
+
+            <!-- 다음 페이지(있을 때만) -->
             <button
+              v-if="nextPage !== null"
+              type="button"
               class="page-button"
-              :disabled="currentPage === totalPages"
+              @click="goPage(nextPage)"
+            >
+              {{ nextPage }}
+            </button>
+
+            <!-- 다음 화살표 -->
+            <button
+              type="button"
+              class="page-button arrow-button"
+              :disabled="currentPage >= totalPages"
               @click="goPage(currentPage + 1)"
             >
-              다음
+              ›
             </button>
           </div>
+
         </div>
       </div>
     </div>
@@ -168,6 +196,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 
+
 import {
   useDeptWorkSystemStore,
   type DeptWorkSystemRowDTO,
@@ -179,6 +208,7 @@ import { useAuthStore } from '@/stores/auth';
  * - date input의 max 속성에 사용
  */
 const today = new Date().toISOString().slice(0, 10);
+const minDate = '2025-01-01';
 
 /**
  * 화면에서 사용하는 테이블 한 행 타입
@@ -204,6 +234,10 @@ const { workDate } = storeToRefs(deptWorkStore);
 
 /** 인증 스토어 (TODO: departmentId 연동 시 사용) */
 const authStore = useAuthStore();
+const { user } = storeToRefs(authStore);
+const getMyDepartmentId = (): number | null => {
+  return user.value?.departmentId ?? null;
+};
 
 /* =========================
    화면 상태 (필터/페이지)
@@ -252,6 +286,14 @@ const totalPages = computed<number>(() => {
   return Math.max(1, Math.ceil(allList.value.length / pageSize.value));
 });
 
+const prevPage = computed<number | null>(() => {
+  return currentPage.value > 1 ? currentPage.value - 1 : null;
+});
+
+const nextPage = computed<number | null>(() => {
+  return currentPage.value < totalPages.value ? currentPage.value + 1 : null;
+});
+
 /**
  * 현재 페이지에 보여줄 데이터
  */
@@ -271,18 +313,14 @@ const pagedList = computed<EmployeeWorkSystemRow[]>(() => {
  * - 선택한 날짜 기준으로 부서 근태 현황 조회
  */
 const onSearch = async (): Promise<void> => {
-  if (!selectedDate.value) {
-    return;
-  }
+  if (!selectedDate.value) return;
 
   isSearching.value = true;
-
   try {
     currentPage.value = 1;
     workDate.value = selectedDate.value;
 
-    // TODO: authStore.user?.departmentId 등으로 실제 로그인 사용자 부서 연결
-    const departmentId = 1;
+    const departmentId = getMyDepartmentId();  
 
     deptWorkStore.setFilters(departmentId, workDate.value);
     await deptWorkStore.fetchDeptWorkSystem(1);
@@ -297,17 +335,14 @@ const onSearch = async (): Promise<void> => {
  */
 const onReset = async (): Promise<void> => {
   isResetting.value = true;
-
   try {
-    const todayDate = new Date();
-    const iso = todayDate.toISOString().slice(0, 10);
+    const iso = new Date().toISOString().slice(0, 10);
 
     selectedDate.value = iso;
     workDate.value = iso;
     currentPage.value = 1;
 
-    // TODO: authStore.user?.departmentId 로 교체 예정
-    const departmentId = 1;
+    const departmentId = getMyDepartmentId();  // ← 여기
 
     deptWorkStore.setFilters(departmentId, iso);
     await deptWorkStore.fetchDeptWorkSystem(1);
@@ -536,7 +571,9 @@ onMounted(async () => {
 
 /* 페이지네이션 */
 .pagination {
-  margin-top: 8px;
+  width: 100%;
+  padding: 16px 0;
+  background: #f8fafc;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -544,24 +581,44 @@ onMounted(async () => {
 }
 
 .page-button {
-  min-width: 40px;
-  height: 30px;
+  min-width: 34px;
+  height: 29px;
+  padding: 4px 10px;
   border-radius: 4px;
-  border: 1px solid #cad5e2;
-  background-color: #ffffff;
+  border: 0.67px solid #cad5e2;
+  background: #ffffff;
+  font-size: 14px;
   color: #62748e;
   cursor: pointer;
 }
 
-.page-button:disabled {
+
+.page-button.page-active:disabled {
+  opacity: 1;
+}
+
+.page-button:disabled:not(.page-active) {
   opacity: 0.5;
   cursor: default;
 }
 
 .page-active {
-  background-color: #155dfc;
+  background: #155dfc;
   border-color: #155dfc;
   color: #ffffff;
+  font-weight: 700;
+}
+
+.page-button.page-active:disabled:hover {
+  background: #2b6bff;
+  border-color: #2b6bff;
+}
+
+/* 화살표 버튼 */
+.arrow-button {
+  min-width: 34px;
+  font-size: 18px;
+  line-height: 1;
 }
 
 .employee-table tbody tr:last-child td {
@@ -575,9 +632,24 @@ onMounted(async () => {
 
 .panel-search-inner {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
+}
+
+.search-info {
+  font-size: 18px;
+  color: #94a3b8;
+  margin: 0;
+
+  position: relative;
+  top: -2px;   
+}
+
+.filter-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;   /* 날짜와 버튼 사이 간격 */
 }
 
 /* 날짜 필터 그룹 */

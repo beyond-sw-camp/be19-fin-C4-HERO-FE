@@ -6,117 +6,23 @@
  *
  * History
  * 2025/12/26 - 이지윤 최초 작성
+ * 2026/01/01 - 이지윤 type 분리
  *
  * @author 이지윤
- * @version 1.0
+ * @version 1.1
  */
 
 import { defineStore } from 'pinia';
-
 import apiClient from '@/api/apiClient';
 import { useAuthStore } from '@/stores/auth';
 
-/**
- * 백엔드 DepartmentVacationDTO와 필드명 매칭
- *
- * - vacationLogId   : 휴가 로그 ID
- * - employeeId      : 사원 ID
- * - employeeName    : 사원명
- * - vacationTypeName: 휴가 유형명(연차/반차/병가 등)
- * - startDate       : 시작일(yyyy-MM-dd)
- * - endDate         : 종료일(yyyy-MM-dd)
- */
-export interface DepartmentVacationDTO {
-  vacationLogId: number;
-  employeeId: number;
-  employeeName: string;
-  vacationTypeName: string;
-  startDate: string;
-  endDate: string;
-}
+import type {
+  DepartmentVacationDTO,
+  DepartmentVacationState,
+} from '@/types/vacation/departmentVacation.types'
+import { extractEmployeeIdFromToken } from '@/types/vacation/jwt'
 
-/**
- * 부서 휴가 캘린더 스토어 상태 타입
- */
-interface DepartmentVacationState {
-  /** 캘린더에 표시할 휴가 아이템 목록 */
-  items: DepartmentVacationDTO[];
-  /** 로딩 상태 플래그 */
-  loading: boolean;
-  /** 에러 메시지 (없으면 null) */
-  errorMessage: string | null;
 
-  /** 선택된 부서 ID (정책상 현재는 사용 X, 확장 대비) */
-  departmentId: number | null;
-  /** 현재 로그인한 직원 ID (JWT에서 추출) */
-  myEmployeeId: number | null;
-}
-
-/* =========================
-   JWT → employeeId 추출 유틸
-   ========================= */
-
-/**
- * JWT Payload 타입 (동적 키 허용)
- */
-type JwtPayload = Record<string, unknown>;
-
-/**
- * JWT 문자열에서 payload를 디코딩하여 객체로 반환합니다.
- *
- * @param {string} token - 'header.payload.signature' 형태의 JWT 문자열
- * @returns {JwtPayload | null} 디코딩된 payload 객체, 실패 시 null
- ****************************************
- * @param → 함수의 인자(Parameter)
- ****************************************
- */
-function decodeJwtPayload(token: string): JwtPayload | null {
-  try {
-    const payloadBase64Url = token.split('.')[1];
-    if (!payloadBase64Url) return null;
-
-    const payloadBase64 = payloadBase64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const json = decodeURIComponent(
-      atob(payloadBase64)
-        .split('')
-        .map((c) => `%${`00${c.charCodeAt(0).toString(16)}`.slice(-2)}`)
-        .join(''),
-    );
-
-    return JSON.parse(json) as JwtPayload;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * JWT payload에서 employeeId 후보 키들을 순회하며 숫자 ID를 추출합니다.
- *
- * 우선순위:
- *  - employeeId
- *  - employee_id
- *  - empId
- *  - id
- *  - sub
- *
- * @param {string} token - JWT 문자열
- * @returns {number | null} 추출된 employeeId, 없으면 null
- */
-function extractEmployeeIdFromToken(token: string): number | null {
-  const payload = decodeJwtPayload(token);
-  if (!payload) return null;
-
-  // 프로젝트마다 claim 키가 다를 수 있어 후보를 여러 개 둠
-  const candidates = ['employeeId', 'employee_id', 'empId', 'id', 'sub'];
-
-  for (const key of candidates) {
-    const v = payload[key];
-    const num = typeof v === 'number' ? v : Number(v);
-    if (Number.isFinite(num)) return num;
-  }
-
-  return null;
-}
 
 /**
  * 부서 휴가 캘린더 Pinia 스토어
