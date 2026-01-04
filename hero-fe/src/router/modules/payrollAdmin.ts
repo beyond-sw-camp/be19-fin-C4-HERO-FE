@@ -49,12 +49,12 @@ const payrollAdminRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/payroll/admin/items/Items.vue"),
         meta: { title: "급여 항목 관리" },
     },
-    {
-        path: "/payroll/admin/report",
-        name: "PayrollAdminReport",
-        component: () => import("@/views/payroll/admin/Analytics/Analytics.vue"),
-        meta: { title: "급여 보고서" },
-    },
+    // {
+    //     path: "/payroll/admin/report",
+    //     name: "PayrollAdminReport",
+    //     component: () => import("@/views/payroll/admin/Analytics/Analytics.vue"),
+    //     meta: { title: "급여 보고서" },
+    // },
 ];
 
 export default payrollAdminRoutes;
