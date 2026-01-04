@@ -62,7 +62,7 @@ const BASE = '/admin/payroll/batches';
 const ALLOWANCE_BASE = '/admin/payroll/allowances';
 const DEDUCTION_BASE = '/admin/payroll/deductions';
 const PAYMENT_BASE = '/admin/payroll/payments';
-const ANALYTICS_BASE = '/payroll/admin/analytics';
+const ANALYTICS_BASE = '/admin/payroll/analytics';
 
 export const payrollAdminApi = {
     // GET /api/admin/payroll/batches?month=&status=
