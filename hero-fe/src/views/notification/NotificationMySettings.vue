@@ -12,10 +12,11 @@
   2025/12/16 (혜원) 최초 작성
   2025/12/17 (혜원) 알림 마운트 수정
   2026/01/04 (혜원) 스타일 수정
+  2026/01/04 (혜원) 설정 저장 후 페이지 이동 제거
   </pre>
 
   @author 혜원
-  @version 1.2
+  @version 1.3
 -->
 <template>
   <div class="notification-settings-page">
@@ -245,21 +246,35 @@ const handleBrowserNotificationChange = async () => {
   }
 };
 
+/**
+ * 설정 저장 핸들러
+ * - 페이지 이동 없이 현재 페이지에 머물기
+ */
 const handleSaveSettings = async () => {
   const result = await settingsStore.saveSettings();
 
   if (result.success) {
     alert('설정이 저장되었습니다.');
-    router.push('/notifications');
   } else {
     alert('설정 저장에 실패했습니다.');
   }
 };
 
-const handleResetSettings = () => {
+/**
+ * 기본값으로 되돌리기 핸들러
+ * - 설정 초기화 후 저장하고 현재 페이지에 머물기
+ */
+const handleResetSettings = async () => {
   if (confirm('설정을 기본값(모두 ON)으로 되돌리시겠습니까?')) {
     settingsStore.resetSettings();
-    handleSaveSettings();
+    
+    const result = await settingsStore.saveSettings();
+    
+    if (result.success) {
+      alert('설정이 기본값으로 되돌려졌습니다.');
+    } else {
+      alert('설정 저장에 실패했습니다.');
+    }
   }
 };
 
@@ -282,16 +297,16 @@ onMounted(async () => {
   z-index: 10;
 
   width: 100%;
-  height: 56px;                 /* 고정 높이 */
-  padding: 0 16px;              /* 과한 padding 제거 */
+  height: 56px;
+  padding: 0 16px;
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
 
   display: flex;
-  align-items: center;          /* 수직 가운데 */
+  align-items: center;
   gap: 12px;
   box-sizing: border-box;
-  overflow: hidden;            
+  overflow: hidden;
 }
 
 .back-btn {
@@ -319,7 +334,7 @@ onMounted(async () => {
 .back-icon {
   width: 20px;
   height: 20px;
-  display: block;            
+  display: block;
 }
 
 .settings-title {
@@ -327,7 +342,7 @@ onMounted(async () => {
   font-size: 20px;
   font-weight: 700;
   color: #1f2937;
-  line-height: 1;             
+  line-height: 1;
   display: flex;
   align-items: center;
   white-space: nowrap;
@@ -409,7 +424,7 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  display: block;              
+  display: block;
 }
 
 .setting-content {
