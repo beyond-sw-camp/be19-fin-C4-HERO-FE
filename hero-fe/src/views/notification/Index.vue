@@ -12,10 +12,11 @@
   2025/12/09 (혜원) 컴포넌트 분리 및 통합
   2025/12/12 (혜원) TypeScript 변환 및 Store 연동
   2025/12/16 (혜원) 삭제/복구 기능 추가
+  2026/01/04 (혜원) 스타일 수정 및 클릭 동작 변경
   </pre>
 
   @author 혜원
-  @version 3.0
+  @version 3.1
 -->
 
 <template>
@@ -44,9 +45,8 @@
           v-for="notification in filteredNotifications"
           :key="notification.notificationId"
           :notification="notification"
-          @click="handleNotificationClick"
+          @view="handleViewDetail"
           @delete="handleDelete"
-          @action="handleAction"
         />
       </transition-group>
 
@@ -132,12 +132,6 @@ const tabs: Ref<Tab[]> = ref([
   { id: 'deleted', label: '삭제된 알림', count: 0 }
 ]);
 
-onMounted(async () => {
-  // 새로고침해도 데이터를 다시 채울 수 있도록 강제 호출
-  await notificationStore.fetchDeletedNotifications();
-});
-
-
 /**
  * 알림 목록 데이터 (Store에서 관리)
  * @type {ComputedRef<Array<Notification>>}
@@ -186,31 +180,23 @@ const filteredNotifications: ComputedRef<Notification[]> = computed(() => {
 });
 
 /**
- * 알림 클릭 이벤트 핸들러
+ * 상세 보기 버튼 클릭 이벤트 핸들러
  * @param {Notification} notification - 클릭된 알림 객체
  */
-const handleNotificationClick = async (notification: Notification): Promise<void> => {
+const handleViewDetail = async (notification: Notification): Promise<void> => {
   try {
+    // 읽음 처리
     if (!notification.isRead) {
       await notificationStore.markAsRead(notification.notificationId);
       updateTabCounts();
     }
 
+    // 관련 페이지로 이동
     if (notification.link) {
       router.push(notification.link);
     }
   } catch (error) {
-    console.error('알림 클릭 처리 실패:', error);
-  }
-};
-
-/**
- * 알림 액션 버튼 클릭 이벤트 핸들러
- * @param {Notification} notification - 액션이 발생한 알림 객체
- */
-const handleAction = (notification: Notification): void => {
-  if (notification.link) {
-    router.push(notification.link);
+    console.error('페이지 이동 실패:', error);
   }
 };
 
@@ -278,7 +264,7 @@ const handleMarkAllRead = async (): Promise<void> => {
  * 설정 버튼 클릭 이벤트 핸들러
  */
 const toggleSettings = (): void => {
-  router.push({ name: 'NotificationMySettings' });  // 설정 페이지로 이동
+  router.push({ name: 'NotificationMySettings' });
 };
 
 /**
@@ -321,14 +307,12 @@ const getIcon = (type: NotificationCategory): string => {
   return iconMap[type] || '/images/alarm/alarmsetting.svg';
 };
 
-
-// 그리고 기존 getTimeAgo 함수 삭제하고
-// 템플릿이나 다른 곳에서 사용할 때:
 const getTimeAgo = getRelativeTime;
 
 onMounted(async () => {
   try {
     await notificationStore.fetchNotifications();
+    await notificationStore.fetchDeletedNotifications();
     updateTabCounts();
   } catch (error) {
     console.error('초기화 실패:', error);
@@ -349,7 +333,6 @@ onMounted(async () => {
   background: #F8FAFC;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   overflow-y: auto;
-  /* padding-bottom: 100px; 스크롤시 밑에까지 보이게 해줌 -> App.vue 수정으로 인해 필요없어진 css*/
 }
 
 .notification-list {
@@ -395,8 +378,9 @@ onMounted(async () => {
 }
 
 .notification-icon img {
-  width: 40px;
-  height: 40px;
+  width: 20px;
+  height: 20px;
+  margin-bottom: 25px;     
 }
 
 .notification-content {
