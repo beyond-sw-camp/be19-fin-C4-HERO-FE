@@ -5,8 +5,8 @@ import type {
   ApiResponse,
   ExitReasonDTO,
   RetirementSummaryDTO,
-  ExitReasonStatDTO,
-  TenureRetentionDTO,
+  ExitReasonStatsResponseDTO,
+  TenureDistributionDTO,
   NewHireStatDTO,
   DepartmentTurnoverDTO,
 } from '@/types/retirement/retirement.types';
@@ -36,15 +36,15 @@ export const getRetirementSummary = async () => {
  * 사유별 퇴직 통계 조회
  */
 export const getExitReasonStats = async () => {
-  const response = await apiClient.get<ApiResponse<ExitReasonStatDTO[]>>(`${BASE_URL}/stats/reason`);
+  const response = await apiClient.get<ApiResponse<ExitReasonStatsResponseDTO>>(`${BASE_URL}/stats/reason`);
   return response.data;
 };
 
 /**
- * 근속 기간별 잔존율 조회
+ * 근속 연수별 인력 분포 조회
  */
-export const getTenureRetentionStats = async () => {
-  const response = await apiClient.get<ApiResponse<TenureRetentionDTO[]>>(`${BASE_URL}/stats/tenure`);
+export const getTenureDistributionStats = async () => {
+  const response = await apiClient.get<ApiResponse<TenureDistributionDTO[]>>(`${BASE_URL}/stats/tenure`);
   return response.data;
 };
 

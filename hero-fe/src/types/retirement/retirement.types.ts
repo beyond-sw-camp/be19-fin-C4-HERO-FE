@@ -39,11 +39,19 @@ export interface ExitReasonStatDTO {
 }
 
 /**
- * 근속 기간별 잔존율 DTO
+ * 퇴사 사유 통계 응답 DTO
  */
-export interface TenureRetentionDTO {
+export interface ExitReasonStatsResponseDTO {
+  earlyLeavers: ExitReasonStatDTO[]; // 1년 미만 퇴사자 통계
+  totalLeavers: ExitReasonStatDTO[]; // 전체 퇴사자 통계
+}
+
+/**
+ * 근속 연수별 인력 분포 DTO
+ */
+export interface TenureDistributionDTO {
   tenureRange: string;
-  retentionRate: number;
+  percentage: number;
 }
 
 /**

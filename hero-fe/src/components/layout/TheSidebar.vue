@@ -268,6 +268,7 @@
 
       <!-- 인사 관리 -->
       <div class="menu-item has-dropdown"
+          v-if="canSeePersonnelParent"
           :class="{ 'active-parent': activeParent === 'personnel' }"
           @click="handleParentClick('personnel')">
         <div class="menu-content">
@@ -282,27 +283,27 @@
       </div>
 
       <div v-if="isPersonnelOpen && !isCollapsed" class="sub-menu-list">
-        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'employeeList' }"
+        <div v-if="canSeePersonnelGeneral" class="sub-menu-item" :class="{ active: activeSubMenu === 'employeeList' }"
             @click="handleSubMenuClick('employeeList')">
           <div class="sub-menu-text">사원</div>
         </div>
-        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'turnover' }"
+        <div v-if="canSeePersonnelGeneral" class="sub-menu-item" :class="{ active: activeSubMenu === 'turnover' }"
             @click="handleSubMenuClick('turnover')">
           <div class="sub-menu-text">이직률</div>
         </div>
-        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'plan' }"
+        <div v-if="canSeePersonnelGeneral" class="sub-menu-item" :class="{ active: activeSubMenu === 'plan' }"
             @click="handleSubMenuClick('plan')">
           <div class="sub-menu-text">승진 계획 등록</div>
         </div>
-        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'recommend' }"
+        <div v-if="canSeePromotionRecommend" class="sub-menu-item" :class="{ active: activeSubMenu === 'recommend' }"
             @click="handleSubMenuClick('recommend')">
           <div class="sub-menu-text">승진 추천</div>
         </div>
-        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'review' }"
+        <div v-if="canSeePersonnelGeneral" class="sub-menu-item" :class="{ active: activeSubMenu === 'review' }"
             @click="handleSubMenuClick('review')">
           <div class="sub-menu-text">승진 심사</div>
         </div>
-        <div class="sub-menu-item" :class="{ active: activeSubMenu === 'special' }"
+        <div v-if="canSeePersonnelGeneral" class="sub-menu-item" :class="{ active: activeSubMenu === 'special' }"
             @click="handleSubMenuClick('special')">
           <div class="sub-menu-text">특별 승진</div>
         </div>
@@ -310,6 +311,7 @@
 
         <!-- 조직도 -->
         <div class="menu-item"
+             v-if="canSeeOrganization"
              :class="{ 'active-parent': activeParent === 'organization' }"
              @click="handleParentClick('organization')">
           <div class="menu-content">
@@ -322,6 +324,7 @@
 
       <!-- 설정 관리 -->
       <div class="menu-item"
+          v-if="canSeeSettings"
           :class="{ 'active-parent': activeParent === 'settings' }"
           @click="handleParentClick('settings')">
         <div class="menu-content">
@@ -390,6 +393,31 @@ const canSeeDeptDashboard = computed(() =>
     'ROLE_HR_EVALUATION',
   ])
 )
+
+// 사원 관리 일반 메뉴 (HR_TRANSFER)
+const canSeePersonnelGeneral = computed(() =>
+  authStore.hasAnyRole(['ROLE_HR_TRANSFER', 'ROLE_SYSTEM_ADMIN'])
+);
+
+// 승진 추천 (DEPT_MANAGER)
+const canSeePromotionRecommend = computed(() =>
+  authStore.hasAnyRole(['ROLE_DEPT_MANAGER', 'ROLE_SYSTEM_ADMIN'])
+);
+
+// 사원 관리 상위 메뉴 (하위 메뉴 중 하나라도 볼 수 있으면 노출)
+const canSeePersonnelParent = computed(() =>
+  canSeePersonnelGeneral.value || canSeePromotionRecommend.value
+);
+
+// 조직도 (EMPLOYEE)
+const canSeeOrganization = computed(() =>
+  authStore.hasAnyRole(['ROLE_EMPLOYEE', 'ROLE_SYSTEM_ADMIN'])
+);
+
+// 설정 (SYSTEM_ADMIN, HR_MANAGER)
+const canSeeSettings = computed(() =>
+  authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN', 'ROLE_HR_MANAGER'])
+);
 
 const router = useRouter();
 const route = useRoute();
