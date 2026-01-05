@@ -7,13 +7,14 @@
   * - ApprovalCreate.vue: 서식 선택 시 작성화면으로 라우팅
   *
   * History
-  *   2025/12/10 (민철) 최초 작성
-  *   2025/12/23 (민철) 파일명 변경 
+  * 2025/12/10 (민철) 최초 작성
+  * 2025/12/23 (민철) 파일명 변경
+  * 2026/01/06 (민철) 주석 제거
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 2.0
+  * @version 2.1
 -->
 <template>
   <div class="formtpl-container">
@@ -88,16 +89,14 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
-import { useAuthStore } from '@/stores/auth';
 import { useApprovalTemplateStore } from '@/stores/approval/approval.store';
 import { ApprovalTemplateResponseDTO } from '@/types/approval/template.types';
 
 
 const router = useRouter();
 const templateStore = useApprovalTemplateStore();
-const authStore = useAuthStore();
 
-const { templates, isBookmarked } = storeToRefs(templateStore);
+const { templates } = storeToRefs(templateStore);
 
 const searchKeyword = ref<string>('');
 
@@ -106,7 +105,6 @@ onMounted(() => {
   templateStore.fetchTemplates();
 });
 
-// const template = templates;
 
 const toggleBookmark = async (templateId: number) => {
 
@@ -157,7 +155,6 @@ const getCategoryIcon = (category: string): string => {
 };
 
 const handleCardClick = async (form: ApprovalTemplateResponseDTO) => {
-  console.log('선택된 양식:', form.templateKey, form.templateId);
 
   await router.push({
     name: 'ApprovalCreate',

@@ -13,11 +13,12 @@
   * 2025/12/30 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
   * 2025/12/30 (민철) 모두 지원하도록 수정
   * 2025/12/30 (민철) Watch 최적화, Computed 적용
+  * 2026/01/06 (민철) 주석 제거
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 3.1
+  * @version 3.2
 -->
 <template>
   <div class="detail-form-section">
@@ -149,13 +150,11 @@ import { useAuthStore } from '@/stores/auth';
 import { useApprovalDataStore } from '@/stores/approval/approval_data.store';
 import type { ResignTypeResponseDTO } from '@/types/approval/approval_data.types';
 
-// Store
 const approvalDataStore = useApprovalDataStore();
 const { resignTypes } = storeToRefs(approvalDataStore);
 const userStore = useAuthStore();
 const { user } = storeToRefs(userStore);
 
-// Props & Emits
 const props = defineProps<{
   modelValue?: ResignFormData;
   readonly?: boolean;
@@ -167,24 +166,21 @@ const emit = defineEmits<{
 
 export interface ResignFormData {
   employeeName: string;
-  employeeNumber: number | string; // 문자로 올 수도 있으므로 유연하게
+  employeeNumber: number | string;
   department: string;
   grade: string;
-  hireDate: string;        // YYYY-MM-DD
-  terminationDate: string; // YYYY-MM-DD
-  terminateReason: number; // 퇴직 사유 (이름 or ID)
+  hireDate: string;
+  terminationDate: string;
+  terminateReason: number;
   terminateReasonDetail: string;
 }
 
 onMounted(async () => {
-  // 데이터가 없을 때만 호출
   if (!resignTypes.value || resignTypes.value.length === 0) {
     await approvalDataStore.fetchResignTypes();
   }
 });
 
-// --- State Management ---
-// 초기값 설정: modelValue(저장된 값)가 있으면 우선 사용, 없으면 userStore(현재 로그인 정보) 사용
 const formData = reactive<ResignFormData>({
   employeeName: props.modelValue?.employeeName || user.value?.employeeName || '-',
   employeeNumber: props.modelValue?.employeeNumber ?? (user.value?.employeeNumber || 0),
@@ -196,14 +192,12 @@ const formData = reactive<ResignFormData>({
   terminateReasonDetail: props.modelValue?.terminateReasonDetail || ''
 });
 
-// [동기화 1] 부모 -> 자식 (API 조회 데이터 등)
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     Object.assign(formData, newVal);
   }
 }, { deep: true });
 
-// [동기화 2] 자식 -> 부모 (폼 변경 시 자동 emit)
 watch(formData, (newVal) => {
   if (!props.readonly) {
     emit('update:modelValue', { ...newVal });
@@ -211,7 +205,6 @@ watch(formData, (newVal) => {
 }, { deep: true });
 
 
-// --- Dropdown Logic ---
 const isDropdownOpen = ref(false);
 
 const toggleDropdown = () => {
@@ -229,25 +222,18 @@ const selectReason = (option: ResignTypeResponseDTO) => {
   isDropdownOpen.value = false;
 };
 
-/**
- * 선택된 사유 이름 (Computed)
- * - 데이터가 늦게 로딩되거나, 이미 저장된 값을 보여줄 때 유용함
- */
 const currentResignReasonName = computed(() => {
   const val = formData.terminateReason;
   if (!val) return null;
 
   if (!resignTypes.value || resignTypes.value.length === 0) return val;
 
-  // 만약 formData에 ID가 저장된다면 찾아서 이름 반환
   const matched = resignTypes.value.find(r => r.resignTypeId === val);
   return matched ? matched.resignTypeName : val;
 
-  // return val;
 });
 
 
-// --- Readonly Formatters ---
 const formatReadOnlyDate = (dateStr: string) => {
   if (!dateStr) return '-';
   const [year, month, day] = dateStr.split('-');
@@ -305,7 +291,6 @@ const formatReadOnlyDate = (dateStr: string) => {
   width: 100%;
 }
 
-/* 그리드 레이아웃 설정 */
 .input-group-row {
   display: flex;
   gap: 16px;
@@ -318,20 +303,15 @@ const formatReadOnlyDate = (dateStr: string) => {
   gap: 10px;
 }
 
-/* 4열 컬럼 스타일 (25% 너비에서 gap 고려) */
 .col-quarter {
   flex: 0 0 calc(25% - 12px);
-  /* 16px gap * 3 / 4 = 12px */
   min-width: 150px;
-  /* 반응형 최소 너비 */
 }
 
-/* 라벨 스타일 */
 .group-label {
   display: flex;
   align-items: center;
   height: 20px;
-  /* 라벨 높이 통일 */
 }
 
 .group-label-with-icon {
@@ -350,7 +330,6 @@ const formatReadOnlyDate = (dateStr: string) => {
   font-weight: 400;
 }
 
-/* --- 입력 박스 공통 스타일 (높이 46px 통일) --- */
 .text-input-box,
 .date-input-box,
 .dropdown-box {
@@ -372,7 +351,6 @@ const formatReadOnlyDate = (dateStr: string) => {
   border-color: #cbd5e1;
 }
 
-/* Native Input (Text/Date) */
 .native-input {
   border: none;
   outline: none;
@@ -388,7 +366,6 @@ const formatReadOnlyDate = (dateStr: string) => {
   color: #90a1b9;
 }
 
-/* 드롭다운 스타일 */
 .dropdown-box {
   justify-content: space-between;
   cursor: pointer;
@@ -448,7 +425,6 @@ const formatReadOnlyDate = (dateStr: string) => {
   background-color: #f1f5f9;
 }
 
-/* 오버레이 */
 .overlay-backdrop {
   position: fixed;
   top: 0;
@@ -459,7 +435,6 @@ const formatReadOnlyDate = (dateStr: string) => {
   z-index: 40;
 }
 
-/* 사유 상세 입력 (Textarea) */
 .reason-content {
   flex-direction: column;
   padding: 16px 20px;
@@ -487,7 +462,6 @@ const formatReadOnlyDate = (dateStr: string) => {
   color: #90a1b9;
 }
 
-/* 읽기 전용 모드 스타일 */
 .readonly-value {
   flex: 1;
   padding: 10px 12px;

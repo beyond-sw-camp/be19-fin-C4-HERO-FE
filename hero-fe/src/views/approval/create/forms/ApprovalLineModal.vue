@@ -13,19 +13,19 @@
  *   - 선택된 직원 확인
  *
  * History
- *   2025/12/24 (민철) 최초 작성
- *   2025/12/26 (민철) API 연동 완료
+ * 2025/12/24 (민철) 최초 작성
+ * 2025/12/26 (민철) API 연동 완료
+ * 2026/01/06 (민철) 주석 제거
  *
  * </pre>
  *
  * @module approval
  * @author 민철
- * @version 2.0
+ * @version 3.0
 -->
 <template>
   <article class="org-chart-container">
 
-    <!-- 헤더 -->
     <header class="header">
       <div class="header-title">
         <img src="/images/aaaapeople.svg" alt="" width="24" height="24" />
@@ -36,14 +36,12 @@
       </button>
     </header>
 
-    <!-- 검색 영역 -->
     <section class="search-area">
       <label class="search-box">
         <input type="text" placeholder="이름, 부서, 직책으로 검색..." v-model="searchInput" @input="handleSearchInput" />
       </label>
     </section>
 
-    <!-- 선택된 직원 표시 -->
     <section v-if="selectedCount > 0" class="selected-area">
       <div class="selected-header">
         <span>선택된 직원 ({{ selectedCount }}명)</span>
@@ -57,12 +55,10 @@
       </div>
     </section>
 
-    <!-- 로딩 -->
     <div v-if="isLoading" class="loading-area">
       <span>조직도를 불러오는 중...</span>
     </div>
 
-    <!-- 검색 결과 -->
     <section v-else-if="searchResults.length > 0" class="search-results">
       <div class="result-header">
         <span>검색 결과 ({{ searchResults.length }}명)</span>
@@ -84,7 +80,6 @@
       </ul>
     </section>
 
-    <!-- 조직도 트리 -->
     <section v-else class="tree-content">
       <div v-if="organizationTree">
         <TreeNode :node="organizationTree" :depth="1" @employee-click="handleEmployeeClick" />
@@ -94,7 +89,6 @@
       </div>
     </section>
 
-    <!-- 하단 버튼 -->
     <footer class="footer">
       <button class="btn-cancel" @click="handleClose">취소</button>
       <button class="btn-confirm" @click="handleConfirm" :disabled="selectedCount === 0">
@@ -113,18 +107,11 @@ import { useOrganization } from '@/composables/approval/useOrganization';
 import { OrganizationEmployeeDTO } from '@/types/approval/organization.types';
 import TreeNode from './TreeNode.vue';
 
-/* ========================================== */
-/* Props & Emits */
-/* ========================================== */
-
 const emit = defineEmits<{
-  (e: 'close'): void
-  (e: 'confirm', employees: any[]): void
+  (e: 'close'): void;
+  (e: 'confirm', employees: any[]): void;
 }>();
 
-/* ========================================== */
-/* Store & Composable */
-/* ========================================== */
 
 const orgStore = useOrganizationStore();
 const {
@@ -145,38 +132,24 @@ const {
   isEmployeeSelected
 } = useOrganization();
 
-/* ========================================== */
-/* Local State */
-/* ========================================== */
 
 const searchInput = ref<string>('');
 
-/* ========================================== */
-/* Lifecycle */
-/* ========================================== */
 
 onMounted(async () => {
   try {
     await orgStore.fetchOrganizationTree();
 
-    // ✅ 루트 노드 자동 확장 (departmentId = 0)
     if (organizationTree.value?.departmentId === 0) {
       toggleDepartment(0);
     }
-
-    console.log('✅ 조직도 로딩 완료:', organizationTree.value);
   } catch (error) {
-    console.error('❌ 조직도 로딩 실패:', error);
+    console.error('organization error:', error);
+    alert('조직도를 불러올 수 없습니다.');
   }
 });
 
-/* ========================================== */
-/* Methods */
-/* ========================================== */
 
-/**
- * 검색 입력 처리
- */
 const handleSearchInput = () => {
   const keyword = searchInput.value.trim();
 
@@ -187,16 +160,11 @@ const handleSearchInput = () => {
   }
 };
 
-/**
- * 직원 클릭 (선택/해제)
- */
 const handleEmployeeClick = (employee: OrganizationEmployeeDTO) => {
   toggleEmployeeSelection(employee);
 };
 
-/**
- * 모달 닫기
- */
+
 const handleClose = () => {
   orgStore.clearSelectedEmployees();
   orgStore.clearSearchResults();
@@ -204,19 +172,15 @@ const handleClose = () => {
   emit('close');
 };
 
-/**
- * 확인 버튼
- */
+
 const handleConfirm = () => {
   if (selectedCount.value === 0) {
     alert('결재자를 선택해주세요.');
     return;
   }
 
-  // 선택된 직원 목록 전달
   emit('confirm', selectedEmployees.value);
 
-  // Store 초기화
   orgStore.clearSelectedEmployees();
   orgStore.clearSearchResults();
   searchInput.value = '';
@@ -225,8 +189,6 @@ const handleConfirm = () => {
 </script>
 
 <style scoped>
-/* 기존 CSS + 추가 스타일 */
-
 .org-chart-container {
   width: 100%;
   max-width: 600px;
@@ -272,7 +234,6 @@ const handleConfirm = () => {
   border-color: #3b82f6;
 }
 
-/* 선택된 직원 영역 */
 .selected-area {
   padding: 12px 20px;
   background: #f9fafb;
@@ -321,7 +282,6 @@ const handleConfirm = () => {
   cursor: pointer;
 }
 
-/* 로딩 */
 .loading-area {
   flex: 1;
   display: flex;
@@ -330,7 +290,6 @@ const handleConfirm = () => {
   color: #6b7280;
 }
 
-/* 검색 결과 */
 .search-results {
   flex: 1;
   overflow-y: auto;
@@ -350,14 +309,12 @@ const handleConfirm = () => {
   margin: 0;
 }
 
-/* 트리 컨텐츠 */
 .tree-content {
   flex: 1;
   overflow-y: auto;
   padding: 12px 0;
 }
 
-/* 직원 카드 */
 .user-card {
   display: flex;
   align-items: center;
@@ -441,7 +398,6 @@ const handleConfirm = () => {
   font-weight: 600;
 }
 
-/* 빈 상태 */
 .empty-state {
   flex: 1;
   display: flex;
@@ -451,7 +407,6 @@ const handleConfirm = () => {
   font-size: 14px;
 }
 
-/* 하단 버튼 */
 .footer {
   display: flex;
   gap: 12px;

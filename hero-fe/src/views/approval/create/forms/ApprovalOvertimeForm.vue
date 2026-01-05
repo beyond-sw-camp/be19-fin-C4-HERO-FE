@@ -11,11 +11,12 @@
   *   2025/12/14 - 민철 공통 컴포넌트화
   *   2025/12/23 - 민철 파일명 변경
   *   2025/12/30 - 지윤 초과 근무 로직을 위한 함수(watch) 추가 및 수정
+  *   2026/01/06 - 민철 주석 제거
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 3.1
+  * @version 3.2
 -->
 <template>
   <div class="detail-form-section">
@@ -128,7 +129,6 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue';
 
-// Props & Emits
 const props = defineProps<{
   modelValue?: OvertimeFormData;
   readonly?: boolean;
@@ -138,30 +138,26 @@ const emit = defineEmits<{
   'update:modelValue': [value: OvertimeFormData];
 }>();
 
-// 타입 정의
 export interface OvertimeFormData {
-  workDate: string;      // 근무 날짜 (YYYY-MM-DD)
-  startTime: string;     // 시작 시간 (HH:mm)
-  endTime: string;       // 종료 시간 (HH:mm)
-  reason: string;        // 사유
+  workDate: string;
+  startTime: string;
+  endTime: string;
+  reason: string;
 }
 
-// --- State Management ---
 const formData = reactive<OvertimeFormData>({
   workDate: props.modelValue?.workDate || '',
-  startTime: props.modelValue?.startTime || '18:00', // 초과근무 시작시간
-  endTime: props.modelValue?.endTime || '21:00',     // 초과근무 종료시간
+  startTime: props.modelValue?.startTime || '18:00',
+  endTime: props.modelValue?.endTime || '21:00',
   reason: props.modelValue?.reason || ''
 });
 
-// [동기화 1] 부모 -> 자식 (초기 데이터 로딩)
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     Object.assign(formData, newVal);
   }
 }, { deep: true });
 
-// [동기화 2] 자식 -> 부모 (폼 변경 시 자동 emit)
 watch(formData, (newVal) => {
   if (!props.readonly) {
     emit('update:modelValue', { ...newVal });
@@ -304,7 +300,6 @@ const formatReadOnlyTime = (time: string) => {
   margin-top: 0px;
 }
 
-/* --- 날짜/시간 입력 박스 스타일 --- */
 .date-input-box {
   height: 46px;
   border: 1px solid #e2e8f0;
@@ -327,7 +322,6 @@ const formatReadOnlyTime = (time: string) => {
   border-color: #4f46e5;
 }
 
-/* 텍스트 스타일 */
 .native-input {
   border: none;
   outline: none;
@@ -365,7 +359,6 @@ const formatReadOnlyTime = (time: string) => {
   margin-top: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   z-index: 50;
-  /* 다른 요소 위에 표시 */
   display: flex;
   overflow: hidden;
 }
@@ -423,7 +416,6 @@ const formatReadOnlyTime = (time: string) => {
   z-index: 40;
 }
 
-/* 사유 입력 */
 .reason-content {
   flex-direction: column;
   padding: 16px 20px;
@@ -452,7 +444,6 @@ const formatReadOnlyTime = (time: string) => {
   border-color: #cbd5e1;
 }
 
-/* 읽기 전용 모드 스타일 */
 .readonly-value {
   flex: 1;
   padding: 10px 12px;

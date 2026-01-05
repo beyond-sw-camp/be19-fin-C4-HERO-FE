@@ -13,11 +13,12 @@
   * 2025/12/30 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
   * 2025/12/30 (민철) 모두 지원하도록 수정
   * 2025/12/30 (민철) Watch 최적화, Computed 적용
+  * 2026/01/06 (민철) 주석 제거
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 3.1
+  * @version 3.2
 -->
 <template>
   <div class="detail-form-section">
@@ -113,7 +114,6 @@ import { ref, reactive, watch, computed, onMounted } from 'vue';
 import { useApprovalDataStore } from '@/stores/approval/approval_data.store';
 import { storeToRefs } from 'pinia';
 
-// Props & Emits
 const props = defineProps<{
   modelValue?: RaisePayrollFormData;
   readonly?: boolean;
@@ -124,13 +124,12 @@ const emit = defineEmits<{
 }>();
 
 export interface RaisePayrollFormData {
-  raisePercent: number;  // 인상률
-  beforeSalary: number;  // 인상 전 급여
-  afterSalary: number;   // 인상 후 급여
+  raisePercent: number;
+  beforeSalary: number;
+  afterSalary: number;
   reason: string;
 }
 
-// Store
 const approvalDataStore = useApprovalDataStore();
 const { payroll } = storeToRefs(approvalDataStore);
 
@@ -140,8 +139,7 @@ onMounted(async () => {
   }
 });
 
-// --- State Management ---
-const increaseType = ref<'direct' | 'rate'>('rate'); // 입력 방식 (작성 모드용)
+const increaseType = ref<'direct' | 'rate'>('rate');
 
 const formData = reactive<RaisePayrollFormData>({
   raisePercent: props.modelValue?.raisePercent || 0,
@@ -150,14 +148,14 @@ const formData = reactive<RaisePayrollFormData>({
   reason: props.modelValue?.reason || ''
 });
 
-// [동기화 1] 부모 -> 자식 (초기 로딩)
+
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     Object.assign(formData, newVal);
   }
 }, { deep: true });
 
-// [동기화 2] 자식 -> 부모 (변경 시 emit)
+
 watch(formData, (newVal) => {
   if (!props.readonly) {
     emit('update:modelValue', { ...newVal });
@@ -165,13 +163,6 @@ watch(formData, (newVal) => {
 }, { deep: true });
 
 
-// --- Computed Logic ---
-
-/**
- * 기존 기본급 계산
- * 1. 저장된 값(modelValue)이 있으면 우선 사용 (조회 모드)
- * 2. 없으면 스토어 값 사용 (신규 작성)
- */
 const currentBaseSalary = computed(() => {
   if (props.modelValue?.beforeSalary) {
     return props.modelValue.beforeSalary;
@@ -179,7 +170,7 @@ const currentBaseSalary = computed(() => {
 
   const storeVal = payroll.value?.beforePayroll || 0;
 
-  // 작성 모드일 때 formData 동기화
+
   if (!props.readonly && formData.beforeSalary !== storeVal) {
     formData.beforeSalary = storeVal;
   }
@@ -187,9 +178,6 @@ const currentBaseSalary = computed(() => {
 });
 
 
-// --- Calculation Watchers ---
-
-// 1. 인상률 변경 시 -> 급여 자동 계산
 watch(() => formData.raisePercent, (newRate) => {
   if (increaseType.value === 'rate' && !props.readonly) {
     const base = currentBaseSalary.value;
@@ -199,19 +187,17 @@ watch(() => formData.raisePercent, (newRate) => {
   }
 });
 
-// 2. 급여 변경 시 -> 인상률 자동 계산
 watch(() => formData.afterSalary, (newSalary) => {
   if (increaseType.value === 'direct' && !props.readonly) {
     const base = currentBaseSalary.value;
     if (base > 0 && newSalary > 0) {
       const rate = ((newSalary - base) / base) * 100;
-      formData.raisePercent = Math.round(rate * 10) / 10; // 소수점 1자리 반올림
+      formData.raisePercent = Math.round(rate * 10) / 10;
     }
   }
 });
 
 
-// --- Input Formatting (Comma) ---
 const isFocused = ref(false);
 
 const displayAfterSalary = computed({

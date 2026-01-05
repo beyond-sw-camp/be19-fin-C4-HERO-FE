@@ -13,11 +13,12 @@
   * 2025/12/30 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
   * 2025/12/30 (민철) 모두 지원하도록 수정
   * 2025/12/30 (민철) Watch 최적화, Computed 적용
+  * 2026/01/06 (민철) 주석 제거
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 3.1
+  * @version 3.2
 -->
 <template>
   <div class="detail-form-section">

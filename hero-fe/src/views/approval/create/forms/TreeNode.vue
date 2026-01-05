@@ -12,18 +12,18 @@
  *   - 직원 클릭 이벤트 전달
  *
  * History
- *   2025/12/26 (민철) 최초 작성
- *   2025/12/26 (민철) 반응성 수정 (expandedDepartments storeToRefs)
+ * 2025/12/26 (민철) 최초 작성
+ * 2025/12/26 (민철) 반응성 수정 (expandedDepartments storeToRefs)
+ * 2026/01/06 (민철) 주석 제거
  *
  * </pre>
  *
  * @module approval
  * @author 민철
- * @version 1.1
+ * @version 1.2
 -->
 <template>
     <div>
-        <!-- 부서 노드 -->
         <div v-if="node.type === 'department'" :class="['tree-row', `depth-${depth}`]" @click="handleDepartmentClick">
             <img :class="['icon', 'icon-arrow', { 'rotated': isExpanded }]" src="/images/dropdownarrow.svg" alt="" />
             <img class="icon" src="/images/organization.svg" alt="" />
@@ -31,16 +31,12 @@
             <span class="node-count">{{ departmentCountText }}</span>
         </div>
 
-        <!-- 자식 노드 (확장 시) -->
         <ul v-if="node.type === 'department' && isExpanded && node.children">
-            <!-- 1. 하위 부서들 -->
             <li v-for="child in departmentChildren" :key="getNodeKey(child)">
                 <TreeNode :node="child" :depth="depth + 1" @employee-click="handleEmployeeClick" />
             </li>
 
-            <!-- 2. 소속 직원 처리 -->
             <template v-if="employeeChildren.length > 0">
-                <!-- 2-1. 하위 부서가 있으면 토글 노드 -->
                 <li v-if="hasDepartmentChildren" :key="`dept-${node.departmentId}-employees`">
                     <div :class="['tree-row', 'employee-list-toggle', `depth-${depth + 1}`]"
                         @click="toggleEmployeeList">
@@ -51,7 +47,6 @@
                         <span class="node-count">{{ employeeChildren.length }}명</span>
                     </div>
 
-                    <!-- 직원 카드들 (확장 시) -->
                     <ul v-if="isEmployeeListExpanded">
                         <li v-for="employee in employeeChildren" :key="getNodeKey(employee)">
                             <div @click="handleEmployeeClick(convertToEmployee(employee))"
@@ -72,7 +67,6 @@
                     </ul>
                 </li>
 
-                <!-- 2-2. 하위 부서가 없으면 직원 바로 표시 -->
                 <li v-else v-for="employee in employeeChildren" :key="getNodeKey(employee)">
                     <div @click="handleEmployeeClick(convertToEmployee(employee))"
                         :class="['user-card', `depth-${depth + 1}`, { 'selected': isSelected(employee.employeeId) }]">
@@ -118,7 +112,6 @@ const emit = defineEmits<{
 }>();
 
 const orgStore = useOrganizationStore();
-// expandedDepartments를 storeToRefs로 가져와서 반응성 확보
 const { selectedEmployees, expandedDepartments } = storeToRefs(orgStore);
 
 const {
@@ -127,14 +120,9 @@ const {
     getAvatarInitial,
 } = useOrganization();
 
-// 직원 목록 확장 상태 (부서별로 독립적)
 const employeeListExpanded = ref<boolean>(false);
 
 
-/**
- * 현재 부서가 확장되었는지
- * expandedDepartments를 직접 참조해서 반응성 확보
- */
 const isExpanded = computed(() => {
     if (props.node.type === 'department' && props.node.departmentId !== undefined) {
         const expanded = expandedDepartments.value.has(props.node.departmentId);
@@ -144,40 +132,23 @@ const isExpanded = computed(() => {
 });
 
 
-/**
- * 직원 목록이 확장되었는지
- */
 const isEmployeeListExpanded = computed(() => employeeListExpanded.value);
 
 
-/**
- * 하위 부서만 필터링
- */
 const departmentChildren = computed(() => {
     return props.node.children?.filter(child => child.type === 'department') || [];
 });
 
-/**
- * 직원만 필터링
- */
 const employeeChildren = computed(() => {
     return props.node.children?.filter(child => child.type === 'employee') || [];
 });
 
 
-/**
- * 하위 부서가 있는지
- */
 const hasDepartmentChildren = computed(() => {
     return departmentChildren.value.length > 0;
 });
 
 
-/**
- * 부서 카운트 텍스트
- * - 하위 부서가 있으면: "3개 팀 7명"
- * - 하위 부서가 없으면: "7명"
- */
 const departmentCountText = computed(() => {
     const deptCount = departmentChildren.value.length;
     const empCount = employeeChildren.value.length;
@@ -193,9 +164,6 @@ const departmentCountText = computed(() => {
 });
 
 
-/**
- * 노드 키 생성
- */
 const getNodeKey = (node: OrganizationTreeNodeDTO): string => {
     if (node.type === 'department') {
         return `dept-${node.departmentId}`;
@@ -204,45 +172,29 @@ const getNodeKey = (node: OrganizationTreeNodeDTO): string => {
 };
 
 
-/**
- * 직원이 선택되었는지
- */
 const isSelected = (employeeId?: number): boolean => {
     if (!employeeId) return false;
     return selectedEmployees.value.some(emp => emp.approverId === employeeId);
 };
 
 
-/**
- * 부서 클릭 (확장/축소)
- */
 const handleDepartmentClick = () => {
     if (props.node.type === 'department' && props.node.departmentId !== undefined) {
-        console.log('🖱️ 부서 클릭:', props.node.departmentName, props.node.departmentId);
         toggleDepartment(props.node.departmentId);
     }
 };
 
 
-/**
- * 직원 목록 토글
- */
 const toggleEmployeeList = () => {
     employeeListExpanded.value = !employeeListExpanded.value;
 };
 
 
-/**
- * 직원 클릭 이벤트 전달
- */
 const handleEmployeeClick = (employee: OrganizationEmployeeDTO) => {
     emit('employee-click', employee);
 };
 
 
-/**
- * TreeNode → OrganizationEmployeeDTO 변환
- */
 const convertToEmployee = (node: OrganizationTreeNodeDTO): OrganizationEmployeeDTO => {
     return {
         employeeId: node.employeeId || 0,
@@ -314,7 +266,7 @@ ul {
 .user-card {
     display: flex;
     align-items: center;
-    padding: 12px;
+    padding: 8px;
     cursor: pointer;
     transition: background-color 0.2s;
     border-bottom: 1px solid #f0f0f0;
@@ -329,8 +281,8 @@ ul {
 }
 
 .avatar {
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
     display: flex;
     align-items: center;

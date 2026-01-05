@@ -7,11 +7,12 @@
  * - useApprovalDetail: 문서 상세 조회 관련 상태 및 액션 제공
  *
  * History
- *   2025/12/26 (민철) 최초 작성
+ * 2025/12/26 (민철) 최초 작성
+ * 2026/01/06 (민철) 주석제거
  * </pre>
  *
  * @author 민철
- * @version 1.0
+ * @version 1.1
  */
 
 import { computed, onMounted, onUnmounted } from 'vue';
@@ -26,16 +27,12 @@ import { useApprovalDetailStore } from '@/stores/approval/approval_detail.store'
 export const useApprovalDetail = (docId: number) => {
     const detailStore = useApprovalDetailStore();
 
-    // 상태 참조
     const { document, loading, error } = storeToRefs(detailStore);
 
-    // 액션
     const { fetchDocument, resetStore } = detailStore;
 
-    // 문서 상세 데이터 computed
     const documentDetail = computed(() => document.value);
 
-    // details JSON 파싱
     const parsedDetails = computed(() => {
         if (!document.value?.details) return null;
         try {
@@ -46,24 +43,20 @@ export const useApprovalDetail = (docId: number) => {
         }
     });
 
-    // 컴포넌트 마운트 시 문서 조회
     onMounted(() => {
         fetchDocument(docId);
     });
 
-    // 컴포넌트 언마운트 시 스토어 초기화
     onUnmounted(() => {
         resetStore();
     });
 
     return {
-        // 상태
         document: documentDetail,
         parsedDetails,
         loading,
         error,
 
-        // 액션
         fetchDocument,
         resetStore,
     };

@@ -13,11 +13,12 @@
   * 2025/12/30 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
   * 2025/12/30 (민철) 모두 지원하도록 수정
   * 2025/12/30 (민철) Watch 최적화, Computed 적용
+  * 2026/01/06 (민철) 주석 제거
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 3.1
+  * @version 3.2
 -->
 <template>
   <div class="detail-form-section">
@@ -85,7 +86,6 @@ import { ref, reactive, watch, computed, onMounted } from 'vue';
 import { useApprovalDataStore } from '@/stores/approval/approval_data.store';
 import { storeToRefs } from 'pinia';
 
-// Props & Emits
 const props = defineProps<{
   modelValue?: ModifyPayrollFormData;
   readonly?: boolean;
@@ -95,14 +95,12 @@ const emit = defineEmits<{
   'update:modelValue': [value: ModifyPayrollFormData];
 }>();
 
-// 타입 정의
 export interface ModifyPayrollFormData {
-  currentAmount: number;      // 기존 급여
-  adjustmentAmount: number;   // 조정 후 급여
-  reason: string;             // 사유
+  currentAmount: number;
+  adjustmentAmount: number;
+  reason: string;
 }
 
-// Store
 const approvalDataStore = useApprovalDataStore();
 const { payroll } = storeToRefs(approvalDataStore);
 
@@ -112,21 +110,18 @@ onMounted(async () => {
   }
 });
 
-// --- State Management ---
 const formData = reactive<ModifyPayrollFormData>({
   currentAmount: props.modelValue?.currentAmount || 0,
   adjustmentAmount: props.modelValue?.adjustmentAmount || 0,
   reason: props.modelValue?.reason || ''
 });
 
-// [동기화 1] 부모 -> 자식 (초기 데이터 로딩)
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     Object.assign(formData, newVal);
   }
 }, { deep: true });
 
-// [동기화 2] 자식 -> 부모 (폼 변경 시 자동 emit)
 watch(formData, (newVal) => {
   if (!props.readonly) {
     emit('update:modelValue', { ...newVal });
@@ -134,13 +129,6 @@ watch(formData, (newVal) => {
 }, { deep: true });
 
 
-
-/**
- * 기존 급여
- * 1. API(Store)에서 가져온 값이 있으면 그 값 사용 (신규 작성 시)
- * 2. 이미 저장된(modelValue) 값이 있으면 그 값 사용 (수정/조회 시)
- * 3. 없으면 0
- */
 const currentAmount = computed(() => {
   if (props.modelValue?.currentAmount) {
     return props.modelValue.currentAmount;
@@ -179,7 +167,6 @@ const onBlur = () => {
   isFocused.value = false;
 };
 
-// 숫자 포맷팅 (천 단위 콤마)
 const formatNumber = (num: number | undefined) => {
   if (num === undefined || num === null || isNaN(num)) {
     return '0';
@@ -401,7 +388,6 @@ const formatNumber = (num: number | undefined) => {
   color: #64748b;
 }
 
-/* 파란색 텍스트 강조 */
 .text-blue {
   color: #4f46e5;
 }
@@ -440,7 +426,6 @@ const formatNumber = (num: number | undefined) => {
   border-color: #cbd5e1;
 }
 
-/* 읽기 전용 모드 스타일 */
 .readonly-value {
   flex: 1;
   padding: 10px 12px;

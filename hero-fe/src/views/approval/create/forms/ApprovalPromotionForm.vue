@@ -12,12 +12,13 @@
   * 2025/12/23 (민철) 파일명 변경
   * 2025/12/30 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
   * 2025/12/30 (민철) 모두 지원하도록 수정
-  * 2025/12/30 (민철) Watch 최적화, Computed 적용, 서식명 변경 근태기록수정신청서 -> 지연출근신청서
+  * 2025/12/30 (민철) Watch 최적화, Computed 적용
+  * 2026/01/06 (민철) 주석 제거
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 3.1
+  * @version 3.2
 -->
 <template>
   <div class="detail-form-section">
@@ -308,7 +309,6 @@ const getLabel = (type: 'dept' | 'grade', id: number) => {
 </script>
 
 <style scoped>
-/* 공통 레이아웃 */
 .detail-form-section {
   border: 1px solid #e2e8f0;
   border-top: none;
@@ -384,14 +384,11 @@ const getLabel = (type: 'dept' | 'grade', id: number) => {
   min-width: 200px;
 }
 
-/* 날짜 입력 박스 & Readonly 박스 */
 .date-input-box,
 .readonly-value {
   height: 40px;
-  /* 테이블 입력 높이와 맞춤 */
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  /* 테이블 스타일과 유사하게 */
   padding: 0 12px;
   display: flex;
   align-items: center;
@@ -419,12 +416,10 @@ const getLabel = (type: 'dept' | 'grade', id: number) => {
   font-family: "Inter-Regular", sans-serif;
 }
 
-/* --- 테이블 스타일 --- */
 .table-wrapper {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   margin-bottom: 10px;
-  /* overflow: hidden 제거: 드롭다운 메뉴가 테이블 밖으로 나올 수 있게 함 */
 }
 
 .data-table {
@@ -444,7 +439,6 @@ const getLabel = (type: 'dept' | 'grade', id: number) => {
 
 .data-table td {
   padding: 4px;
-  /* 드롭다운 여백 확보를 위해 약간의 패딩 */
   border-bottom: 1px solid #e2e8f0;
   background-color: #fff;
   vertical-align: middle;
@@ -455,7 +449,6 @@ const getLabel = (type: 'dept' | 'grade', id: number) => {
 }
 
 
-/* --- 커스텀 드롭다운 스타일 (테이블용 수정) --- */
 .cell-dropdown-wrapper {
   width: 100%;
   position: relative;
@@ -463,7 +456,6 @@ const getLabel = (type: 'dept' | 'grade', id: number) => {
 
 .dropdown-box.table-dropdown {
   height: 36px;
-  /* 테이블 셀에 맞게 높이 조정 */
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   padding: 0 10px;
@@ -474,7 +466,6 @@ const getLabel = (type: 'dept' | 'grade', id: number) => {
   cursor: pointer;
   width: 100%;
   border: 1px solid #e2e8f0;
-  /* 테두리 추가 */
 }
 
 .dropdown-box.table-dropdown:hover,

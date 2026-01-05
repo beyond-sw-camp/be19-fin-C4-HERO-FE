@@ -427,6 +427,7 @@
 }
 
 .input-wrapper {
+  height: 46px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 10px 12px;
@@ -561,6 +562,10 @@
   width: 20px;
 }
 
+.add-card:hover {
+  background-color: #f8fafc;
+}
+
 .add-icon {
   font-size: 24px;
   color: #62748e;
@@ -583,6 +588,10 @@
   gap: 8px;
   cursor: pointer;
   background: #fff;
+}
+
+.file-upload-box:hover {
+  background-color: #f8fafc;
 }
 
 .hidden-file-input {
@@ -654,7 +663,7 @@
   font-weight: 500;
 }
 
-/* 칩 내부 삭제 버튼 */
+
 .btn-ref-delete {
   display: flex;
   align-items: center;
@@ -672,7 +681,6 @@
   background-color: #cbd5e1;
 }
 
-/* 참조 추가 버튼 (심플한 텍스트+아이콘 형태) */
 .btn-add-ref {
   display: flex;
   align-items: center;
@@ -680,7 +688,6 @@
   padding: 8px 12px;
   background-color: #fff;
   border: 1px dashed #cbd5e1;
-  /* 점선 테두리로 '추가' 영역임을 강조 */
   border-radius: 8px;
   cursor: pointer;
   width: fit-content;
@@ -725,6 +732,7 @@
   background: #fff;
   cursor: pointer;
   min-width: 95px;
+  transition: all 0.2s;
 }
 
 .btn-text-sm {
@@ -747,8 +755,13 @@
   background: #fff;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #f8fafc;
 }
 
 .btn-primary {
@@ -758,8 +771,13 @@
   padding: 8px 24px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
 }
 
 .btn-icon {

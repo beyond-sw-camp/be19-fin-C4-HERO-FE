@@ -8,40 +8,36 @@
  * - ApprovalTemplates.vue: 새 결재 작성 버튼 클릭 시 결재문서서식페이지로 라우팅
  *
  * History
- *   2025/12/14 (민철) 공통 컴포넌트화
- *   2025/12/23 (민철) 파일명 변경 
- *   2025/12/24 (민철) 작성 UI 최종 구현(제목/분류/결재선/참고목록 지정)
- *   2025/12/25 (민철) 서식 목록에서 서식ID 쿼리스트링으로 전달받기
- *   2025/12/26 (민철) Composable 사용 및 타입 안정성 개선, 미리보기 주석처리
- *   2025/12/31 (지윤) 지연 근무 신청/초과 근무 신청에 관한 로직 추가 script 부분에 표시
+ * 2025/12/14 (민철) 공통 컴포넌트화
+ * 2025/12/23 (민철) 파일명 변경 
+ * 2025/12/24 (민철) 작성 UI 최종 구현(제목/분류/결재선/참고목록 지정)
+ * 2025/12/25 (민철) 서식 목록에서 서식ID 쿼리스트링으로 전달받기
+ * 2025/12/26 (민철) Composable 사용 및 타입 안정성 개선, 미리보기 주석처리
+ * 2025/12/31 (지윤) 지연 근무 신청/초과 근무 신청에 관한 로직 추가 script 부분에 표시
+ * 2026/01/06 (민철) 주석제거, 뒤로 가기
  * </pre>
  *
  * @module approval
  * @author 민철
- * @version 2.2
+ * @version 2.3
 -->
 <template>
   <div class="page-wrapper">
 
-    <!-- 헤더 영역 -->
     <div class="page-header">
       <div class="header-inner">
-        <button class="btn-back" @click="backToList()">
-          <img class="icon-arrow" src="/images/arrow.svg" alt="화살표" />
-          <div class="back-label-wrap">
-            <div class="back-label">목록으로</div>
-          </div>
-        </button>
-
+        <div class="back-label-wrap">
+          <button class="btn-back" @click="goBack">
+            <img class="icon-arrow" src="/images/arrow.svg" alt="화살표" />
+          </button>
+          <div class="back-label">뒤로가기</div>
+        </div>
         <div class="action-group">
           <button class="btn-secondary" @click="handleSaveDraft()">
             <img class="btn-icon" src="/images/file.svg" />
             <div class="btn-text">임시저장</div>
           </button>
-          <!-- <button class="btn-secondary" @click="previewDocument()">
-            <img class="btn-icon" src="/images/preview.svg" />
-            <div class="btn-text">미리보기</div>
-          </button> -->
+          
           <button class="btn-primary" @click="handleSubmit()">
             <img class="btn-icon" src="/images/submit.svg" />
             <div class="btn-text-white">상신</div>
@@ -50,15 +46,13 @@
       </div>
     </div>
 
-    <!-- 메인 컨텐츠 영역 -->
     <div class="page-body">
       <div class="form-wrapper">
         <div class="form-container">
           <ApprovalCreateCommonForm ref="commonFormRef" :templateId="templateId" :templateName="templateName"
             :category="category" :empName="empName" :empDept="empDept" :empGrade="empGrade"
-            @saveDraft="handleSaveDraft()" @cancel="backToList()" @submit="handleSubmit()">
+            @saveDraft="handleSaveDraft()" @cancel="goBack" @submit="handleSubmit()">
             <template #detail-section>
-              <!-- v-model로 sectionData와 양방향 바인딩 -->
               <component :is="currentDetailSection" v-model="sectionData" />
             </template>
           </ApprovalCreateCommonForm>
@@ -69,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted} from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useApprovalDocument } from '@/composables/approval/useApprovalDocument';
 import { ApprovalDocumentRequestDTO } from '@/types/approval/approval_request.types';
@@ -94,9 +88,6 @@ import { useAttendanceStore } from '@/stores/attendance/attendanceStore';
 const commonFormRef = ref<InstanceType<typeof ApprovalCreateCommonForm>>();
 const sectionData = ref<any>({});
 
-/* ========================================== */
-/* Router & Composables */
-/* ========================================== */
 
 const router = useRouter();
 const route = useRoute();
@@ -107,18 +98,11 @@ const { template } = storeToRefs(approvalStore);
 const attendanceStore = useAttendanceStore();
 const { selectedRow } = storeToRefs(attendanceStore);
 
-/* ========================================== */
-/* Props */
-/* ========================================== */
-
 const props = defineProps<{
   formName: string;
 }>();
 
 
-/* ========================================== */
-/* (지윤) - 지연근무/초과 근무 로직 관련 함수 */
-/* ========================================== */
 const toHHmm = (t?: string | null) => (t ? String(t).substring(0, 5) : '00:00');
 
 const preloadModifyWorkRecord = (): void => {
@@ -159,10 +143,6 @@ const preloadByForm = (): void => {
   preloadOvertime();
 };
 
-/* ========================================== */
-/* Lifecycle */
-/* ========================================== */
-
 onMounted(async () => {
   const idFromQuery = Number(route.query.templateId);
 
@@ -171,11 +151,10 @@ onMounted(async () => {
   }
 
   preloadByForm();
-  
+
 });
 
 
-// 섹션 컴포넌트 매핑
 const sectionMap: Record<string, any> = {
   vacation: ApprovalVacationForm,
   changework: ApprovalWorkChangeForm,
@@ -207,19 +186,9 @@ const currentDate = computed(() => {
   return `${year}-${month}-${day}`;
 });
 
-/* ========================================== */
-/* Methods */
-/* ========================================== */
-
-/**
- * DTO 생성
- * 타입 명시하여 안정성 확보
- */
 const createRequestDTO = (status: 'draft' | 'submitted'): ApprovalDocumentRequestDTO => {
   const commonFormData = commonFormRef.value?.getCommonData();
   const detailsJsonString = JSON.stringify(sectionData.value);
-
-  console.log('details:', detailsJsonString);
 
   return {
     formType: props.formName,
@@ -237,17 +206,7 @@ const createRequestDTO = (status: 'draft' | 'submitted'): ApprovalDocumentReques
   };
 };
 
-/**
- * 목록으로 돌아가기
- */
-const backToList = () => {
-  router.push('/approval/document-templates');
-};
 
-/**
- * 임시저장
- * Composable 사용
- */
 const handleSaveDraft = async () => {
   try {
     const requestDTO = createRequestDTO('draft');
@@ -255,24 +214,13 @@ const handleSaveDraft = async () => {
     const files = commonFormData?.attachments || [];
 
     const response = await saveDraft(requestDTO, files);
-    console.log('임시저장 완료:', response);
+    alert('임시저장되었습니다.');
+    router.push('/approval/document-templates');
   } catch (error) {
-    console.error('임시저장 에러:', error);
+    alert('임시저장 중 오류가 발생했습니다.');
   }
 };
 
-/**
- * 미리보기 (추후 확장 가능)
- */
-// const previewDocument = () => {
-//   const requestDTO = createRequestDTO('draft');
-//   console.log('미리보기 데이터:', requestDTO);
-// };
-
-/**
- * 상신
- * Composable 사용 (유효성 검사 포함)
- */
 const handleSubmit = async () => {
   try {
     const requestDTO = createRequestDTO('submitted');
@@ -282,189 +230,19 @@ const handleSubmit = async () => {
     const response = await submit(requestDTO, files, props.formName);
 
     if (response) {
-      console.log('상신 완료:', response);
       router.push('/approval/document-templates');
     }
   } catch (error) {
-    console.error('상신 에러:', error);
+    alert('상신 중 오류가 발생했습니다.');
   }
+};
+
+const goBack = () => {
+  router.back();
 };
 
 </script>
 
 <style scoped>
-.page-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
-.page-header {
-  width: 100%;
-  background: #ffffff;
-  border-style: solid;
-  border-color: #e2e8f0;
-  border-width: 0px 0px 2px 0px;
-  padding: 6px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-  min-height: 38px;
-  justify-content: center;
-}
-
-.header-inner {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.btn-back {
-  border-style: solid;
-  border-color: #bfc2c7;
-  border-width: 0px 0px 1px 0px;
-  display: flex;
-  flex-direction: row;
-  gap: 0px;
-  align-items: center;
-  justify-content: flex-start;
-  flex-shrink: 0;
-  position: relative;
-  width: fit-content;
-  background: none;
-  padding: 0;
-}
-
-.icon-arrow {
-  flex-shrink: 0;
-  width: 19px;
-  height: 19px;
-  position: relative;
-  overflow: visible;
-}
-
-.back-label-wrap {
-  flex-shrink: 0;
-  width: 55px;
-  height: 24px;
-  position: relative;
-}
-
-.back-label {
-  color: #0f172b;
-  text-align: left;
-  font-family: "Inter-Regular", sans-serif;
-  font-size: 14px;
-  line-height: 24px;
-  letter-spacing: 0.07px;
-  font-weight: 400;
-  position: absolute;
-  left: 0px;
-  top: 0px;
-}
-
-.action-group {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  align-items: center;
-  justify-content: flex-start;
-  flex-shrink: 0;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-secondary {
-  border-radius: 8px;
-  border-style: solid;
-  border-color: #e2e8f0;
-  border-width: 1px;
-  padding: 6px 11px 6px 11px;
-  display: flex;
-  flex-direction: row;
-  gap: 7px;
-  align-items: center;
-  justify-content: flex-start;
-  flex-shrink: 0;
-  position: relative;
-  text-align: left;
-  background-color: white;
-}
-
-.btn-primary {
-  background: linear-gradient(180deg,
-      rgba(28, 57, 142, 1) 0%,
-      rgba(22, 36, 86, 1) 100%);
-  border-radius: 8px;
-  border: none;
-  padding: 6px 18px 6px 18px;
-  display: flex;
-  flex-direction: row;
-  gap: 7px;
-  align-items: center;
-  justify-content: flex-start;
-  flex-shrink: 0;
-  position: relative;
-  text-align: left;
-}
-
-.btn-icon {
-  flex-shrink: 0;
-  width: 12px;
-  height: 12px;
-  position: relative;
-  overflow: visible;
-}
-
-.btn-text {
-  color: #62748e;
-  text-align: center;
-  font-family: "Inter-Regular", sans-serif;
-  font-size: 12px;
-  line-height: 18px;
-  letter-spacing: -0.31px;
-  font-weight: 400;
-  position: relative;
-}
-
-.btn-text-white {
-  color: #ffffff;
-  text-align: center;
-  font-family: "Inter-Regular", sans-serif;
-  font-size: 12px;
-  line-height: 18px;
-  letter-spacing: -0.31px;
-  font-weight: 400;
-  position: relative;
-}
-
-.page-body {
-  display: flex;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow-y: auto;
-  height: 100%;
-}
-
-.form-wrapper {
-  padding: 0px 100px 0px 100px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.form-container {
-  display: flex;
-  height: 100%;
-  width: 100%;
-  padding: 0;
-  background-color: #ffff;
-  overflow-y: auto;
-}
+@import "@/assets/styles/approval/approval-detail.css";
 </style>
