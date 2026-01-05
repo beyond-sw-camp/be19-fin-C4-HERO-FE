@@ -10,45 +10,43 @@
  *
  * History
  *   2025/12/09 - 동근 최초 작성
+ *   2026/01/04 - 동근 요약 카드 UI 수정
  * </pre>
  *
  * @module payroll-history
  * @author 동근
- * @version 1.0
+ * @version 1.1
 -->
 <template>
   <div class="pay-history-page">
     <!-- 요약 카드 -->
     <section v-if="history" class="history-cards">
-      <div class="summary-card">
-        <span class="summary-label">평균 실수령액</span>
-        <p class="summary-value">{{ formatMoney(history.avgNetPay) }}</p>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">최고 실수령액</span>
-        <p class="summary-value">{{ formatMoney(history.maxNetPay) }}</p>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">최저 실수령액</span>
-        <p class="summary-value">{{ formatMoney(history.minNetPay) }}</p>
-      </div>
-      <div class="summary-card">
-        <span class="summary-label">전월 대비 변화율</span>
-        <p
-          class="summary-value"
-          :class="history.monthOverMonthRate >= 0 ? 'rate-up' : 'rate-down'"
-        >
-          <span v-if="history.monthOverMonthRate >= 0">▲</span>
-          <span v-else>▼</span>
-          {{ history.monthOverMonthRate }}%
-        </p>
-      </div>
+        <div class="summary-card">
+       <span class="summary-label">수당 비중</span>
+    <p class="summary-value">{{ formatPercentOrDash(allowanceRate) }}</p>
+  </div>
 
-      <!-- 올해 누적 실수령액 -->
-      <div class="summary-card">
-        <span class="summary-label">올해 누적 실수령액</span>
-        <p class="summary-value">{{ formatMoney(history.ytdNetPay) }}</p>
-      </div>
+  <div class="summary-card">
+    <span class="summary-label">공제 비중</span>
+    <p class="summary-value">{{ formatPercentOrDash(deductionRate) }}</p>
+  </div>
+
+  <div class="summary-card">
+    <span class="summary-label">전월 대비 증감액</span>
+    <p class="summary-value" :class="momDeltaNetPayClass">
+      {{ formatSignedMoneyOrDash(momDeltaNetPay) }}
+    </p>
+  </div>
+
+  <div class="summary-card">
+    <span class="summary-label">최근 3개월 평균 실수령액</span>
+    <p class="summary-value">{{ formatMoneyOrDash(avgNetPay3m) }}</p>
+  </div>
+
+  <div class="summary-card">
+    <span class="summary-label">올해 누적 실수령액</span>
+    <p class="summary-value">{{ formatMoneyOrDash(ytdNetPay) }}</p>
+  </div>
     </section>
 
     <!-- 차트 -->
@@ -120,8 +118,103 @@ const chartData = computed(() =>
   history.value ? history.value.chart.map((c) => c.netPay) : []
 );
 
-// 금액 포맷 (₩표기 + 3자리 끊어서)
+/**
+ * rows는 XML에서 ORDER BY salary_month(오름차순)이라면
+ * 최신 월은 맨 마지막 요소가 됨.
+ */
+const rows = computed(() => history.value?.rows ?? []);
+
+const latestRow = computed(() => {
+  const r = rows.value;
+  return r.length ? r[r.length - 1] : null;
+});
+
+const prevRow = computed(() => {
+  const r = rows.value;
+  return r.length >= 2 ? r[r.length - 2] : null;
+});
+
+// 총지급액(gross) = 기본급 + 수당합계 (필요 시 기준 변경 가능)
+const latestGrossPay = computed(() => {
+  const lr = latestRow.value;
+  if (!lr) return null;
+  const gross = (lr.baseSalary ?? 0) + (lr.allowanceTotal ?? 0);
+  return gross > 0 ? gross : null;
+});
+
+/** KPI 1) 수당 비율 = allowanceTotal / grossPay */
+const allowanceRate = computed(() => {
+  const lr = latestRow.value;
+  const gross = latestGrossPay.value;
+  if (!lr || gross === null) return null;
+  return (lr.allowanceTotal / gross) * 100;
+});
+
+/** KPI 2) 공제 비율 = deductionTotal / grossPay */
+const deductionRate = computed(() => {
+  const lr = latestRow.value;
+  const gross = latestGrossPay.value;
+  if (!lr || gross === null) return null;
+  return (lr.deductionTotal / gross) * 100;
+});
+
+/** KPI 3) 전월 대비 증감액(원) = 이번달 netPay - 전월 netPay */
+const momDeltaNetPay = computed(() => {
+  const lr = latestRow.value;
+  const pr = prevRow.value;
+  if (!lr || !pr) return null;
+  return (lr.netPay ?? 0) - (pr.netPay ?? 0);
+});
+
+const momDeltaNetPayClass = computed(() => {
+  if (momDeltaNetPay.value === null) return '';
+  if (momDeltaNetPay.value > 0) return 'rate-up';
+  if (momDeltaNetPay.value < 0) return 'rate-down';
+  return '';
+});
+
+/** KPI 4) 최근 3개월 평균 실수령액 */
+const avgNetPay3m = computed(() => {
+  const r = rows.value;
+  if (r.length === 0) return null;
+  const last3 = r.slice(Math.max(0, r.length - 3));
+  const sum = last3.reduce((acc, cur) => acc + (cur.netPay ?? 0), 0);
+  return Math.round(sum / last3.length);
+});
+
+/** KPI 5) 올해 누적 실수령액 (rows 중 올해만 합산) */
+const ytdNetPay = computed(() => {
+  const r = rows.value;
+  if (r.length === 0) return null;
+  const thisYear = new Date().getFullYear();
+  return r.reduce((acc, cur) => {
+    const ym = cur.salaryMonth; // "YYYY-MM"
+    const year = ym ? Number(ym.split('-')[0]) : NaN;
+    if (year === thisYear) return acc + (cur.netPay ?? 0);
+    return acc;
+  }, 0);
+});
+
+// --------------------
+// 포맷터
+// --------------------
 const formatMoney = (value: number) => `₩${value.toLocaleString()}`;
+
+const formatMoneyOrDash = (value: number | null | undefined) => {
+  if (value === null || value === undefined) return '-';
+  return formatMoney(value);
+};
+
+const formatSignedMoneyOrDash = (value: number | null | undefined) => {
+  if (value === null || value === undefined) return '-';
+  const sign = value > 0 ? '+' : value < 0 ? '-' : '';
+  return `${sign}${formatMoney(Math.abs(value))}`;
+};
+
+const formatPercentOrDash = (value: number | null | undefined) => {
+  if (value === null || value === undefined) return '-';
+  return `${value.toFixed(1)}%`;
+};
 </script>
 
 <style scoped>
@@ -149,7 +242,7 @@ const formatMoney = (value: number) => `₩${value.toLocaleString()}`;
 }
 
 .summary-label {
-  font-size: 13px;
+  font-size: 16px;
   color: #6b7280;
   margin-left: 22px;
 }
