@@ -213,7 +213,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import EmployeeHalfChart from '@/views/attendance/attendanceDashboard/EmplloyeeHalfChartDrawer.vue'
+import EmployeeHalfChart from '@/views/attendance/attendanceDashBoard/EmplloyeeHalfChartDrawer.vue'
 
 import { useAttendanceEmployeeDashboardStore } from '@/stores/attendance/attendanceEmployeeDashboard'
 import { useAttendanceDashboardStore } from '@/stores/attendance/dashboard'
