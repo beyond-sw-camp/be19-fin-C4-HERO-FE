@@ -128,8 +128,8 @@ html {
 .layout-body {
   flex: 1;
   display: flex;
-  min-height: 0;              
-  overflow: hidden; 
+  min-height: 100vh;
+  overflow: hidden;
 }
 
 .main-content {
