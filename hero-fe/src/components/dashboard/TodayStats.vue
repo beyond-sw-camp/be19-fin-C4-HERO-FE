@@ -7,6 +7,21 @@
  
   History
   2025/12/26 (혜원) 최초 작성
+  2026/01/06 (혜원) 디자인 수정
+  </pre>
+ 
+  @author 혜원
+  @version 1.0
+--><!-- 
+  <pre>
+  Component Name : TodayStats
+  Description : 오늘 근무 현황 컴포넌트
+                - 출근, 퇴근, 근무시간, 상태 4가지 정보 표시
+                - 실시간 근무시간 업데이트 지원
+ 
+  History
+  2025/12/26 (혜원) 최초 작성
+  2026/01/06 (혜원) 디자인 수정
   </pre>
  
   @author 혜원
@@ -60,15 +75,16 @@ defineProps<Props>();
   background: #fff;
   border-radius: 11.25px;
   border: 2px solid #E2E8F0;
-  padding: 29px;
+  padding: 10px 29px 29px 29px;
   box-shadow: 0px 1px 2px -1px rgba(0, 0, 0, 0.10);
 }
 
 .card-title-blue {
   color: #1C398E;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 20px; /* 18px → 20px */
+  font-weight: 600; /* 700 → 600 */
   margin-bottom: 20px;
+  letter-spacing: -0.02em;
 }
 
 .grid-4 {
@@ -93,9 +109,23 @@ defineProps<Props>();
   border-color: #FCDCDC;
 }
 
+.s-head {
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
 .s-body {
   font-size: 24px;
   font-weight: 700;
   margin: 5px 0;
+  color: #1e293b;
+}
+
+.s-foot {
+  font-size: 13px;
+  color: #94a3b8;
+  text-align: right; /* 오른쪽 정렬 */
+  margin-top: 4px;
 }
 </style>

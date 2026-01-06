@@ -10,6 +10,7 @@
   2025/12/22 - (혜원) 최초 작성
   2025/12/22 - (혜원) 최근 활동 알림 연동 추가
   2025/12/26 - (혜원) 대시보드 API 연동
+  2026/01/06 - (혜원) 디자인 수정 & 퇴근 확인 모달 추가
   </pre>
  
   @author 혜원
@@ -270,7 +271,7 @@ const fetchMonthlyStats = async (): Promise<void> => {
     
     if (data) {
       monthlySummary.value = [
-        { label: '일수', value: `${data.workDays}일`, sub: '근무', image: '/images/home-day.svg' },
+        { label: '근무', value: `${data.workDays}일`, sub: '일수', image: '/images/home-day.svg' },
         { label: '잔여', value: `${data.remainingAnnualLeave}일`, sub: '연차', image: '/images/home-annualleave.svg' },
         { label: '사용', value: `${data.usedVacationDays}일`, sub: '휴가', image: '/images/home-leave.svg' }
       ];
@@ -397,6 +398,12 @@ const handlePunchIn = async (): Promise<void> => {
 };
 
 const handlePunchOut = async (): Promise<void> => {
+  // 퇴근 확인 메시지
+  const confirmed = confirm('퇴근 처리하시겠습니까?');
+  if (!confirmed) {
+    return; // 취소하면 함수 종료
+  }
+
   try {
     isLoading.value = true;
     await dashboardApi.clockOut();
@@ -465,8 +472,8 @@ onUnmounted(() => {
   }
 });
 </script>
-
 <style scoped>
+  
 .dashboard-wrapper {
   display: flex;
   gap: 27px;
@@ -477,7 +484,7 @@ onUnmounted(() => {
 }
 
 .left-panel {
-  width: 680px;
+  width: 600px;
   display: flex;
   flex-direction: column;
   gap: 27px;
@@ -494,5 +501,15 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 27px;
+}
+
+/* 모든 카드 제목 통일 */
+:deep(.time-clock-card h3),
+:deep(.card-title),
+:deep(h3) {
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  letter-spacing: -0.02em;
 }
 </style>

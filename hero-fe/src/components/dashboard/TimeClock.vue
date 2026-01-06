@@ -8,6 +8,7 @@
  
   History
   2025/12/26 (혜원) 최초 작성
+  2026/01/06 (혜원) 디자인 수정
   </pre>
  
   @author 혜원
@@ -15,13 +16,14 @@
 -->
 <template>
   <section class="card main-attendance-card">
-    <div class="card-header">
-      <div class="header-title-group">
-        <h3>근태현황</h3>
-        <p class="current-date">{{ currentDateTime }}</p>
-      </div>
-      <span class="text-link">최근 시간</span>
+   <div class="card-header">
+    <h3>근태현황</h3>
+
+    <!-- 오른쪽: 최근 시간 + 시간 같은 줄 -->
+    <div class="recent-time">
+      <span class="current-date">{{ currentDateTime }}</span>
     </div>
+  </div>
 
     <!-- 출근/퇴근 버튼 -->
     <div class="punch-group-row">
@@ -171,7 +173,7 @@ const handlePunchOut = () => emit('punchOut');
   background: #fff;
   border-radius: 11.25px;
   border: 2px solid #E2E8F0;
-  padding: 29px;
+  padding: 10px 29px;
   box-shadow: 0px 1px 2px -1px rgba(0, 0, 0, 0.10);
 }
 
@@ -180,19 +182,26 @@ const handlePunchOut = () => emit('punchOut');
   display: flex;
   flex-direction: column;
 }
-
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 30px;
+  align-items: center; /* 기존 flex-start -> center */
+  margin-bottom: 24px;
+}
+
+.recent-time {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .current-date {
   color: #90A1B9;
   font-size: 18px;
-  margin-top: 5px;
+  margin-top: 0; /* 기존 5px 제거 */
+  white-space: nowrap; /* 줄바꿈 방지 */
 }
+
 
 .punch-group-row {
   display: flex;
