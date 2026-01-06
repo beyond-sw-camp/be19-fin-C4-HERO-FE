@@ -14,6 +14,7 @@
  * 2025/12/24 (민철) 작성 UI 최종 구현(제목/분류/결재선/참고목록 지정)
  * 2025/12/26 (민철) 조직도 모달 통합
  * 2026/01/06 (민철) 주석 제거
+ * 2026/01/06 (민철) 외부 스타일 시트 방식 적용
  * </pre>
  *
  * @module approval
@@ -590,116 +591,4 @@ defineExpose({ getCommonData });
 
 <style scoped>
 @import "@/assets/styles/approval/commonform.css";
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.file-content {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 16px;
-  width: 100%;
-}
-
-.upload-left-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.uploaded-file-list {
-  flex-grow: 1;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background-color: #f8fafc;
-  padding: 8px;
-  max-height: 72px;
-  overflow-y: auto;
-}
-
-.uploaded-file-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.uploaded-file-list::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
-  border-radius: 3px;
-}
-
-.file-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 6px 10px;
-  margin-bottom: 6px;
-  font-size: 13px;
-}
-
-.file-item:last-child {
-  margin-bottom: 0;
-}
-
-.file-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow: hidden;
-}
-
-.icon-clip {
-  width: 14px;
-  height: 14px;
-  opacity: 0.6;
-}
-
-.file-name {
-  color: #334155;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: fit-content;
-  max-width: 400px;
-}
-
-.file-size {
-  color: #94a3b8;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.btn-remove-file {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-
-.btn-remove-file:hover {
-  opacity: 1;
-}
-
-.hidden-file-input {
-  display: none;
-}
 </style>
