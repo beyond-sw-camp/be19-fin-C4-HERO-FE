@@ -15,6 +15,7 @@
   2025/12/16 - 민철 사이드바 스타일 높이 수정
   2025/12/16 - 동근 사이드바 관련 버그 수정(새로고침 시 active 상태 유지 & 접고 펼칠 때 active 상태 유지)
   2025/12/27 - 동근 급여 관리 정책&설정 메뉴 제거(설정쪽으로 이동) / 급여 이력 삭제, 사원 급여 조회 네이밍 변경
+  2025/01/04 - 동그 급여 관리자 권한에 따른 메뉴 노출 처리 추가
   </pre>
  
   @author 승건
@@ -219,6 +220,7 @@
 
         <!-- 급여 관리 (관리자) -->
           <div
+          v-if="canSeePayrollAdmin"
           class="menu-item has-dropdown"
           :class="{ 'active-parent': activeParent === 'payrollAdmin' }"
           @click="handleParentClick('payrollAdmin')"
@@ -407,6 +409,15 @@ const canSeePromotionRecommend = computed(() =>
 // 사원 관리 상위 메뉴 (하위 메뉴 중 하나라도 볼 수 있으면 노출)
 const canSeePersonnelParent = computed(() =>
   canSeePersonnelGeneral.value || canSeePromotionRecommend.value
+);
+
+// 급여 관리자 담당 메뉴
+const canSeePayrollAdmin = computed(() =>
+  authStore.hasAnyRole([
+    'ROLE_SYSTEM_ADMIN',
+    'ROLE_HR_MANAGER',
+    'ROLE_HR_PAYROLL',
+  ])
 );
 
 // 조직도 (EMPLOYEE)

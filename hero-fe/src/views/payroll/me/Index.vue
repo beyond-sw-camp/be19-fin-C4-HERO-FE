@@ -87,7 +87,13 @@
             <span class="pay-name">지급 총액</span>
             <span class="pay-amount">{{ formatMoney(summary.grossPay) }}</span>
           </div>
+          <div class="pay-row pay-row--net">
+          <span class="pay-name">실수령액</span>
+          <span class="pay-amount pay-amount--net">
+          {{ formatMoney(netPay) }}
+          </span>
         </div>
+      </div>
       </div>
 
       <!-- 공제 내역 -->
@@ -301,7 +307,10 @@ const goPayrollAdjustmentRequest = () => {
     query: { templateId: 8 }
   });
 };
-
+const netPay = computed(() => {
+  if (!summary.value) return 0;
+  return summary.value.grossPay - summary.value.totalDeduction;
+});
 </script>
 
 <style scoped>
@@ -516,5 +525,16 @@ const goPayrollAdjustmentRequest = () => {
   font-size: 13px;
   cursor: pointer;
   text-decoration: underline;
+}
+.pay-row--net {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #ecfeff;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.pay-amount--net {
+  color: #0f766e;
 }
 </style>
