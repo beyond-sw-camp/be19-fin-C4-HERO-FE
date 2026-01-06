@@ -11,7 +11,7 @@
     border-style: solid;
     border-color: #e2e8f0;
     border-width: 0px 0px 2px 0px;
-    padding: 6px 8px;
+    padding: 10px 20px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -27,46 +27,48 @@
     justify-content: space-between;
 }
 
-.btn-back {
-    border-style: solid;
-    border-color: #bfc2c7;
-    border-width: 0px 0px 1px 0px;
+.back-label-wrap {
     display: flex;
-    flex-direction: row;
-    gap: 0px;
     align-items: center;
-    justify-content: flex-start;
-    flex-shrink: 0;
-    position: relative;
-    width: fit-content;
-    background: none;
+    gap: 10px;
+    min-width: 0;
+}
+
+.btn-back {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    background: transparent;
+    border: none;
     padding: 0;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.btn-back:hover {
+    transform: translateX(-2px);
+    background: #F1F5F9;
 }
 
 .icon-arrow {
-    flex-shrink: 0;
-    width: 19px;
-    height: 19px;
-    position: relative;
-    overflow: visible;
-}
-
-.back-label-wrap {
-    flex-shrink: 0;
-    width: 55px;
-    height: 24px;
-    position: relative;
+    width: 20px;
+    height: 20px;
+    display: block;
 }
 
 .back-label {
     color: #0f172b;
     text-align: left;
+    white-space: nowrap;
     font-family: "Inter-Regular", sans-serif;
-    font-size: 14px;
+    font-size: 16px;
     line-height: 24px;
     letter-spacing: 0.07px;
     font-weight: 400;
-    position: absolute;
     left: 0px;
     top: 0px;
 }
@@ -74,7 +76,7 @@
 .action-group {
     display: flex;
     flex-direction: row;
-    gap: 8px;
+    gap: 10px;
     align-items: center;
     justify-content: flex-start;
     flex-shrink: 0;
@@ -113,12 +115,12 @@
 .btn-approve,
 .btn-reject,
 .btn-edit {
-    border-radius: 8px;
+    border-radius: 10px;
     border: none;
-    padding: 6px 18px;
+    padding: 10px 18px;
     display: flex;
     flex-direction: row;
-    gap: 7px;
+    gap: 10px;
     align-items: center;
     justify-content: center;
     cursor: pointer;
@@ -137,15 +139,15 @@
     background: linear-gradient(180deg, rgba(28, 57, 142, 1) 0%, rgba(22, 36, 86, 1) 100%);
 }
 
-.btn-secondary-header {
-    border-radius: 8px;
+.btn-secondary {
+    border-radius: 10px;
     border-style: solid;
     border-color: #e2e8f0;
     border-width: 1px;
-    padding: 6px 11px;
+    padding: 10px 11px;
     display: flex;
     flex-direction: row;
-    gap: 7px;
+    gap: 10px;
     align-items: center;
     justify-content: center;
     background-color: white;
@@ -153,18 +155,26 @@
     transition: opacity 0.2s;
 }
 
-.btn-primary-header {
+.btn-secondary:hover {
+    background-color: #f8fafc;
+}
+
+.btn-primary {
     background: linear-gradient(180deg, rgba(28, 57, 142, 1) 0%, rgba(22, 36, 86, 1) 100%);
-    border-radius: 8px;
+    border-radius: 10px;
     border: none;
-    padding: 6px 18px;
+    padding: 10px 18px;
     display: flex;
     flex-direction: row;
-    gap: 7px;
+    gap: 10px;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: opacity 0.2s;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
 }
 
 .btn-approve:hover,
@@ -179,7 +189,7 @@
     color: #62748e;
     text-align: center;
     font-family: "Inter-Regular", sans-serif;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 18px;
     letter-spacing: -0.31px;
     font-weight: 400;
@@ -195,7 +205,7 @@
     color: #ffffff;
     text-align: center;
     font-family: "Inter-Regular", sans-serif;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 18px;
     letter-spacing: -0.31px;
     font-weight: 400;

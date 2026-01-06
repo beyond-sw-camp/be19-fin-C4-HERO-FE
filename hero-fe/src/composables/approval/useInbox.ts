@@ -7,12 +7,13 @@
  * - useInbox: 문서함 관련 상태 및 액션 제공
  *
  * History
- *   2025/12/26 (민철) 최초 작성
- *   2025/12/29 (민철) 검색 기능 개선
+ * 2025/12/26 (민철) 최초 작성
+ * 2025/12/29 (민철) 검색 기능 개선
+ * 2026/01/06 (민철) 주석제거
  * </pre>
  *
  * @author 민철
- * @version 2.0
+ * @version 2.1
  */
 
 import { onMounted } from 'vue';
@@ -27,7 +28,6 @@ import type { InboxTab } from '@/types/approval/inbox.types';
 export const useInbox = () => {
     const inboxStore = useInboxStore();
 
-    // 상태 참조
     const {
         documents,
         page,
@@ -39,7 +39,6 @@ export const useInbox = () => {
         loading,
     } = storeToRefs(inboxStore);
 
-    // 액션
     const {
         fetchDocuments,
         changeTab,
@@ -48,7 +47,6 @@ export const useInbox = () => {
         resetStore
     } = inboxStore;
 
-    // 페이지 변경 핸들러
     const handlePageChange = (newPage: number) => {
         if (newPage < 0 || newPage >= totalPages.value) {
             return;
@@ -56,12 +54,10 @@ export const useInbox = () => {
         changePage(newPage);
     };
 
-    // 탭 클릭 핸들러
     const handleTabClick = (tab: InboxTab) => {
         changeTab(tab);
     };
 
-    // 검색 핸들러
     const handleSearch = (params: {
         fromDate?: string;
         toDate?: string;
@@ -71,13 +67,11 @@ export const useInbox = () => {
         updateSearchParams(params);
     };
 
-    // 컴포넌트 마운트 시 문서 조회
     onMounted(() => {
         fetchDocuments();
     });
 
     return {
-        // 상태
         documents,
         page,
         size,
@@ -87,7 +81,6 @@ export const useInbox = () => {
         searchParams,
         loading,
 
-        // 액션
         fetchDocuments,
         handleTabClick,
         handlePageChange,

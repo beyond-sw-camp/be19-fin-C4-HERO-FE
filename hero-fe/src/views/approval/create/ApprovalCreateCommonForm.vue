@@ -7,17 +7,19 @@
  * - 부모 컴포넌트: ApprovalCreate.vue
  *
  * History
- *   2025/12/10 (민철) 최초작성
- *   2025/12/11 (민철) props 데이터 및 동적컴포넌트 추가
- *   2025/12/14 (민철) 공통 컴포넌트화
- *   2025/12/23 (민철) 파일명 변경
- *   2025/12/24 (민철) 작성 UI 최종 구현(제목/분류/결재선/참고목록 지정)
- *   2025/12/26 (민철) 조직도 모달 통합
+ * 2025/12/10 (민철) 최초작성
+ * 2025/12/11 (민철) props 데이터 및 동적컴포넌트 추가
+ * 2025/12/14 (민철) 공통 컴포넌트화
+ * 2025/12/23 (민철) 파일명 변경
+ * 2025/12/24 (민철) 작성 UI 최종 구현(제목/분류/결재선/참고목록 지정)
+ * 2025/12/26 (민철) 조직도 모달 통합
+ * 2026/01/06 (민철) 주석 제거
+ * 2026/01/06 (민철) 외부 스타일 시트 방식 적용
  * </pre>
  *
  * @module approval
  * @author 민철
- * @version 2.2
+ * @version 2.3
 -->
 <template>
   <div class="form-wrapper">
@@ -25,14 +27,12 @@
       <div class="paper-padding">
         <div class="paper-content">
 
-          <!-- 제목 영역 -->
           <div class="title-section">
             <div class="title-row">
               <h1 class="main-title">{{ props.templateName }}</h1>
             </div>
           </div>
 
-          <!-- 상단 정보 + 결재선 -->
           <div class="top-section">
             <div class="info-table">
               <div class="info-row">
@@ -77,11 +77,9 @@
               </div>
             </div>
 
-            <!-- 결재 도장 영역 -->
             <div class="stamp-area">
               <div class="stamp-group">
 
-                <!-- 1. 기안자 도장 -->
                 <div class="stamp-box">
                   <div class="stamp-header">
                     <span class="stamp-role-label">기안</span>
@@ -108,7 +106,6 @@
                   </div>
                 </div>
 
-                <!-- 2. 1차 결재자 도장 -->
                 <div class="stamp-box">
                   <div class="stamp-header">
                     <span class="stamp-role-label">결재</span>
@@ -144,7 +141,6 @@
                   </div>
                 </div>
 
-                <!-- 3. 2차 결재자 도장 -->
                 <div class="stamp-box">
                   <div class="stamp-header">
                     <span class="stamp-role-label">결재</span>
@@ -183,13 +179,10 @@
             </div>
           </div>
 
-          <!-- 메인 폼 영역 -->
           <div class="form-section">
 
-            <!-- 공통 입력 섹션 -->
             <div class="main-form-section">
 
-              <!-- 제목 입력 부분 -->
               <div class="form-row">
                 <div class="row-label-top">
                   <span class="label-text">제목</span>
@@ -199,7 +192,6 @@
                 </div>
               </div>
 
-              <!-- 결재선 -->
               <div class="form-row">
                 <div class="row-label">
                   <span class="label-text">결재선</span>
@@ -207,7 +199,6 @@
                 <div class="row-content flow-content">
                   <div class="approval-flow">
 
-                    <!-- ✅ 결재선 카드 -->
                     <template v-for="(approver, index) in commonData.lines" :key="index">
                       <div class="flow-card">
                         <div class="card-inner">
@@ -238,7 +229,6 @@
                         src="/images/linearrow.svg" alt="화살표" />
                     </template>
 
-                    <!-- ✅ 결재자 추가 버튼 -->
                     <button v-if="commonData.lines.length < 3" class="flow-card add-card" @click="openModal('LINE')"
                       type="button">
                       <div class="add-icon">
@@ -250,7 +240,6 @@
                 </div>
               </div>
 
-              <!-- 참조 -->
               <div class="form-row">
                 <div class="row-label">
                   <span class="label-text">참조</span>
@@ -258,7 +247,6 @@
                 <div class="row-content ref-content">
                   <div class="reference-wrapper">
 
-                    <!-- 참조 칩 리스트 -->
                     <div v-if="commonData.references.length > 0" class="ref-chip-list">
                       <div v-for="(refMember, index) in commonData.references" :key="index" class="ref-chip">
                         <span class="ref-name">{{ refMember.referencerName }} {{ refMember.gradeName }} {{
@@ -269,7 +257,6 @@
                       </div>
                     </div>
 
-                    <!-- 참조 추가 버튼 -->
                     <button class="btn-add-ref" @click="openModal('REF')" type="button">
                       <img src="/images/plus-dark.svg" alt="추가" width="12" height="12" />
                       <span class="btn-text-sm">참조 추가</span>
@@ -279,14 +266,12 @@
                 </div>
               </div>
 
-              <!-- 조직도 모달 (Teleport) -->
               <Teleport to="body">
                 <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
                   <ApprovalLineModal :type="modalType" @close="closeModal" @confirm="handleModalConfirm" />
                 </div>
               </Teleport>
 
-              <!-- 첨부파일 -->
               <div class="form-row">
                 <div class="row-label">
                   <span class="label-text">첨부파일</span>
@@ -325,13 +310,11 @@
               </div>
             </div>
 
-            <!-- 동적 상세 폼 섹션 (슬롯으로 각 서식별 컴포넌트 주입) -->
             <slot name="detail-section"></slot>
 
           </div>
         </div>
 
-        <!-- 하단 버튼 (hideActions가 false일 때만 표시) -->
         <div v-if="!props.hideActions" class="action-buttons">
           <button class="btn-secondary" @click="onSave">
             <img class="btn-icon" src="/images/file.svg" />
@@ -381,14 +364,13 @@ const props = defineProps<{
   hideActions?: boolean;
 }>();
 
-// emit
 const emit = defineEmits<{
-  (e: 'saveDraft'): void
-  (e: 'cancel'): void
-  (e: 'submit'): void
+  (e: 'saveDraft'): void;
+  (e: 'cancel'): void;
+  (e: 'submit'): void;
+  (e: 'goBack'): void;
 }>();
 
-// 공통 데이터 직접 입력하는 제목/결재선/참조/첨부파일
 const commonData = reactive({
   title: '',
   lines: [] as ApprovalDefaultLineDTO[],
@@ -400,37 +382,24 @@ onMounted(async () => {
   await initializeData();
 });
 
-// watch로 template 변경 감지
 watch(
   () => template.value,
   (newTemplate) => {
     if (newTemplate && newTemplate.templateId) {
-      console.log('📋 template 로드 완료, 재초기화');
       initializeData();
     }
   }
 );
 
-/**
- * 기본결재선 및 참조자 초기화
- * - 기안자 정보를 첫 번째 결재선으로 설정
- * - API에서 받은 기본결재선을 2차 결재선부터 추가
- * - API에서 받은 참조자 목록 설정
- * - 수정 모드일 경우 initialTitle, initialLines, initialReferences 사용
- */
 const initializeData = async () => {
   try {
-    // 수정 모드: 초기값 사용
     if (props.initialTitle) {
       commonData.title = props.initialTitle;
     }
 
     if (props.initialLines && props.initialLines.length > 0) {
       commonData.lines = props.initialLines;
-      console.log('초기 결재선 로드:', commonData.lines);
     } else {
-      // 신규 작성 모드: 기본결재선 설정
-      // 1. 기안자 정보 설정
       const currentUser = authStore.user || {
         employeeId: 0,
         employeeName: props.empName,
@@ -450,42 +419,26 @@ const initializeData = async () => {
         jobTitleName: currentUser.jobTitleName,
       };
 
-      // 2. API 응답 데이터 확인
       if (!template.value || !template.value.lines) {
-        console.warn('기본결재선 정보가 없음. 빈 결재선으로 초기화.');
         commonData.lines = [drafterLine];
         commonData.references = [];
         return;
       }
 
-      // 3. API에서 받은 기본결재선 데이터 사용
       const defaultLines = template.value.lines;
 
-      // 4. 기안자 + API 기본결재선 병합
       commonData.lines = [drafterLine, ...defaultLines];
 
-      console.log('결재선 초기화 완료:', {
-        총결재선: commonData.lines.length,
-        결재자: commonData.lines.map(l => l.approverName)
-      });
     }
 
-    // 참조자 설정
     if (props.initialReferences && props.initialReferences.length > 0) {
       commonData.references = props.initialReferences;
-      console.log('초기 참조자 로드:', commonData.references);
     } else if (template.value && template.value.references) {
-      // 5. API에서 받은 참조자 목록 설정
       commonData.references = template.value.references || [];
-      console.log('참조자 초기화 완료:', {
-        참조자: commonData.references.map(r => r.referencerName)
-      });
     }
 
   } catch (error) {
-    console.error('결재선 초기화 중 오류:', error);
 
-    // 최소한 기안자만이라도 설정
     const currentUser = authStore.user || {
       employeeId: 0,
       employeeName: props.empName,
@@ -508,9 +461,6 @@ const initializeData = async () => {
   }
 };
 
-/**
- * 결재자 삭제
- */
 const removeApprover = (index: number) => {
   if (index === 0) {
     alert("기안자(본인)는 결재선에서 제외할 수 없습니다.");
@@ -519,49 +469,31 @@ const removeApprover = (index: number) => {
 
   commonData.lines.splice(index, 1);
 
-  // seq 재정렬 (1부터 시작)
   commonData.lines.forEach((line, idx) => {
     line.seq = idx + 1;
   });
 };
 
-/**
- * 참조 삭제
- */
 const removeReference = (index: number) => {
   commonData.references.splice(index, 1);
 };
 
-/* ========================================== */
-/* 모달 관련 */
-/* ========================================== */
 
 const isModalOpen = ref(false);
 const modalType = ref<'LINE' | 'REF'>('LINE');
 
-/**
- * 모달 열기
- */
 const openModal = (type: 'LINE' | 'REF') => {
   modalType.value = type;
   isModalOpen.value = true;
 };
 
-/**
- * 모달 닫기
- */
 const closeModal = () => {
   isModalOpen.value = false;
 };
 
-/**
- * 모달 확인 처리 (조직도에서 선택 완료)
- */
 const handleModalConfirm = (selectedEmployees: SelectedApproverDTO[]) => {
-  console.log('선택된 직원:', selectedEmployees);
 
   if (modalType.value === 'LINE') {
-    // 결재선 추가
     const currentCount = commonData.lines.length;
     const addCount = selectedEmployees.length;
 
@@ -570,10 +502,8 @@ const handleModalConfirm = (selectedEmployees: SelectedApproverDTO[]) => {
       return;
     }
 
-    // 현재 최대 seq 찾기
     const maxSeq = Math.max(...commonData.lines.map(line => line.seq), 0);
 
-    // 선택된 직원들을 결재선에 추가
     selectedEmployees.forEach((employee, index) => {
       const newLine: ApprovalDefaultLineDTO = {
         seq: maxSeq + index + 1,
@@ -588,10 +518,8 @@ const handleModalConfirm = (selectedEmployees: SelectedApproverDTO[]) => {
       commonData.lines.push(newLine);
     });
 
-    console.log('업데이트된 결재선:', commonData.lines);
 
   } else {
-    // 참조 추가
     selectedEmployees.forEach(employee => {
       const newRef: ApprovalDefaultReferenceDTO = {
         referencerId: employee.approverId,
@@ -602,22 +530,16 @@ const handleModalConfirm = (selectedEmployees: SelectedApproverDTO[]) => {
         jobTitleName: employee.jobTitleName,
       };
 
-      // 중복 체크
       const exists = commonData.references.some(r => r.referencerId === newRef.referencerId);
       if (!exists) {
         commonData.references.push(newRef);
       }
     });
 
-    console.log('업데이트된 참조:', commonData.references);
   }
-
   closeModal();
 };
 
-/* ========================================== */
-/* 유틸리티 */
-/* ========================================== */
 
 const currentDate = computed(() => {
   const today = new Date();
@@ -669,115 +591,4 @@ defineExpose({ getCommonData });
 
 <style scoped>
 @import "@/assets/styles/approval/commonform.css";
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.file-content {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 16px;
-  width: 100%;
-}
-
-.upload-left-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.uploaded-file-list {
-  flex-grow: 1;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background-color: #f8fafc;
-  padding: 8px;
-  max-height: 72px;
-  overflow-y: auto;
-}
-
-.uploaded-file-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.uploaded-file-list::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
-  border-radius: 3px;
-}
-
-.file-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 6px 10px;
-  margin-bottom: 6px;
-  font-size: 13px;
-}
-
-.file-item:last-child {
-  margin-bottom: 0;
-}
-
-.file-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow: hidden;
-}
-
-.icon-clip {
-  width: 14px;
-  height: 14px;
-  opacity: 0.6;
-}
-
-.file-name {
-  color: #334155;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
-}
-
-.file-size {
-  color: #94a3b8;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.btn-remove-file {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-
-.btn-remove-file:hover {
-  opacity: 1;
-}
-
-.hidden-file-input {
-  display: none;
-}
 </style>

@@ -85,7 +85,7 @@ export const useInboxStore = defineStore('inbox', {
      */
     changeTab(tab: InboxTab) {
       this.activeTab = tab;
-      this.page = 0; // 탭 변경 시 첫 페이지로
+      this.page = 0;
       this.fetchDocuments();
     },
 
@@ -104,7 +104,7 @@ export const useInboxStore = defineStore('inbox', {
      */
     updateSearchParams(params: Partial<Omit<InboxSearchParams, 'page' | 'size' | 'tab'>>) {
       this.searchParams = { ...this.searchParams, ...params };
-      this.page = 0; // 검색 시 첫 페이지로
+      this.page = 0;
       this.fetchDocuments();
     },
 
