@@ -13,11 +13,12 @@
   * 2025/12/30 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
   * 2025/12/30 (민철) 모두 지원하도록 수정
   * 2025/12/30 (민철) Watch 최적화, Computed 적용, 서식명 변경 근태기록수정신청서 -> 지연출근신청서
+  * 2026/01/06 (민철) 주석 제거
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 3.1
+  * @version 3.2
 -->
 <template>
   <div class="detail-form-section">
@@ -130,7 +131,6 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue';
 
-// Props & Emits
 const props = defineProps<{
   modelValue?: ModifyWorkRecordFormData;
   readonly?: boolean;
@@ -147,7 +147,6 @@ export interface ModifyWorkRecordFormData {
   reason: string;
 }
 
-// --- State Management ---
 const formData = reactive<ModifyWorkRecordFormData>({
   targetDate: props.modelValue?.targetDate || '',
   correctedStart: props.modelValue?.correctedStart || '09:00',
@@ -155,14 +154,12 @@ const formData = reactive<ModifyWorkRecordFormData>({
   reason: props.modelValue?.reason || ''
 });
 
-// [동기화 1] 부모 -> 자식 (API 조회 데이터 등)
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     Object.assign(formData, newVal);
   }
 }, { deep: true });
 
-// [동기화 2] 자식 -> 부모 (폼 변경 시 자동 emit)
 watch(formData, (newVal) => {
   if (!props.readonly) {
     emit('update:modelValue', { ...newVal });
@@ -198,8 +195,6 @@ const updateTime = (type: 'start' | 'end', unit: 'hour' | 'minute', value: strin
   formData[targetKey] = `${h}:${m}`;
 };
 
-
-// --- Readonly Formatters ---
 const formatReadOnlyDate = (dateStr: string) => {
   if (!dateStr) return '-';
   const date = new Date(dateStr);

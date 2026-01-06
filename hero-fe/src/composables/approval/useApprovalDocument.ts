@@ -12,11 +12,12 @@
  * 2025/12/26 (민철) 최초 작성
  * 2025/12/27 (민철) 실제 필드명 반영 및 유효성 검사 강화
  * 2025/12/31 (민철) 임시저장 수정
+ * 2026/01/06 (민철) 주석제거
  *
  * </pre>
  *
  * @author 민철
- * @version 2.1
+ * @version 2.2
  */
 
 import {
@@ -35,13 +36,7 @@ import {
 
 export function useApprovalDocument() {
 
-    /* ========================================== */
-    /* 유효성 검사 */
-    /* ========================================== */
 
-    /**
-     * 공통 필수 항목 검증
-     */
     const validateCommon = (data: ApprovalDocumentRequestDTO): boolean => {
         if (!data.title || data.title.trim() === '') {
             alert('제목을 입력하세요.');
@@ -56,10 +51,6 @@ export function useApprovalDocument() {
         return true;
     };
 
-    /**
-     * 1. 휴가신청서 (vacation) 검증
-     * 필수: vacationType, startDate, endDate
-     */
     const validateVacation = (details: any): boolean => {
         if (!details.vacationType) {
             alert('휴가 종류를 선택하세요.');
@@ -72,10 +63,6 @@ export function useApprovalDocument() {
         return true;
     };
 
-    /**
-     * 2. 초과근무신청서 (overtime) 검증
-     * 필수: workDate, startTime, endTime
-     */
     const validateOvertime = (details: any): boolean => {
         if (!details.workDate) {
             alert('근무 날짜를 선택하세요.');
@@ -92,10 +79,6 @@ export function useApprovalDocument() {
         return true;
     };
 
-    /**
-     * 3. 근무변경신청서 (changework) 검증
-     * 필수: workSystemTemplateId, applyDate, startTime, endTime
-     */
     const validateWorkChange = (details: any): boolean => {
         if (!details.workSystemTemplate) {
             alert('근무제 템플릿을 선택하세요.');
@@ -116,10 +99,6 @@ export function useApprovalDocument() {
         return true;
     };
 
-    /**
-     * 4. 근태수정신청서 (modifyworkrecord) 검증
-     * 필수: workDate, startTime, endTime, reason
-     */
     const validateAttendanceFix = (details: any): boolean => {
         if (!details.targetDate) {
             alert('수정 대상 날짜를 선택하세요.');
@@ -136,10 +115,6 @@ export function useApprovalDocument() {
         return true;
     };
 
-    /**
-     * 5. 인사발령품의서 (personnelappointment) 검증
-     * 필수: appointmentType, effectiveDate, targetEmpId
-     */
     const validateAppointment = (details: any): boolean => {
         if (!details.changeType) {
             alert('발령 유형을 선택하세요.');
@@ -156,10 +131,6 @@ export function useApprovalDocument() {
         return true;
     };
 
-    /**
-     * 6. 퇴직신청서 (resign) 검증
-     * 필수: terminationDate, terminateReason
-     */
     const validateResign = (details: any): boolean => {
         if (!details.hireDate) {
             alert('입사일을 선택하세요.');
@@ -176,10 +147,6 @@ export function useApprovalDocument() {
         return true;
     };
 
-    /**
-     * 7. 급여인상신청서 (raisepayroll) 검증
-     * 필수: beforeSalary, afterSalary
-     */
     const validatePayrollRaise = (details: any): boolean => {
         if (!details.afterSalary || details.afterSalary <= 0) {
             alert('인상 후 급여를 입력하세요.');
@@ -192,10 +159,6 @@ export function useApprovalDocument() {
         return true;
     };
 
-    /**
-     * 8. 급여조정신청서 (modifypayroll) 검증
-     * 필수: adjustmentType, currentAmount, adjustedAmount
-     */
     const validatePayrollAdjust = (details: any): boolean => {
         if (!details.adjustmentAmount || details.adjustmentAmount <= 0) {
             alert('조정 후 금액을 입력하세요.');
@@ -208,13 +171,7 @@ export function useApprovalDocument() {
         return true;
     };
 
-    /**
-     * 9. 승진계획서 (promotionplan) 검증
-     * 필수: nominationDeadlineAt
-     *  
-     */
     const validatePromotion = (details: any): boolean => {
-        // 1. 필수 날짜 및 내용 체크
         if (!details.nominationDeadlineAt) {
             alert("추천 마감일을 선택해주세요.");
             return false;
@@ -228,49 +185,39 @@ export function useApprovalDocument() {
             return false;
         }
 
-        // 2. 날짜 논리 체크 (추천 마감일이 발령일보다 늦으면 안 됨)
         if (details.nominationDeadlineAt >= details.appointmentAt) {
             alert("추천 마감일은 발령 예정일보다 이전이어야 합니다.");
             return false;
         }
 
-        // 3. 상세 계획(표) 존재 여부 체크
         if (!details.detailPlan || !Array.isArray(details.detailPlan) || details.detailPlan.length === 0) {
             alert("최소 1개 이상의 승진 계획(행)을 추가해주세요.");
             return false;
         }
 
-        // 4. 상세 계획(표) 내부 값 체크 (Loop)
         for (let i = 0; i < details.detailPlan.length; i++) {
             const row = details.detailPlan[i];
-            const rowNum = i + 1; // 사용자에게 보여줄 행 번호 (1부터 시작)
+            const rowNum = i + 1;
 
-            // 부서 선택 여부 (0이나 null이면 false)
             if (!row.departmentId) {
                 alert(`${rowNum}번째 행의 '대상 부서'를 선택해주세요.`);
                 return false;
             }
 
-            // 직급 선택 여부
             if (!row.gradeId) {
                 alert(`${rowNum}번째 행의 '승진 후 직급'을 선택해주세요.`);
                 return false;
             }
 
-            // 대상 수 입력 여부 (0 이하 체크)
             if (!row.quotaCount || row.quotaCount <= 0) {
                 alert(`${rowNum}번째 행의 '대상 수'를 1명 이상 입력해주세요.`);
                 return false;
             }
         }
 
-        // 모든 검증 통과
         return true;
     };
 
-    /**
-     * 서식별 유효성 검사 라우터
-     */
     const validateByFormType = (formType: string, details: any): boolean => {
         switch (formType) {
             case 'vacation':
@@ -307,19 +254,14 @@ export function useApprovalDocument() {
         }
     };
 
-    /**
-     * 전체 문서 유효성 검사
-     */
     const validateDocument = (
         data: ApprovalDocumentRequestDTO,
         formType: string
     ): boolean => {
-        // 1. 공통 검증
         if (!validateCommon(data)) {
             return false;
         }
 
-        // 2. 서식별 검증
         try {
             const details = JSON.parse(data.details);
             return validateByFormType(formType, details);
@@ -330,13 +272,6 @@ export function useApprovalDocument() {
         }
     };
 
-    /* ========================================== */
-    /* 임시저장 */
-    /* ========================================== */
-
-    /**
-     * 임시저장
-     */
     const saveDraft = async (
         data: ApprovalDocumentRequestDTO,
         files?: File[]
@@ -352,13 +287,6 @@ export function useApprovalDocument() {
         }
     };
 
-    /* ========================================== */
-    /* 임시저장 수정 */
-    /* ========================================== */
-
-    /**
-     * 임시저장 문서 수정
-     */
     const updateDraft = async (
         docId: number,
         data: ApprovalDocumentRequestDTO,

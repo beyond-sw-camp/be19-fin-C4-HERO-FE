@@ -20,13 +20,10 @@ import type { ApprovalDocumentDetailResponseDTO } from '@/types/approval/approva
 
 export const useApprovalDetailStore = defineStore('approvalDetail', {
     state: () => ({
-        // 문서 상세 정보
         document: null as ApprovalDocumentDetailResponseDTO | null,
 
-        // 로딩 상태
         loading: false,
 
-        // 에러 정보
         error: null as string | null,
     }),
 
@@ -51,9 +48,6 @@ export const useApprovalDetailStore = defineStore('approvalDetail', {
             }
         },
 
-        /**
-         * 스토어 초기화
-         */
         resetStore() {
             this.document = null;
             this.loading = false;
