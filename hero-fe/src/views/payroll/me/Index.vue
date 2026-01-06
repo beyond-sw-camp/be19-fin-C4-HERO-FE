@@ -13,12 +13,13 @@
  *
  * History
  *   2025/12/09 - 동근 최초 작성
- *   2026/01/01 - 급여 조정 요청 버튼 추가
+ *   2026/01/01 - 동근 급여 조정 요청 버튼 추가
+ *   2026/01/04 - 동근 실지급액 표시 추가
  * </pre>
  *
  * @module payroll-main
  * @author 동근
- * @version 1.0
+ * @version 1.2
  -->
 
 <template>
@@ -40,11 +41,8 @@
           <button class="btn-danger" @click="goPayrollAdjustmentRequest">
             급여 조정 요청
           </button>
-          <button class="btn-secondary" @click="openPayslip">
-            상세 보기
-          </button>
           <button class="btn-primary" @click="downloadPayslipPdf">
-            명세서 다운로드
+            명세서 PDF 다운로드
           </button>
         </div>
       </div>
@@ -88,7 +86,7 @@
             <span class="pay-amount">{{ formatMoney(summary.grossPay) }}</span>
           </div>
           <div class="pay-row pay-row--net">
-          <span class="pay-name">실수령액</span>
+          <span class="pay-name">실 수령액</span>
           <span class="pay-amount pay-amount--net">
           {{ formatMoney(netPay) }}
           </span>
@@ -184,6 +182,7 @@
       :payslip="payslip"
       :month="selectedMonth"
       :auto-download-key="autoDownloadKey"
+      :silent="payslipSilent"
     />
 
     <!-- 계좌 관리 모달 -->
@@ -198,7 +197,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePayrollStore } from '@/stores/payroll/payrollMeStore';
 import AccountModal from '@/views/payroll/me/BankAccountModal.vue';
@@ -213,6 +212,7 @@ const router = useRouter();
  * accountModalOpen - 계좌 관리 모달
  */
 const payslipModalOpen = ref(false);
+const payslipSilent = ref(false);
 const accountModalOpen = ref(false);
 
 // 요약, 명세서, 계좌 데이터
@@ -223,9 +223,10 @@ const bankAccounts = computed(() => store.accounts);
 // 급여월 선택 옵션 (최근 12개월)
 const monthOptions = computed(() => {
   const now = new Date();
+  const base = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const arr: { value: string; label: string }[] = [];
   for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
     const ymVal = `${d.getFullYear()}-${String(
       d.getMonth() + 1
     ).padStart(2, '0')}`;
@@ -248,6 +249,7 @@ onMounted(async () => {
     selectedMonth.value = store.summary.salaryMonth;
   } else {
     selectedMonth.value = monthOptions.value[0].value;
+    await store.loadMyPayroll(selectedMonth.value);
   }
 });
 
@@ -256,11 +258,6 @@ const onChangeMonth = () => {
   store.loadMyPayroll(selectedMonth.value);
 };
 
-const openPayslip = async () => {
-  if (!selectedMonth.value) return;
-  await store.loadPayslip(selectedMonth.value);
-  payslipModalOpen.value = true;
-};
 
 // 헤더 명세서 다운로드 클릭 시 명세서 로드 + 모달 열고 자동 다운로드 트리거
 const downloadPayslipPdf = async () => {
@@ -272,11 +269,12 @@ const downloadPayslipPdf = async () => {
     }
   }
 
-  if (!payslip.value) {
-    await store.loadPayslip(selectedMonth.value);
-  }
+  await store.loadPayslip(selectedMonth.value);
 
+  payslipSilent.value = true;
   payslipModalOpen.value = true;
+
+  await nextTick();
   autoDownloadKey.value++;
 };
 
@@ -310,6 +308,9 @@ const goPayrollAdjustmentRequest = () => {
 const netPay = computed(() => {
   if (!summary.value) return 0;
   return summary.value.grossPay - summary.value.totalDeduction;
+});
+watch(payslipModalOpen, (v) => {
+  if (!v) payslipSilent.value = false;
 });
 </script>
 
@@ -391,8 +392,8 @@ const netPay = computed(() => {
 }
 
 .panel-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 800;
   margin-bottom: 12px;
 }
 
@@ -423,11 +424,6 @@ const netPay = computed(() => {
   font-weight: 600;
 }
 
-.pay-row--deduction-total {
-  background-color: #fff7ed;
-  border-radius: 8px;
-  padding: 8px 10px;
-}
 
 .pay-amount--plus {
   color: #16a34a;
@@ -528,9 +524,8 @@ const netPay = computed(() => {
 }
 .pay-row--net {
   margin-top: 8px;
-  padding: 10px 12px;
-  background: #ecfeff;
-  border-radius: 10px;
+  padding: 10px 0;
+  background: #f9fafb;
   font-weight: 700;
 }
 

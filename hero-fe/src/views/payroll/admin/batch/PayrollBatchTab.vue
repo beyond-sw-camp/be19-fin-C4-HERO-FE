@@ -33,10 +33,6 @@
           <option value="PAID">지급완료</option>
         </select>
       </div>
-
-      <button class="btn-secondary" type="button" disabled title="추후(엑셀 export)">
-        엑셀 다운로드
-      </button>
     </header>
 
     <div class="table-wrap">
@@ -77,11 +73,7 @@
             </td>
 
             <td>
-              {{
-                store.selectedBatchId === b.batchId && store.batchDetail
-                  ? store.batchDetail.totalEmployeeCount
-                  : '-'
-              }}
+ {{ store.employeeCountByBatchId?.[b.batchId] ?? '-' }}
             </td>
 
             <td>{{ formatMoneyOrDash(b.totalGrossPay) }}</td>
@@ -205,7 +197,6 @@ const badgeClass = (s: PayrollBatchStatus) => {
 <style scoped>
 .panel {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
   border-radius: 16px;
   overflow-y: auto;
 }
@@ -249,7 +240,7 @@ table {
 }
 
 th, td {
-  padding: 12px 14px;
+  padding: 12px 16px;
   text-align: left;
 }
 

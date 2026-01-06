@@ -61,9 +61,19 @@
               </span>
             </td>
             <td class="icon-cell">
-              <button class="icon-btn" :disabled="store.loading" @click="toggleActive(row)">
-                   <img src="/images/preview.svg" alt="활성" class="status-icon"/>
-              </button>
+<button
+  class="icon-btn"
+  :disabled="store.loading"
+  @click="toggleActive(row)"
+>
+  <img
+    :src="row.activeYn === 'Y'
+      ? '/images/preview.svg'
+      : '/images/eye-off.svg'"
+    :alt="row.activeYn === 'Y' ? '활성' : '비활성'"
+    class="status-icon"
+  />
+</button>
             </td>
             <td class="icon-cell">
               <button class="icon-btn" :disabled="store.loading" @click="openEdit(row)">
@@ -247,7 +257,7 @@ const indexOfRow = (idxInPage: number) => {
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: #ffffff;
   font-size: 13px;
-  padding: 16px 20px;
+  padding: 12px 16px;
   text-align: left;
 }
 
@@ -256,14 +266,10 @@ const indexOfRow = (idxInPage: number) => {
 }
 
 .items-table tbody td {
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-top: 1px solid #eef2f7;
   font-size: 13px;
   color: #334155;
-}
-
-.items-table tbody tr:nth-child(even) {
-  background: #E2E8F0;
 }
 
 .pill {
