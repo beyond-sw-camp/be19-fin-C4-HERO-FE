@@ -56,6 +56,10 @@
   cursor: pointer;
 }
 
+.formtpl-search-button:hover {
+  opacity: 0.9;
+}
+
 .formtpl-section {
   display: flex;
   flex-direction: column;
