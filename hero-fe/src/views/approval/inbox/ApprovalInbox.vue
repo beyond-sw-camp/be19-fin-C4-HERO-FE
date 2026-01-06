@@ -122,15 +122,10 @@
 
         <div class="inbox-body-bottom">
           <div class="inbox-body-buttons">
-            <button class="inbox-button" @click="handlePageChange(page - 1)"
-              :disabled="page === 0">이전</button>
+            <button class="inbox-button" @click="handlePageChange(page - 1)" :disabled="page === 0">이전</button>
 
-            <button 
-              v-for="pageNum in visiblePages" 
-              :key="pageNum"
-              class="inbox-button button-page" 
-              :class="{ active: page === pageNum }"
-              @click="handlePageChange(pageNum)">
+            <button v-for="pageNum in visiblePages" :key="pageNum" class="inbox-button button-page"
+              :class="{ active: page === pageNum }" @click="handlePageChange(pageNum)">
               {{ pageNum + 1 }}
             </button>
 
@@ -152,7 +147,6 @@ import { useInbox } from '@/composables/approval/useInbox';
 
 const router = useRouter();
 
-// composable 사용
 const {
   documents,
   page,
@@ -164,16 +158,11 @@ const {
   handleSearch,
 } = useInbox();
 
-// 검색 조건 로컬 상태
 const fromDate = ref('');
 const toDate = ref('');
 const sortBy = ref('all');
 const searchKeyword = ref('');
 
-/**
- * 보이는 페이지 번호 계산 (최대 3개)
- * 현재 페이지를 중심으로 좌우 페이지 표시
- */
 const visiblePages = computed(() => {
   const total = totalPages.value;
   const current = page.value;
@@ -181,7 +170,6 @@ const visiblePages = computed(() => {
 
   if (total === 0) return pages;
 
-  // 전체 페이지가 3개 이하인 경우
   if (total <= 3) {
     for (let i = 0; i < total; i++) {
       pages.push(i);
@@ -189,16 +177,12 @@ const visiblePages = computed(() => {
     return pages;
   }
 
-  // 전체 페이지가 3개 초과인 경우
-  // 현재 페이지를 중심으로 좌우 1개씩 표시
   let start = Math.max(0, current - 1);
   let end = Math.min(total - 1, current + 1);
 
-  // 시작이 0이면 끝을 조정
   if (start === 0) {
     end = Math.min(total - 1, 2);
   }
-  // 끝이 마지막이면 시작을 조정
   else if (end === total - 1) {
     start = Math.max(0, total - 3);
   }
@@ -210,9 +194,6 @@ const visiblePages = computed(() => {
   return pages;
 });
 
-/**
- * 검색 조건 변경 핸들러
- */
 const onSearchChange = () => {
   handleSearch({
     fromDate: fromDate.value,
@@ -222,17 +203,10 @@ const onSearchChange = () => {
   });
 };
 
-/**
- * 결재 서식 목록 페이지로 이동
- */
 const toTemplateList = () => {
   router.push('/approval/document-templates');
 };
 
-/**
- * 문서 상세 페이지로 이동
- * @param {number} docId - 문서 ID
- */
 const toDocumentDetail = (docId: number) => {
   router.push({
     name: 'ApprovalDetail',
@@ -240,11 +214,6 @@ const toDocumentDetail = (docId: number) => {
   });
 };
 
-/**
- * 결재 상태에 따른 CSS 클래스 반환
- * @param {string} status - 결재 상태값
- * @returns {string} CSS 클래스명
- */
 const getStatusClass = (status: string): string => {
   const statusMap: Record<string, string> = {
     '진행중': 'status-inprogress',
@@ -254,15 +223,12 @@ const getStatusClass = (status: string): string => {
   return statusMap[status] || 'status-inprogress';
 };
 
-/**
- * 결재 상태 텍스트 반환 (필요시 변환)
- * @param {string} status - 결재 상태값
- * @returns {string} 표시할 상태 텍스트
- */
 const getStatusText = (status: string): string => {
   return status;
 };
 
 </script>
 
-<style scoped src="@/assets/styles/approval/approval-inbox.css"></style>
+<style scoped>
+@import '@/assets/styles/approval/approval-inbox.css';
+</style>

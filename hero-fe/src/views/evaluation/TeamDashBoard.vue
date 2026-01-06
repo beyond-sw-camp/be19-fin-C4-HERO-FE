@@ -1,5 +1,5 @@
 <!-- 
-  File Name   : DepartmentDashBoard2.vue
+  File Name   : TeamDashBoard.vue
   Description : 팀 평가 대시보드: 부서 등급 분포 페이지
  
   History
@@ -49,22 +49,31 @@
       <!-- 리스트 박스 -->
       <div class="list-box">
 
-        <!-- 필터 영역 -->
-        <div class="filter-row">
-          <select v-model="selectedTemplateId" @change="updateChart">
-            <option
-              v-for="t in dashboardData"
-              :key="t.evaluationTemplateId"
-              :value="t.evaluationTemplateId"
-            >
-              {{ t.evaluationTemplateName }}
-            </option>
-          </select>
+        <!-- 🔄 로딩 중 -->
+        <div v-if="isLoading" class="loading">
+          <div class="spinner"></div>
+          <p>데이터를 불러오는 중입니다.</p>
         </div>
 
-        <!-- 차트 영역 -->
-        <div class="chart-wrapper">
-          <canvas ref="chartCanvas"></canvas>
+        <!-- 📊 실제 대시보드 -->
+        <div v-else>
+          <!-- 필터 영역 -->
+          <div class="filter-row">
+            <select v-model="selectedTemplateId" @change="updateChart">
+              <option
+                v-for="t in dashboardData"
+                :key="t.evaluationTemplateId"
+                :value="t.evaluationTemplateId"
+              >
+                {{ t.evaluationTemplateName }}
+              </option>
+            </select>
+          </div>
+
+          <!-- 차트 영역 -->
+          <div class="chart-wrapper">
+            <canvas ref="chartCanvas"></canvas>
+          </div>
         </div>
 
       </div>
@@ -75,7 +84,7 @@
 <!--script-->
 <script setup lang="ts">
 //Import 구문
-import { ref, onMounted, nextTick } from "vue";
+import { ref, onMounted, nextTick, watch } from "vue";
 import { useRouter } from "vue-router";
 import Chart from "chart.js/auto";
 import apiClient from "@/api/apiClient";
@@ -88,6 +97,7 @@ const authStore = useAuthStore();
 //Reactive 데이터
 const dashboardData = ref<any[]>([]);
 const selectedTemplateId = ref<number | null>(null);
+const isLoading = ref(false);
 
 //차트 객체
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
@@ -99,21 +109,30 @@ let chartInstance: Chart | null = null;
 const loadDashboard = async () => {
   const departmentId = authStore.user?.departmentId;
 
-  const { data } = await apiClient.get(
-    `/evaluation/dashboard/${departmentId}`
-  );
+  try {
+    isLoading.value = true; 
 
-  if (!data || data.length === 0) {
-    alert("해당 부서에 대한 평가 데이터가 존재하지 않습니다.");
-    goBack();
-    return;
+    const { data } = await apiClient.get(
+      `/evaluation/dashboard/${departmentId}`
+    );
+
+    if (!data || data.length === 0) {
+      alert("해당 부서에 대한 평가 데이터가 존재하지 않습니다.");
+      goBack();
+      return;
+    }
+
+    dashboardData.value = data;
+    selectedTemplateId.value = data[0].evaluationTemplateId;
+
+    await nextTick();
+    renderChart();
+
+  } catch (e) {
+    console.error("대시보드 조회 실패", e);
+  } finally {
+    isLoading.value = false; 
   }
-
-  dashboardData.value = data;
-  selectedTemplateId.value = data[0].evaluationTemplateId;
-
-  await nextTick();
-  renderChart();
 };
 
 /**
@@ -247,6 +266,14 @@ const goScoreTrend = () => {
  */
 const goBack = () => router.back();
 
+watch([isLoading, selectedTemplateId], async () => {
+  if (isLoading.value) return;
+  if (!dashboardData.value.length) return;
+
+  await nextTick();
+  renderChart();
+});
+
 onMounted(loadDashboard);
 </script>
 
@@ -351,5 +378,30 @@ select {
   height: 100% !important;
   max-width: 900px;     
   max-height: 360px;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: #64748b;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #1c398e;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

@@ -427,6 +427,7 @@
 }
 
 .input-wrapper {
+  height: 46px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   padding: 10px 12px;
@@ -556,9 +557,12 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  /* flex: 1; */
   min-width: 110px;
   width: 20px;
+}
+
+.add-card:hover {
+  background-color: #f8fafc;
 }
 
 .add-icon {
@@ -583,6 +587,10 @@
   gap: 8px;
   cursor: pointer;
   background: #fff;
+}
+
+.file-upload-box:hover {
+  background-color: #f8fafc;
 }
 
 .hidden-file-input {
@@ -654,7 +662,7 @@
   font-weight: 500;
 }
 
-/* 칩 내부 삭제 버튼 */
+
 .btn-ref-delete {
   display: flex;
   align-items: center;
@@ -672,7 +680,6 @@
   background-color: #cbd5e1;
 }
 
-/* 참조 추가 버튼 (심플한 텍스트+아이콘 형태) */
 .btn-add-ref {
   display: flex;
   align-items: center;
@@ -680,7 +687,6 @@
   padding: 8px 12px;
   background-color: #fff;
   border: 1px dashed #cbd5e1;
-  /* 점선 테두리로 '추가' 영역임을 강조 */
   border-radius: 8px;
   cursor: pointer;
   width: fit-content;
@@ -725,6 +731,7 @@
   background: #fff;
   cursor: pointer;
   min-width: 95px;
+  transition: all 0.2s;
 }
 
 .btn-text-sm {
@@ -747,8 +754,13 @@
   background: #fff;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #f8fafc;
 }
 
 .btn-primary {
@@ -758,8 +770,13 @@
   padding: 8px 24px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
 }
 
 .btn-icon {
@@ -775,4 +792,116 @@
 .btn-text-white {
   color: #ffffff;
   font-size: 16px;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.file-content {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+
+.upload-left-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.uploaded-file-list {
+  flex-grow: 1;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  padding: 8px;
+  max-height: 72px;
+  overflow-y: auto;
+}
+
+.uploaded-file-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.uploaded-file-list::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.file-item:last-child {
+  margin-bottom: 0;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.icon-clip {
+  width: 14px;
+  height: 14px;
+  opacity: 0.6;
+}
+
+.file-name {
+  color: #334155;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: fit-content;
+  max-width: 400px;
+}
+
+.file-size {
+  color: #94a3b8;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.btn-remove-file {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.btn-remove-file:hover {
+  opacity: 1;
+}
+
+.hidden-file-input {
+  display: none;
 }

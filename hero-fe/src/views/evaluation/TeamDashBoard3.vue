@@ -1,5 +1,5 @@
 <!-- 
-  File Name   : DepartmentDashBoard2.vue
+  File Name   : TeamDashBoard3.vue
   Description : 팀 평가 대시보드: 팀원별 역량 상세 분석 페이지
  
   History
@@ -77,8 +77,13 @@
         <div class="chart-analysis-wrapper">
 
           <!-- Radar Chart -->
-          <div class="chart-wrapper">
+          <div class="chart-wrapper chart-loading-container">
             <canvas ref="chartCanvas"></canvas>
+
+            <div v-if="analyzing" class="chart-loading-overlay">
+              <div class="spinner"></div>
+              <p>AI가 사원의 강점과 개선점을 분석 중입니다.(1~2분 정도 시간이 소요됩니다.)</p>
+            </div>
           </div>
 
           <!-- LLM 분석 -->
@@ -105,10 +110,6 @@
             </div>
           </div>
 
-        </div>
-
-        <div v-if="analyzing" class="analysis-loading">
-          AI가 사원의 강점과 개선점을 분석 중입니다...
         </div>
 
       </div>
@@ -415,10 +416,14 @@ select {
 
 /* Analysis */
 .analysis-section {
-  padding: 14px 16px;
+  padding: 10px 25px;
   border-radius: 10px;
   background: #f8fafc;
   position: relative;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 /* 섹션 간 간격 강화 */
@@ -463,8 +468,67 @@ select {
 
 /* 제목 강조 */
 .analysis-section h4 {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
-  margin-bottom: 8px;
 }
+
+h4 {
+  margin: 0px;
+}
+
+.chart-wrapper {
+  position: relative;   /* ⭐ 기준점 */
+  flex: 1.2;
+  height: 420px;
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 24px;
+}
+
+/* 차트 위 로딩 레이어 */
+.chart-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(248, 250, 252, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  border-radius: 14px;
+}
+
+/* 스피너 */
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #1c398e;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 10px;
+}
+
+.chart-loading-overlay p {
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  text-align: center;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+ul {
+  padding-left: 16px;
+}
+
+li {
+  font-size: 15px;
+}
+
+
 </style>

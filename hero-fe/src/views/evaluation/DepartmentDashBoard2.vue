@@ -44,7 +44,7 @@
             class="tab tab-end"
             @click="goRecommendation"
           >
-            승진 대상자 추천
+            우수 사원 추천
           </button>
         </div>
       </div>
@@ -52,28 +52,31 @@
       <!-- Content -->
       <div class="list-box">
 
-        <div class="filter-row">
-          <select v-model="selectedTemplateId" @change="renderDepartmentChart">
-            <option
-              v-for="t in dashboardData"
-              :key="t.evaluationTemplateId"
-              :value="t.evaluationTemplateId"
-            >
-              {{ t.evaluationTemplateName }}
-            </option>
-          </select>
+        <!-- 🔄 로딩 중 -->
+        <div v-if="isLoading" class="loading">
+          <div class="spinner"></div>
+          <p>데이터를 불러오는 중입니다.</p>
         </div>
 
-        <!-- 부서별 평균 점수 -->
-        <div v-if="activeTab === 'deptAvg'">
+        <!-- 📊 실제 콘텐츠 -->
+        <div v-else>
+
+          <div class="filter-row">
+            <select v-model="selectedTemplateId">
+              <option
+                v-for="t in dashboardData"
+                :key="t.evaluationTemplateId"
+                :value="t.evaluationTemplateId"
+              >
+                {{ t.evaluationTemplateName }}
+              </option>
+            </select>
+          </div>
+
           <div class="chart-wrapper">
             <canvas ref="chartCanvas"></canvas>
           </div>
-        </div>
 
-        <!-- 나머지 탭 -->
-        <div v-if="activeTab !== 'deptAvg'" class="placeholder">
-          구현 예정
         </div>
 
       </div>
@@ -84,7 +87,7 @@
 <!--script-->
 <script setup lang="ts">
 //Import 구문
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import Chart from "chart.js/auto";
 import apiClient from "@/api/apiClient";
@@ -96,6 +99,7 @@ const router = useRouter();
 const activeTab = ref("deptAvg");
 const dashboardData = ref<any[]>([]);
 const selectedTemplateId = ref<number | null>(null);
+const isLoading = ref(false);
 
 //차트 객체
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
@@ -140,13 +144,27 @@ const goRecommendation = () => {
  * 설명: 대시보드 데이터 조회 메소드
  */
 const loadDashboard = async () => {
-  const { data } = await apiClient.get("/evaluation/dashboard/all");
-  dashboardData.value = data;
+  try {
+    isLoading.value = true;
 
-  // 기본: 첫 번째 평가 템플릿 기준
-  selectedTemplateId.value = data[0]?.evaluationTemplateId ?? null;
+    const { data } = await apiClient.get("/evaluation/dashboard/all");
 
-  renderDepartmentChart();
+    if (!data || data.length === 0) {
+      alert("평가 데이터가 존재하지 않습니다.");
+      return;
+    }
+
+    dashboardData.value = data;
+    selectedTemplateId.value = data[0]?.evaluationTemplateId ?? null;
+
+    await nextTick();
+    renderDepartmentChart();
+
+  } catch (e) {
+    console.error("대시보드 조회 실패", e);
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 /**
@@ -272,6 +290,14 @@ watch(activeTab, tab => {
   }
 });
 
+watch([isLoading, selectedTemplateId], async () => {
+  if (isLoading.value) return;
+  if (!dashboardData.value.length) return;
+
+  await nextTick();
+  renderDepartmentChart();
+});
+
 
 onMounted(loadDashboard);
 </script>
@@ -370,5 +396,30 @@ select {
   align-items: center;
   justify-content: center;
   color: #64748b;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: #64748b;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #1c398e;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

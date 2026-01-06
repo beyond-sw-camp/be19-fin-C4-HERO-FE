@@ -668,13 +668,27 @@ const syncActiveByRoute = (path: string) => {
 
   // 성과평가
   if (path.startsWith('/evaluation')) {
-    activeParent.value = 'evaluation';
-    if (!isCollapsed.value) isEvaluationOpen.value = true;
-    if (path.includes('/template')) activeSubMenu.value = 'template';
-    else if (path.includes('/guide')) activeSubMenu.value = 'guide';
-    else if (path.includes('/list')) activeSubMenu.value = 'list';
-    return;
+  activeParent.value = 'evaluation';
+  if (!isCollapsed.value) isEvaluationOpen.value = true;
+
+  if (path.includes('/template')) {
+    activeSubMenu.value = 'template';
   }
+  else if (path.includes('/guide')) {
+    activeSubMenu.value = 'guide';
+  }
+  else if (path.includes('/list')) {
+    activeSubMenu.value = 'list';
+  }
+  else if (path.startsWith('/evaluation/team')) {
+    activeSubMenu.value = 'teamDash';
+  }
+  else if (path.startsWith('/evaluation/department')) {
+    activeSubMenu.value = 'deptDash';
+  }
+
+  return;
+}
 
   // 급여(사원)
   if (path.startsWith('/payroll') && !path.startsWith('/payroll/admin')) {
