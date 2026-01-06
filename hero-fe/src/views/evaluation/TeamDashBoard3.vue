@@ -82,7 +82,7 @@
 
             <div v-if="analyzing" class="chart-loading-overlay">
               <div class="spinner"></div>
-              <p>AI가 사원의 강점과 개선점을 분석 중입니다.</p>
+              <p>AI가 사원의 강점과 개선점을 분석 중입니다.(1~2분 정도 시간이 소요됩니다.)</p>
             </div>
           </div>
 
@@ -420,6 +420,10 @@ select {
   border-radius: 10px;
   background: #f8fafc;
   position: relative;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 /* 섹션 간 간격 강화 */
@@ -466,7 +470,10 @@ select {
 .analysis-section h4 {
   font-size: 18px;
   font-weight: 700;
-  margin-bottom: 8px;
+}
+
+h4 {
+  margin: 0px;
 }
 
 .chart-wrapper {
@@ -522,4 +529,6 @@ ul {
 li {
   font-size: 15px;
 }
+
+
 </style>

@@ -387,11 +387,11 @@ onMounted(loadDetail);
 
 /* ================= Header ================= */
 .header {
-  width: 100%;
-  height: 50px;
-  background: white;
-  padding: 20px;
+  height: auto;
+  padding: 10px 20px;
+  background: #ffffff;
   border-bottom: 2px solid #e2e8f0;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -404,9 +404,16 @@ onMounted(loadDetail);
 }
 
 .title {
-  font-size: 14px;
-  font-weight: 600;
   color: #0f172b;
+  text-align: left;
+  white-space: nowrap;
+  font-family: "Inter-Regular", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0.07px;
+  font-weight: 400;
+  left: 0px;
+  top: 0px;
 }
 
 .back-icon {

@@ -44,7 +44,7 @@
             class="tab tab-end"
             @click="goRecommendation"
           >
-            승진 대상자 추천
+            우수 사원 추천
           </button>
         </div>
       </div>
@@ -65,13 +65,26 @@
           </div>
 
           <!-- 분석 중 -->
-          <div v-if="analyzing" class="loading-overlay">
+          <div
+            v-if="loadingDashboard || analyzing"
+            class="loading-overlay"
+          >
             <div class="spinner"></div>
-            <p>AI가 평가 가이드 위반 여부를 분석 중입니다.</p>
+
+            <p v-if="loadingDashboard">
+              AI가 평가 가이드 위반 여부를 분석 중입니다.(1~2분 정도 시간이 소요됩니다.)
+            </p>
+
+            <p v-else>
+              AI가 평가 가이드 위반 여부를 분석 중입니다.(1~2분 정도 시간이 소요됩니다.)
+            </p>
           </div>
 
           <!-- 위반 결과 -->
-          <div v-else class="promotion-wrapper">
+          <div
+            v-if="!loadingDashboard && !analyzing"
+            class="promotion-wrapper"
+          >
 
             <div
               v-for="(v, idx) in violations"
@@ -116,7 +129,10 @@
               </div>
             </div>
 
-            <div v-if="violations.length === 0" class="empty-box">
+            <div
+              v-if="hasAnalyzed && violations.length === 0"
+              class="empty-box"
+            >
               해당 평가 템플릿에서 가이드 위반이 발견되지 않았습니다.
             </div>
 
@@ -144,6 +160,8 @@ const dashboardData = ref<any[]>([]);
 const templates = ref<any[]>([]);
 const violations = ref<any[]>([]);
 const selectedTemplateId = ref<number | null>(null);
+const hasAnalyzed = ref(false);
+const loadingDashboard = ref(false);
 
 /**
  * 설명: 부서별 평균 점수 페이지로 이동하는 메소드
@@ -184,43 +202,56 @@ const goRecommendation = () => {
  * 설명: 대시보드 데이터 로드 메서드
  */
 const loadDashboard = async () => {
-  const { data } = await apiClient.get("/evaluation/dashboard/all");
-  dashboardData.value = data;
-  templates.value = data;
-  selectedTemplateId.value = data[0]?.evaluationTemplateId ?? null;
+  loadingDashboard.value = true;
 
-  if (selectedTemplateId.value) analyzeViolation();
+  try {
+    const { data } = await apiClient.get("/evaluation/dashboard/all");
+    dashboardData.value = data;
+    templates.value = data;
+    selectedTemplateId.value = data[0]?.evaluationTemplateId ?? null;
+
+    if (selectedTemplateId.value) {
+      await analyzeViolation();
+    }
+  } catch (e) {
+    console.error(e);
+    alert("대시보드 데이터를 불러오지 못했습니다.");
+  } finally {
+    loadingDashboard.value = false;
+  }
 };
 
 /**
  * 설명: 위반 사항 분석 메서드
  */
 const analyzeViolation = async () => {
+  analyzing.value = true;
+  hasAnalyzed.value = false;
+  violations.value = [];
+
   const template = dashboardData.value.find(
     t => t.evaluationTemplateId === selectedTemplateId.value
   );
-  if (!template) return;
+
+  if (!template) {
+    analyzing.value = false;
+    return;
+  }
 
   const guideContent =
     template.evaluations?.[0]?.evaluationGuide?.evaluationGuideContent ?? null;
 
   if (!guideContent) {
     alert("해당 평가 템플릿에 평가 가이드가 없습니다.");
-    violations.value = [];
+    analyzing.value = false;
     return;
   }
 
   try {
-    analyzing.value = true;
-    violations.value = [];
-
-    const res = await apiClient.post(
-      "/ai/violation",
-      {
-        guide: guideContent,
-        template
-      }
-    );
+    const res = await apiClient.post("/ai/violation", {
+      guide: guideContent,
+      template
+    });
 
     violations.value = res.data;
   } catch (e) {
@@ -228,6 +259,7 @@ const analyzeViolation = async () => {
     alert("평가 가이드 위반 분석 실패");
   } finally {
     analyzing.value = false;
+    hasAnalyzed.value = true;
   }
 };
 
@@ -435,5 +467,23 @@ select {
 
 .section-title {
   font-weight: bold;
+}
+
+.card-top .left {
+  display: flex;
+  align-items: center;   /* 세로 중앙 */
+  gap: 10px;             /* ⚠ 과 텍스트 간격 */
+}
+
+.card-top .left > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;              /* 이름 / 부서 / 템플릿 간격 */
+}
+
+.card-top .name,
+.card-top .sub {
+  display: inline;
+  margin: 0;
 }
 </style>

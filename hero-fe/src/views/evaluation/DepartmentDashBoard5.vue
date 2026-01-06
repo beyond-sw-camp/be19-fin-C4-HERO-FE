@@ -44,7 +44,7 @@
             class="tab active tab-end"
             @click="goRecommendation"
           >
-            승진 대상자 추천
+            우수 사원 추천
           </button>
         </div>
       </div>
@@ -54,7 +54,7 @@
           <!-- 🔹 AI 분석 중 -->
           <div v-if="analyzing" class="loading-overlay">
             <div class="spinner"></div>
-            <p>AI가 승진 추천 대상자를 분석 중입니다.</p>
+            <p>AI가 승진 추천 대상자를 분석 중입니다.(1~2분 정도 시간이 소요됩니다.)</p>
           </div>
 
           <!-- 🔹 Promotion Cards -->

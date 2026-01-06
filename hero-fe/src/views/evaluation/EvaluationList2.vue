@@ -352,7 +352,7 @@ onMounted(() => {
 }
 
 .content-wrapper {
-  padding: 36px;
+  padding: 24px;
 }
 
 /* ===== Tabs ===== */

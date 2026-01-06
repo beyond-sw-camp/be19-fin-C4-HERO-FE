@@ -44,7 +44,7 @@
             class="tab tab-end"
             @click="goRecommendation"
           >
-            승진 대상자 추천
+            우수 사원 추천
           </button>
         </div>
       </div>

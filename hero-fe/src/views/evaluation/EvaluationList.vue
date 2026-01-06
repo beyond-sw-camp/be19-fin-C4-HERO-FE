@@ -281,7 +281,7 @@ onMounted(async () => {
 
 .content-wrapper {
   flex: 1;
-  padding: 36px;
+  padding: 24px;
 }
 
 /* ========== Tabs ========== */

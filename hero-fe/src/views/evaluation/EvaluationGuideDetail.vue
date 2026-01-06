@@ -190,11 +190,13 @@ onMounted(async (): Promise<void> => {
 .content {
   width: 100%;
   padding: 24px;
-  display: block;
-  justify-content: center;
+
+  display: flex;                
+  justify-content: center;      
+  align-items: flex-start;      
+
   overflow-y: auto;
   flex: 1;
-  min-height: 0;
 }
 
 .form-box {
@@ -210,14 +212,14 @@ onMounted(async (): Promise<void> => {
 }
 
 .header {
-  width: 100%;
-  height: 50px;
-  background: white;
-  padding: 20px;
-  border-bottom: 2px solid #E2E8F0;
+  height: auto;
+  padding: 10px 20px;
+  background: #ffffff;
+  border-bottom: 2px solid #e2e8f0;
+
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
 }
 
 .title-wrapper {
@@ -227,9 +229,16 @@ onMounted(async (): Promise<void> => {
 }
 
 .title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0F172B;
+  color: #0f172b;
+  text-align: left;
+  white-space: nowrap;
+  font-family: "Inter-Regular", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0.07px;
+  font-weight: 400;
+  left: 0px;
+  top: 0px;
 }
 
 .section-title {
