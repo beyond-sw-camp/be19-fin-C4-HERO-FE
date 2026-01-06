@@ -73,12 +73,12 @@
 
         <!-- 버튼 -->
         <div class="modal-footer">
-          <button type="button" class="btn-cancel" @click="handleClose">
-            닫기
-          </button>
           <button type="submit" class="btn-submit" :disabled="loading">
             <img src="/images/save.svg" alt="저장" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" />
             {{ loading ? '저장 중...' : '저장' }}
+          </button>
+          <button type="button" class="btn-cancel" @click="handleClose">
+            닫기
           </button>
         </div>
       </form>
