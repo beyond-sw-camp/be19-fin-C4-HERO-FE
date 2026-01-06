@@ -73,12 +73,12 @@
 
         <!-- 버튼 -->
         <div class="modal-footer">
+          <button type="button" class="btn-cancel" @click="handleClose">
+            닫기
+          </button>
           <button type="submit" class="btn-submit" :disabled="loading">
             <img src="/images/save.svg" alt="저장" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" />
-            {{ loading ? '저장 중...' : '저장하기' }}
-          </button>
-          <button type="button" class="btn-cancel" @click="handleClose">
-            취소
+            {{ loading ? '저장 중...' : '저장' }}
           </button>
         </div>
       </form>
@@ -123,15 +123,9 @@ const queryClient = useQueryClient();
  * 값이 있을 때만 형식 검증
  */
 const schema = yup.object({
-  email: yup
-    .string()
-    .nullable()
-    .test('email-format', '이메일 형식이 올바르지 않습니다', function(value) {
-      // 값이 비어있으면 통과
-      if (!value || value.trim() === '') return true;
-      // 값이 있으면 이메일 형식 검증
-      return yup.string().email().isValidSync(value);
-    }),
+  email: yup.string()
+    .required('이메일을 입력해주세요')
+    .email('이메일 형식이 올바르지 않습니다'),
   mobile: yup
     .string()
     .nullable()
@@ -264,6 +258,10 @@ const onSubmit = handleSubmit(async () => {
     toast.error(error.value);
   } finally {
     loading.value = false;
+  }
+}, ({ errors }) => {
+  if (errors.email) {
+    toast.error(errors.email);
   }
 });
 </script>
@@ -403,15 +401,16 @@ const onSubmit = handleSubmit(async () => {
   gap: 12px;
   margin-top: 24px;
   padding-top: 24px;
-  border-top: 1.2px solid #E2E8F0;
+  border-top: 1px solid #e5e7eb;
 }
 
 .btn-submit,
 .btn-cancel {
-  padding: 12px 24px;
+  flex: 1;
+  padding: 12px;
   border-radius: 8px;
-  font-size: 16px;
-  font-weight: 400;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -421,10 +420,9 @@ const onSubmit = handleSubmit(async () => {
 }
 
 .btn-submit {
-  background: linear-gradient(180deg, #372AAC 0%, #432DD7 100%);
+  background: #3b82f6;
   border: none;
   color: white;
-  width: 136px;
 }
 
 .btn-submit svg {
@@ -433,23 +431,22 @@ const onSubmit = handleSubmit(async () => {
 }
 
 .btn-submit:hover:not(:disabled) {
-  opacity: 0.9;
+  background: #2563eb;
 }
 
 .btn-submit:disabled {
-  opacity: 0.5;
+  background: #d1d5db;
   cursor: not-allowed;
 }
 
 .btn-cancel {
   background: white;
-  border: 1.2px solid #E2E8F0;
-  color: #64748B;
-  width: 82px;
+  border: 1px solid #d1d5db;
+  color: #374151;
 }
 
 .btn-cancel:hover {
-  background: #F8FAFC;
+  background: #f9fafb;
 }
 
 .error-message {

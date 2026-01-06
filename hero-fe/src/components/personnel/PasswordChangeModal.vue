@@ -177,15 +177,12 @@
 
         <!-- 버튼 -->
         <div class="modal-footer">
-          <button type="submit" class="btn-submit" :disabled="!isFormValid || loading">
-            <svg viewBox="0 0 16 16" fill="none">
-              <path d="M2 2L14 2L14 14L2 14L2 2Z" stroke="white" stroke-width="1.33"/>
-              <path d="M6 10L10 10M6 3L6 6" stroke="white" stroke-width="1.33"/>
-            </svg>
-            {{ loading ? '변경 중...' : '비밀번호 변경' }}
-          </button>
           <button type="button" class="btn-cancel" @click="handleClose">
-            취소
+            닫기
+          </button>
+          <button type="submit" class="btn-submit" :disabled="!isFormValid || loading">
+            <img src="/images/save.svg" alt="저장" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" />
+            {{ loading ? '저장 중...' : '저장' }}
           </button>
         </div>
       </form>
@@ -654,16 +651,18 @@ const handleSubmit = async () => {
 .modal-footer {
   display: flex;
   gap: 12px;
+  margin-top: 24px;
   padding-top: 24px;
-  border-top: 1.2px solid #E2E8F0;
+  border-top: 1px solid #e5e7eb;
 }
 
 .btn-submit,
 .btn-cancel {
-  padding: 12px 24px;
+  flex: 1;
+  padding: 12px;
   border-radius: 8px;
-  font-size: 16px;
-  font-weight: 400;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
@@ -673,10 +672,9 @@ const handleSubmit = async () => {
 }
 
 .btn-submit {
-  background: linear-gradient(180deg, #372AAC 0%, #432DD7 100%);
+  background: #3b82f6;
   border: none;
   color: white;
-  width: 174px;
 }
 
 .btn-submit svg {
@@ -685,23 +683,22 @@ const handleSubmit = async () => {
 }
 
 .btn-submit:hover:not(:disabled) {
-  opacity: 0.9;
+  background: #2563eb;
 }
 
 .btn-submit:disabled {
-  opacity: 0.5;
+  background: #d1d5db;
   cursor: not-allowed;
 }
 
 .btn-cancel {
   background: white;
-  border: 1.2px solid #E2E8F0;
-  color: #64748B;
-  width: 82px;
+  border: 1px solid #d1d5db;
+  color: #374151;
 }
 
 .btn-cancel:hover {
-  background: #F8FAFC;
+  background: #f9fafb;
 }
 
 .error-message {

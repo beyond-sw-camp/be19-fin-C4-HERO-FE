@@ -85,8 +85,8 @@
               </select>
             </div>
             <div class="search-row">
-              <input v-model="searchParams.employeeName" @keyup.enter="searchEmployees(0)" type="text" placeholder="사원명 입력" class="form-input" />
-              <button @click="searchEmployees(0)" class="btn-search-action">검색</button>
+              <input v-model="searchParams.employeeName" @keyup.enter="handleSearch" type="text" placeholder="사원명 입력" class="form-input" />
+              <button @click="handleSearch" class="btn-search-action">검색</button>
             </div>
           </div>
           <div class="employee-list">
@@ -100,11 +100,10 @@
             <div v-else class="no-result">검색 결과가 없습니다.</div>
           </div>
           <!-- 페이지네이션 -->
-          <div class="pagination" v-if="totalPages > 0">
-            <button :disabled="currentPage === 0" @click="searchEmployees(currentPage - 1)">&lt;</button>
-            <span>{{ currentPage + 1 }} / {{ totalPages }}</span>
-            <button :disabled="currentPage >= totalPages - 1" @click="searchEmployees(currentPage + 1)">&gt;</button>
-          </div>
+          <SlidingPagination
+            v-model="currentPage"
+            :total-pages="totalPages"
+          />
           <div class="modal-actions">
             <button @click="closeEmployeeModal" class="btn-cancel">닫기</button>
           </div>
@@ -115,12 +114,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
 import { useSettingsStore } from '@/stores/settings';
 // 사원 검색 API (가정) - 실제 경로에 맞게 수정 필요
 import { fetchEmployees, fetchEmployeeSearchOptions } from '@/api/personnel/personnel'; 
 import type { SettingsDepartmentRequestDTO, SettingsDepartmentResponseDTO } from '@/types/settings';
 import DepartmentTreeItem from '@/views/settings/DepartmentTreeItem.vue';
+import SlidingPagination from '@/components/common/SlidingPagination.vue';
 
 const settingsStore = useSettingsStore();
 const localDepartments = ref<SettingsDepartmentResponseDTO[]>([]);
@@ -261,21 +261,24 @@ const openEmployeeSearch = async () => {
   showEmployeeModal.value = true;
   // 검색 조건 초기화
   searchParams.value = {
-    departmentName: '',
+    departmentName: editingDeptData.value.departmentName || '',
     jobTitleName: '',
     gradeName: '',
     employeeName: ''
   };
   employeeList.value = [];
-  currentPage.value = 0;
   totalPages.value = 0;
   
   // 옵션 로드
   if (departmentOptions.value.length === 0) {
     await loadSearchOptions();
   }
-  
-  searchEmployees(0); // 초기 전체 조회
+
+  if (currentPage.value === 0) {
+    searchEmployees(0);
+  } else {
+    currentPage.value = 0;
+  }
 };
 
 const closeEmployeeModal = () => {
@@ -295,6 +298,14 @@ const loadSearchOptions = async () => {
   }
 };
 
+const handleSearch = () => {
+  if (currentPage.value === 0) {
+    searchEmployees(0);
+  } else {
+    currentPage.value = 0;
+  }
+};
+
 const searchEmployees = async (page: number = 0) => {
   isLoadingEmployees.value = true;
   try {
@@ -303,7 +314,7 @@ const searchEmployees = async (page: number = 0) => {
     const params: any = {
       page: page + 1,
       size: pageSize,
-      ...searchParams.value
+      ...searchParams.value,
     };
 
     const res = await fetchEmployees(params);
@@ -332,9 +343,28 @@ const selectManager = (emp: any) => {
   closeEmployeeModal();
 };
 
+watch(currentPage, (newPage) => {
+  searchEmployees(newPage);
+});
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    if (showEmployeeModal.value) {
+      closeEmployeeModal();
+    } else if (showEditModal.value) {
+      closeEditModal();
+    }
+  }
+};
+
 onMounted(async () => {
+  window.addEventListener('keydown', handleKeydown);
   await settingsStore.fetchDepartments();
   console.log('Department onMounted store data:', settingsStore.departments);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
 });
 </script>
 
@@ -363,13 +393,14 @@ onMounted(async () => {
 }
 
 .btn-save {
+  padding: 0 15px;
+  height: 40px;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
   border: none;
-  padding: 10px 24px;
   border-radius: 10px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .btn-save:hover {
@@ -446,14 +477,17 @@ onMounted(async () => {
 }
 
 .modal-header {
-  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
-  padding: 16px 24px;
+  /* background: linear-gradient(180deg, #1c398e 0%, #162456 100%); */
+  background-color: white;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
   color: white;
 }
 
 .modal-header h3 {
+  color: #0F172B;
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 18px;
   font-weight: 600;
 }
 
@@ -478,10 +512,14 @@ onMounted(async () => {
 
 .form-input {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  height: 40px;
+  padding: 0 12px;
+  border: 2px solid #cad5e2;
+  border-radius: 10px;
   font-size: 0.95rem;
+  background-color: #ffffff;
+  color: #1f2933;
+  box-sizing: border-box;
 }
 
 .manager-select-box {
@@ -509,18 +547,22 @@ onMounted(async () => {
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
+  height: 40px;
+  padding: 0 15px;
+  border-radius: 10px;
   cursor: pointer;
+  font-weight: 700;
 }
 
 .btn-cancel, .btn-search, .btn-clear {
   background-color: #f1f5f9;
   color: #475569;
   border: 1px solid #cbd5e1;
-  padding: 8px 16px;
-  border-radius: 6px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
   cursor: pointer;
+  font-weight: 700;
 }
 
 .employee-list {
@@ -555,38 +597,18 @@ onMounted(async () => {
 
 .filter-select {
   flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  height: 40px;
+  padding: 0 12px;
+  border: 2px solid #cad5e2;
+  border-radius: 10px;
   font-size: 0.95rem;
   background-color: white;
+  color: #1f2933;
+  box-sizing: border-box;
 }
 
 .search-row {
   display: flex;
   gap: 8px;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-  font-size: 0.9rem;
-}
-
-.pagination button {
-  padding: 4px 10px;
-  border: 1px solid #cbd5e1;
-  background: white;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.pagination button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: #f1f5f9;
 }
 </style>

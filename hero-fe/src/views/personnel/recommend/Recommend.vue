@@ -1,15 +1,17 @@
 <template>
   <div class="promotion-recommend-container">
     <!-- 헤더 영역 -->
-    <div class="header-section">
+    <div class="page-header">
       <div class="header-inner">
-        <div class="header-left">
-          <button v-if="step > 1" class="btn-back-icon" @click="step--">←</button>
-          <h1 class="page-title">승진 추천</h1>
+        <div class="back-label-wrap">
+          <button v-if="step > 1" class="btn-back" @click="handleBack">
+            <img class="icon-arrow" src="/images/arrow.svg" alt="뒤로가기" />
+          </button>
+          <div class="back-label">승진 추천</div>
         </div>
         
         <!-- 단계 표시 (Breadcrumbs) -->
-        <div class="breadcrumbs" v-if="step > 1">
+        <div class="breadcrumbs">
           <span class="crumb" :class="{ active: step === 1 }" @click="step = 1">계획 선택</span>
           <span class="separator">›</span>
           <span class="crumb" :class="{ active: step === 2 }" @click="step > 2 ? step = 2 : null">대상 그룹</span>
@@ -78,9 +80,9 @@
           </div>
         </div>
 
-        <div class="plan-content-box">
+        <!-- <div class="plan-content-box">
           {{ recommendPlanDetail.planContent || '상세 내용이 없습니다.' }}
-        </div>
+        </div> -->
 
         <div class="card-grid detail-grid">
           <div 
@@ -128,7 +130,6 @@
             :class="{ 'nominated': candidate.isNominated }"
           >
             <div class="member-header">
-              <div class="avatar">{{ candidate.employeeName?.charAt(0) || '?' }}</div>
               <div class="member-id">
                 <span class="name">{{ candidate.employeeName || '이름 없음' }}</span>
                 <span class="pos">{{ candidate.grade }}</span>
@@ -207,6 +208,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { usePromotionRecommendStore } from '@/stores/personnel/promotionRecommend.store';
 import type { PromotionPlanResponseDTO } from '@/types/personnel/promotion.types';
@@ -214,6 +216,7 @@ import type { PromotionPlanResponseDTO } from '@/types/personnel/promotion.types
 const store = usePromotionRecommendStore();
 const { recommendPlans, recommendPlanDetail, loading } = storeToRefs(store);
 
+const router = useRouter();
 // --- State ---
 const step = ref(1);
 const selectedPlan = ref<PromotionPlanResponseDTO | null>(null);
@@ -228,6 +231,14 @@ const nominationReasonInput = ref('');
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return '-';
   return dateStr.split('T')[0];
+};
+
+const handleBack = () => {
+  if (step.value > 1) {
+    step.value--;
+  } else {
+    router.back();
+  }
 };
 
 // Step 1 -> Step 2
@@ -313,6 +324,16 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import "@/assets/styles/approval/approval-detail.css";
+
+.header-inner {
+  padding: 0 5px;
+}
+
+.back-label-wrap {
+  min-height: 40px; /* 뒤로가기 버튼이 없을 때도 높이 유지 */
+}
+
 /* Inline Nomination Form Styles */
 .nomination-form {
   margin-top: 16px;
@@ -365,45 +386,15 @@ onMounted(() => {
 .promotion-recommend-container {
   width: 100%;
   min-height: 100vh;
-  background-color: #f8fafc;
-}
-
-/* Header */
-.header-section {
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 20px;
-}
-
-.header-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 10px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  /* background-color: #f8fafc; */
 }
 
 .content-area {
-  max-width: 1200px;
-  margin: 0 auto;
+  margin: 20px;
   padding: 30px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  margin-bottom: 40px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.page-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1e293b;
 }
 
 .breadcrumbs {
@@ -426,23 +417,6 @@ onMounted(() => {
 .separator {
   color: #cbd5e1;
   font-size: 12px;
-}
-
-.btn-back-icon {
-  background: none;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-  cursor: pointer;
-  font-size: 20px;
-  padding: 4px;
-  transition: all 0.2s;
-}
-
-.btn-back-icon:hover {
-  color: #334155;
 }
 
 /* Section Header */
@@ -482,7 +456,7 @@ onMounted(() => {
 }
 
 .plan-card:hover {
-  transform: translateY(-4px);
+  /* transform: translateY(-4px); */
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   border-color: #3b82f6;
 }
@@ -614,7 +588,7 @@ onMounted(() => {
 }
 
 .stats strong {
-  color: #2563eb;
+  color: #1C398E;
 }
 
 .divider {
@@ -629,25 +603,25 @@ onMounted(() => {
 }
 
 .detail-card:hover .hover-arrow {
-  color: #3b82f6;
+  color: #1C398E;
   transform: translateX(4px);
 }
 
 /* Member Card (Step 3) */
 .member-list-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
 }
 
 .member-card {
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   transition: all 0.2s;
 }
 
@@ -697,10 +671,10 @@ onMounted(() => {
 .member-stats {
   background: #f8fafc;
   border-radius: 8px;
-  padding: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .member-card.nominated .member-stats {
@@ -711,7 +685,7 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  font-size: 13px;
+  font-size: 14px;
   gap: 8px;
 }
 
@@ -813,9 +787,9 @@ onMounted(() => {
   to { transform: rotate(360deg); }
 }
 
-.fade-in {
+/* .fade-in {
   animation: fadeIn 0.3s ease-in-out;
-}
+} */
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
