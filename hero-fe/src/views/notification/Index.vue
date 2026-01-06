@@ -3,7 +3,7 @@
   File Name   : NotificationPage.vue
   Description : 알림 목록 페이지 - 컴포넌트 통합 버전
                 - NotificationHeader: 헤더 (뒤로가기, 제목, 설정)
-                - NotificationFilter: 필터 탭 및 모두 읽음 버튼
+                - NotificationFilter: 필터 탭 및 삭제된 알림 버튼
                 - NotificationItem: 개별 알림 아이템
                 - NotificationEmpty: 알림 없는 상태 UI
   
@@ -13,10 +13,12 @@
   2025/12/12 (혜원) TypeScript 변환 및 Store 연동
   2025/12/16 (혜원) 삭제/복구 기능 추가
   2026/01/04 (혜원) 스타일 수정 및 클릭 동작 변경
+  2026/01/06 (혜원) 페이지네이션 UI 추가 및 전체 필터링 목록 페이징 적용
+  2026/01/06 (혜원) NotificationEmpty props로 삭제된 알림 Empty 상태 통합
   </pre>
 
   @author 혜원
-  @version 3.1
+  @version 3.3
 -->
 
 <template>
@@ -30,7 +32,6 @@
     <NotificationFilter
       :tabs="tabs"
       v-model:activeTab="activeTab"
-      @markAllRead="handleMarkAllRead"
     />
 
     <div v-if="isLoading" class="loading">
@@ -42,70 +43,96 @@
       <!-- 일반 알림 목록 -->
       <transition-group v-if="activeTab !== 'deleted'" name="notification" tag="div">
         <NotificationItem
-          v-for="notification in filteredNotifications"
+          v-for="notification in pagedItems"
           :key="notification.notificationId"
           :notification="notification"
           @view="handleViewDetail"
           @delete="handleDelete"
         />
       </transition-group>
-
       <!-- 삭제된 알림 목록 -->
       <transition-group v-else name="notification" tag="div">
         <div
-          v-for="notification in deletedNotifications"
+          v-for="notification in pagedItems"
           :key="notification.notificationId"
           class="notification-item deleted"
         >
           <div class="notification-icon">
-            <img 
-              :src="getIcon(notification.type)" 
+            <img
+              :src="getIcon(notification.type)"
               :alt="`${notification.type} 아이콘`"
             />
           </div>
-          
+
           <div class="notification-content">
             <div class="notification-title">{{ notification.title }}</div>
             <div class="notification-message">{{ notification.message }}</div>
             <div class="notification-time">
-              삭제됨: {{ notification.deletedAt ? getTimeAgo(notification.deletedAt) : '' }}
+              숨김 처리됨: {{ notification.deletedAt ? getTimeAgo(notification.deletedAt) : '' }}
             </div>
           </div>
 
           <div class="action-buttons">
-            <button 
+            <button
               class="restore-btn"
+              type="button"
               @click="handleRestore(notification.notificationId)"
               title="복구"
             >
-              복구
+              <img
+                src="/images/eye.svg"
+                alt=""
+                class="btn-icon"
+              />
+              숨기기 해제
             </button>
-            <button 
+
+            <button
               class="hard-delete-btn"
+              type="button"
               @click="handleHardDelete(notification.notificationId)"
-              title="영구 삭제"
+              title="삭제"
             >
-              영구 삭제
+              삭제
             </button>
           </div>
         </div>
       </transition-group>
 
-      <NotificationEmpty v-if="filteredNotifications.length === 0 && activeTab !== 'deleted'" />
-      <NotificationEmpty v-if="deletedNotifications.length === 0 && activeTab === 'deleted'" />
+
+      <!-- Empty 상태 처리 -->
+      <NotificationEmpty 
+        v-if="filteredNotifications.length === 0 && activeTab !== 'deleted'" 
+      />
+      
+      <!-- 삭제된 알림 Empty 상태 -->
+      <NotificationEmpty 
+        v-if="deletedNotifications.length === 0 && activeTab === 'deleted'"
+        icon="/images/trashcan.svg"
+        title="삭제된 알림이 없습니다"
+        description="삭제한 알림이 여기에 표시됩니다."
+      />
+
+      <!-- 페이지네이션 컴포넌트 사용 -->
+      <Paging
+        v-if="currentItems.length > 0"
+        v-model="currentPageIndex"
+        :totalPages="totalPages"
+        :windowSize="3"
+      />
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted, Ref, ComputedRef } from 'vue';
-import { useRouter } from 'vue-router';
+<script setup lang="ts">import { ref, computed, onMounted, onUnmounted, Ref, ComputedRef, watch } from 'vue';
+import { useRouter, onBeforeRouteLeave } from 'vue-router';
 import { getRelativeTime } from '@/utils/timeUtils';
 import { useNotificationStore } from '@/stores/notification/notification.store';
 import NotificationHeader from '@/components/notification/NotificationHeader.vue';
 import NotificationFilter from '@/components/notification/NotificationFilter.vue';
 import NotificationItem from '@/components/notification/NotificationItem.vue';
 import NotificationEmpty from '@/components/notification/NotificationEmpty.vue';
+import Paging from '@/components/common/SlidingPagination.vue';
 import type { Notification, Tab, NotificationCategory } from '@/types/notification/notification.types';
 
 const router = useRouter();
@@ -116,6 +143,53 @@ const notificationStore = useNotificationStore();
  * @type {Ref<string>}
  */
 const activeTab: Ref<string> = ref('all');
+
+// ===== 페이징 설정 =====
+/**
+ * 페이지당 표시할 알림 개수
+ * @type {number}
+ */
+const pageSize = 5;
+
+/**
+ * 현재 페이지 인덱스 (0-based)
+ * @type {Ref<number>}
+ */
+const currentPageIndex = ref(0);
+
+/**
+ * 탭이 변경되면 0페이지로 초기화
+ */
+watch(activeTab, () => {
+  currentPageIndex.value = 0;
+});
+
+/**
+ * 현재 탭 기준 전체 아이템 (삭제된 알림 포함)
+ * @returns {Array<Notification>} 현재 탭의 모든 알림 배열
+ */
+const currentItems = computed(() => {
+  return activeTab.value === 'deleted'
+    ? deletedNotifications.value
+    : filteredNotifications.value;
+});
+
+/**
+ * 전체 페이지 수 계산
+ * @returns {number} 총 페이지 수
+ */
+const totalPages = computed(() => {
+  return Math.max(1, Math.ceil(currentItems.value.length / pageSize));
+});
+
+/**
+ * 현재 페이지에 표시할 알림 목록
+ * @returns {Array<Notification>} 페이징 처리된 알림 배열
+ */
+const pagedItems = computed(() => {
+  const start = currentPageIndex.value * pageSize;
+  return currentItems.value.slice(start, start + pageSize);
+});
 
 /**
  * 탭 목록 데이터
@@ -205,15 +279,8 @@ const handleViewDetail = async (notification: Notification): Promise<void> => {
  * @param {number} notificationId - 삭제할 알림 ID
  */
 const handleDelete = async (notificationId: number): Promise<void> => {
-  if (confirm('알림을 삭제하시겠습니까? (30일 후 자동으로 영구 삭제됩니다)')) {
-    try {
-      await notificationStore.softDeleteNotification(notificationId);
-      updateTabCounts();
-    } catch (error) {
-      console.error('알림 삭제 실패:', error);
-      alert('알림 삭제에 실패했습니다');
-    }
-  }
+    await notificationStore.softDeleteNotification(notificationId);
+    updateTabCounts();
 };
 
 /**
@@ -236,27 +303,15 @@ const handleRestore = async (notificationId: number): Promise<void> => {
  * @param {number} notificationId - 영구 삭제할 알림 ID
  */
 const handleHardDelete = async (notificationId: number): Promise<void> => {
-  if (confirm('정말로 영구 삭제하시겠습니까? 복구할 수 없습니다!')) {
+  if (confirm('알림을 삭제하시겠습니까?')) {
     try {
       await notificationStore.hardDeleteNotification(notificationId);
       updateTabCounts();
-      alert('알림이 영구 삭제되었습니다');
+      alert('알림이 삭제되었습니다');
     } catch (error) {
       console.error('알림 영구 삭제 실패:', error);
-      alert('알림 영구 삭제에 실패했습니다');
+      alert('알림 삭제에 실패했습니다');
     }
-  }
-};
-
-/**
- * 모든 알림을 읽음 처리
- */
-const handleMarkAllRead = async (): Promise<void> => {
-  try {
-    await notificationStore.markAllAsRead();
-    updateTabCounts();
-  } catch (error) {
-    console.error('전체 읽음 처리 실패:', error);
   }
 };
 
@@ -294,7 +349,9 @@ const goBack = (): void => {
 };
 
 /**
- * 아이콘 경로 반환
+ * 알림 타입에 따른 아이콘 경로 반환
+ * @param {NotificationCategory} type - 알림 타입
+ * @returns {string} 아이콘 경로
  */
 const getIcon = (type: NotificationCategory): string => {
   const iconMap: Record<NotificationCategory, string> = {
@@ -307,8 +364,31 @@ const getIcon = (type: NotificationCategory): string => {
   return iconMap[type] || '/images/alarm/alarmsetting.svg';
 };
 
+/**
+ * 상대 시간 포맷 함수 (유틸리티 함수 재사용)
+ */
 const getTimeAgo = getRelativeTime;
 
+/**
+ * 모든 알림을 읽음 처리하는 함수
+ */
+const markAllNotificationsAsRead = async (): Promise<void> => {
+  try {
+    await notificationStore.markAllAsRead();
+    await notificationStore.fetchNotifications();
+    updateTabCounts();
+  } catch (error) {
+    console.error('읽음 처리 실패:', error);
+  }
+};
+
+/**
+ * 컴포넌트 마운트 시 실행
+ * - 알림 목록 로드
+ * - 삭제된 알림 로드
+ * - 탭 카운트 갱신
+ * (읽음 처리는 하지 않음 - 페이지 떠날 때 처리)
+ */
 onMounted(async () => {
   try {
     await notificationStore.fetchNotifications();
@@ -318,7 +398,23 @@ onMounted(async () => {
     console.error('초기화 실패:', error);
   }
 });
+
+/**
+ * 페이지를 떠나기 전 모든 알림 읽음 처리
+ */
+onBeforeRouteLeave(async (to, from, next) => {
+  await markAllNotificationsAsRead();
+  next();
+});
+
+/**
+ * 컴포넌트 언마운트 시 읽음 처리
+ */
+onUnmounted(() => {
+  markAllNotificationsAsRead();
+});
 </script>
+
 
 <style scoped>
 * {
@@ -419,29 +515,44 @@ onMounted(async () => {
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
+  color: #62748e;
   transition: all 0.2s;
 }
 
+.restore-btn,
+.hard-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+
 .restore-btn {
-  background: #DBEAFE;
-  color: #1E40AF;
-  border-color: #93C5FD;
+   background-color: white;
+  border-color: #e2e8f0;
+
 }
 
 .restore-btn:hover {
-  background: #BFDBFE;
+  background-color: #f8fafc;
 }
 
 .hard-delete-btn {
   background: #FEE2E2;
-  color: #991B1B;
-  border-color: #FCA5A5;
+   background-color: white;
 }
 
 .hard-delete-btn:hover {
-  background: #FECACA;
+    background-color: #f8fafc;
 }
 
+/* 트랜지션 효과 */
 .notification-enter-active,
 .notification-leave-active {
   transition: all 0.3s ease;
@@ -457,6 +568,7 @@ onMounted(async () => {
   transform: translateX(20px);
 }
 
+/* 반응형 디자인 */
 @media (max-width: 1024px) {
   .notification-list {
     padding-left: 24px;
