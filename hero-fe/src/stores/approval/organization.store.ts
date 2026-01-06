@@ -38,56 +38,34 @@ import {
 } from '@/types/approval/organization.types';
 
 export const useOrganizationStore = defineStore('organization', () => {
-  /* ========================================== */
-  /* State */
-  /* ========================================== */
-
-  // 조직도 트리
   const organizationTree = ref<OrganizationTreeNodeDTO | null>(null);
 
-  // 검색 결과
   const searchResults = ref<OrganizationEmployeeDTO[]>([]);
 
-  // 검색 키워드
   const searchKeyword = ref<string>('');
 
-  // 선택된 직원 목록 (결재선용)
   const selectedEmployees = ref<SelectedApproverDTO[]>([]);
 
-  // 로딩 상태
   const isLoading = ref<boolean>(false);
 
-  // 확장된 부서 ID 목록
   const expandedDepartments = ref<Set<number>>(new Set());
 
-  /* ========================================== */
-  /* Getters */
-  /* ========================================== */
-
-  // 선택된 직원 수
   const selectedCount = computed(() => selectedEmployees.value.length);
 
-  // 특정 직원이 선택되었는지 확인
   const isEmployeeSelected = computed(() => {
     return (employeeId: number) => {
       return selectedEmployees.value.some(emp => emp.approverId === employeeId);
     };
   });
 
-  /* ========================================== */
-  /* Actions */
-  /* ========================================== */
 
-  /**
-   * 조직도 전체 조회
-   */
   const fetchOrganizationTree = async () => {
     try {
       isLoading.value = true;
       const data = await getOrganizationTree();
       organizationTree.value = data.root;
     } catch (error) {
-      console.error('❌ 조직도 조회 실패:', error);
+      console.error('조직도 조회 실패:', error);
       throw error;
     } finally {
       isLoading.value = false;

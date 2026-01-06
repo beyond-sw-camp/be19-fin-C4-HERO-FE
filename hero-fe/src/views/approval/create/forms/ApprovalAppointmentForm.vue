@@ -13,11 +13,12 @@
   * 2025/12/30 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
   * 2025/12/30 (민철) 모두 지원하도록 수정
   * 2025/12/30 (민철) Watch 최적화, Computed 적용, 서식명 변경 근태기록수정신청서 -> 지연출근신청서
+  * 2026/01/06 (민철) 주석 제거
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 3.1
+  * @version 3.2
 -->
 <template>
   <div class="detail-form-section">
@@ -262,7 +263,6 @@ const approvalDataStore = useApprovalDataStore();
 const { personnelTypes } = storeToRefs(approvalDataStore);
 
 onMounted(async () => {
-  // 데이터가 없을 때만 호출
   if (!personnelTypes.value.departments ||
     !personnelTypes.value.jobTitles ||
     !personnelTypes.value.grades ||
@@ -274,7 +274,6 @@ onMounted(async () => {
   }
 });
 
-// Props & Emits
 const props = defineProps<{
   modelValue?: PersonnelAppointmentFormData;
   readonly?: boolean;
@@ -284,34 +283,30 @@ const emit = defineEmits<{
   'update:modelValue': [value: PersonnelAppointmentFormData];
 }>();
 
-// 타입 정의: number 타입으로 변경
 export interface PersonnelAppointmentFormData {
   changeType: string;
   employeeNumber: string;
   employeeName: string;
   effectiveDate: string;
 
-  departmentBefore: number; // 변경: string -> number
-  gradeBefore: number;      // 변경: string -> number
-  jobTitleBefore: number;   // 변경: string -> number
+  departmentBefore: number;
+  gradeBefore: number;
+  jobTitleBefore: number;
 
-  departmentAfter: number;  // 변경: string -> number
-  gradeAfter: number;       // 변경: string -> number
-  jobTitleAfter: number;    // 변경: string -> number
+  departmentAfter: number;
+  gradeAfter: number;
+  jobTitleAfter: number;
 
   status: string;
   auditDate: string;
   reason: string;
 }
 
-// --- Data Options (고정값) ---
 const typeOptions = [
   { label: '정기 승진', value: 'REGULAR' },
   { label: '특별 승진', value: 'SPECIAL' }
 ];
 
-// --- State Management ---
-// 초기값 0으로 설정 (선택 안 됨을 의미)
 const formData = reactive<PersonnelAppointmentFormData>({
   changeType: props.modelValue?.changeType || '',
   employeeNumber: props.modelValue?.employeeNumber || '',
@@ -328,7 +323,6 @@ const formData = reactive<PersonnelAppointmentFormData>({
   reason: props.modelValue?.reason || '',
 });
 
-// [동기화]
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     Object.assign(formData, newVal);
@@ -342,7 +336,6 @@ watch(formData, (newVal) => {
 }, { deep: true });
 
 
-// --- Dropdown Helpers ---
 const activeDropdown = ref<string | null>(null);
 
 const toggleDropdown = (key: string) => {
@@ -354,18 +347,14 @@ const closeDropdown = () => {
   activeDropdown.value = null;
 };
 
-// 선택 로직: value를 number로 받아서 저장
 const selectOption = (field: keyof PersonnelAppointmentFormData, value: string | number) => {
   if (props.readonly) return;
+
   // @ts-ignore
   formData[field] = value;
   closeDropdown();
 };
 
-/**
- * 라벨 조회 로직 수정
- * ID(number)를 받아서 이름(string)을 반환
- */
 const getLabel = (type: 'type' | 'dept' | 'duty' | 'position', value: string | number) => {
   if (!value) return '';
 
@@ -374,7 +363,6 @@ const getLabel = (type: 'type' | 'dept' | 'duty' | 'position', value: string | n
     return found ? found.label : String(value);
   }
 
-  // Store 데이터에서 조회
   if (type === 'dept' && personnelTypes.value?.departments) {
     const found = personnelTypes.value.departments.find(d => d.departmentId === value);
     return found ? found.departmentName : '';
@@ -641,7 +629,6 @@ const getLabel = (type: 'type' | 'dept' | 'duty' | 'position', value: string | n
 }
 
 .readonly-value {
-  /* flex: 1; */
   padding: 10px 12px;
   background-color: #f9fafb;
   border: 1px solid #e5e7eb;
