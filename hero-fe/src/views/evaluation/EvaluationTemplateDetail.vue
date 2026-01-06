@@ -17,7 +17,9 @@
     <!--평가 템플릿 세부 페이지 헤더-->
     <div class="header">
       <div class="title-wrapper">
-        <img class="back-icon" src="/images/backArrow.svg" @click="goBack" />
+        <button class="back-button" type="button" aria-label="뒤로가기">
+          <img src="/images/arrow.svg" alt="" class="back-icon" @click="goBack"/>
+        </button>
         <h1 class="title">평가 템플릿 상세</h1>
       </div>
 
@@ -30,7 +32,7 @@
     <!--평가 템플릿 세부 페이지 내용-->
     <div class="content">
       <div class="form-box">
-        <h2 class="section-title">평가 템플릿 상세 페이지</h2>
+        <h2 class="section-title">평가 템플릿 상세</h2>
 
         <!-- 평가 템플릿 이름 -->
         <div class="form-item">
@@ -304,7 +306,7 @@ onMounted(() => {
 }
 
 .title {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
   color: #0F172B;
 }
@@ -318,14 +320,22 @@ onMounted(() => {
   cursor: pointer;
 }
 
+.btn-remove:hover {
+  opacity: 0.9;
+}
+
 .btn-edit {
-  background: #4b89dc;
+  background: linear-gradient(180deg, #1C398E 0%, #162456 100%);;
   color: white;
   padding: 10px 24px;
   border-radius: 10px;
   border: none;
   cursor: pointer;
   margin-right: 10px;
+}
+
+.btn-edit:hover {
+  opacity: 0.9;
 }
 
 .form-item {
@@ -348,7 +358,7 @@ onMounted(() => {
 
 .section-title {
   text-align: center;
-  font-size: 24px;
+  font-size: 25px;
   color: #0F172B;
   font-weight: 600;
 }
@@ -433,7 +443,7 @@ onMounted(() => {
 .section-title {
   flex: 1;
   margin-left: 16px;
-  font-size: 18px;
+  font-size: 25px;
   font-weight: 600;
   color: #1c398e;
 }
@@ -617,4 +627,44 @@ label {
   overflow-y: auto;
   padding-right: 6px;      
 }
+
+.back-button {
+  width: 40px;
+  height: 40px;                 /* 버튼 박스 고정 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.back-button:hover {
+  transform: translateX(-2px);
+  background: #F1F5F9;
+}
+
+.back-icon {
+  width: 20px;
+  height: 20px;
+  display: block;               /* baseline 튐 방지 */
+}
+
+@media (max-width: 768px) {
+
+  .back-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .back-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
 </style>

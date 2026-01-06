@@ -18,9 +18,8 @@
       <div class="content-box">
         <div class="header">
           <button
+            v-if="authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_HR_EVALUATION'])"
             class="btn-new"
-            :class="{ disabled: !authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_HR_EVALUATION']) }"
-            :disabled="!authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_HR_EVALUATION'])"
             @click="createTemplate"
           >
             + 새 템플릿 작성
@@ -190,7 +189,12 @@ const selectEvaluationTemplateList = async (): Promise<void> => {
  */
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString)
-  return date.toLocaleString('ko-KR', { hour12: false })
+
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1   // 0부터 시작하므로 +1
+  const day = date.getDate()
+
+  return `${year}년 ${month}월 ${day}일`
 }
 
 /**
@@ -267,7 +271,6 @@ onMounted(async () => {
   background: white;
   border-radius: 14px;
   outline: 2px #E2E8F0 solid;
-  gap: 20px;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -281,11 +284,15 @@ onMounted(async () => {
 .btn-new {
   padding: 8px 16px;
   background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
-  border-radius: 14px;
+  border-radius: 10px;
   color: #fff;
   font-size: 14px;
   border: none;
   cursor: pointer;
+}
+
+.btn-new:hover {
+  opacity: 0.9;
 }
 
 /* 테이블 */
@@ -314,7 +321,7 @@ onMounted(async () => {
 }
 
 .table-body .row.alt {
-  background: #F8FAFC;
+  background: white;
 }
 
 .col {
@@ -336,7 +343,7 @@ onMounted(async () => {
   gap: 10px;
   justify-content: center;
   padding: 16px;
-  background: #F8FAFC;
+  background: white;
   border-bottom-left-radius: 14px;
   border-bottom-right-radius: 14px;
 }

@@ -15,7 +15,9 @@
     <!-- 헤더 -->
     <div class="header">
       <div class="title-wrapper">
-        <img class="back-icon" src="/images/backArrow.svg" @click="goBack" />
+        <button class="back-button" type="button" aria-label="뒤로가기">
+          <img src="/images/arrow.svg" alt="" class="back-icon" @click="goBack"/>
+        </button>
         <h1 class="title">평가 가이드 상세 페이지</h1>
       </div>
 
@@ -27,7 +29,7 @@
 
     <div class="content">
       <div class="form-box">
-        <h2 class="section-title">평가 가이드 정보</h2>
+        <h2 class="section-title">평가 가이드 상세</h2>
 
         <!-- 가이드 제목 -->
         <div class="form-item">
@@ -234,7 +236,7 @@ onMounted(async (): Promise<void> => {
   flex: 1;
   margin-left: 16px;
   text-align: center;
-  font-size: 18px;
+  font-size: 25px;
   font-weight: 600;
   color: #1c398e;
 }
@@ -323,8 +325,12 @@ label {
   cursor: pointer; 
 }
 
+.btn-remove:hover {
+  opacity: 0.9;
+}
+
 .btn-edit {
-  background: #4b89dc;
+  background: linear-gradient(180deg, #1C398E 0%, #162456 100%);;
   color: white;
   padding: 10px 24px;
   border-radius: 10px;
@@ -332,4 +338,48 @@ label {
   cursor: pointer;
   margin-right: 10px;
 }
+
+.btn-edit:hover {
+  opacity: 0.9;
+}
+
+.back-button {
+  width: 40px;
+  height: 40px;                 /* 버튼 박스 고정 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.back-button:hover {
+  transform: translateX(-2px);
+  background: #F1F5F9;
+}
+
+.back-icon {
+  width: 20px;
+  height: 20px;
+  display: block;               /* baseline 튐 방지 */
+}
+
+@media (max-width: 768px) {
+
+  .back-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .back-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
 </style>

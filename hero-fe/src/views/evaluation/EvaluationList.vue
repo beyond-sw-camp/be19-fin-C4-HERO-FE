@@ -40,12 +40,17 @@
 
           <!-- 테이블 헤더 -->
           <div class="table-header">
-            <div class="col header-col">템플릿ID</div>
+            <div class="col header-col">문서번호</div>
             <div class="col header-col">템플릿명</div>
             <div class="col header-col">기안부서</div>
             <div class="col header-col">기안자</div>
             <div class="col header-col">기안일시</div>
-            <div class="col header-col">작업</div>
+            <div
+              v-if="authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_DEPT_MANAGER'])"
+              class="col header-col"
+            >
+              작업
+            </div>
           </div>
 
           <!-- 테이블 바디 -->
@@ -63,11 +68,13 @@
               <div class="col">{{ formatDate(item.evaluationTemplateCreatedAt) }}</div>
 
               <!-- 평가 생성 -->
-              <div class="col action">
+              <div
+                v-if="authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_DEPT_MANAGER'])"
+                class="col action"
+              >
                 <button
                   class="btn-create"
-                  :disabled="!authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_DEPT_MANAGER'])"
-                  @click="authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_DEPT_MANAGER']) && goToCreate(item.evaluationTemplateTemplateId)"
+                  @click="goToCreate(item.evaluationTemplateTemplateId)"
                 >
                   <img class="document-icon" src="/images/document.svg" />
                   평가 생성
@@ -219,9 +226,14 @@ const pageNumbers = computed(() =>
  * 설명: 날짜 타입 변환 메소드
  */
 const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleString("ko-KR", { hour12: false });
-};
+  const date = new Date(dateString)
+
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1   
+  const day = date.getDate()
+
+  return `${year}년 ${month}월 ${day}일`
+}
 
 /**
  * 설명: 평가 템플릿 목록으로 이동하는 메소드
@@ -339,7 +351,7 @@ onMounted(async () => {
   grid-template-columns: 1fr 2fr 1fr 1fr 1.2fr 1fr;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
-  padding: 12px 20px;
+  padding: 11px 16px;
   font-size: 14px;
   font-weight: 700;
 }
@@ -348,12 +360,12 @@ onMounted(async () => {
 .table-body .row {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr 1fr 1.2fr 1fr;
-  padding: 16px 20px;
+  padding: 16px;
   border-top: 1px solid #e2e8f0;
 }
 
 .table-body .row.alt {
-  background: #f8fafc;
+  background: white;
 }
 
 .col {
@@ -377,16 +389,26 @@ onMounted(async () => {
 
 /* 평가 생성 버튼 */
 .btn-create {
-  padding: 6px 12px;
+  height: 20px;                 /* ✅ 정확한 버튼 높이 */
+  padding: 0 8px;               /* ✅ 좌우만 유지, 상하는 제거 */
+
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
-  border-radius: 8px;
+  border-radius: 6px;           /* 20px에 어울리게 살짝 축소 */
   color: white;
+
   font-size: 12px;
+  line-height: 20px;            /* ✅ 텍스트 세로 중앙 */
+  
   border: none;
   cursor: pointer;
-  display: flex;
+
+  display: inline-flex;         /* ✅ 버튼 높이 안정 */
   align-items: center;
   gap: 4px;
+}
+
+.btn-create:hover {
+  opacity: 0.9;
 }
 
 /* 아이콘 */
@@ -401,7 +423,7 @@ onMounted(async () => {
   gap: 10px;
   justify-content: center;
   padding: 16px;
-  background: #f8fafc;
+  background: white;
   border-bottom-left-radius: 14px;
   border-bottom-right-radius: 14px;
   border-top: 1px solid #e2e8f0;

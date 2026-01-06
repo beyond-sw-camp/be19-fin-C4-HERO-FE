@@ -84,8 +84,8 @@
                 </button>
 
                 <button
+                  v-if="authEmployeeId === item.evaluationEmployeeId"
                   class="btn danger"
-                  :disabled="authEmployeeId !== item.evaluationEmployeeId"
                   @click.stop="deleteEvaluation(item.evaluationEvaluationId)"
                 >
                   삭제
@@ -205,24 +205,42 @@ const pageNumbers = computed(() =>
 
 /**
  * 설명: 날짜 변환 메소드
- * @param {string} date - 문자열 타입 날짜
+ * @param {string} dateString - 문자열 타입 날짜
  */
-const formatDate = (date: string) => {
-  if (!date) return "-";
-  return new Date(date).toLocaleDateString("ko-KR");
-};
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString)
+
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1   // 0부터 시작하므로 +1
+  const day = date.getDate()
+
+  return `${year}년 ${month}월 ${day}일`
+}
 
 /**
  * 설명: 평가 기간 타입 변환 메소드
  * @param {any} item - 평가 기간 데이터 
  */
-const formatPeriod = (item: any) => {
-  if (!item.evaluationEvaluationPeriodStart || !item.evaluationEvaluationPeriodEnd) {
+const formatPeriod = (item: any): string => {
+  if (
+    !item.evaluationEvaluationPeriodStart ||
+    !item.evaluationEvaluationPeriodEnd
+  ) {
     return "-";
   }
 
-  const start = new Date(item.evaluationEvaluationPeriodStart).toLocaleDateString("ko-KR");
-  const end = new Date(item.evaluationEvaluationPeriodEnd).toLocaleDateString("ko-KR");
+  const formatKoreanDate = (dateString: string): string => {
+    const date = new Date(dateString);
+
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    return `${year}년 ${month}월 ${day}일`;
+  };
+
+  const start = formatKoreanDate(item.evaluationEvaluationPeriodStart);
+  const end = formatKoreanDate(item.evaluationEvaluationPeriodEnd);
 
   return `${start} ~ ${end}`;
 };
@@ -400,12 +418,12 @@ onMounted(() => {
 .table-row {
   display: grid;
   grid-template-columns:
-    2fr
-    1fr
-    1fr
+    3.7fr
+    1.2fr
     1.5fr
-    1fr
-    1fr
+    3.5fr
+    1.5fr
+    2fr
     2.5fr;
 }
 
@@ -415,7 +433,7 @@ onMounted(() => {
 }
 
 .th {
-  padding: 12px 20px;   /* 🔥 핵심: 헤더 높이 동일 */
+  padding: 11px 16px;   
   display: flex;
   align-items: center;
   color: white;
@@ -429,11 +447,18 @@ onMounted(() => {
 }
 
 .td {
+  height: 60px;
   padding: 20px;
   display: flex;
   align-items: center;
+
   font-size: 14px;
   color: #0f172b;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0; 
 }
 
 .muted {
@@ -473,6 +498,10 @@ onMounted(() => {
   cursor: pointer;
 }
 
+.btn:hover {
+  opacity: 0.9;
+}
+
 .primary {
   background: linear-gradient(180deg, #0d00ff, #080099);
   color: white;
@@ -494,7 +523,7 @@ onMounted(() => {
   justify-content: center;
   gap: 10px;
   padding: 16px;
-  background: #f8fafc;
+  background: white;
   border-top: 1px solid #e2e8f0;
 }
 

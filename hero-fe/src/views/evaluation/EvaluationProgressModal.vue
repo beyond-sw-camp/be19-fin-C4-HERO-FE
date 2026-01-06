@@ -12,13 +12,13 @@
 
 <!--template-->
 <template>
-  <div class="modal-overlay">
-    <div class="modal">
+  <div class="modal-overlay" @click="emit('close')">
+    <div class="modal" @click.stop>
 
       <!-- ===== Header ===== -->
       <header class="modal-header">
         <div class="header-left">
-          <img class="header-icon" src="/images/people.svg"></img>
+          <img class="header-icon" src="/images/aaaapeople.svg"></img>
           <div class="header-text">
             <h2>평가 진행 현황</h2>
             <p class="subtitle">
@@ -29,27 +29,26 @@
           </div>
         </div>
 
-        <button class="close-btn" @click="emit('close')">✕</button>
+        <button class="close-btn" @click="emit('close')">
+          <img class="close-img" src="/images/deletebutton.svg"></img>
+        </button>
       </header>
 
       <!-- ===== Summary ===== -->
       <section class="summary">
         <div class="summary-card dark">
           <span class="label">전체 인원</span>
-          <strong>{{ summary.total }}</strong>
-          <span class="unit">명</span>
+          <strong>{{ summary.total }} 명</strong>
         </div>
 
         <div class="summary-card blue">
           <span class="label">제출 완료</span>
-          <strong>{{ summary.done }}</strong>
-          <span class="unit">{{ summary.doneRate }}%</span>
+          <strong>{{ summary.done }} 명</strong>
         </div>
 
         <div class="summary-card sky">
           <span class="label">미실시</span>
-          <strong>{{ summary.progress }}</strong>
-          <span class="unit">{{ summary.progressRate }}%</span>
+          <strong>{{ summary.progress }} 명</strong>
         </div>
       </section>
 
@@ -57,7 +56,7 @@
       <section class="employee-table">
 
         <div class="table-header">
-          <div>No.</div>
+          <div>번호</div>
           <div>이름</div>
           <div>직급</div>
           <div>평가 상태</div>
@@ -126,11 +125,6 @@
 
       </section>
 
-      <!-- ===== Footer ===== -->
-      <footer class="modal-footer">
-        <button class="btn-close" @click="emit('close')">닫기</button>
-      </footer>
-
     </div>
   </div>
 </template>
@@ -138,7 +132,7 @@
 <!--script-->
 <script setup lang="ts">
 //Import 구문
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import apiClient from "@/api/apiClient";
 import { useAuthStore } from '@/stores/auth';
@@ -262,10 +256,23 @@ const goEvaluate = (emp: any) => {
   });
 };
 
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === "Escape") {
+    emit("close");
+  }
+};
+
 /**
  * 설명: 마운트 시, 평가 세부 데이터 조회
  */
-onMounted(fetchEvaluationDetail);
+onMounted(() => {
+  fetchEvaluationDetail();
+  window.addEventListener("keydown", handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleKeydown);
+});
 
 /**
  * 설명: 페이지네이션 버튼 계산 메소드
@@ -339,7 +346,7 @@ const formatPeriod = (item: any) => {
 
 /* ===== Modal ===== */
 .modal {
-  width: 1200px;
+  width: 750px;
   background: white;
   border-radius: 12px;
   overflow: hidden;
@@ -347,33 +354,36 @@ const formatPeriod = (item: any) => {
 
 /* ===== Header ===== */
 .modal-header {
-  height: 114px;
+  height: 100px;
   padding: 24px;
-  background: linear-gradient(180deg, #1c398e, #162456);
+  background: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom-color: rgb(226, 232, 240);
 }
 
 .header-left {
   display: flex;
   gap: 16px;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .header-icon {
+  margin-top: 21px;
   width: 30px;
   height: 30px;
 }
 
 .header-text h2 {
-  color: white;
+  color: black;
   font-size: 24px;
   font-weight: 700;
+  margin-bottom: 5px;
 }
 
 .subtitle {
-  color: rgba(255, 255, 255, 0.9);
+  color: black;
   font-size: 15px;
   margin-top: 6px;
 }
@@ -383,10 +393,14 @@ const formatPeriod = (item: any) => {
   height: 40px;
   border-radius: 10px;
   border: none;
-  background: rgba(255, 255, 255, 0.2);
   color: white;
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
+}
+
+.close-img {
+  width: 25px;
+  height: 25px;
 }
 
 /* ===== Summary ===== */
@@ -395,13 +409,16 @@ const formatPeriod = (item: any) => {
   gap: 16px;
   padding: 24px;
   border-bottom: 1px solid #e2e8f0;
+  border-top: 1px solid #e2e8f0;
+  justify-content: center;
 }
 
 .summary-card {
-  flex: 1;
+  flex: 0 0 200px;
   padding: 18px;
   border-radius: 12px;
-  color: white;
+  border: 2px solid #e2e8f0;
+  color: black;
 }
 
 .summary-card strong {
@@ -419,9 +436,15 @@ const formatPeriod = (item: any) => {
   opacity: 0.8;
 }
 
-.dark  { background: linear-gradient(180deg, #1c398e, #162456); }
-.blue  { background: linear-gradient(180deg, #2563eb, #1c398e); }
-.sky   { background: linear-gradient(180deg, #3b82f6, #2563eb); }
+.dark  { 
+  background: white; 
+}
+.blue  { 
+  background: white; 
+}
+.sky   { 
+  background: white; 
+}
 .light { background: linear-gradient(180deg, #60a5fa, #3b82f6); }
 .score { background: linear-gradient(180deg, #93c5fd, #60a5fa); }
 
@@ -551,6 +574,10 @@ const formatPeriod = (item: any) => {
   cursor: pointer;
 }
 
+.btn-action:hover {
+  opacity: 0.9;
+}
+
 .btn-action.primary {
   background: linear-gradient(180deg, #1c398e, #162456);
   color: white;
@@ -566,4 +593,13 @@ const formatPeriod = (item: any) => {
   background: #f1f5f9;
   color: #475569;
 }
+
+.table-header > div,
+.table-row > div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
 </style>

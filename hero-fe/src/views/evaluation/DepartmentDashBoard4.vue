@@ -50,75 +50,77 @@
       </div>
 
       <div class="list-box">
+        <div class="violation-container">
+          <!-- 평가 템플릿 선택 -->
+          <div class="filter-box">
+            <select v-model="selectedTemplateId" @change="analyzeViolation">
+              <option
+                v-for="t in templates"
+                :key="t.evaluationTemplateId"
+                :value="t.evaluationTemplateId"
+              >
+                {{ t.evaluationTemplateName }}
+              </option>
+            </select>
+          </div>
 
-        <!-- 평가 템플릿 선택 -->
-        <div class="filter-box">
-          <select v-model="selectedTemplateId" @change="analyzeViolation">
-            <option
-              v-for="t in templates"
-              :key="t.evaluationTemplateId"
-              :value="t.evaluationTemplateId"
+          <!-- 분석 중 -->
+          <div v-if="analyzing" class="loading-overlay">
+            <div class="spinner"></div>
+            <p>AI가 평가 가이드 위반 여부를 분석 중입니다.</p>
+          </div>
+
+          <!-- 위반 결과 -->
+          <div v-else class="promotion-wrapper">
+
+            <div
+              v-for="(v, idx) in violations"
+              :key="idx"
+              class="promotion-card violation"
             >
-              {{ t.evaluationTemplateName }}
-            </option>
-          </select>
-        </div>
-
-        <!-- 분석 중 -->
-        <div v-if="analyzing" class="analysis-loading">
-          AI가 평가 가이드 위반 여부를 분석 중입니다...
-        </div>
-
-        <!-- 위반 결과 -->
-        <div v-else class="promotion-wrapper">
-
-          <div
-            v-for="(v, idx) in violations"
-            :key="idx"
-            class="promotion-card violation"
-          >
-            <!-- 카드 상단 -->
-            <div class="card-top">
-              <div class="left">
-                <div class="rank-badge warning">⚠</div>
-                <div>
-                  <div class="name">{{ v.managerName }}</div>
-                  <div class="sub">
-                    {{ v.departmentName }} • {{ v.templateName }}
+              <!-- 카드 상단 -->
+              <div class="card-top">
+                <div class="left">
+                  <div class="rank-badge warning">⚠</div>
+                  <div>
+                    <div class="name">{{ v.managerName }} 부장</div>
+                    <div class="sub">
+                      {{ v.departmentName }}  {{ v.templateName }}
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <div class="divider"></div>
+
+              <!-- 위반 항목 -->
+              <div class="section">
+                <div class="section-title">평가 가이드 위반 사항</div>
+
+                <ul class="violation-list">
+                  <li
+                    v-for="(item, i) in v.violations"
+                    :key="i"
+                    class="violation-item"
+                  >
+                    <div class="violation-header">
+                      <span class="person">{{ item['피평가자'] }}</span>
+                      <span class="dot">•</span>
+                      <span class="category">{{ item['항목'] }}</span>
+                    </div>
+                    <div class="violation-reason">
+                      {{ item['위반 사유'] }}
+                    </div>
+                  </li>
+                </ul>
+              </div>
             </div>
 
-            <div class="divider"></div>
-
-            <!-- 위반 항목 -->
-            <div class="section">
-              <div class="section-title">평가 가이드 위반 사항</div>
-
-              <ul class="violation-list">
-                <li
-                  v-for="(item, i) in v.violations"
-                  :key="i"
-                  class="violation-item"
-                >
-                  <div class="violation-header">
-                    <span class="person">{{ item['피평가자'] }}</span>
-                    <span class="dot">•</span>
-                    <span class="category">{{ item['항목'] }}</span>
-                  </div>
-                  <div class="violation-reason">
-                    {{ item['위반 사유'] }}
-                  </div>
-                </li>
-              </ul>
+            <div v-if="violations.length === 0" class="empty-box">
+              해당 평가 템플릿에서 가이드 위반이 발견되지 않았습니다.
             </div>
-          </div>
 
-          <div v-if="violations.length === 0" class="empty-box">
-            해당 평가 템플릿에서 가이드 위반이 발견되지 않았습니다.
           </div>
-
         </div>
       </div>
     </div>
@@ -128,7 +130,7 @@
 <!--script-->
 <script setup lang="ts">
 //Import 구문
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import apiClient from "@/api/apiClient";
@@ -361,7 +363,7 @@ select {
 
 .violation-reason {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.5;
   color: #991b1b;
 }
@@ -381,5 +383,57 @@ select {
   text-align: center;
   font-weight: 700;
   color: #16a34a;
+}
+
+.violation-container {
+  position: relative;   
+  min-height: 300px;    
+}
+
+.loading-container {
+  position: relative;
+}
+
+
+/* 🔄 로딩 오버레이 */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(248, 250, 252, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 14px;
+}
+
+/* 🔄 스피너 */
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #1c398e; /* 위반 = warning 톤 */
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+
+.loading-overlay p {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  text-align: center;
+}
+
+/* 회전 애니메이션 */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.section-title {
+  font-weight: bold;
 }
 </style>
