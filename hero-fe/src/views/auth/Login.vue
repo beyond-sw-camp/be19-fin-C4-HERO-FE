@@ -69,6 +69,7 @@ const errorMessage = ref('');
 const passwordFieldType = ref<'password' | 'text'>('password');
 const saveId = ref(false);
 const showPasswordChangeModal = ref(false);
+const isLoading = ref(false);
 
 const router = useRouter();
 const route = useRoute();
@@ -88,7 +89,10 @@ const togglePasswordVisibility = () => {
  * @returns {Promise<void>}
  */
 const handleLogin = async () => {
+  if (isLoading.value) return; // 이미 요청 중이면 중단
+
   errorMessage.value = ''; // 이전 오류 메시지 초기화
+  isLoading.value = true;  // 로딩 시작
 
   // 아이디 저장 로직
   if (saveId.value) {
@@ -130,14 +134,17 @@ const handleLogin = async () => {
     }
   } catch (error: any) {
     // 401 오류는 아이디/비밀번호 오류로 간주하고 명확한 메시지를 표시합니다.
-    if (error.response?.status === 401) {
-      errorMessage.value = '이메일 또는 비밀번호가 올바르지 않습니다.';
-    } else if (error.response?.data?.message) {
+    if (error.response?.data?.message) {
       errorMessage.value = error.response.data.message;
+    } else if (error.response?.status === 401) {
+      errorMessage.value = '아이디 또는 비밀번호가 일치하지 않습니다.';
     } else {
       errorMessage.value = '로그인 중 오류가 발생했습니다.';
     }
+    password.value = ''; // 로그인 실패 시 비밀번호 초기화
     console.error('Login error:', error);
+  } finally {
+    isLoading.value = false; // 로딩 종료
   }
 };
 
@@ -291,6 +298,12 @@ button[type="submit"] {
 
 button[type="submit"]:hover {
   opacity: 0.9;
+}
+
+button[type="submit"]:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .error-message {
