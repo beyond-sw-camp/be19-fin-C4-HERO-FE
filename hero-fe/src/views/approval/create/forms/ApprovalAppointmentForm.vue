@@ -13,11 +13,13 @@
   * 2025/12/30 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
   * 2025/12/30 (민철) 모두 지원하도록 수정
   * 2025/12/30 (민철) Watch 최적화, Computed 적용, 서식명 변경 근태기록수정신청서 -> 지연출근신청서
+  * 2026/01/06 (민철) 주석 제거
+  * 2026/01/06 (민철) 외부 스타일 시트 방식 적용
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 3.1
+  * @version 4.0
 -->
 <template>
   <div class="detail-form-section">
@@ -262,7 +264,6 @@ const approvalDataStore = useApprovalDataStore();
 const { personnelTypes } = storeToRefs(approvalDataStore);
 
 onMounted(async () => {
-  // 데이터가 없을 때만 호출
   if (!personnelTypes.value.departments ||
     !personnelTypes.value.jobTitles ||
     !personnelTypes.value.grades ||
@@ -274,7 +275,6 @@ onMounted(async () => {
   }
 });
 
-// Props & Emits
 const props = defineProps<{
   modelValue?: PersonnelAppointmentFormData;
   readonly?: boolean;
@@ -284,34 +284,30 @@ const emit = defineEmits<{
   'update:modelValue': [value: PersonnelAppointmentFormData];
 }>();
 
-// 타입 정의: number 타입으로 변경
 export interface PersonnelAppointmentFormData {
   changeType: string;
   employeeNumber: string;
   employeeName: string;
   effectiveDate: string;
 
-  departmentBefore: number; // 변경: string -> number
-  gradeBefore: number;      // 변경: string -> number
-  jobTitleBefore: number;   // 변경: string -> number
+  departmentBefore: number;
+  gradeBefore: number;
+  jobTitleBefore: number;
 
-  departmentAfter: number;  // 변경: string -> number
-  gradeAfter: number;       // 변경: string -> number
-  jobTitleAfter: number;    // 변경: string -> number
+  departmentAfter: number;
+  gradeAfter: number;
+  jobTitleAfter: number;
 
   status: string;
   auditDate: string;
   reason: string;
 }
 
-// --- Data Options (고정값) ---
 const typeOptions = [
   { label: '정기 승진', value: 'REGULAR' },
   { label: '특별 승진', value: 'SPECIAL' }
 ];
 
-// --- State Management ---
-// 초기값 0으로 설정 (선택 안 됨을 의미)
 const formData = reactive<PersonnelAppointmentFormData>({
   changeType: props.modelValue?.changeType || '',
   employeeNumber: props.modelValue?.employeeNumber || '',
@@ -328,7 +324,6 @@ const formData = reactive<PersonnelAppointmentFormData>({
   reason: props.modelValue?.reason || '',
 });
 
-// [동기화]
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     Object.assign(formData, newVal);
@@ -342,7 +337,6 @@ watch(formData, (newVal) => {
 }, { deep: true });
 
 
-// --- Dropdown Helpers ---
 const activeDropdown = ref<string | null>(null);
 
 const toggleDropdown = (key: string) => {
@@ -354,18 +348,14 @@ const closeDropdown = () => {
   activeDropdown.value = null;
 };
 
-// 선택 로직: value를 number로 받아서 저장
 const selectOption = (field: keyof PersonnelAppointmentFormData, value: string | number) => {
   if (props.readonly) return;
+
   // @ts-ignore
   formData[field] = value;
   closeDropdown();
 };
 
-/**
- * 라벨 조회 로직 수정
- * ID(number)를 받아서 이름(string)을 반환
- */
 const getLabel = (type: 'type' | 'dept' | 'duty' | 'position', value: string | number) => {
   if (!value) return '';
 
@@ -374,7 +364,6 @@ const getLabel = (type: 'type' | 'dept' | 'duty' | 'position', value: string | n
     return found ? found.label : String(value);
   }
 
-  // Store 데이터에서 조회
   if (type === 'dept' && personnelTypes.value?.departments) {
     const found = personnelTypes.value.departments.find(d => d.departmentId === value);
     return found ? found.departmentName : '';
@@ -394,279 +383,5 @@ const getLabel = (type: 'type' | 'dept' | 'duty' | 'position', value: string | n
 </script>
 
 <style scoped>
-.detail-form-section {
-  border: 1px solid #e2e8f0;
-  border-top: none;
-  border-radius: 0 0 14px 14px;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  font-family: "Inter-Regular", sans-serif;
-}
-
-.form-row {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  flex-wrap: wrap;
-}
-
-.border-top {
-  border-top: 1px solid #e2e8f0;
-}
-
-.row-label {
-  background: #f8fafc;
-  border-right: 1px solid #e2e8f0;
-  padding: 16px;
-  width: 140px;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.label-bottom {
-  border-bottom-left-radius: 14px;
-}
-
-.row-content {
-  padding: 16px 20px;
-  flex: 1;
-  min-width: 200px;
-}
-
-.section-body {
-  flex: 1;
-  width: 100%;
-}
-
-.input-group-row {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  flex-direction: row;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.group-label {
-  display: flex;
-  align-items: center;
-  height: 20px;
-}
-
-.group-label-with-icon {
-  gap: 6px;
-}
-
-.icon-label {
-  width: 16px;
-  height: 16px;
-}
-
-.label-text {
-  color: #45556c;
-  font-size: 14px;
-  font-weight: 400;
-}
-
-/* 그리드 시스템 */
-.col-half {
-  flex: 0 0 calc(50% - 8px);
-  min-width: 200px;
-}
-
-.col-quarter {
-  /* flex: 0 0 calc(25% - 12px); */
-  flex: 1;
-  min-width: 140px;
-}
-
-.mt-20 {
-  margin-top: 20px;
-}
-
-.mt-30 {
-  margin-top: 30px;
-}
-
-.section-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #0f172b;
-  margin-bottom: 12px;
-}
-
-/* 입력 박스 공통 */
-.text-input-box,
-.date-input-box,
-.dropdown-box,
-.readonly-value {
-  height: 46px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 0 12px;
-  display: flex;
-  align-items: center;
-  background: #fff;
-  width: 100%;
-  box-sizing: border-box;
-  transition: border-color 0.2s;
-}
-
-.text-input-box:focus-within,
-.date-input-box:focus-within {
-  border-color: #cbd5e1;
-}
-
-.native-input {
-  border: none;
-  outline: none;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  font-size: 15px;
-  color: #0f172b;
-  font-family: "Inter-Regular", sans-serif;
-}
-
-.native-input::placeholder {
-  color: #90a1b9;
-}
-
-
-.dropdown-box {
-  justify-content: space-between;
-  cursor: pointer;
-  position: relative;
-}
-
-.dropdown-box.is-open {
-  border-color: #cbd5e1;
-  z-index: 50;
-}
-
-.dropdown-value {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.placeholder-text {
-  color: #90a1b9;
-  font-size: 15px;
-}
-
-.text-selected {
-  color: #0f172b;
-  font-size: 15px;
-}
-
-.icon-dropdown {
-  width: 18px;
-  transition: transform 0.2s;
-}
-
-.icon-dropdown.rotate {
-  transform: rotate(180deg);
-}
-
-.dropdown-options {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  margin-top: 4px;
-  padding: 0;
-  list-style: none;
-  z-index: 50;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.dropdown-item {
-  padding: 10px 12px;
-  font-size: 14px;
-  color: #0f172b;
-  cursor: pointer;
-}
-
-.dropdown-item:hover {
-  background-color: #f1f5f9;
-}
-
-.overlay-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: transparent;
-  z-index: 40;
-}
-
-.reason-content {
-  flex-direction: column;
-  padding: 16px 20px;
-}
-
-.input-textarea {
-  width: 100%;
-  height: 200px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 16px;
-  resize: vertical;
-  font-family: "Inter-Regular", sans-serif;
-  font-size: 14px;
-  color: #0f172b;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.input-textarea:focus {
-  border-color: #cbd5e1;
-}
-
-.input-textarea::placeholder {
-  color: #90a1b9;
-}
-
-.readonly-value {
-  /* flex: 1; */
-  padding: 10px 12px;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-}
-
-.readonly-textarea {
-  width: 100%;
-  height: 200px;
-  background-color: #f9fafb;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 16px;
-}
-
-.value-text {
-  flex: 1;
-  font-size: 14px;
-  color: #374151;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
+@import '@/assets/styles/approval/approval-appointment.css';
 </style>

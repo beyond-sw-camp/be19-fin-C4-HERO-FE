@@ -35,11 +35,22 @@
     border-left: 1px solid #e2e8f0;
     border-right: 1px solid #e2e8f0;
     background-color: #ffff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tab:hover {
+    background-color: #f8fafc;
 }
 
 .tab.active {
     color: #ffff;
     background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
+    transition: opacity 0.2s;
+}
+
+.tab.active:hover {
+    opacity: 0.9;
 }
 
 .tab-start {
@@ -72,6 +83,10 @@
     flex-direction: row;
     background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
     border-radius: 10px;
+}
+
+.top-first-button:hover {
+    opacity: 0.9;
 }
 
 .newdoc-button {
@@ -108,8 +123,18 @@
     padding: 10px;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
-    font-size: 14px;
+    font-size: 15px;
     display: flex;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.input-box:focus {
+    border-color: #cbd5e1;
+}
+
+.from-cal {
+    font-size: 17px;
 }
 
 .calendar {
@@ -118,9 +143,14 @@
 
 .search-button {
     color: #ffff;
-    padding: 10px 15px 10px 15px;
+    padding: 10px 18px 10px 18px;
     border-radius: 10px;
     background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
+    transition: opacity 0.2s;
+}
+
+.search-button:hover {
+    opacity: 0.9;
 }
 
 .inbox-body-table {
@@ -161,7 +191,6 @@ td {
     text-align: left;
 }
 
-/* 테이블 열 너비 설정 */
 .docNo {
     width: 200px;
 }
@@ -183,7 +212,6 @@ td {
 }
 
 .docTitle {
-    /* width: auto; */
     min-width: 200px;
     white-space: normal;
     word-break: break-word;
@@ -201,7 +229,6 @@ td {
     width: 190px;
 }
 
-/* 결재 상태 뱃지 공통 스타일 - 고정 크기 */
 .status-badge {
     display: inline-flex;
     padding: 4px 12px;
@@ -214,22 +241,19 @@ td {
     white-space: nowrap;
 }
 
-/* 진행중 상태 */
 .status-inprogress {
     background-color: #dbeafe;
-    color: #1e40af;
+    color: #1C398E !important;
 }
 
-/* 승인완료 상태 */
 .status-approved {
     background-color: #d1fae5;
-    color: #065f46;
+    color: #0D542B !important;
 }
 
-/* 반려 상태 */
 .status-rejected {
     background-color: #fee2e2;
-    color: #991b1b;
+    color: #82181A !important;
 }
 
 .inbox-body-bottom {
@@ -245,24 +269,25 @@ td {
 }
 
 .inbox-button {
-    /* border: 1px solid #e2e8f0;
-    border-radius: 10px; */
     padding: 5px 12px;
     border-radius: 4px;
     border: 1px solid #CAD5E2;
     color: #62748E;
     font-size: 14px;
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.inbox-button:hover {
+    background-color: #f8fafc !important;
 }
 
 .button-page.active {
-
     background: #155DFC;
     border: none;
     color: #fff;
 }
 
-/* 클릭 가능한 행 스타일 */
 .clickable-row {
     cursor: pointer;
     transition: background-color 0.2s;

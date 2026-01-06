@@ -13,11 +13,13 @@
   * 2025/12/30 (민철) readonly 모드 지원 추가 (작성용/조회용 통합)
   * 2025/12/30 (민철) 모두 지원하도록 수정
   * 2025/12/30 (민철) Watch 최적화, Computed 적용
+  * 2026/01/06 (민철) 주석 제거
+  * 2026/01/06 (민철) 외부 스타일 시트 방식 적용
   * </pre>
   *
   * @module approval
   * @author 민철
-  * @version 3.1
+  * @version 4.0
 -->
 <template>
   <div class="detail-form-section">
@@ -113,7 +115,6 @@ import { ref, reactive, watch, computed, onMounted } from 'vue';
 import { useApprovalDataStore } from '@/stores/approval/approval_data.store';
 import { storeToRefs } from 'pinia';
 
-// Props & Emits
 const props = defineProps<{
   modelValue?: RaisePayrollFormData;
   readonly?: boolean;
@@ -124,13 +125,12 @@ const emit = defineEmits<{
 }>();
 
 export interface RaisePayrollFormData {
-  raisePercent: number;  // 인상률
-  beforeSalary: number;  // 인상 전 급여
-  afterSalary: number;   // 인상 후 급여
+  raisePercent: number;
+  beforeSalary: number;
+  afterSalary: number;
   reason: string;
 }
 
-// Store
 const approvalDataStore = useApprovalDataStore();
 const { payroll } = storeToRefs(approvalDataStore);
 
@@ -140,8 +140,7 @@ onMounted(async () => {
   }
 });
 
-// --- State Management ---
-const increaseType = ref<'direct' | 'rate'>('rate'); // 입력 방식 (작성 모드용)
+const increaseType = ref<'direct' | 'rate'>('rate');
 
 const formData = reactive<RaisePayrollFormData>({
   raisePercent: props.modelValue?.raisePercent || 0,
@@ -150,14 +149,14 @@ const formData = reactive<RaisePayrollFormData>({
   reason: props.modelValue?.reason || ''
 });
 
-// [동기화 1] 부모 -> 자식 (초기 로딩)
+
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     Object.assign(formData, newVal);
   }
 }, { deep: true });
 
-// [동기화 2] 자식 -> 부모 (변경 시 emit)
+
 watch(formData, (newVal) => {
   if (!props.readonly) {
     emit('update:modelValue', { ...newVal });
@@ -165,13 +164,6 @@ watch(formData, (newVal) => {
 }, { deep: true });
 
 
-// --- Computed Logic ---
-
-/**
- * 기존 기본급 계산
- * 1. 저장된 값(modelValue)이 있으면 우선 사용 (조회 모드)
- * 2. 없으면 스토어 값 사용 (신규 작성)
- */
 const currentBaseSalary = computed(() => {
   if (props.modelValue?.beforeSalary) {
     return props.modelValue.beforeSalary;
@@ -179,7 +171,7 @@ const currentBaseSalary = computed(() => {
 
   const storeVal = payroll.value?.beforePayroll || 0;
 
-  // 작성 모드일 때 formData 동기화
+
   if (!props.readonly && formData.beforeSalary !== storeVal) {
     formData.beforeSalary = storeVal;
   }
@@ -187,9 +179,6 @@ const currentBaseSalary = computed(() => {
 });
 
 
-// --- Calculation Watchers ---
-
-// 1. 인상률 변경 시 -> 급여 자동 계산
 watch(() => formData.raisePercent, (newRate) => {
   if (increaseType.value === 'rate' && !props.readonly) {
     const base = currentBaseSalary.value;
@@ -199,19 +188,17 @@ watch(() => formData.raisePercent, (newRate) => {
   }
 });
 
-// 2. 급여 변경 시 -> 인상률 자동 계산
 watch(() => formData.afterSalary, (newSalary) => {
   if (increaseType.value === 'direct' && !props.readonly) {
     const base = currentBaseSalary.value;
     if (base > 0 && newSalary > 0) {
       const rate = ((newSalary - base) / base) * 100;
-      formData.raisePercent = Math.round(rate * 10) / 10; // 소수점 1자리 반올림
+      formData.raisePercent = Math.round(rate * 10) / 10;
     }
   }
 });
 
 
-// --- Input Formatting (Comma) ---
 const isFocused = ref(false);
 
 const displayAfterSalary = computed({
@@ -239,244 +226,5 @@ const formatNumber = (num: number | undefined) => {
 </script>
 
 <style scoped>
-.detail-form-section {
-  border: 1px solid #e2e8f0;
-  border-top: none;
-  border-radius: 0 0 14px 14px;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  font-family: "Inter-Regular", sans-serif;
-}
-
-.form-row {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  flex-wrap: wrap;
-}
-
-.border-top {
-  border-top: 1px solid #e2e8f0;
-}
-
-.row-label {
-  background: #f8fafc;
-  border-right: 1px solid #e2e8f0;
-  padding: 16px;
-  width: 140px;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.label-bottom {
-  border-bottom-left-radius: 14px;
-}
-
-.row-content {
-  padding: 16px 20px;
-  flex: 1;
-  min-width: 200px;
-  display: flex;
-  align-items: center;
-}
-
-.section-body {
-  flex: 1;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.label-text {
-  color: #45556c;
-  font-size: 14px;
-  line-height: 20px;
-  font-weight: 400;
-}
-
-.radio-group-row {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.group-title {
-  margin-right: 8px;
-}
-
-.radio-group {
-  display: flex;
-  gap: 16px;
-}
-
-.radio-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.radio-text {
-  color: #0f172b;
-  font-size: 14px;
-}
-
-.input-group-row.calculation-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.input-box {
-  height: 46px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 0 12px;
-  display: flex;
-  align-items: center;
-  background: #fff;
-  box-sizing: border-box;
-}
-
-.col-rate .input-box.rate-box {
-  width: 90px;
-  justify-content: flex-end;
-  background: #f8fafc;
-}
-
-.input-invisible {
-  border: none;
-  background: transparent;
-  width: fit-content;
-  outline: none;
-  font-size: 15px;
-  color: #0f172b;
-  font-family: inherit;
-}
-
-.text-right {
-  text-align: right;
-}
-
-.col-salary {
-  flex: 1;
-}
-
-.input-box.salary-box {
-  justify-content: space-between;
-}
-
-.input-box.salary-box.disabled {
-  background: #f8fafc;
-  border-color: #e2e8f0;
-  color: #94a3b8;
-}
-
-.input-box.salary-box.active {
-  border: 1px solid #4f46e5;
-  background: #fff;
-}
-
-.placeholder-text {
-  color: #94a3b8;
-  font-size: 14px;
-}
-
-.placeholder-text.active-placeholder {
-  color: #4f46e5;
-}
-
-.input-value {
-  font-size: 15px;
-  font-weight: 500;
-  color: #64748b;
-  text-align: right;
-  flex: 1;
-  margin-right: 4px;
-}
-
-.input-value.active-value {
-  color: #0f172b;
-}
-
-.unit-text {
-  font-size: 14px;
-  color: #64748b;
-}
-
-.unit-text.active-unit {
-  color: #4f46e5;
-}
-
-.arrow-icon {
-  color: #94a3b8;
-  font-size: 18px;
-  padding-bottom: 12px;
-}
-
-.reason-content {
-  flex-direction: column;
-  padding: 16px 20px;
-}
-
-.input-textarea {
-  width: 100%;
-  height: 250px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 12px;
-  resize: none;
-  font-family: "Inter-Regular", sans-serif;
-  font-size: 14px;
-  color: #0f172b;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.input-textarea::placeholder {
-  color: #94a3b8;
-}
-
-.input-textarea:focus {
-  border-color: #cbd5e1;
-}
-
-/* 읽기 전용 모드 스타일 */
-.readonly-value {
-  flex: 1;
-  padding: 10px 12px;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-}
-
-.readonly-textarea {
-  width: 100%;
-  height: 200px;
-  background-color: #f9fafb;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 16px;
-}
-
-.value-text {
-  flex: 1;
-  font-size: 14px;
-  color: #374151;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
+@import '@/assets/styles/approval/approval-payrollraise.css';
 </style>

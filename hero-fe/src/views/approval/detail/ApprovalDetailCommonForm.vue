@@ -7,13 +7,14 @@
  * - 부모 컴포넌트: ApprovalDetail.vue
  *
  * History
- *   2025/12/26 (민철) 최초 작성 (ApprovalCreateCommonForm 기반 읽기 전용 버전)
- *   2026/01/01 (혜원) 첨부파일 다운로드 기능 구현
+ * 2025/12/26 (민철) 최초 작성 (ApprovalCreateCommonForm 기반 읽기 전용 버전)
+ * 2026/01/01 (민철) 첨부파일 다운로드 기능 구현
+ * 2026/01/06 (민철) 주석 제거
  * </pre>
  *
  * @module approval
- * @author 민철, 혜원
- * @version 1.1
+ * @author 민철
+ * @version 1.2
 -->
 <template>
     <div class="form-wrapper">
@@ -21,14 +22,12 @@
             <div class="paper-padding">
                 <div class="paper-content">
 
-                    <!-- 제목 영역 -->
                     <div class="title-section">
                         <div class="title-row">
                             <h1 class="main-title">{{ document.templateName }}</h1>
                         </div>
                     </div>
 
-                    <!-- 상단 정보 + 결재선 -->
                     <div class="top-section">
                         <div class="info-table">
                             <div class="info-row">
@@ -73,11 +72,9 @@
                             </div>
                         </div>
 
-                        <!-- 결재 도장 영역 -->
                         <div class="stamp-area">
                             <div class="stamp-group">
 
-                                <!-- 결재선 도장 (최대 3개) -->
                                 <div v-for="(line, index) in displayLines" :key="index" class="stamp-box">
                                     <div class="stamp-header">
                                         <span class="stamp-role-label">{{ index === 0 ? '기안' : '결재' }}</span>
@@ -103,7 +100,6 @@
                                     </div>
                                 </div>
 
-                                <!-- 빈 도장 (3개 미만일 때) -->
                                 <div v-for="i in emptyStampCount" :key="`empty-${i}`" class="stamp-box">
                                     <div class="stamp-header">
                                         <span class="stamp-role-label">결재</span>
@@ -127,13 +123,10 @@
                         </div>
                     </div>
 
-                    <!-- 메인 폼 영역 -->
                     <div class="form-section">
 
-                        <!-- 공통 섹션 -->
                         <div class="main-form-section">
 
-                            <!-- 제목 -->
                             <div class="form-row">
                                 <div class="row-label-top">
                                     <span class="label-text">제목</span>
@@ -143,7 +136,6 @@
                                 </div>
                             </div>
 
-                            <!-- 결재선 (읽기 전용) -->
                             <div class="form-row">
                                 <div class="row-label">
                                     <span class="label-text">결재선</span>
@@ -182,7 +174,6 @@
                                 </div>
                             </div>
 
-                            <!-- 참조 (읽기 전용) -->
                             <div class="form-row" v-if="document.references && document.references.length > 0">
                                 <div class="row-label">
                                     <span class="label-text">참조</span>
@@ -229,7 +220,6 @@
 
                         </div>
 
-                        <!-- 동적 상세 폼 섹션 (슬롯으로 각 서식별 컴포넌트 주입) -->
                         <slot name="detail-section"></slot>
 
                     </div>
@@ -249,24 +239,16 @@ const props = defineProps<{
     parsedDetails: any;
 }>();
 
-/**
- * 도장 표시용 결재선 (최대 3개)
- */
+
 const displayLines = computed(() => {
     return props.document.lines.slice(0, 3);
 });
 
-/**
- * 빈 도장 개수 계산
- */
 const emptyStampCount = computed(() => {
     const lineCount = props.document.lines.length;
     return lineCount < 3 ? 3 - lineCount : 0;
 });
 
-/**
- * 날짜 포맷팅
- */
 const formatDate = (dateStr: string | null): string => {
     if (!dateStr) return '-';
     const date = new Date(dateStr);
@@ -276,9 +258,6 @@ const formatDate = (dateStr: string | null): string => {
     return `${year}-${month}-${day}`;
 };
 
-/**
- * 결재 상태에 따른 도장 클래스
- */
 const getStampClass = (status: string): string => {
     const classMap: Record<string, string> = {
         'APPROVED': 'approved',
@@ -289,9 +268,6 @@ const getStampClass = (status: string): string => {
     return classMap[status] || 'pending';
 };
 
-/**
- * 결재 상태 텍스트 클래스
- */
 const getStatusTextClass = (status: string): string => {
     const classMap: Record<string, string> = {
         'APPROVED': 'status-approved',
@@ -302,9 +278,6 @@ const getStatusTextClass = (status: string): string => {
     return classMap[status] || 'status-pending';
 };
 
-/**
- * 결재 상태 라벨
- */
 const getStatusLabel = (status: string): string => {
     const labelMap: Record<string, string> = {
         'APPROVED': '승인',
@@ -315,9 +288,6 @@ const getStatusLabel = (status: string): string => {
     return labelMap[status] || '대기';
 };
 
-/**
- * 파일 크기 포맷팅 (Bytes -> KB, MB)
- */
 const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -326,12 +296,7 @@ const formatFileSize = (bytes: number): string => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-/**
- * 파일 다운로드 핸들러
- * S3 Presigned URL을 사용하여 다운로드
- */
 const onDownload = (file: ApprovalAttachmentResponseDTO) => {
-    // downloadUrl이 있으면 바로 다운로드
     if (file.downloadUrl) {
         window.open(file.downloadUrl, '_blank');
     } else {
@@ -364,18 +329,15 @@ const onDownload = (file: ApprovalAttachmentResponseDTO) => {
     display: none;
 }
 
-/* 파일 목록 컨테이너 (스크롤 영역) */
 .file-list-wrapper {
-    /* 파일 항목 하나 높이(약 44px) * 3개 = 약 132px + 여유분 */
     max-height: 140px; 
-    overflow-y: auto; /* 내용이 넘치면 세로 스크롤 생성 */
+    overflow-y: auto;
     width: 100%;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     background-color: #fff;
 }
 
-/* 개별 파일 항목 */
 .file-item {
     display: flex;
     align-items: center;
@@ -386,7 +348,6 @@ const onDownload = (file: ApprovalAttachmentResponseDTO) => {
     transition: background-color 0.2s;
 }
 
-/* 마지막 항목은 밑줄 제거 */
 .file-item:last-child {
     border-bottom: none;
 }
@@ -400,8 +361,8 @@ const onDownload = (file: ApprovalAttachmentResponseDTO) => {
     align-items: center;
     
     gap: 8px;
-    flex: 1; /* 남은 공간 차지 */
-    min-width: 0; /* 텍스트 말줄임 처리를 위해 필수 */
+    flex: 1;
+    min-width: 0;
 }
 
 .file-icon {
@@ -413,7 +374,6 @@ const onDownload = (file: ApprovalAttachmentResponseDTO) => {
     color: #334155;
     font-weight: 500;
     
-    /* 긴 파일명 말줄임 (...) 처리 */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -423,7 +383,7 @@ const onDownload = (file: ApprovalAttachmentResponseDTO) => {
     font-size: 12px;
     color: #94a3b8;
     margin-left: 4px;
-    white-space: nowrap; /* 줄바꿈 방지 */
+    white-space: nowrap;
 }
 
 .btn-download-icon {
@@ -438,7 +398,6 @@ const onDownload = (file: ApprovalAttachmentResponseDTO) => {
     color: #3b82f6;
 }
 
-/* 스크롤바 커스텀 (Chrome, Safari, Edge) - 선택사항 */
 .file-list-wrapper::-webkit-scrollbar {
     width: 6px;
 }
