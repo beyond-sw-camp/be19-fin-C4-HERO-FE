@@ -36,6 +36,7 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
     const employees = ref<PayrollEmployeeResultResponse[]>([]);
     const targets = ref<PayrollBatchTargetEmployee[]>([]);
 
+    const employeeCountByBatchId = ref<Record<number, number>>({});
     const selectedBatch = computed(() =>
         selectedBatchId.value == null
             ? null
@@ -60,6 +61,21 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
         resetError();
         try {
             batches.value = await payrollAdminApi.listBatches(filter);
+            const pairs = await Promise.all(
+                batches.value.map(async (b) => {
+                    try {
+                        const detail = await payrollAdminApi.getBatchDetail(b.batchId);
+                        return [b.batchId, detail.totalEmployeeCount] as const;
+                    } catch {
+                        return [b.batchId, undefined] as const;
+                    }
+                })
+            );
+            const nextMap: Record<number, number> = {};
+            for (const [batchId, cnt] of pairs) {
+                if (typeof cnt === 'number') nextMap[batchId] = cnt;
+            }
+            employeeCountByBatchId.value = nextMap;
         } catch (e: unknown) {
             errorMessage.value = extractErrorMessage(e, '배치 목록 조회 실패');
             throw e;
@@ -80,6 +96,10 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
             ]);
             batchDetail.value = detail;
             employees.value = emps;
+            employeeCountByBatchId.value = {
+                ...employeeCountByBatchId.value,
+                [batchId]: detail.totalEmployeeCount,
+            };
         } catch (e: unknown) {
             errorMessage.value = extractErrorMessage(e, '배치 선택 실패');
             throw e;
@@ -254,6 +274,7 @@ export const usePayrollAdminStore = defineStore('payrollAdminStore', () => {
         batchDetail,
         employees,
         targets,
+        employeeCountByBatchId,
 
         loadBatches,
         selectBatch,

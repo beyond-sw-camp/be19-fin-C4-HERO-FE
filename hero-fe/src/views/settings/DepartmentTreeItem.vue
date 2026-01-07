@@ -59,7 +59,7 @@ const handleChildRemove = (index: number) => {
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  background-color: #f8fafc;
+  background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   margin-bottom: 4px;

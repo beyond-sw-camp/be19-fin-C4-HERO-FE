@@ -15,7 +15,7 @@
   2025/12/16 - 민철 사이드바 스타일 높이 수정
   2025/12/16 - 동근 사이드바 관련 버그 수정(새로고침 시 active 상태 유지 & 접고 펼칠 때 active 상태 유지)
   2025/12/27 - 동근 급여 관리 정책&설정 메뉴 제거(설정쪽으로 이동) / 급여 이력 삭제, 사원 급여 조회 네이밍 변경
-  2025/01/04 - 동그 급여 관리자 권한에 따른 메뉴 노출 처리 추가
+  2025/01/04 - 동근 급여 관리자 권한에 따른 메뉴 노출 처리 추가
   </pre>
  
   @author 승건
@@ -305,10 +305,10 @@
             @click="handleSubMenuClick('review')">
           <div class="sub-menu-text">승진 심사</div>
         </div>
-        <div v-if="canSeePersonnelGeneral" class="sub-menu-item" :class="{ active: activeSubMenu === 'special' }"
+        <!-- <div v-if="canSeePersonnelGeneral" class="sub-menu-item" :class="{ active: activeSubMenu === 'special' }"
             @click="handleSubMenuClick('special')">
           <div class="sub-menu-text">특별 승진</div>
-        </div>
+        </div> -->
       </div>
 
         <!-- 조직도 -->
@@ -716,8 +716,8 @@ const syncActiveByRoute = (path: string) => {
   if (path.startsWith('/personnel')) {
     activeParent.value = 'personnel';
     if (!isCollapsed.value) isPersonnelOpen.value = true;
-    if (path.startsWith('/personnel/list')) activeSubMenu.value = 'employeeList';
-    else if (path.startsWith('/personnel/turnover')) activeSubMenu.value = 'turnover';
+    if (path.startsWith('/personnel/list') || path.startsWith('/personnel/register')) activeSubMenu.value = 'employeeList';
+    else if (path.startsWith('/personnel/retirement/turnover')) activeSubMenu.value = 'turnover';
     else if (path.startsWith('/personnel/promotion/plan')) activeSubMenu.value = 'plan';
     else if (path.startsWith('/personnel/promotion/recommend')) activeSubMenu.value = 'recommend';
     else if (path.startsWith('/personnel/promotion/review')) activeSubMenu.value = 'review';
@@ -753,7 +753,7 @@ watch(
 .sidebar-container {
   height: auto;
   max-width: 100%;
-  width: 230px;
+  width: 215px;
   background: white;
   transition: width 0.3s ease;
 }

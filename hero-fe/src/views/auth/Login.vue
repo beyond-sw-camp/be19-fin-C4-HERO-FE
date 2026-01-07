@@ -18,6 +18,7 @@
   <div class="login-container">
     <div class="login-card">
       <div class="login-header">
+        <img src="/images/logo.png" alt="HERO Logo" class="login-logo" />
         <h3>로그인</h3>
         <p>HERO HRIS 시스템에 접속하세요</p>
       </div>
@@ -69,6 +70,7 @@ const errorMessage = ref('');
 const passwordFieldType = ref<'password' | 'text'>('password');
 const saveId = ref(false);
 const showPasswordChangeModal = ref(false);
+const isLoading = ref(false);
 
 const router = useRouter();
 const route = useRoute();
@@ -88,7 +90,10 @@ const togglePasswordVisibility = () => {
  * @returns {Promise<void>}
  */
 const handleLogin = async () => {
+  if (isLoading.value) return; // 이미 요청 중이면 중단
+
   errorMessage.value = ''; // 이전 오류 메시지 초기화
+  isLoading.value = true;  // 로딩 시작
 
   // 아이디 저장 로직
   if (saveId.value) {
@@ -130,14 +135,17 @@ const handleLogin = async () => {
     }
   } catch (error: any) {
     // 401 오류는 아이디/비밀번호 오류로 간주하고 명확한 메시지를 표시합니다.
-    if (error.response?.status === 401) {
-      errorMessage.value = '이메일 또는 비밀번호가 올바르지 않습니다.';
-    } else if (error.response?.data?.message) {
+    if (error.response?.data?.message) {
       errorMessage.value = error.response.data.message;
+    } else if (error.response?.status === 401) {
+      errorMessage.value = '아이디 또는 비밀번호가 일치하지 않습니다.';
     } else {
       errorMessage.value = '로그인 중 오류가 발생했습니다.';
     }
+    password.value = ''; // 로그인 실패 시 비밀번호 초기화
     console.error('Login error:', error);
+  } finally {
+    isLoading.value = false; // 로딩 종료
   }
 };
 
@@ -172,35 +180,69 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: #f0f2f5;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 배경 워터마크 장식 */
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background-image: url('/images/onlylogo.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  opacity: 0.05;
+  z-index: 0;
+  pointer-events: none;
+  margin-left: 400px;
 }
 
 .login-card {
+  position: relative;
+  z-index: 1;
   background-color: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 400px;
   overflow: hidden; /* 헤더의 둥근 모서리를 위해 추가 */
+  border-top: 5px solid #1C398E; /* 브랜드 컬러 포인트 */
 }
 
 .login-header {
-  padding: 24px 40px;
-  background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
-  color: #fff;
+  padding: 40px 40px 20px;
+  background: #fff;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.login-logo {
+  height: 40px;
+  margin-bottom: 16px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .login-header h3 {
   margin: 0;
   font-size: 24px;
   font-weight: bold;
-  text-align: left;
+  color: #1C398E;
+  margin-bottom: 8px;
 }
 
 .login-header p {
-  margin: 4px 0 0;
+  margin: 0;
   font-size: 14px;
-  opacity: 0.8;
+  color: #666;
 }
 
 .login-body {
@@ -291,6 +333,12 @@ button[type="submit"] {
 
 button[type="submit"]:hover {
   opacity: 0.9;
+}
+
+button[type="submit"]:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .error-message {

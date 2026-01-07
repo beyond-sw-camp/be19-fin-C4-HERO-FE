@@ -11,7 +11,7 @@
  * @author 동근
  * @version 1.0
 -->
-<template>
+<!-- <template>
   <div class="approval-tab">
     <div class="form-card">
           <div class="form-grid">
@@ -773,4 +773,4 @@ const nextApplyMonth = (createdAt: string) => {
 .table thead th.col-amount {
   text-align: center;
 }
-</style>
+</style> -->

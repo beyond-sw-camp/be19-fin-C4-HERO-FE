@@ -119,8 +119,10 @@ const handleSubmit = async () => {
   background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
   color: white; border: none; border-radius: 8px;
   cursor: pointer; font-weight: 600;
+  transition: opacity 0.2s;
 }
 .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+.btn-submit:hover:not(:disabled) { opacity: 0.9; }
 
 .error-message { color: #dc3545; text-align: center; margin-top: 12px; font-size: 14px; }
 </style>

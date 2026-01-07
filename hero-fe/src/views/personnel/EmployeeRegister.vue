@@ -1,30 +1,30 @@
 <template>
   <div class="page-container">
-    <div class="header">
-      <div class="title-wrapper">
-        <img class="back-icon" src="/images/backArrow.svg" @click="goBack" />
-        <h1 class="title">신규 사원 등록</h1>
-      </div>
-      <div class="button-group">
-        <button class="btn-cancel" @click="goBack">취소</button>
-        <button class="btn-save" @click="handleSave">등록</button>
+    <!-- 전체 화면 로딩 오버레이 -->
+    <div v-if="isLoading" class="loading-overlay">
+      <div class="spinner-large"></div>
+      <p>등록 중입니다...</p>
+    </div>
+
+    <div class="page-header">
+      <div class="header-inner">
+        <div class="title-wrapper">
+          <img class="back-icon" src="/images/backArrow.svg" @click="goBack" />
+          <h1 class="title">신규 사원 등록</h1>
+        </div>
+        <div class="button-group">
+          <button class="btn-cancel" @click="goBack">취소</button>
+          <button class="btn-save" @click="handleSave" :disabled="isLoading">
+            <span>{{ isLoading ? '등록 중...' : '등록' }}</span>
+          </button>
+        </div>
       </div>
     </div>
 
     <div class="content">
       <div class="form-box">
-        <div class="registration-type-selector">
-          <button
-            :class="['type-button', { active: registrationType === 'single' }]"
-            @click="registrationType = 'single'"
-          >
-            단일 등록
-          </button>
-          <button class="type-button" disabled>단체 등록 (준비중)</button>
-        </div>
-
         <!-- 단일 등록 폼 -->
-        <div v-if="registrationType === 'single'" class="form-content">
+        <div class="form-content">
           <h2 class="section-title">기본 정보</h2>
           <div class="form-grid">
             <div class="form-item">
@@ -112,9 +112,6 @@
             </div>
           </div>
         </div>
-        <div v-else class="form-placeholder">
-          <p>등록 방식을 선택해주세요.</p>
-        </div>
       </div>
     </div>
   </div>
@@ -132,12 +129,13 @@ const goBack = () => {
   router.push('/personnel/list');
 };
 
-const registrationType = ref<'single' | null>(null);
+const registrationType = ref<'single' | null>('single');
 
 const departmentOptions = ref<string[]>([]);
 const gradeOptions = ref<string[]>([]);
 const jobTitleOptions = ref<string[]>([]);
 
+const isLoading = ref(false);
 const formData = reactive<EmployeeRegisterParams>({
   employeeName: '',
   employeeNumber: '',
@@ -215,6 +213,7 @@ const isErrorWithResponse = (error: unknown): error is { response: { data: { mes
 
 const handleSave = async () => {
   if (registrationType.value !== 'single') return;
+  if (isLoading.value) return;
 
   // 필수값 체크
   if (!formData.employeeName || !formData.employeeNumber || !formData.email || !formData.phone || !formData.contractType || !formData.hireDate || !formData.baseSalary) {
@@ -244,6 +243,7 @@ const handleSave = async () => {
   if (formData.gradeName) submitData.append('gradeName', formData.gradeName);
   if (formData.jobTitleName) submitData.append('jobTitleName', formData.jobTitleName);
 
+  isLoading.value = true;
   try {
     const response = await createEmployee(submitData);
     if (response.data.success) {
@@ -263,6 +263,8 @@ const handleSave = async () => {
     } else {
       alert('사원 등록 중 오류가 발생했습니다.');
     }
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>
@@ -277,15 +279,26 @@ const handleSave = async () => {
   overflow: hidden;
 }
 
-.header {
+.page-header {
   width: 100%;
-  height: 50px;
-  background: white;
-  padding: 20px;
-  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-style: solid;
+  border-color: #e2e8f0;
+  border-width: 0px 0px 1px 0px;
+  padding: 6px 8px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 38px;
+  justify-content: center;
+}
+
+.header-inner {
+  display: flex;
+  flex-direction: row;
   align-items: center;
+  justify-content: space-between;
 }
 
 .title-wrapper {
@@ -296,10 +309,11 @@ const handleSave = async () => {
 
 .back-icon {
   cursor: pointer;
+  width: 24px;
 }
 
 .title {
-  font-size: 1.25rem;
+  font-size: 14px;
   font-weight: 600;
   color: #0f172b;
 }
@@ -312,21 +326,31 @@ const handleSave = async () => {
 .btn-save {
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
-  padding: 10px 24px;
-  border-radius: 10px;
+  padding: 6px 18px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   font-weight: 600;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-save:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
 }
 
 .btn-cancel {
-  background-color: #f1f5f9;
-  color: #334155;
-  padding: 10px 24px;
-  border-radius: 10px;
-  border: none;
+  background-color: white;
+  color: #62748e;
+  padding: 6px 11px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
   cursor: pointer;
   font-weight: 600;
+  font-size: 12px;
 }
 
 .content {
@@ -396,7 +420,7 @@ const handleSave = async () => {
 .form-content {
   display: flex;
   flex-direction: column;
-  margin-top: 30px; /* 선택기와 폼 내용 사이의 간격 */
+  margin-top: 0;
 }
 
 .section-title {
@@ -489,5 +513,35 @@ select:focus {
   .form-item.full-width {
     grid-column: span 1;
   }
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  font-weight: 600;
+  color: #1c398e;
+}
+
+.spinner-large {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #e2e8f0;
+  border-top-color: #1c398e;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

@@ -15,127 +15,152 @@
 <template>
   <div class="pay-search-page">
     <section class="panel">
-      <div class="filter-grid">
-        <div class="field">
-          <label class="field-label">급여월<span class="req">*</span></label>
-          <input
-            v-model="salaryMonth"
-            class="field-input"
-            placeholder="YYYY-MM (예: 2025-12)"
-            @keyup.enter="onSearch"
-          />
-        </div>
+      <div class="filter-bar">
+        <span class="total">총 {{ displayTotal }}건</span>
+        <div class="filter-right">
+        <span class="filter-label">필터</span>
 
-        <div class="field">
-            <label class="field-label">부서명</label>
-              <input
-            v-model="departmentKeyword"
-            class="field-input"
-            placeholder="부서명 검색"
-            @keyup.enter="onSearch"
-          />
-        </div>
+        <input
+          v-model="salaryMonth"
+          type="month"
+          class="filter-select"
+          :min="minMonth"
+          :max="currentMonth"
+          :disabled="loading"
+        />
 
-        <div class="field">
-          <label class="field-label">사원명/사번</label>
-          <input
-            v-model="keyword"
-            class="field-input"
-            placeholder="사원명 또는 사번"
-            @keyup.enter="onSearch"
-          />
-        </div>
-      </div>
+<select
+  v-model.number="departmentId"
+  class="filter-select"
+  :disabled="loading || deptLoading"
+>
+  <option :value="null">전체 부서</option>
+  <option
+    v-for="dept in visibleDepartmentOptions"
+    :key="dept.departmentId"
+    :value="dept.departmentId"
+  >
+    {{ dept.departmentName }}
+  </option>
+</select>
+        <!-- 정렬 기준 -->
+        <select v-model="sortKey" class="filter-select">
+          <option value="TOTAL">지급액</option>
+          <option value="DEDUCTION">공제</option>
+          <option value="NET">실수령액</option>
+        </select>
 
-      <div class="field">
-      <div class="filter-actions">
-        <div class="left-meta">
-                   <span class="total">
-            총 {{ displayTotal }}건
-          </span>
+        <!-- 정렬 방향 -->
+        <select v-model="sortOrder" class="filter-select">
+          <option value="DESC">내림차순</option>
+          <option value="ASC">오름차순</option>
+        </select>
+
+        <!-- 사원명/사번 -->
+        <input
+          v-model="keyword"
+          class="filter-input"
+          placeholder="사원명 또는 사번"
+          @keyup.enter="onSearch"
+        />
+
+
+        <!-- 조회 -->
+        <button
+          class="btn-primary"
+          type="button"
+          @click="onSearch"
+          :disabled="loading"
+        >
+          조회
+        </button>
+
+        <!-- 총 건수 / 에러 -->
+        <div class="filter-meta">
+
           <span v-if="errorMessage" class="error">{{ errorMessage }}</span>
         </div>
-
-
-        <div class="right-actions">
-          <button class="btn-primary" type="button" @click="onSearch" :disabled="loading">
-            조회
-          </button>
         </div>
       </div>
-      </div>
-    </section>
 
-    <section class="paneltwo">
-      <table class="table">
-        <thead>
-          <tr class="table-header">
-            <th>사번</th>
-            <th>사원명</th>
-            <th>부서</th>
-            <th>직책</th>
-            <th class="right">기본급</th>
-            <th class="right">수당</th>
-            <th class="right">공제</th>
-            <th class="right">실수령액</th>
-            <th>작업</th>
-          </tr>
-        </thead>
+      <!-- =====================
+           테이블 영역 (panel 내부)
+      ====================== -->
+      <div class="paneltwo">
+        <table class="table">
+          <thead>
+            <tr class="table-header">
+              <th>사번</th>
+              <th>사원명</th>
+              <th>부서</th>
+              <th>직책</th>
+              <th class="right">지급액</th>
+              <th class="right">공제</th>
+              <th class="right">실수령액</th>
+              <th>작업</th>
+            </tr>
+          </thead>
 
-        <tbody class="table-body">
-         <tr v-for="row in filteredRows" :key="row.payrollId">
-            <td class="table-cell link" @click="openDetail(row.payrollId)">
-              {{ row.employeeNumber }}
-            </td>
-            <td>{{ row.employeeName }}</td>
-            <td>{{ row.departmentName }}</td>
-            <td>{{ row.jobTitleName }}</td>
-            <td class="right">{{ money(row.baseSalary) }}</td>
-            <td class="right plus">+{{ money(row.allowanceTotal) }}</td>
-            <td class="right minus">-{{ money(row.deductionTotal) }}</td>
-            <td class="right">{{ money(row.netPay) }}</td>
-            <td>
-              <button class="btn-link" type="button" @click="openDetail(row.payrollId)">
-                상세
-              </button>
-            </td>
-          </tr>
+          <tbody class="table-body">
+            <tr v-for="row in filteredRows" :key="row.payrollId">
+              <td class="table-cell link" @click="openDetail(row.payrollId)">
+                {{ row.employeeNumber }}
+              </td>
+              <td>{{ row.employeeName }}</td>
+              <td>{{ row.departmentName }}</td>
+              <td>{{ row.jobTitleName }}</td>
+              <td class="right">{{ money(getGrossPay(row)) }}</td>
+              <td class="right minus">-{{ money(row.deductionTotal) }}</td>
+               <td class="right">{{ money(getRealNetPay(row)) }}</td>
+              <td>
+                <button
+                  class="btn-link"
+                  type="button"
+                  @click="openDetail(row.payrollId)"
+                >
+                  상세
+                </button>
+              </td>
+            </tr>
 
-         <tr v-if="!loading && filteredRows.length === 0">
-            <td colspan="9" class="empty">조회 결과가 없습니다.</td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="pager">
-        <button
-          class="pbtn"
-          type="button"
-          :disabled="loading || page <= 1"
-          @click="goPage(page - 1)"
-        >
-          이전
-        </button>
+            <tr v-if="!loading && filteredRows.length === 0">
+              <td colspan="8" class="empty">조회 결과가 없습니다.</td>
+            </tr>
+          </tbody>
+        </table>
 
-        <button
-          v-for="p in pageNumbers"
-          :key="p"
-          class="pnum"
-          type="button"
-          :class="{ active: p === page }"
-          :disabled="loading"
-          @click="goPage(p)"
-        >
-          {{ p }}
-        </button>
+        <!-- 페이지네이션 -->
+        <div class="pager">
+          <button
+            class="pbtn"
+            type="button"
+            :disabled="loading || page <= 1"
+            @click="goPage(page - 1)"
+          >
+            이전
+          </button>
 
-        <button
-          class="pbtn"
-          type="button"
-          :disabled="loading || page >= (totalPages || 1)"
-          @click="goPage(page + 1)"
-        >
-          다음
-        </button>
+          <button
+            v-for="p in pageNumbers"
+            :key="p"
+            class="pnum"
+            type="button"
+            :class="{ active: p === page }"
+            :disabled="loading"
+            @click="goPage(p)"
+          >
+            {{ p }}
+          </button>
+
+          <button
+            class="pbtn"
+            type="button"
+            :disabled="loading || page >= (totalPages || 1)"
+            @click="goPage(page + 1)"
+          >
+            다음
+          </button>
+        </div>
       </div>
     </section>
     <Teleport to="body">
@@ -167,12 +192,8 @@
 
               <div class="detail-totals">
                 <div class="total-card">
-                  <span class="total-label">기본급</span>
-                  <p class="total-value">{{ money(detail.baseSalary) }}</p>
-                </div>
-                <div class="total-card">
-                  <span class="total-label">수당</span>
-                  <p class="total-value plus">{{ money(detail.allowanceTotal) }}</p>
+                  <span class="total-label">총지급액</span>
+                  <p class="total-value">{{ money(detail.totalPay) }}</p>
                 </div>
                 <div class="total-card">
                   <span class="total-label">공제</span>
@@ -209,7 +230,9 @@
           </section>
 
           <footer class="modal-footer">
-            <button class="btn-secondary" type="button" @click="closeDetail">닫기</button>
+            <button class="btn-secondary" type="button" @click="closeDetail">
+              닫기
+            </button>
           </footer>
         </div>
       </div>
@@ -219,7 +242,8 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, watch, onUnmounted } from 'vue';
+import { useAttendanceDashboardStore } from '@/stores/attendance/dashboard';
 import { usePayrollPaymentStore } from '@/stores/payroll/payrollPaymentStore';
 
 const store = usePayrollPaymentStore();
@@ -229,7 +253,7 @@ const {
 
   salaryMonth,
   keyword,
-
+  departmentId,
   page,
   totalElements,
   totalPages,
@@ -242,28 +266,131 @@ const {
 
 const { search, goPage, openDetail, closeDetail } = store;
 
-const departmentKeyword = ref<string>('');
+const DEFAULT_MONTH = '2025-12'
+const initialLoaded = ref(false)
 
-const filteredRows = computed(() => {
-  const kw = departmentKeyword.value.trim().toLowerCase();
-  if (!kw) return rows.value;
-  return rows.value.filter((r) => (r.departmentName ?? '').toLowerCase().includes(kw));
+const getGrossPay = (r: any) => (r?.totalPay ?? r?.netPay ?? 0);
+const getRealNetPay = (r: any) => getGrossPay(r) - (r?.deductionTotal ?? 0);
+
+const onKeydown = (e: KeyboardEvent) => {
+  if (e.key !== 'Escape') return;
+  if (!detailOpen.value) return;
+  closeDetail();
+};
+
+watch(detailOpen, (open) => {
+  if (open) {
+    window.addEventListener('keydown', onKeydown);
+  } else {
+    window.removeEventListener('keydown', onKeydown);
+  }
 });
 
-// pagination numbers (1..totalPages)
+onUnmounted(() => {
+  window.removeEventListener('keydown', onKeydown);
+});
+
+
+const getTotalPay = (r: any) => {
+  const total = r?.totalPay;
+  if (total !== null && total !== undefined) return total;
+
+  const net = r?.netPay ?? 0;
+  const ded = r?.deductionTotal ?? 0;
+  return net + ded;
+};
+
+const getNetPay = (r: any) => {
+  const net = r?.netPay;
+  if (net !== null && net !== undefined) return net;
+
+  const total = getTotalPay(r);
+  const ded = r?.deductionTotal ?? 0;
+  return total - ded;
+};
+
+ const attendanceStore = useAttendanceDashboardStore()
+ const { departmentOptions, deptLoading } = storeToRefs(attendanceStore)
+ 
+const now = new Date()
+now.setMonth(now.getMonth() - 1)
+const currentMonth = now.toISOString().slice(0, 7)
+
+const minMonth = '2025-01'
+
+ const filteredRows = computed(() => {
+   let result = rows.value
+
+   const getValue = (r: any): number => {
+     switch (sortKey.value) {
+       case 'TOTAL':
+         return getGrossPay(r)
+       case 'DEDUCTION':
+         return r.deductionTotal ?? 0
+       case 'NET':
+         return getRealNetPay(r)
+       default:
+         return 0
+     }
+   }
+
+   result = [...result].sort((a, b) => {
+     const diff = getValue(a) - getValue(b)
+     return sortOrder.value === 'ASC' ? diff : -diff
+   })
+
+   return result
+ })
+
+type SortKey = 'TOTAL' | 'DEDUCTION' | 'NET'
+type SortOrder = 'ASC' | 'DESC'
+
+const sortKey = ref<SortKey>('NET')   
+const sortOrder = ref<SortOrder>('DESC')  
+
+  onMounted(async () => {
+   if (!departmentOptions.value.length) {
+     await attendanceStore.fetchDepartmentOptions()
+   }
+     if (!salaryMonth.value) {
+    salaryMonth.value = DEFAULT_MONTH
+  }
+
+  if (!initialLoaded.value) {
+    initialLoaded.value = true
+    page.value = 1
+    await search()
+  }
+ })
+
 const pageNumbers = computed(() => {
   const tp = totalPages.value || 1;
-  const pages: number[] = [];
-  for (let i = 1; i <= tp; i++) pages.push(i);
-  return pages;
+    const cur = page.value || 1;
+   if (tp <= 3) return Array.from({ length: tp }, (_, i) => i + 1);
+ 
+   let start = cur - 1;
+   let end = cur + 1;
+   if (start < 1) {
+     start = 1;
+     end = 3;
+   }
+   if (end > tp) {
+     end = tp;
+     start = tp - 2;
+   }
+ 
+   const pages: number[] = [];
+   for (let p = start; p <= end; p++) pages.push(p);
+   return pages;
 });
 
 const displayTotal = computed(() => {
-  return departmentKeyword.value.trim()
-    ? filteredRows.value.length
-    : totalElements.value;
+ return totalElements.value;
+
 });
-const money = (v: number) => `₩${(v ?? 0).toLocaleString()}`;
+ const money = (v?: number | null) =>
+   v === null || v === undefined ? '-' : `₩${v.toLocaleString()}`;
+
 
 const itemTypeLabel = (t?: string) => {
   switch ((t ?? '').toUpperCase()) {
@@ -280,6 +407,30 @@ async function onSearch() {
   page.value = 1;
   await search();
 }
+
+const PAYROLL_EXCLUDED_DEPARTMENTS = [
+  '관리자 부서',
+  '발령 대기 부서',
+]
+
+const visibleDepartmentOptions = computed(() => {
+  return departmentOptions.value.filter(
+    d => !PAYROLL_EXCLUDED_DEPARTMENTS.includes(d.departmentName)
+  )
+})
+
+watch(rows, (list) => {
+  if (!list?.length) return;
+  const r = list[0];
+  console.log({
+    grossShown: getGrossPay(r),
+    deduction: r.deductionTotal,
+    netShown: getRealNetPay(r),
+    formulaOk: getGrossPay(r) - (r.deductionTotal ?? 0) === getRealNetPay(r),
+  });
+}, { deep: true });
+
+
 </script>
 
 <style scoped>
@@ -302,19 +453,54 @@ async function onSearch() {
 
 .paneltwo {
   background-color: #ffffff;
-  border-bottom-left-radius: 16px;
-  border-bottom-right-radius: 16px;
-  border: 1px solid #e5e7eb;
-  padding: 0 0 16px;
+  padding: 12px 0 16px;
 }
 .field{
   padding: 0 20px;
 }
-.filter-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
+ .filter-bar {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   padding: 10px 12px;
+   background: #ffffff;
+   margin: 0 20px;
+ }
+ 
+ .filter-label {
+   color: #64748b;
+   font-size: 13px;
+   font-weight: 600;
+   white-space: nowrap;
+ }
+ 
+ .filter-select {
+   width: 180px;
+   height: 38px;
+   border-radius: 10px;
+   border: 1px solid #d1d5db;
+   padding: 0 10px;
+   font-size: 13px;
+   color: #1f2933;
+   background: #fff;
+ }
+ 
+ .filter-input {
+   width: 220px;
+   height: 38px;
+   border-radius: 10px;
+   border: 1px solid #d1d5db;
+   padding: 0 12px;
+   font-size: 13px;
+   background: #fff;
+ }
+ 
+ .filter-meta {
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   white-space: nowrap;
+ }
 
 .field-label {
   font-size: 13px;
@@ -393,7 +579,6 @@ async function onSearch() {
   color: #2563eb;
   font-size: 13px;
   cursor: pointer;
-  text-decoration: underline;
 }
 
 .btn-lite:disabled,
@@ -418,10 +603,6 @@ async function onSearch() {
 .table td {
   text-align: left;
   padding: 12px 16px;
-}
-
-.table-body tr:nth-child(2n) {
-  background-color: #e2e8f0;
 }
 
 .table-cell {
@@ -574,7 +755,7 @@ async function onSearch() {
 .detail-totals {
   margin-top: 12px;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -594,6 +775,14 @@ async function onSearch() {
   font-weight: 700;
   font-size: 14px;
 }
+ .filter-right {
+   margin-left: auto;          
+   display: flex;
+   align-items: center;
+   gap: 10px;
+   flex-wrap: wrap;        
+   justify-content: flex-end;  
+ }
 
 @media (max-width: 1100px) {
   .filter-grid {
@@ -602,5 +791,31 @@ async function onSearch() {
   .detail-totals {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+     .filter-bar {
+     flex-wrap: wrap;
+   }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  padding-top: 6px;
+
+  table-layout: fixed;
+}
+
+.table th,
+.table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table th,
+.table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

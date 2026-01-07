@@ -234,23 +234,25 @@ const formData = reactive<PromotionPlanFormData>({
   ])
 });
 
-// [동기화]
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
-    Object.assign(formData, newVal);
-    // 배열 딥카피
-    if (newVal.detailPlan) {
-      formData.detailPlan = newVal.detailPlan.map(item => ({ ...item }));
+    // 값이 완전히 동일하다면 덮어쓰지 않고 리턴 (Loop Break)
+    if (JSON.stringify(newVal) === JSON.stringify(formData)) {
+      return;
     }
+    Object.assign(formData, newVal);
   }
 }, { deep: true });
 
 watch(formData, (newVal) => {
   if (!props.readonly) {
+    // 방금 부모에게서 받은 값과 동일하다면 다시 Emit 하지 않음 (Loop Break)
+    if (JSON.stringify(newVal) === JSON.stringify(props.modelValue)) {
+      return;
+    }
     emit('update:modelValue', { ...newVal });
   }
 }, { deep: true });
-
 
 // --- Actions ---
 const addRow = () => {

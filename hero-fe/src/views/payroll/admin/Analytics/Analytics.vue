@@ -1,13 +1,13 @@
 <!--
  * <pre>
- * Vue Name : Report.vue
+ * Vue Name : Analytics.vue
  * Description     : 급여 보고서(관리자) 탭 컨테이너 페이지
  *
  * History
  *   2026/01/02 - 동근 최초 작성
  * </pre>
  *
- * @module payroll-report
+ * @module payroll-Analytics
  * @author 동근
  * @version 1.0
 -->
@@ -76,11 +76,12 @@ const activeTab = ref<TabKey>('summary');
 
 const monthOptions = computed(() => {
   const now = new Date();
+  const base = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const pad = (n: number) => String(n).padStart(2, '0');
 
   const list: string[] = [];
   for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const d = new Date(base.getFullYear(), base.getMonth() - i, 1);
     list.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`);
   }
   return list;
@@ -100,54 +101,64 @@ const selectedMonth = ref<YearMonth>(monthOptions.value[0] as YearMonth);
 
 .panel {
   width: 100%;
-  background: #ffffff;
-  border-radius: 14px;
+  background: transparent;
+  border-radius: 0px;
   border: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .panel-top {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 0;
+  margin-bottom: 0;
+  position: relative;
+  z-index: 2; 
 }
 
 .panel-tabs {
   display: inline-flex;
+  gap:0;
 }
 
 .tab {
-  width: 146px;
-  height: 52px;
+  width: 95px;
+  padding:10px;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #ffffff;
-  border-top: 2px solid #e2e8f0;
-  border-bottom: 2px solid #e2e8f0;
-  border-right: 2px solid #e2e8f0;
+  border: 1px solid #e2e8f0;
   font-size: 14px;
   color: #62748e;
   cursor: pointer;
-  padding: 0;
+  border-bottom: none; 
 }
 
 .tab-left {
-  border-left: 2px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
   border-top-left-radius: 14px;
+  border-bottom-left-radius: 0;
 }
 
 .tab-right {
   border-top-right-radius: 14px;
+  border-bottom-right-radius: 0;
+}
+
+.tab + .tab {
+  border-left: none;
 }
 
 .tab-active {
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: #ffffff;
   font-weight: 700;
+  border-bottom: none;
 }
 
 .tab:disabled {
@@ -158,7 +169,8 @@ const selectedMonth = ref<YearMonth>(monthOptions.value[0] as YearMonth);
 .toolbar {
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0;
+  background: transparent;
 }
 
 .toolbar-right {
@@ -184,6 +196,11 @@ const selectedMonth = ref<YearMonth>(monthOptions.value[0] as YearMonth);
 }
 
 .panel-body {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  border-top-left-radius: 0;  
+  border-top-right-radius: 0; 
   padding: 20px 0 24px;
 }
 </style>

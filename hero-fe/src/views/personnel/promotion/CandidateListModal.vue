@@ -47,15 +47,12 @@
           </table>
         </div>
       </div>
-
-      <div class="modal-footer">
-        <button class="btn-confirm" @click="close">확인</button>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue';
 import type { PromotionCandidateDTO } from '@/types/personnel/promotion.types';
 
 // Props 정의
@@ -100,6 +97,15 @@ const getStatusClass = (status?: string) => {
     default: return '';
   }
 };
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && props.open) {
+    close();
+  }
+};
+
+onMounted(() => window.addEventListener('keydown', handleKeydown));
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 </script>
 
 <style scoped>
@@ -129,19 +135,19 @@ const getStatusClass = (status?: string) => {
 }
 
 .modal-header {
-  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
-  padding: 16px 24px;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 20px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  color: white;
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 18px;
   font-weight: 700;
-  color: white;
+  color: #1C398E;
 }
 
 .close-btn {
@@ -149,7 +155,7 @@ const getStatusClass = (status?: string) => {
   border: none;
   font-size: 1.8rem;
   cursor: pointer;
-  color: white;
+  color: #94a3b8;
   line-height: 1;
 }
 
@@ -206,26 +212,5 @@ const getStatusClass = (status?: string) => {
 .no-data {
   padding: 40px !important;
   color: #94a3b8;
-}
-
-.modal-footer {
-  padding: 16px 24px;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.btn-confirm {
-  background: #1c398e;
-  color: white;
-  border: none;
-  padding: 10px 30px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.btn-confirm:hover {
-  background: #162456;
 }
 </style>

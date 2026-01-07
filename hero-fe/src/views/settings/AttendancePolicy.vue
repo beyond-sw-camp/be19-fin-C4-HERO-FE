@@ -4,19 +4,28 @@
   Description : 근태 설정 - 근무제 템플릿(Work System Template) 관리 화면
                 - 템플릿 목록 조회
                 - 시간/휴게시간 수정 후 일괄 저장
+                - 신규 템플릿 추가
 
   History
     2025/12/29 (지윤) 근무제 템플릿 조회/저장 화면 최초 작성
+    2026/01/07 (혜원) 신규 템플릿 추가 기능 구현
   </pre>
 -->
 
 <template>
   <div class="page-content">
-    <!-- 상단 헤더 영역: 저장 버튼 -->
+    <!-- 상단 헤더 영역: 근무제 생성 + 저장 버튼 -->
     <div class="page-header">
       <button
         type="button"
-        class="btn-save"
+        class="btn-action"
+        @click="onAddTemplate"
+      >
+        근무제 생성
+      </button>
+      <button
+        type="button"
+        class="btn-action"
         @click="onSaveTemplates"
       >
         저장
@@ -28,10 +37,11 @@
       <table class="data-table">
         <thead>
           <tr>
+            <th class="w-100">정책 번호</th>
             <th>근무제명</th>
             <th class="w-140">시작</th>
             <th class="w-140">종료</th>
-            <th class="w-160">휴게(분)</th>
+            <th class="w-160">휴게시간(분)</th>
           </tr>
         </thead>
 
@@ -40,6 +50,11 @@
             v-for="row in localTemplates"
             :key="row.workSystemTemplateId"
           >
+            <!-- 정책 번호 -->
+            <td class="text-center">
+              {{ row.workSystemTemplateId > 0 ? row.workSystemTemplateId : '-' }}
+            </td>
+
             <!-- 근무제명(사유) -->
             <td>
               <input
@@ -84,7 +99,7 @@
           <!-- 데이터 없음 -->
           <tr v-if="localTemplates.length === 0">
             <td
-              colspan="4"
+              colspan="5"
               class="no-data"
             >
               등록된 근무제가 없습니다.
@@ -122,6 +137,7 @@ interface WorkSystemTemplateRow {
    로컬 상태
    ========================= */
 const localTemplates = ref<WorkSystemTemplateRow[]>([]);
+let newTemplateIdCounter = -1; // 신규 템플릿 임시 ID (음수로 구분)
 
 /* =========================
    시간 포맷 변환 유틸
@@ -182,6 +198,26 @@ onMounted(() => {
 });
 
 /* =========================
+   템플릿 추가
+   ========================= */
+
+/**
+ * 신규 근무제 템플릿 추가
+ */
+const onAddTemplate = (): void => {
+  const newTemplate: WorkSystemTemplateRow = {
+    workSystemTemplateId: newTemplateIdCounter--, // 음수로 신규 구분
+    workSystemTypeId: 1, // 기본값
+    reason: '',
+    startTimeHHmm: '09:00',
+    endTimeHHmm: '18:00',
+    breakMinMinutes: 60,
+  };
+  
+  localTemplates.value.push(newTemplate);
+};
+
+/* =========================
    저장 처리
    ========================= */
 
@@ -235,21 +271,23 @@ const onSaveTemplates = async (): Promise<void> => {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 12px;
   padding: 24px 24px 0;
   margin-bottom: 20px;
 }
 
-.btn-save {
+.btn-action {
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: #ffffff;
   border: none;
-  padding: 10px 24px;
+  height: 40px;
+  padding: 0 15px;
   border-radius: 10px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.btn-save:hover {
+.btn-action:hover {
   background-color: #162456;
 }
 
@@ -274,12 +312,16 @@ const onSaveTemplates = async (): Promise<void> => {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  table-layout: fixed;
 }
 
 .data-table th,
 .data-table td {
-  padding: 15px;
+  padding: 12px 16px;
   border-bottom: 1px solid #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .data-table th {
@@ -296,10 +338,14 @@ const onSaveTemplates = async (): Promise<void> => {
 .input-time,
 .input-number {
   width: 100%;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 2px solid #cad5e2;
+  background: #ffffff;
+  box-sizing: border-box;
+  margin: 0;
+  vertical-align: middle;
 }
 
 .text-center {
@@ -310,10 +356,6 @@ const onSaveTemplates = async (): Promise<void> => {
   padding: 40px 0;
   text-align: center;
   color: #94a3b8;
-}
-
-.w-100 {
-  width: 100px;
 }
 
 .w-140 {

@@ -44,6 +44,7 @@ export type PayrollPaymentSearchRow = {
     jobTitleName: string;
     baseSalary: number;
     allowanceTotal: number;
+    totalPay?: number;
     deductionTotal: number;
     netPay: number;
     payrollStatus: string;

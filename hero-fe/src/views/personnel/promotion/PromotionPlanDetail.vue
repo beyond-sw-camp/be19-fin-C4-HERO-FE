@@ -8,16 +8,18 @@
 <template>
   <div class="detail-container">
     <!-- 헤더 -->
-    <div class="header-container">
-      <div class="header-left">
-        <button class="back-btn" @click="goBack">
-          ←
-        </button>
-        <h2 class="page-title">승진 계획 상세</h2>
-      </div>
-      <div class="header-right">
-        <!-- <button class="btn-edit" @click="goToEdit">수정</button> -->
-        <!-- <button class="btn-delete" @click="deletePlan">삭제</button> -->
+    <div class="page-header">
+      <div class="header-inner">
+        <div class="back-label-wrap">
+          <button class="btn-back" @click="goBack">
+            <img class="icon-arrow" src="/images/arrow.svg" alt="뒤로가기" />
+          </button>
+          <div class="back-label">승진 계획 상세</div>
+        </div>
+        <div class="action-group">
+          <!-- <button class="btn-cancel" @click="goToEdit">수정</button> -->
+          <!-- <button class="btn-delete" @click="deletePlan">삭제</button> -->
+        </div>
       </div>
     </div>
 
@@ -151,69 +153,23 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import "@/assets/styles/approval/approval-detail.css";
+
 .detail-container {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.header-container {
-  width: 100%;
-  height: 50px;
-  background: white;
-  padding: 0 20px;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.header-right {
-  display: flex;
-  gap: 8px;
-}
-
-.back-btn {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: #64748b;
-  padding: 5px;
-}
-
-.back-btn:hover {
-  color: #1c398e;
-}
-
-.page-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #0f172b;
-}
-
-.btn-edit, .btn-delete {
-  padding: 8px 16px;
+.btn-cancel {
+  background-color: white;
+  color: #62748e;
+  padding: 6px 11px;
   border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
+  border: 1px solid #e2e8f0;
   cursor: pointer;
-  border: none;
-}
-
-.btn-edit {
-  background: #f1f5f9;
-  color: #475569;
-}
-
-.btn-delete {
-  background: #fee2e2;
-  color: #ef4444;
+  font-weight: 600;
+  font-size: 12px;
 }
 
 .content-wrapper {
@@ -334,4 +290,12 @@ onMounted(() => {
   padding: 40px;
   color: #64748b;
 }
+
+/* 색상 유틸리티 클래스 */
+.t-blue { color: #1C398E !important; }
+.t-green { color: #0D542B !important; }
+.t-red { color: #82181A !important; }
+.t-orange { color: #7E2A0C !important; }
+.t-brown { color: #733E0A !important; }
+.t-dark { color: #0F172B !important; }
 </style>

@@ -3,7 +3,10 @@
     <div class="modal-content" :class="{ 'large-size': selectedEvaluationId }">
       <!-- 모달 헤더 -->
       <div class="modal-header">
-        <h3>{{ selectedEvaluationId ? '평가 상세 정보' : '평가 이력' }}</h3>
+        <div class="header-title-group">
+          <img v-if="selectedEvaluationId" class="back-icon" src="/images/backArrow.svg" @click="selectedEvaluationId = null" />
+          <h3>{{ selectedEvaluationId ? '평가 상세 정보' : '평가 이력' }}</h3>
+        </div>
         <button class="close-btn" @click="closeModal">×</button>
       </div>
 
@@ -124,8 +127,20 @@ const getGradeClass = (rank: string) => {
 }
 
 .modal-content.large-size {
-  width: 900px;
+    width: 1200px; /* 모달 너비를 900px에서 1200px로 확장 */
   height: 80vh;
+}
+
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.back-icon {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
 }
 
 .modal-header {

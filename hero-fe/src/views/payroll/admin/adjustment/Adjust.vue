@@ -16,26 +16,26 @@
   <div class="adjust-page">
     <div class="panel">
       <div class="panel-tabs">
-        <button
+        <!-- <button
           class="tab tab-left"
           :class="{ 'tab-active': activeTab === 'approval' }"
           @click="activeTab = 'approval'"
         >
           조정 요청(결재)
-        </button>
-
+        </button> -->
+<!-- 
         <button
           class="tab tab-right"
           :class="{ 'tab-active': activeTab === 'manual' }"
           @click="activeTab = 'manual'"
         >
           수기 조정
-        </button>
+        </button> -->
       </div>
 
       <div class="panel-body">
         <ApprovalAdjustmentTab v-if="activeTab === 'approval'" />
-        <ManualAdjustmentTab v-else />
+        <!-- <ManualAdjustmentTab v-else /> -->
       </div>
     </div>
   </div>
@@ -45,7 +45,6 @@
 import { ref } from 'vue';
 
 import ApprovalAdjustmentTab from './ApprovalAdjustmentTab.vue';
-import ManualAdjustmentTab from './ManualAdjustmentTab.vue';
 
 type TabKey = 'approval' | 'manual';
 
