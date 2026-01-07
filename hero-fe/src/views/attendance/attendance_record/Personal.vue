@@ -156,7 +156,7 @@
                     <th class="col-time">퇴근시간</th>
                     <th class="col-personal">근무시간</th>
                     <th>근무제</th>
-                    <th>결재양식 작성</th>
+                    <th>빠른 결재 작성</th>
                   </tr>
                 </thead>
 
