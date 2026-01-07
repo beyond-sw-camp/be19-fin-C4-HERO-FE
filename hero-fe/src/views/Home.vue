@@ -471,7 +471,7 @@ onUnmounted(() => {
   display: flex;
   gap: 27px;
   padding: 30px;
-  background-color: #f8fafc;
+  /* background-color: #f8fafc; */
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
 }

@@ -110,13 +110,14 @@ const saveJobTitles = async () => {
 }
 
 .btn-save {
+  padding: 0 15px;
+  height: 40px;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
   border: none;
-  padding: 10px 24px;
   border-radius: 10px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .btn-save:hover {
@@ -146,11 +147,15 @@ const saveJobTitles = async () => {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  table-layout: fixed;
 }
 
 .data-table th, .data-table td {
-  padding: 15px;
+  padding: 12px 16px;
   border-bottom: 1px solid #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .data-table th {
@@ -165,10 +170,14 @@ const saveJobTitles = async () => {
 
 .input-text {
   width: 100%;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 2px solid #cad5e2;
+  background: #ffffff;
+  box-sizing: border-box;
+  margin: 0;
+  vertical-align: middle;
 }
 
 .text-center {

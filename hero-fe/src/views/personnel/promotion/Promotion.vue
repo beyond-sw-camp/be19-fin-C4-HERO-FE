@@ -18,7 +18,7 @@
 .promotion-base-container {
   width: 100%;
   height: 100%;
-  background-color: #f8fafc;
+  /* background-color: #f8fafc; */
   box-sizing: border-box;
 }
 </style>

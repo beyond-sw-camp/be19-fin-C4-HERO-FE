@@ -2,8 +2,8 @@
   <div class="page-content">
     <!-- 검색 -->
     <div class="search-container">
-      <input v-model="searchQuery" @keyup.enter="fetchData" type="text" placeholder="사원명 검색" class="search-input" />
-      <button @click="fetchData" class="btn-search">검색</button>
+      <input v-model="searchQuery" @keyup.enter="handleSearch" type="text" placeholder="사원명 검색" class="search-input" />
+      <button @click="handleSearch" class="btn-search">검색</button>
     </div>
 
     <!-- 테이블 -->
@@ -46,30 +46,10 @@
         </tbody>
       </table>
       <!-- 페이지네이션 -->
-      <div class="pagination">
-        <button
-          class="page-button"
-          :disabled="currentPage === 1"
-          @click="changePage(currentPage - 1)"
-        >
-          이전
-        </button>
-        <button
-          v-for="p in totalPages"
-          :key="p"
-          @click="changePage(p)"
-          :class="['page-button', { 'page-active': currentPage === p }]"
-        >
-          {{ p }}
-        </button>
-        <button
-          class="page-button"
-          :disabled="currentPage === totalPages"
-          @click="changePage(currentPage + 1)"
-        >
-          다음
-        </button>
-      </div>
+      <SlidingPagination
+        v-model="currentPage"
+        :total-pages="totalPages"
+      />
     </div>
 
     <!-- 권한 수정 모달 -->
@@ -77,7 +57,7 @@
       <div v-if="editingEmployee" class="modal-overlay" @click.self="editingEmployee = null">
         <div class="modal-content">
           <div class="modal-header">
-            <h3>권한 수정 - {{ editingEmployee.employeeName }} ({{ editingEmployee.employeeId }})</h3>
+            <h3>권한 수정 - {{ editingEmployee.employeeName }} ({{ editingEmployee.employeeNumber }})</h3>
           </div>
           <div class="modal-body">
             <div class="checkbox-group select-all">
@@ -89,17 +69,19 @@
               >
               <label for="role-all" class="label-bold">전체 선택</label>
             </div>
-            <div v-for="(role, index) in settingsStore.roles" :key="role.roleId || index" class="checkbox-group">
-              <input 
-                type="checkbox" 
-                :id="'role-' + (role.roleId || index)" 
-                :value="role.roleId" 
-                v-model="selectedRoleIds"
-                class="checkbox-input"
-                :disabled="isRoleDisabled(role.role)"
-                @change="handleRoleChange($event, role)"
-              >
-              <label :for="'role-' + (role.roleId || index)">{{ role.role }}</label>
+            <div class="role-grid">
+              <div v-for="(role, index) in settingsStore.roles" :key="role.roleId || index" :class="['role-item', { disabled: isRoleDisabled(role.role) }]">
+                <input 
+                  type="checkbox" 
+                  :id="'role-' + (role.roleId || index)" 
+                  :value="role.roleId" 
+                  v-model="selectedRoleIds"
+                  class="checkbox-input"
+                  :disabled="isRoleDisabled(role.role)"
+                  @change="handleRoleChange($event, role)"
+                >
+                <label :for="'role-' + (role.roleId || index)">{{ role.role }}</label>
+              </div>
             </div>
           </div>
           <div class="modal-footer">
@@ -113,13 +95,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
 import { useSettingsStore } from '@/stores/settings';
 import type { SettingsPermissionsResponseDTO, Role } from '@/types/settings';
+import SlidingPagination from '@/components/common/SlidingPagination.vue';
 
 const settingsStore = useSettingsStore();
 const permissions = ref<SettingsPermissionsResponseDTO[]>([]);
-const currentPage = ref(1);
+const currentPage = ref(0);
 const totalPages = ref(1);
 const searchQuery = ref('');
 
@@ -162,11 +145,19 @@ const isAllSelected = computed({
 const fetchData = async () => {
   // 검색어가 비어있으면 undefined로 설정하여 쿼리 파라미터에서 제외 (백엔드 500 에러 방지)
   const query = searchQuery.value.trim() ? searchQuery.value : undefined;
-  const res = await settingsStore.fetchPermissions(currentPage.value - 1, 10, query);
+  const res = await settingsStore.fetchPermissions(currentPage.value, 10, query);
   if (res.success) {
     console.log('Fetched Permissions (After Update):', res.data.content);
     permissions.value = res.data.content;
     totalPages.value = res.data.totalPages;
+  }
+};
+
+const handleSearch = () => {
+  if (currentPage.value === 0) {
+    fetchData();
+  } else {
+    currentPage.value = 0;
   }
 };
 
@@ -186,12 +177,6 @@ const getBadgeClass = (roleName: string) => {
   if (roleName === 'EMPLOYEE') return 'badge-employee';
   if (roleName === 'DEPT_MANAGER') return 'badge-manager';
   return 'badge-admin';
-};
-
-const changePage = (page: number) => {
-  if (page < 1 || page > totalPages.value) return;
-  currentPage.value = page;
-  fetchData();
 };
 
 const openEditModal = (emp: SettingsPermissionsResponseDTO) => {
@@ -235,9 +220,24 @@ const savePermissions = async () => {
   }
 };
 
+watch(currentPage, () => {
+  fetchData();
+});
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && editingEmployee.value) {
+    editingEmployee.value = null;
+  }
+};
+
 onMounted(async () => {
+  window.addEventListener('keydown', handleKeydown);
   await settingsStore.fetchRoles();
   fetchData();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
 });
 </script>
 
@@ -264,22 +264,25 @@ onMounted(async () => {
 }
 
 .search-input {
-  width: 300px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #334155;
+  width: 220px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 2px solid #cad5e2;
+  background: #ffffff;
+  color: #1f2933;
+  box-sizing: border-box;
 }
 
 .btn-search {
+  padding: 0 15px;
+  height: 40px;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
   border: none;
-  padding: 8px 24px;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .page-content {
@@ -306,22 +309,48 @@ onMounted(async () => {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
+  table-layout: fixed;
 }
 
 .data-table th, .data-table td {
-  padding: 15px;
+  padding: 12px 16px;
   border-bottom: 1px solid #e2e8f0;
   color: #334155;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .data-table th {
+  padding: 12px 16px;
   position: sticky;
   top: 0;
   z-index: 1;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
+}
+
+/* 컬럼 너비 고정 */
+.data-table th:nth-child(1) {
+  width: 20%;
+}
+
+.data-table th:nth-child(2) {
+  width: 15%;
+}
+
+.data-table th:nth-child(3) {
+  width: 15%;
+}
+
+.data-table th:nth-child(4) {
+  width: 40%;
+}
+
+.data-table th:nth-child(5) {
+  width: 10%;
 }
 
 .col-name {
@@ -421,7 +450,8 @@ onMounted(async () => {
 .modal-content {
   background: white;
   border-radius: 12px;
-  width: 400px;
+  width: 600px;
+  max-height: 85vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -429,45 +459,96 @@ onMounted(async () => {
 }
 
 .modal-header {
-  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
-  padding: 16px 24px;
-  color: white;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 20px 24px;
 }
 
 .modal-header h3 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 18px;
   font-weight: 600;
+  color: #1c398e;
 }
 
 .modal-body {
   padding: 24px;
+  overflow-y: auto;
 }
 
 .checkbox-group {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
 }
 
 .checkbox-group label {
   color: #334155;
   font-size: 0.95rem;
   cursor: pointer;
+  margin-left: 8px;
 }
 
 .checkbox-input {
-  margin-right: 8px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #1c398e;
 }
 
 .select-all {
-  padding-bottom: 12px;
-  margin-bottom: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
   border-bottom: 1px solid #e2e8f0;
 }
 
 .label-bold {
   font-weight: 600;
+}
+
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.role-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.role-item:hover {
+  background-color: #ffffff;
+  border-color: #1c398e;
+  box-shadow: 0 2px 8px rgba(28, 57, 142, 0.1);
+}
+
+.role-item.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f1f5f9;
+}
+
+.role-item.disabled:hover {
+  border-color: #e2e8f0;
+  box-shadow: none;
+}
+
+.role-item label {
+  cursor: pointer;
+  flex: 1;
+  margin-left: 10px;
+  font-size: 14px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.role-item.disabled label {
+  cursor: not-allowed;
 }
 
 .modal-footer {
@@ -481,17 +562,21 @@ onMounted(async () => {
   background-color: #f1f5f9;
   color: #4b5563;
   border: 1px solid #cbd5e1;
-  padding: 8px 16px;
-  border-radius: 6px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .btn-save-modal {
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
+  height: 40px;
+  padding: 0 15px;
+  border-radius: 10px;
   cursor: pointer;
+  font-weight: 600;
 }
 </style>

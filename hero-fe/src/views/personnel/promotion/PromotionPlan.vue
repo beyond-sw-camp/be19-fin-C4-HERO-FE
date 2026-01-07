@@ -1,30 +1,28 @@
 <template>
   <div class="plan-list-container">
-    <div class="header-container">
-      <h2 class="page-title">승진 계획 목록</h2>
-      <button class="register-btn" @click="goToCreate">
-        + 새 계획 등록
-      </button>
-    </div>
-
     <div class="content-wrapper">
       <!-- 탭 메뉴 (main-card 밖으로 이동하여 배경색 노출) -->
-      <div class="tabs-container">
+      <div class="panel-header">
         <button
           @click="changeTab(false)"
-          :class="['tab-button', !filterIsFinished ? 'active' : '']"
+          :class="['tab', 'tab-start', !filterIsFinished ? 'active' : '']"
         >
           진행중인 계획
         </button>
         <button
           @click="changeTab(true)"
-          :class="['tab-button', filterIsFinished ? 'active' : '']"
+          :class="['tab', 'tab-end', filterIsFinished ? 'active' : '']"
         >
           종료된 계획
         </button>
       </div>
 
       <div class="main-card">
+        <div class="action-bar">
+          <button class="register-btn" @click="goToCreate">
+            + 새 계획 등록
+          </button>
+        </div>
         <!-- 컨텐츠 -->
         <div class="content">
           <table class="promotion-table">
@@ -141,31 +139,20 @@ onMounted(() => {
   flex-direction: column;
 }
 
-.header-container {
-  width: 100%;
-  height: 50px;
-  background: white;
-  padding: 0 20px;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-container h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #0f172b;
-}
-
 .register-btn {
+  padding: 10px;
+  display: flex;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
   border: none;
-  padding: 10px 24px;
   border-radius: 10px;
   cursor: pointer;
+  align-items: center;
   font-weight: 600;
+}
+
+.register-btn:hover {
+  background: #162456;
 }
 
 .content-wrapper {
@@ -174,47 +161,54 @@ onMounted(() => {
   overflow-y: auto;
 }
 
-.main-card {
-  background: white;
-  border-radius: 14px;
-  border-top-left-radius: 0; /* 첫 번째 탭과 자연스럽게 연결되도록 */
-  border: 1px solid #e2e8f0;
-  display: flex;
-  flex-direction: column;
+.panel-header {
+  display: inline-flex;
+  flex-direction: row;
+  position: relative;
+  z-index: 1;
 }
 
-.tabs-container {
-  display: flex;
-  margin-bottom: 0;
-  z-index: 1; /* 카드보다 위에 표시 */
-}
-
-.tab-button {
-  width: 146px;
-  height: 52px;
+.tab {
+  padding: 10px 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
   border: 1px solid #e2e8f0;
+  background: #ffffff;
   font-size: 14px;
-  color: #0f172b;
+  font-weight: 500;
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.tab-button:first-child {
-  border-left: 1px solid #e2e8f0;
+.tab-start {
   border-top-left-radius: 14px;
 }
 
-.tab-button:last-child {
+.tab-end {
   border-top-right-radius: 14px;
-  border-right: 1px solid #e2e8f0;
+  border-left: none;
 }
 
-.tab-button.active {
+.tab.active {
+  color: #ffffff;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
-  color: white;
+  border-color: #1c398e;
+  border-bottom-color: transparent;
+}
+
+.main-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0 14px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  margin-top: -1px;
+}
+
+.action-bar {
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .content {
@@ -226,20 +220,27 @@ onMounted(() => {
 .promotion-table {
   width: 100%;
   border-collapse: collapse;
-  text-align: center;
+  text-align: left;
+  table-layout: fixed;
 }
 
 .promotion-table th, .promotion-table td {
-  padding: 15px;
+  padding: 12px 16px;
   border-bottom: 1px solid #e2e8f0;
   font-size: 14px;
-  color: #475569;
+  color: #334155;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .promotion-table th {
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
-  font-weight: 600;
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .promotion-table tbody tr {

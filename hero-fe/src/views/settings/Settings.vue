@@ -1,17 +1,22 @@
 <template>
   <div class="page-container">
-    <div class="header-container">
+    <!-- <div class="header-container">
       <h2 class="page-title">시스템 설정</h2>
-    </div>
+    </div> -->
 
     <div class="content-wrapper">
       <!-- 탭 메뉴 -->
       <div class="tabs-container">
         <button
-          v-for="tab in tabs"
+          v-for="(tab, index) in tabs"
           :key="tab.id"
           @click="changeTab(tab)"
-          :class="['tab-button', isActive(tab) ? 'active' : '']"
+          :class="[
+            'tab', 
+            isActive(tab) ? 'active' : '',
+            index === 0 ? 'tab-start' : '',
+            index === tabs.length - 1 ? 'tab-end' : ''
+          ]"
         >
           {{ tab.label }}
         </button>
@@ -41,10 +46,11 @@ const tabs = [
   { id: 'grade', label: '직급 관리', path: '/settings/grade' },
   { id: 'jobTitle', label: '직책 관리', path: '/settings/jobTitle' },
   { id: 'permission', label: '권한 관리', path: '/settings/permission' },
+  { id: 'attendancePolicy', label: '근태 설정', path: '/settings/attendance-policy' },
+  { id: 'payrollPolicy', label: '급여 설정', path: '/settings/payroll-policy' },
   { id: 'approval', label: '결재 관리', path: '/settings/approval' },
   { id: 'notification', label: '알림 관리', path: '/settings/notification' },
-  { id: 'payrollPolicy', label: '급여 설정', path: '/settings/payroll-policy' },
-  { id: 'attendancePolicy', label: '근태 설정', path: '/settings/attendance-policy' },
+
 ];
 
 const changeTab = (tab: any) => {
@@ -63,22 +69,11 @@ onMounted(() => {
 
 <style scoped>
 .page-container {
-  background-color: #f8fafc;
+  /* background-color: #f8fafc; */
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-
-.header-container {
-  width: 100%;
-  height: 50px;
-  background: white;
-  padding: 20px;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
 }
 
 .page-title {
@@ -112,32 +107,36 @@ onMounted(() => {
   z-index: 1;
 }
 
-.tab-button {
-  width: 146px;
-  height: 52px;
+.tab {
+  padding: 10px 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
-  border: 1px solid #e2e8f0;
+  
+  border-top: 1px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+
+  background-color: #ffffff;
   font-size: 14px;
-  color: #0f172b;
+  font-weight: 500;
   cursor: pointer;
+
+  white-space: nowrap;
 }
 
-.tab-button:first-child {
-  border-left: 1px solid #e2e8f0;
+.tab-start {
   border-top-left-radius: 14px;
 }
 
-.tab-button:last-child {
+.tab-end {
   border-top-right-radius: 14px;
-  border-right: 1px solid #e2e8f0;
 }
 
-.tab-button.active {
+.tab.active {
+  color: #ffffff;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
-  color: white;
 }
 
 .content-container {

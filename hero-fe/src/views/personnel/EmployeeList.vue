@@ -1,39 +1,36 @@
 <template>
   <div class="page-container">
-    <!-- 페이지 헤더 -->
-    <div class="header-container">
-      <h2>사원 정보</h2>
-      <button class="register-btn" @click="$router.push('/personnel/register')">
-        + 신규 사원 등록
-      </button>
-    </div>
-
     <div class="content-wrapper">
       <div class="main-card">
         <!-- 필터링 섹션 -->
         <div class="filter-container">
-          <div class="filter-group">
-            <select v-model="searchParams.resigningExpected" class="filter-select">
-                <option :value="0">재직자 전원</option>
-                <option :value="1">재직자</option>
-                <option :value="2">퇴사예정자</option>
-                <option :value="3">퇴사자</option>
-            </select>
-            <select v-model="searchParams.departmentName" class="filter-select">
-              <option value="">부서 전체</option>
-              <option v-for="dept in departmentOptions" :key="dept" :value="dept">{{ dept }}</option>
-            </select>
-            <select v-model="searchParams.jobTitleName" class="filter-select">
-              <option value="">직책 전체</option>
-              <option v-for="title in jobTitleOptions" :key="title" :value="title">{{ title }}</option>
-            </select>
-            <select v-model="searchParams.gradeName" class="filter-select">
-              <option value="">직급 전체</option>
-              <option v-for="grade in gradeOptions" :key="grade" :value="grade">{{ grade }}</option>
-            </select>
-            <input type="text" v-model="searchParams.employeeName" placeholder="사원명" class="filter-input" />
+          <button class="register-btn" @click="$router.push('/personnel/register')">
+            + 신규 사원 등록
+          </button>
+          <div class="search-area">
+            <div class="filter-group">
+              <select v-model="searchParams.resigningExpected" class="filter-select">
+                  <option :value="0">재직자 전원</option>
+                  <!-- <option :value="1">재직자</option> -->
+                  <option :value="2">퇴사예정자</option>
+                  <option :value="3">퇴사자</option>
+              </select>
+              <select v-model="searchParams.departmentName" class="filter-select">
+                <option value="">부서 전체</option>
+                <option v-for="dept in departmentOptions" :key="dept" :value="dept">{{ dept }}</option>
+              </select>
+              <select v-model="searchParams.jobTitleName" class="filter-select">
+                <option value="">직책 전체</option>
+                <option v-for="title in jobTitleOptions" :key="title" :value="title">{{ title }}</option>
+              </select>
+              <select v-model="searchParams.gradeName" class="filter-select">
+                <option value="">직급 전체</option>
+                <option v-for="grade in gradeOptions" :key="grade" :value="grade">{{ grade }}</option>
+              </select>
+              <input type="text" v-model="searchParams.employeeName" placeholder="사원명" class="filter-input" @keyup.enter="searchEmployees" />
+            </div>
+            <button class="search-btn" @click="searchEmployees">검색</button>
           </div>
-          <button class="search-btn" @click="searchEmployees">검색</button>
         </div>
     
         <!-- 사원 목록 테이블 -->
@@ -61,34 +58,34 @@
               </tr>
             </tbody>
           </table>
+
+          <!-- 페이지네이션 -->
+          <div class="pagination">
+            <button
+              class="page-button"
+              :disabled="pagination.page === 0 || isLoading"
+              @click="goToPage(pagination.page - 1)"
+            >
+              이전
+            </button>
+            <button
+              v-for="page in visiblePages"
+              :key="page"
+              class="page-button"
+              :class="{ 'page-active': page === pagination.page + 1 }"
+              @click="goToPage(page - 1)"
+            >
+              {{ page }}
+            </button>
+            <button
+              class="page-button"
+              :disabled="pagination.page >= pagination.totalPages - 1 || isLoading"
+              @click="goToPage(pagination.page + 1)"
+            >
+              다음
+            </button>
+          </div>
         </div>
-      </div>
-  
-      <!-- 페이지네이션 -->
-      <div class="pagination">
-        <button
-          class="page-button"
-          :disabled="pagination.page === 0 || isLoading"
-          @click="goToPage(pagination.page - 1)"
-        >
-          이전
-        </button>
-        <button
-          v-for="page in pagination.totalPages"
-          :key="page"
-          class="page-button"
-          :class="{ 'page-active': page === pagination.page + 1 }"
-          @click="goToPage(page - 1)"
-        >
-          {{ page }}
-        </button>
-        <button
-          class="page-button"
-          :disabled="pagination.page >= pagination.totalPages - 1 || isLoading"
-          @click="goToPage(pagination.page + 1)"
-        >
-          다음
-        </button>
       </div>
     </div>
 
@@ -100,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { fetchEmployees as apiFetchEmployees, fetchEmployeeSearchOptions } from '@/api/personnel/personnel';
 import type { EmployeeListResponse, EmployeeSearchParams } from '@/types/personnel/personnel';
 import EmployeeDetailModal from './EmployeeDetailModal.vue';
@@ -128,6 +125,27 @@ const selectedEmployeeId = ref<number | null>(null);
 const departmentOptions = ref<string[]>([]);
 const gradeOptions = ref<string[]>([]);
 const jobTitleOptions = ref<string[]>([]);
+
+const visiblePages = computed(() => {
+  const total = pagination.value.totalPages;
+  const current = pagination.value.page + 1;
+  const max = 3;
+
+  if (total <= max) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  let start = current - Math.floor(max / 2);
+  if (start < 1) start = 1;
+  
+  let end = start + max - 1;
+  if (end > total) {
+    end = total;
+    start = end - max + 1;
+  }
+
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+});
 
 // --- 메소드(Methods) ---
 
@@ -206,29 +224,29 @@ const goToPage = (page: number) => {
   getEmployees();
 }
 
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && isModalOpen.value) {
+    isModalOpen.value = false;
+  }
+};
+
 // 컴포넌트가 마운트될 때 사원 목록을 조회합니다.
 onMounted(() => {
   getEmployees();
   loadSearchOptions();
+  window.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
 });
 </script>
 
 <style scoped>
-.header-container {
-  width: 100%;
-  height: 50px;
-  background: white;
-  padding: 20px;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-container h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #0f172b;
+* {
+  font-size: 14px;
+  font-family: 'Inter-Regular', sans-serif;
+  box-sizing: border-box;
 }
 
 .content-wrapper {
@@ -236,17 +254,19 @@ onMounted(() => {
 }
 
 .register-btn {
+  padding: 10px;
+  display: flex;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
   border: none;
-  padding: 10px 24px;
   border-radius: 10px;
   cursor: pointer;
+  align-items: center;
   font-weight: 600;
 }
 
 .register-btn:hover {
-  background-color: #162456;
+  background: #162456;
 }
 
 .main-card {
@@ -264,6 +284,12 @@ onMounted(() => {
   gap: 20px;
 }
 
+.search-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .filter-group {
   display: flex;
   gap: 10px;
@@ -271,24 +297,27 @@ onMounted(() => {
 }
 
 .filter-input, .filter-select {
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 10px;
+  border-radius: 10px;
   border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  background: #ffffff;
+  color: #1f2933;
   min-width: 150px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .search-btn {
+  padding: 10px 15px;
   background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
   border: none;
-  padding: 8px 24px;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
 }
 .search-btn:hover {
-  background-color: #475569;
+  background: #162456;
 }
 
 .content {
@@ -299,12 +328,16 @@ onMounted(() => {
 .employee-table {
   width: 100%;
   border-collapse: collapse;
-  text-align: center;
+  text-align: left;
+  table-layout: fixed;
 }
 
 .employee-table th, .employee-table td {
-  padding: 15px;
+  padding: 12px 16px;
   border-bottom: 1px solid #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .employee-table th {
@@ -312,6 +345,28 @@ onMounted(() => {
   color: white;
   font-weight: 600;
   font-size: 14px;
+}
+
+/* 컬럼 너비 고정 */
+.employee-table th:nth-child(1),
+.employee-table td:nth-child(1) {
+  width: 15%;
+}
+.employee-table th:nth-child(2),
+.employee-table td:nth-child(2) {
+  width: 15%;
+}
+.employee-table th:nth-child(3),
+.employee-table td:nth-child(3) {
+  width: 30%;
+}
+.employee-table th:nth-child(4),
+.employee-table td:nth-child(4) {
+  width: 20%;
+}
+.employee-table th:nth-child(5),
+.employee-table td:nth-child(5) {
+  width: 20%;
 }
 
 .employee-table tbody tr {
@@ -333,7 +388,7 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-top: 20px;
+  padding: 20px;
   gap: 10px;
 }
 

@@ -1,15 +1,17 @@
 <template>
   <div class="review-page-container">
     <!-- 헤더 영역 -->
-    <div class="header-section">
+    <div class="page-header">
       <div class="header-inner">
-        <div class="header-left">
-          <button v-if="step > 1" class="btn-back-icon" @click="step--">←</button>
-          <h1 class="page-title">승진 심사</h1>
+        <div class="back-label-wrap">
+          <button v-if="step > 1" class="btn-back" @click="handleBack">
+            <img class="icon-arrow" src="/images/arrow.svg" alt="뒤로가기" />
+          </button>
+          <div class="back-label">승진 심사</div>
         </div>
         
         <!-- 단계 표시 (Breadcrumbs) -->
-        <div class="breadcrumbs" v-if="step > 1">
+        <div class="breadcrumbs">
           <span class="crumb" :class="{ active: step === 1 }" @click="step = 1">계획 선택</span>
           <span class="separator">›</span>
           <span class="crumb" :class="{ active: step === 2 }" @click="step > 2 ? step = 2 : null">심사 대상</span>
@@ -123,7 +125,6 @@
           <div v-for="candidate in selectedDetailPlan.candidateList" :key="candidate.candidateId" class="member-card" :class="getStatusClass(candidate.status)">
             <template v-if="editingId !== candidate.candidateId">
             <div class="member-header">
-              <div class="avatar">{{ candidate.employeeName?.charAt(0) || '?' }}</div>
               <div class="member-id">
                 <span class="name">{{ candidate.employeeName }} ({{ candidate.employeeNumber }})</span>
                 <span class="pos">{{ candidate.grade }}</span>
@@ -159,6 +160,8 @@
             <div class="extra-actions">
               <button class="btn-extra" @click="openEvaluationModal(candidate)">평가 상세</button>
               <button class="btn-extra" @click="openAttendanceDrawer(candidate)">근태 상세</button>
+              <button class="btn-extra" @click="openGradeHistory(candidate)">직급 로그</button>
+              <button class="btn-extra" @click="openDeptHistory(candidate)">부서 로그</button>
             </div>
 
             <div class="member-action" v-if="!isReviewed(candidate)">
@@ -204,19 +207,79 @@
       :employee-id="evaluationEmployeeId"
       @close="showEvaluationModal = false"
     />
+
+    <!-- 직급 로그 모달 -->
+    <div v-if="showGradeModal" class="modal-overlay" @click.self="closeModals">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>직급 변경 이력</h3>
+          <button class="close-modal-btn" @click="closeModals">×</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="isHistoryLoading" class="loading-state-modal">
+            <p>이력을 불러오는 중입니다...</p>
+          </div>
+          <div v-else-if="historyError" class="error-state-modal">
+            <p>{{ historyError }}</p>
+          </div>
+          <ul v-else-if="gradeHistoryList.length > 0" class="history-list">
+            <li v-for="item in gradeHistoryList" :key="item.employeeHistoryId" class="history-item">
+              <span class="history-date">{{ formatDateTime(item.changedAt) }}</span>
+              <div class="history-detail">
+                <span class="history-val">{{ item.gradeName }}</span>
+                <span class="history-type">{{ item.changeType }}</span>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="no-history">변경 이력이 없습니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 부서 로그 모달 -->
+    <div v-if="showDeptModal" class="modal-overlay" @click.self="closeModals">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>부서 변경 이력</h3>
+          <button class="close-modal-btn" @click="closeModals">×</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="isHistoryLoading" class="loading-state-modal">
+            <p>이력을 불러오는 중입니다...</p>
+          </div>
+          <div v-else-if="historyError" class="error-state-modal">
+            <p>{{ historyError }}</p>
+          </div>
+          <ul v-else-if="deptHistoryList.length > 0" class="history-list">
+            <li v-for="item in deptHistoryList" :key="item.employeeHistoryId" class="history-item">
+              <span class="history-date">{{ formatDateTime(item.changedAt) }}</span>
+              <div class="history-detail">
+                <span class="history-val">{{ item.departmentName }}</span>
+                <span class="history-type">{{ item.changeType }}</span>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="no-history">변경 이력이 없습니다.</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { storeToRefs } from 'pinia';
 import { usePromotionReviewStore } from '@/stores/personnel/promotionReview.store';
+import { useOrganizationStore } from '@/stores/organization/organization.store';
 import type { PromotionDetailForReviewResponseDTO, PromotionCandidateDTO, PromotionReviewRequestDTO } from '@/types/personnel/promotion.types';
 import EmployeeHalfChartDrawer from '@/views/attendance/attendanceDashBoard/EmplloyeeHalfChartDrawer.vue';
 import EvaluationHistoryModal from '@/views/evaluation/EvaluationHistoryModal.vue';
 
 const router = useRouter();
 const reviewStore = usePromotionReviewStore();
+const orgStore = useOrganizationStore();
+const { deptHistoryList, gradeHistoryList, isHistoryLoading, historyError } = storeToRefs(orgStore);
 
 // 심사 입력 상태 관리
 const editingId = ref<number | null>(null);
@@ -249,14 +312,48 @@ const openEvaluationModal = (candidate: PromotionCandidateDTO) => {
   }
 };
 
+// 로그 모달 상태
+const showDeptModal = ref(false);
+const showGradeModal = ref(false);
+
+const openDeptHistory = async (candidate: PromotionCandidateDTO) => {
+  if (!candidate.employeeId) return;
+  showDeptModal.value = true;
+  await orgStore.loadDepartmentHistory(candidate.employeeId);
+};
+
+const openGradeHistory = async (candidate: PromotionCandidateDTO) => {
+  if (!candidate.employeeId) return;
+  showGradeModal.value = true;
+  await orgStore.loadGradeHistory(candidate.employeeId);
+};
+
+const closeModals = () => {
+  showDeptModal.value = false;
+  showGradeModal.value = false;
+};
+
 onMounted(() => {
   // 심사 가능한 계획 목록 조회
   reviewStore.getReviewPlans();
 });
 
+const handleBack = () => {
+  if (step.value > 1) {
+    step.value--;
+  } else {
+    router.back();
+  }
+};
+
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return '-';
   return dateStr.split('T')[0];
+};
+
+const formatDateTime = (dateStr: string) => {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleString();
 };
 
 const handleSelectPlan = async (planId: number) => {
@@ -366,48 +463,28 @@ const handleElectronicApproval = () => {
 </script>
 
 <style scoped>
+@import "@/assets/styles/approval/approval-detail.css";
+
+.header-inner {
+  padding: 0 5px;
+}
+
+.back-label-wrap {
+  min-height: 40px; /* 뒤로가기 버튼이 없을 때도 높이 유지 */
+}
+
 .review-page-container  {
   width: 100%;
   min-height: 100vh;
-  background-color: #f8fafc;
-}
-
-/* Header */
-.header-section {
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 20px;
-}
-
-.header-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 10px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  /* background-color: #f8fafc; */
 }
 
 .content-area {
-  max-width: 1200px;
-  margin: 0 auto;
+  margin: 20px;
   padding: 30px;
   background: white;
   border-radius: 12px;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  margin-bottom: 40px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.page-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1e293b;
 }
 
 .breadcrumbs {
@@ -430,23 +507,6 @@ const handleElectronicApproval = () => {
 .separator {
   color: #cbd5e1;
   font-size: 12px;
-}
-
-.btn-back-icon {
-  background: none;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-  cursor: pointer;
-  font-size: 20px;
-  padding: 4px;
-  transition: all 0.2s;
-}
-
-.btn-back-icon:hover {
-  color: #334155;
 }
 
 /* Section Header */
@@ -486,7 +546,7 @@ const handleElectronicApproval = () => {
 }
 
 .plan-card:hover {
-  transform: translateY(-4px);
+  /* transform: translateY(-4px); */
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   border-color: #3b82f6;
 }
@@ -563,6 +623,7 @@ const handleElectronicApproval = () => {
   line-height: 1.6;
   margin-bottom: 30px;
   border: 1px solid #e2e8f0;
+  white-space: pre-wrap;
 }
 
 .detail-card {
@@ -618,7 +679,7 @@ const handleElectronicApproval = () => {
 }
 
 .stats strong {
-  color: #2563eb;
+  color: #1C398E;
 }
 
 .divider {
@@ -633,25 +694,25 @@ const handleElectronicApproval = () => {
 }
 
 .detail-card:hover .hover-arrow {
-  color: #3b82f6;
+  color: #1C398E;
   transform: translateX(4px);
 }
 
 /* Member Card (Step 3) */
 .member-list-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
 }
 
 .member-card {
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   transition: all 0.2s;
 }
 
@@ -662,14 +723,15 @@ const handleElectronicApproval = () => {
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   background: #e2e8f0;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 18px;
   color: #64748b;
 }
 
@@ -680,19 +742,20 @@ const handleElectronicApproval = () => {
 }
 
 .member-id .name {
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 16px;
   color: #1e293b;
 }
 
 .member-id .pos {
-  font-size: 12px;
+  font-size: 13px;
   color: #64748b;
 }
 
 .status-badge-small {
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -719,10 +782,10 @@ const handleElectronicApproval = () => {
 .member-stats {
   background: #f8fafc;
   border-radius: 8px;
-  padding: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .member-card.status-final-approved .member-stats {
@@ -734,7 +797,7 @@ const handleElectronicApproval = () => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  font-size: 13px;
+  font-size: 14px;
   gap: 8px;
 }
 
@@ -755,16 +818,17 @@ const handleElectronicApproval = () => {
 .extra-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .btn-extra {
-  flex: 1;
-  padding: 8px;
+  flex: 1 1 calc(50% - 8px);
+  padding: 10px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   color: #64748b;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -784,11 +848,11 @@ const handleElectronicApproval = () => {
 
 .btn-approve, .btn-reject {
   flex: 1;
-  padding: 6px 12px;
+  padding: 10px 12px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -835,9 +899,9 @@ const handleElectronicApproval = () => {
   to { transform: rotate(360deg); }
 }
 
-.fade-in {
+/* .fade-in {
   animation: fadeIn 0.3s ease-in-out;
-}
+} */
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -970,5 +1034,114 @@ const handleElectronicApproval = () => {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  width: 400px;
+  max-height: 600px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 0;
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-date {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.history-detail {
+  text-align: right;
+}
+
+.history-val {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.history-type {
+  font-size: 12px;
+  color: #3b82f6;
+}
+
+.no-history {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+  margin: 20px 0;
+}
+
+.loading-state-modal, .error-state-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #64748b;
+  text-align: center;
 }
 </style>

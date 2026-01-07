@@ -21,13 +21,6 @@
       </div>
     </div>
     
-    <!-- ===== Modal Header (Back Button) ===== -->
-    <div class="modal-header-bar" v-else>
-      <button class="btn-back-modal" @click="goBack">
-        <span class="arrow">←</span> 목록으로 돌아가기
-      </button>
-    </div>
-
     <div class="content">
       <div class="form-box" :class="{ 'modal-form-box': isModal }">
 
@@ -381,7 +374,7 @@ onMounted(loadDetail);
 
 .form-box.modal-form-box {
   border: none;
-  padding: 0;
+  padding: 40px;
   max-width: none;
 }
 
