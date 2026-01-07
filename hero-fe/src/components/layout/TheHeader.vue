@@ -11,7 +11,7 @@
   2025/12/11 (승건) 프로필 드롭다운 및 로그아웃 기능 추가
   2025/12/11 (동근) 로고 클릭 시 대시보드 이동 기능 추가, 로그인 세션 남은 시간 표시 & JSDoc 추가
   2025/12/16 (동근) logo-area 스타일 수정(border 제거)
-  2025/01/04 (혜원) 알림 뱃지 99+ 표시 처리 및 알림 UI 개선
+  2025/01/04 (혜원) 알림 뱃지 9+ 표시 처리 및 알림 UI 개선
   </pre>
  
   @author 동근
@@ -29,6 +29,14 @@
     <!-- 우측 영역 : 알림, 로그인 세션, 프로필 정보  -->
     <div class="right-area">
       <div class="right-content">
+      <!-- 로그인 세션 타이머 -->
+      <div class="session-box session-tooltip">
+        <div class="session-time session-only">
+          <img class="clock" src="/images/clock.png" />
+          <span class="time-text big">{{ formattedTime }}</span>
+        </div>
+      </div>
+
          <!-- 알림 버튼 클릭 이벤트 추가 -->
         <div class="icon-box" @click="goToNotifications">
           <div class="folder-wrap">
@@ -37,29 +45,14 @@
             </div>
             <!-- 안읽은 알림 뱃지 -->
             <span v-if="unreadCount > 0" class="alarm-badge">
-            {{ unreadCount > 99 ? '99+' : unreadCount }}
+            {{ unreadCount > 9 ? '9+' : unreadCount }}
             </span>
           </div>
         </div>
 
-        <div class="divider"></div>
-
-        <!-- 로그인 세션 타이머 -->
-        <div class="session-box">
-          <div class="session-title">로그인 세션</div>
-          <div class="session-time">
-            <div class="clock-icon">
-              <img class="clock" src="/images/clock.png"/>
-            </div>
-            <div class="time-text">{{ formattedTime }}</div>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
 
         <!-- 사용자 프로필 정보 -->
-        <div v-if="user" class="profile-container">
+        <div v-if="user" class="profile-container" ref="dropdownRef">
           <div class="profile-box" @click="toggleDropdown">
             <div class="profile-icon">
               <img v-if="user.imagePath && !imageLoadError" :src="profileImageUrl" class="profile-img" alt="Profile" @error="handleImageError" />
@@ -86,7 +79,7 @@
 
 <script setup lang="ts">
 
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { storeToRefs } from 'pinia';
 //세션 관리
@@ -151,24 +144,54 @@ const toggleDropdown = () => {
  * 현재 로그인한 사용자의 프로필 페이지로 라우팅
  */
 const goToMyPage = () => {
-  router.push('/mypage'); 
+  closeDropdown();
+  router.push('/mypage');
+};
+
+// 로그아웃 처리
+const handleLogout = async () => {
+  await authStore.logout();
+  closeDropdown();
+  router.push('/login');
+};
+const dropdownRef = ref<HTMLElement | null>(null);
+
+const closeDropdown = () => {
   isDropdownOpen.value = false;
 };
 
-const handleLogout = async () => {
-  // 스토어의 logout 액션을 호출하고 완료될 때까지 기다립니다.
-  await authStore.logout();
+// 바깥 클릭 닫기
+const onClickOutside = (e: MouseEvent) => {
+  if (!isDropdownOpen.value) return;
 
-  isDropdownOpen.value = false; // 클릭 후 드롭다운 닫기
+  const el = dropdownRef.value;
+  if (!el) return;
 
-  // 상태가 모두 초기화된 후, 로그인 페이지로 이동합니다.
-  router.push('/login');
+  if (!el.contains(e.target as Node)) {
+    closeDropdown();
+  }
+};
+
+// ESC 닫기
+const onKeyDown = (e: KeyboardEvent) => {
+  if (!isDropdownOpen.value) return;
+  if (e.key === 'Escape') closeDropdown();
 };
 
 // 헤더는 새로고침 때도 값이 있어야 하니까 한번 불러오기
 onMounted(() => {
-  notificationStore.fetchNotifications(); 
+  notificationStore.fetchNotifications();
+
+  // 캡처 단계로 걸면 stopPropagation 있어도 안정적
+  document.addEventListener('click', onClickOutside, true);
+  document.addEventListener('keydown', onKeyDown);
 });
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onClickOutside, true);
+  document.removeEventListener('keydown', onKeyDown);
+});
+
 </script>
 
 <style scoped>
@@ -201,7 +224,8 @@ onMounted(() => {
 }
 
 .logo {
-  width: 120px;
+  width: 100px;
+  margin-left: -25px;
   padding: 10px;
 }
 
@@ -221,7 +245,7 @@ onMounted(() => {
 .right-content {
   display: inline-flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
 }
 
 .icon-box {
@@ -280,20 +304,31 @@ onMounted(() => {
   height: 36px;
   background: #E2E8F0;
 }
-
 .session-box {
-  width: 70px; 
   height: 40px;
-  padding: 5px 10px;
-  background: #F8FAFC;
-  border-radius: 11.25px;
-  outline: 2px #E2E8F0 solid;
-  display: flex; 
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 10px;
+  display: flex;
   align-items: center;
+  width: 80px; /* 고정 너비 추가 */
+  margin-right: -14px; /* 오른쪽으로 당김 (값은 6~12px 사이 조절) */
+
+}
+
+.session-only {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%; /* 부모 너비에 맞춤 */
+  justify-content: center; /* 가운데 정렬 */
+}
+
+.time-text.big {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1A337D;
+  min-width: 50px; /* 최소 너비 지정 */
+  text-align: center; /* 가운데 정렬 */
 }
 
 .session-title {
@@ -359,8 +394,8 @@ onMounted(() => {
 }
 
 .profile-icon {
-  width: 40.5px;
-  height: 40.5px;
+  width: 35.5px;
+  height: 35.5px;
   background: linear-gradient(135deg, #1C398E 0%, #162456 100%);
   border-radius: 11.25px;
   color: white;
@@ -386,13 +421,13 @@ onMounted(() => {
 
 .profile-name {
   color: #1C398E;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .profile-team {
   color: #62748E;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .arrow-box {
@@ -465,4 +500,47 @@ onMounted(() => {
   border: 2px solid #fff;     /* 흰 테두리로 또렷하게 */
   line-height: 1;
 }
+
+.session-tooltip {
+  position: relative;
+}
+
+.tooltip-text {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: #90A1B9;   
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease;
+  z-index: 2000;
+  pointer-events: none; /* 툴팁이 hover 방해 안 하게 */
+}
+
+.session-tooltip:hover .tooltip-text {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 말풍선 꼬리 */
+.tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #90A1B9 transparent;
+}
+
 </style>

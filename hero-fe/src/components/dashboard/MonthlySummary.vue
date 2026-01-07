@@ -7,6 +7,7 @@
  
   History
   2025/12/26 (혜원) 최초 작성
+  2026/01/06 (혜원) 디자인 수정
   </pre>
  
   @author 혜원
@@ -32,10 +33,12 @@
         </div>
         <!-- 값 (예: 23일) -->
         <div class="summary-val">{{ m.value }}</div>
-        <!-- 라벨 (예: 일수) -->
-        <div class="summary-lab">{{ m.label }}</div>
-        <!-- 서브 라벨 (예: 근무) -->
-        <div class="summary-sub">{{ m.sub }}</div>
+<!-- 라벨 + 서브라벨 -->
+<div class="summary-label-row">
+  <span class="summary-lab">{{ m.label }}</span>
+  <span class="summary-sub">{{ m.sub }}</span>
+</div>
+
       </div>
     </div>
   </section>
@@ -64,7 +67,7 @@ defineProps<Props>();
   background: #fff;
   border-radius: 11.25px;
   border: 2px solid #E2E8F0;
-  padding: 29px;
+  padding: 10px 29px 29px 29px;
   box-shadow: 0px 1px 2px -1px rgba(0, 0, 0, 0.10);
 }
 
@@ -95,6 +98,7 @@ defineProps<Props>();
   margin: 0 auto 15px;
   display: flex;
   align-items: center;
+  margin-bottom: -1px;
   justify-content: center;
 }
 
