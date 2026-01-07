@@ -29,6 +29,14 @@
     <!-- 우측 영역 : 알림, 로그인 세션, 프로필 정보  -->
     <div class="right-area">
       <div class="right-content">
+      <!-- 로그인 세션 타이머 -->
+      <div class="session-box session-tooltip">
+        <div class="session-time session-only">
+          <img class="clock" src="/images/clock.png" />
+          <span class="time-text big">{{ formattedTime }}</span>
+        </div>
+      </div>
+
          <!-- 알림 버튼 클릭 이벤트 추가 -->
         <div class="icon-box" @click="goToNotifications">
           <div class="folder-wrap">
@@ -41,22 +49,6 @@
             </span>
           </div>
         </div>
-
-        <div class="divider"></div>
-
-     <!-- 로그인 세션 타이머 -->
-<div class="session-box session-tooltip">
-  <div class="session-time session-only">
-    <img class="clock" src="/images/clock.png" />
-    <span class="time-text big">{{ formattedTime }}</span>
-  </div>
-
-  <!-- ✅ hover 툴팁 -->
-  <span class="tooltip-text">
-    로그인 세션 남은 시간: {{ formattedTime }}
-  </span>
-</div>
-        <div class="divider"></div>
 
 
         <!-- 사용자 프로필 정보 -->
@@ -252,7 +244,7 @@ onBeforeUnmount(() => {
 .right-content {
   display: inline-flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
 }
 
 .icon-box {
@@ -311,27 +303,31 @@ onBeforeUnmount(() => {
   height: 36px;
   background: #E2E8F0;
 }
-
 .session-box {
   height: 40px;
   padding: 6px 12px;
-  background: #F8FAFC;
   border-radius: 10px;
-  outline: 2px solid #E2E8F0;
   display: flex;
   align-items: center;
+  width: 80px; /* 고정 너비 추가 */
+  margin-right: -14px; /* 오른쪽으로 당김 (값은 6~12px 사이 조절) */
+
 }
 
 .session-only {
   display: flex;
   align-items: center;
   gap: 6px;
+  width: 100%; /* 부모 너비에 맞춤 */
+  justify-content: center; /* 가운데 정렬 */
 }
 
 .time-text.big {
-  font-size: 14px;      /* 기존 12px → 업 */
+  font-size: 14px;
   font-weight: 800;
   color: #1A337D;
+  min-width: 50px; /* 최소 너비 지정 */
+  text-align: center; /* 가운데 정렬 */
 }
 
 .session-title {
