@@ -14,18 +14,13 @@
     <!-- ===== Header ===== -->
     <div class="header" v-if="!isModal">
       <div class="title-wrapper">
-        <img class="back-icon" src="/images/backArrow.svg" @click="goBack" />
+        <button class="back-button" type="button" aria-label="뒤로가기">
+          <img src="/images/arrow.svg" alt="" class="back-icon" @click="goBack"/>
+        </button>
         <h1 class="title">평가서 상세</h1>
       </div>
     </div>
     
-    <!-- ===== Modal Header (Back Button) ===== -->
-    <div class="modal-header-bar" v-else>
-      <button class="btn-back-modal" @click="goBack">
-        <span class="arrow">←</span> 목록으로 돌아가기
-      </button>
-    </div>
-
     <div class="content">
       <div class="form-box" :class="{ 'modal-form-box': isModal }">
 
@@ -379,17 +374,17 @@ onMounted(loadDetail);
 
 .form-box.modal-form-box {
   border: none;
-  padding: 0;
+  padding: 40px;
   max-width: none;
 }
 
 /* ================= Header ================= */
 .header {
-  width: 100%;
-  height: 50px;
-  background: white;
-  padding: 20px;
+  height: auto;
+  padding: 10px 20px;
+  background: #ffffff;
   border-bottom: 2px solid #e2e8f0;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -402,9 +397,16 @@ onMounted(loadDetail);
 }
 
 .title {
-  font-size: 18px;
-  font-weight: 600;
   color: #0f172b;
+  text-align: left;
+  white-space: nowrap;
+  font-family: "Inter-Regular", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0.07px;
+  font-weight: 400;
+  left: 0px;
+  top: 0px;
 }
 
 .back-icon {
@@ -436,7 +438,7 @@ onMounted(loadDetail);
 /* ================= Typography ================= */
 .section-title {
   text-align: center;
-  font-size: 24px;
+  font-size: 25px;
   font-weight: 800;
   color: #1c398e;
 }
@@ -776,4 +778,44 @@ label {
   color: #16a34a;
   letter-spacing: 1px;
 }
+
+.back-button {
+  width: 40px;
+  height: 40px;                 /* 버튼 박스 고정 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.back-button:hover {
+  transform: translateX(-2px);
+  background: #F1F5F9;
+}
+
+.back-icon {
+  width: 20px;
+  height: 20px;
+  display: block;               /* baseline 튐 방지 */
+}
+
+@media (max-width: 768px) {
+
+  .back-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .back-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
 </style>

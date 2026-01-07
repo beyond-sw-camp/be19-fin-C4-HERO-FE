@@ -101,36 +101,32 @@ const goToCalculate = () => {
 
 .panel {
   width: 100%;
-  background: #ffffff;
-  border-radius: 14px;
-  border: 0px solid #fff;
   display: flex;
   flex-direction: column;
+  background: transparent;
 }
 
 .panel-tabs {
   display: inline-flex;
-  border-bottom: 1px solid #e2e8f0;
+ gap: 0;
 }
 
 .tab {
-  width: 146px;
-  height: 52px;
+  width: 95px;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #ffffff;
-  border-top: 2px solid #e2e8f0;
-  border-bottom: 2px solid #e2e8f0;
-  border-right: 2px solid #e2e8f0;
+border: 1px solid #e2e8f0;
+border-bottom: none;
   font-size: 14px;
   color: #62748e;
   cursor: pointer;
-  padding: 0;
+  padding: 10px;
 }
 
 .tab-left {
-  border-left: 2px solid #e2e8f0;
   border-top-left-radius: 14px;
 }
 
@@ -150,6 +146,17 @@ const goToCalculate = () => {
 }
 
 .panel-body {
+    background: #ffffff; 
+  border: 1px solid #e2e8f0; 
+  border-radius: 14px;
+   border-top-left-radius: 0;
+ border-top-right-radius: 0;
+ border-top: none;
   padding: 20px 0 12px;
 }
+
+.tab + .tab {
+  border-left: none;
+}
+
 </style>

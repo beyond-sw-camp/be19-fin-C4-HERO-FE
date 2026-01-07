@@ -238,20 +238,20 @@ onBeforeUnmount(() => {
 .stat-card {
   border: 1px solid #eef2f7;
   border-radius: 12px;
-  background: #fff;
+  background: #F8FAFC;
   padding: 14px;
 }
 
 .label {
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 18px;
+  font-weight: 500;
   color: #334155;
 }
 
 .value {
   margin-top: 8px;
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 700;
   color: #0f172a;
 }
 

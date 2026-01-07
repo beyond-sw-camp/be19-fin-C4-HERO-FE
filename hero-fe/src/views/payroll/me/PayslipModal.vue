@@ -17,11 +17,21 @@
 -->
 <template>
   <Teleport to="body">
-    <div v-if="open" class="modal-backdrop" @click.self="handleClose">
-      <div class="modal" ref="modalRef">
+    <div
+      v-if="open"
+      class="modal-backdrop"
+      :class="{ 'modal-backdrop--silent': props.silent }"
+      @click.self="!props.silent && handleClose()"
+    >
+      <div class="modal" :class="{ 'modal--silent': props.silent }" ref="modalRef">
         <header class="modal-header">
           <h2>급여 명세서</h2>
-          <button class="modal-close" type="button" @click="handleClose">
+           <button
+   class="modal-close"
+   :class="{ 'pdf-only': props.silent }"
+   type="button"
+   @click="handleClose"
+ >
             ✕
           </button>
         </header>
@@ -64,7 +74,7 @@
             </div>
           </div>
 
-          <div class="payslip-section">
+          <div class="payslip-section payslip-section--deduction">
             <h3>공제 내역</h3>
             <div class="payslip-table">
               <div
@@ -88,9 +98,12 @@
               {{ formatMoney(payslip.netPay) }}
             </span>
           </div>
+                    <div class="payslip-thanks pdf-only">
+            귀하의 노고에 감사드립니다.
+          </div>
         </section>
 
-        <footer class="modal-footer">
+        <footer class="modal-footer" v-if="!props.silent">
           <button class="btn-secondary" type="button" @click="handleClose">
             닫기
           </button>
@@ -137,6 +150,7 @@ const props = defineProps<{
   payslip: Payslip | null;
   month: string;
   autoDownloadKey: number;
+  silent?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -164,11 +178,14 @@ const downloadPdf = async () => {
 
   //DOM 업데이트 완료 후 캡처
   await nextTick();
+  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
   const modalEl = modalRef.value;
   const bodyEl = modalEl.querySelector('.payslip-body') as HTMLElement | null;
   const closeBtn = modalEl.querySelector('.modal-close') as HTMLElement | null;
   const footerEl = modalEl.querySelector('.modal-footer') as HTMLElement | null;
+
+  const captureEl = bodyEl ?? modalEl;
 
   // 기존 스타일 백업
   const prevModalMaxHeight = modalEl.style.maxHeight;
@@ -176,31 +193,58 @@ const downloadPdf = async () => {
   const prevModalOverflow = modalEl.style.overflow;
   const prevModalWidth = modalEl.style.width;
   const prevModalMargin = modalEl.style.margin;
-
+    const prevModalOpacity = modalEl.style.opacity;
+  const prevModalZIndex = modalEl.style.zIndex;
+  const prevModalLeft = modalEl.style.left;
+  const prevModalTop = modalEl.style.top;
+  const prevModalPosition = modalEl.style.position;
   const prevBodyMaxHeight = bodyEl?.style.maxHeight ?? '';
   const prevBodyOverflow = bodyEl?.style.overflow ?? '';
-
   const prevCloseDisplay = closeBtn?.style.display ?? '';
   const prevFooterDisplay = footerEl?.style.display ?? '';
+    const prevCaptureMaxHeight = captureEl.style.maxHeight;
+  const prevCaptureOverflow = captureEl.style.overflow;
+  const prevCaptureHeight = captureEl.style.height;
+  const prevCaptureWidth = captureEl.style.width;
 
   try {
     // PDF용 스타일 세팅
+    modalEl.classList.add('pdf-mode');
+    captureEl.classList.add('pdf-mode');
     modalEl.style.maxHeight = 'none';
     modalEl.style.height = 'auto';
     modalEl.style.overflow = 'visible';
     modalEl.style.width = '720px';
     modalEl.style.margin = '0 auto';
 
+        if (props.silent) {
+      modalEl.style.position = 'fixed';
+      modalEl.style.left = '0';
+      modalEl.style.top = '0';
+      modalEl.style.zIndex = '1';
+      modalEl.style.opacity = '0.01';
+    }
+
     if (bodyEl) {
       bodyEl.style.maxHeight = 'none';
       bodyEl.style.overflow = 'visible';
     }
+    captureEl.style.maxHeight = 'none';
+    captureEl.style.overflow = 'visible';
+    captureEl.style.height = 'auto';
+    captureEl.style.width = '720px';
+
+    await nextTick();
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+
     // PDF에는 닫기/버튼 영역 숨김처리
     if (closeBtn) closeBtn.style.display = 'none';
     if (footerEl) footerEl.style.display = 'none';
 
     // 화면 중앙으로 스크롤처리 (캡처 대상이 화면에 보여야 해서 처리해둠)
-    modalEl.scrollIntoView({ block: 'center' });
+    if (!props.silent) {
+      modalEl.scrollIntoView({ block: 'center' });
+    }
 
     const opt = {
       margin: 10,
@@ -213,14 +257,26 @@ const downloadPdf = async () => {
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
     };
 
-    await html2pdf().set(opt).from(modalEl).save();
+    await html2pdf().set(opt).from(captureEl).save();
   } finally {
     // 스타일 원복 (위에 try에서 에러 나도 실행되도록 finally에 둠)
+    modalEl.classList.remove('pdf-mode');
+    captureEl.classList.remove('pdf-mode');
     modalEl.style.maxHeight = prevModalMaxHeight;
     modalEl.style.height = prevModalHeight;
     modalEl.style.overflow = prevModalOverflow;
     modalEl.style.width = prevModalWidth;
     modalEl.style.margin = prevModalMargin;
+        modalEl.style.opacity = prevModalOpacity;
+    modalEl.style.zIndex = prevModalZIndex;
+    modalEl.style.left = prevModalLeft;
+    modalEl.style.top = prevModalTop;
+    modalEl.style.position = prevModalPosition;
+
+        captureEl.style.maxHeight = prevCaptureMaxHeight;
+    captureEl.style.overflow = prevCaptureOverflow;
+    captureEl.style.height = prevCaptureHeight;
+    captureEl.style.width = prevCaptureWidth;
 
     if (bodyEl) {
       bodyEl.style.maxHeight = prevBodyMaxHeight;
@@ -236,8 +292,11 @@ const downloadPdf = async () => {
 watch(
   () => props.autoDownloadKey,
   async () => {
+    await nextTick();
     if (props.open && props.payslip) {
       await downloadPdf();
+      if (props.silent) {
+        emit('update:open', false);}
     }
   }
 );
@@ -359,5 +418,38 @@ watch(
 .btn-secondary {
   background-color: #eef2ff;
   color: #374151;
+}
+.pdf-only {
+  display: none;
+}
+
+.pdf-mode .pdf-only {
+  display: block;
+  margin-top: 24px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5e7eb;
+  text-align: center;
+  font-size: 16px;
+  color: #374151;
+  font-weight: 600;
+}
+.modal-backdrop--silent {
+  background-color: transparent;
+  pointer-events: none;
+}
+
+.modal--silent {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.pdf-mode .payslip-section--deduction {
+  margin-top: 40px;   
+  padding-top: 16px;
+  border-top: 1px dashed #e5e7eb;
 }
 </style>

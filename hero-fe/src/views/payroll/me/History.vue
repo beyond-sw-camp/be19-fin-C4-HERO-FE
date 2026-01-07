@@ -44,8 +44,8 @@
   </div>
 
   <div class="summary-card">
-    <span class="summary-label">올해 누적 실수령액</span>
-    <p class="summary-value">{{ formatMoneyOrDash(ytdNetPay) }}</p>
+    <span class="summary-label">최근 12개월 실수령액</span>
+    <p class="summary-value">{{ formatMoneyOrDash(last12mNetPay) }}</p>
   </div>
     </section>
 
@@ -71,7 +71,7 @@
             <th>기본급</th>
             <th>수당</th>
             <th>공제</th>
-            <th>실수령액</th>
+            <th class="net-pay-head">실수령액</th>
           </tr>
         </thead>
         <tbody class="table-body">
@@ -80,7 +80,7 @@
             <td>{{ formatMoney(row.baseSalary) }}</td>
             <td class="plus">+{{ formatMoney(row.allowanceTotal) }}</td>
             <td class="minus">-{{ formatMoney(row.deductionTotal) }}</td>
-            <td>{{ formatMoney(row.netPay) }}</td>
+            <td >{{ formatMoney(row.netPay) }}</td>
           </tr>
         </tbody>
       </table>
@@ -182,18 +182,15 @@ const avgNetPay3m = computed(() => {
   return Math.round(sum / last3.length);
 });
 
-/** KPI 5) 올해 누적 실수령액 (rows 중 올해만 합산) */
-const ytdNetPay = computed(() => {
+/** KPI 5) 최근 12개월 실수령액 (최근 12개 월 합산) */
+const last12mNetPay = computed(() => {
   const r = rows.value;
   if (r.length === 0) return null;
-  const thisYear = new Date().getFullYear();
-  return r.reduce((acc, cur) => {
-    const ym = cur.salaryMonth; // "YYYY-MM"
-    const year = ym ? Number(ym.split('-')[0]) : NaN;
-    if (year === thisYear) return acc + (cur.netPay ?? 0);
-    return acc;
-  }, 0);
+
+  const last12 = r.slice(Math.max(0, r.length - 12));
+  return last12.reduce((acc, cur) => acc + (cur.netPay ?? 0), 0);
 });
+
 
 // --------------------
 // 포맷터
@@ -215,6 +212,7 @@ const formatPercentOrDash = (value: number | null | undefined) => {
   if (value === null || value === undefined) return '-';
   return `${value.toFixed(1)}%`;
 };
+
 </script>
 
 <style scoped>
@@ -242,17 +240,20 @@ const formatPercentOrDash = (value: number | null | undefined) => {
 }
 
 .summary-label {
-  font-size: 16px;
-  color: #6b7280;
-  margin-left: 22px;
+  font-size: 18px;
+  font-weight:500;
+  color: #64748b;
+    display: block;
+  line-height: 1.2;
+  margin-top: 4px;
 }
 
 .summary-value {
   margin-top: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 0;
+  line-height: 1.3;
   font-size: 18px;
   font-weight: 700;
-  margin-left: 12px;
 }
 
 .history-chart {
@@ -280,12 +281,12 @@ const formatPercentOrDash = (value: number | null | undefined) => {
 
 .history-table th {
   text-align: left;
-  padding: 12px 20px;
+  padding: 12px 16px;
 }
 
 .history-table td {
   text-align: left;
-  padding: 12px 20px;
+  padding: 12px 16px;
 }
 
 .history-table td:last-child {
@@ -331,9 +332,6 @@ const formatPercentOrDash = (value: number | null | undefined) => {
   color: white;
 }
 
-.table-body tr:nth-child(2n) {
-  background-color: #e2e8f0;
-}
 
 .table-cell {
   color: #155dfc;
@@ -344,6 +342,10 @@ const formatPercentOrDash = (value: number | null | undefined) => {
 }
 
 .panel-title {
-  padding-left: 28px;
+  padding-left: 20px;
+}
+
+.net-pay-head {
+  text-align: left !important;
 }
 </style>

@@ -80,43 +80,54 @@
       <!-- 2. 탭 및 컨텐츠 영역 -->
       <div class="panel">
         <!-- 탭 헤더 -->
-        <div class="panel-tabs">
+        <div class="panel-header">
           <button
-            class="tab tab-left"
-            :class="{ 'tab-active': activeTab === 'reason' }"
+            class="tab tab-start"
+            :class="{ 'active': activeTab === 'reason' }"
             @click="activeTab = 'reason'"
           >
-            퇴사 사유
+            <div class="tooltip-wrapper" style="cursor: pointer;">
+              퇴사 사유별 통계
+              <span class="tooltip-text">전체 및 1년 미만 조기 퇴사자의 사유를 비교 분석합니다.</span>
+            </div>
           </button>
           <button
             class="tab"
-            :class="{ 'tab-active': activeTab === 'tenure' }"
+            :class="{ 'active': activeTab === 'tenure' }"
             @click="activeTab = 'tenure'"
           >
-            근속 기간
+            <div class="tooltip-wrapper" style="cursor: pointer;">
+              근속 기간별 분포
+              <span class="tooltip-text">전체 재직 인원 중 해당 연차에 해당하는 인원의 비율</span>
+            </div>
           </button>
           <button
             class="tab"
-            :class="{ 'tab-active': activeTab === 'newHire' }"
+            :class="{ 'active': activeTab === 'newHire' }"
             @click="activeTab = 'newHire'"
           >
-            신입 통계
+            <div class="tooltip-wrapper" style="cursor: pointer;">
+              신입 이직률 통계
+              <span class="tooltip-text" style="width: 220px; text-align: left;">정착률: 3개월 이상 재직 신입<br>이직률: 1년 내 퇴사 신입</span>
+            </div>
           </button>
           <button
-            class="tab tab-right"
-            :class="{ 'tab-active': activeTab === 'department' }"
+            class="tab tab-end"
+            :class="{ 'active': activeTab === 'department' }"
             @click="activeTab = 'department'"
           >
-            부서별 현황
+            <div class="tooltip-wrapper" style="cursor: pointer;">
+              부서별 이직률 현황
+              <span class="tooltip-text">각 부서의 퇴사자 비율을 나타냅니다.</span>
+            </div>
           </button>
         </div>
 
         <!-- 탭 바디 -->
         <div class="panel-body">
           <!-- Tab 1: 퇴사 사유 -->
-          <div v-if="activeTab === 'reason'" class="chart-panel full-height">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div class="panel-header">퇴사 사유별 통계</div>
+          <div v-if="activeTab === 'reason'" class="full-height" style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; align-items: center; justify-content: flex-end;">
               <div class="toggle-group">
                 <button
                   class="toggle-btn"
@@ -140,50 +151,32 @@
           </div>
 
           <!-- Tab 2: 근속 기간 -->
-          <div v-if="activeTab === 'tenure'" class="chart-panel full-height">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div class="panel-header">근속 연수별 인력 분포</div>
-              <div class="tooltip-wrapper">
-                <span class="info-icon">i</span>
-                <span class="tooltip-text">전체 재직 인원 중 해당 연차에 해당하는 인원의 비율</span>
-              </div>
-            </div>
+          <div v-if="activeTab === 'tenure'" class="full-height" style="display: flex; flex-direction: column;">
             <div class="chart-container">
-              <BaseLineChart
-                v-if="tenureStats.length > 0"
-                :labels="tenureLabels"
-                :data="tenureData"
-                color="#1c398e"
-                tooltip-label-prefix="비율: "
-                tooltip-label-suffix="%"
-                y-axis-title="비율 (%)" />
+              <div class="chart-y-label">비율 (%)</div>
+              <Line
+                v-if="tenureChartData"
+                :data="tenureChartData"
+                :options="tenureOptions"
+              />
             </div>
           </div>
 
           <!-- Tab 3: 신입 통계 -->
-          <div v-if="activeTab === 'newHire'" class="chart-panel full-height">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <div class="panel-header">분기별 신입 사원 정착률 및 이직률</div>
-                <div class="tooltip-wrapper">
-                  <span class="info-icon">i</span>
-                  <span class="tooltip-text" style="text-align: left;">정착률: 3개월 이상 재직 신입<br>이직률: 1년 내 퇴사 신입</span>
-                </div>
-              </div>
+          <div v-if="activeTab === 'newHire'" class="full-height" style="display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; align-items: center; justify-content: flex-end;">
               <select v-if="availableYears.length > 0" v-model="selectedYear" class="year-select">
                 <option v-for="year in availableYears" :key="year" :value="year">{{ year }}년</option>
               </select>
             </div>
             <div class="chart-container">
+              <div class="chart-y-label">비율 (%)</div>
               <Bar v-if="newHireChartData" :data="newHireChartData" :options="newHireOptions" />
             </div>
           </div>
 
           <!-- Tab 4: 부서별 이직률 테이블 -->
           <div v-if="activeTab === 'department'" class="table-container">
-            <div class="panel-header-row">
-              <span class="panel-title">부서별 이직률 현황</span>
-            </div>
             <div class="panel-table-wrapper">
               <table class="turnover-table">
                 <thead>
@@ -231,16 +224,16 @@ import {
   LinearScale,
   PointElement,
   LineElement,
-  ArcElement
+  ArcElement,
+  Filler
 } from 'chart.js';
-import { Bar, Doughnut } from 'vue-chartjs';
+import { Bar, Doughnut, Line } from 'vue-chartjs';
 
 import { useRetirementStore } from '@/stores/retirement/retirement.store';
-import BaseLineChart from '@/components/charts/BaseLineChart.vue';
 import type { ExitReasonStatDTO, TenureDistributionDTO, NewHireStatDTO } from '@/types/retirement/retirement.types';
 
 // Chart.js 등록
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, ArcElement);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, ArcElement, Filler);
 
 // --- State ---
 const store = useRetirementStore();
@@ -295,6 +288,28 @@ const reasonChartData = computed(() => {
 const tenureLabels = computed(() => tenureStats.value.map((item: TenureDistributionDTO) => item.tenureRange));
 const tenureData = computed(() => tenureStats.value.map((item: TenureDistributionDTO) => item.percentage));
 
+const tenureChartData = computed(() => {
+  if (tenureStats.value.length === 0) return null;
+  return {
+    labels: tenureLabels.value,
+    datasets: [
+      {
+        label: '비율',
+        data: tenureData.value,
+        borderColor: '#1c398e',
+        backgroundColor: 'rgba(28, 57, 142, 0.1)',
+        pointBackgroundColor: '#ffffff',
+        pointBorderColor: '#1c398e',
+        pointBorderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        fill: true,
+        tension: 0.3
+      }
+    ]
+  };
+});
+
 // 3. 신입 정착률/이직률 (Bar - Multi Dataset)
 const newHireChartData = computed(() => {
   if (!selectedYear.value) return null;
@@ -314,7 +329,7 @@ const newHireChartData = computed(() => {
         backgroundColor: '#16a34a', // Green
         data: labels.map(label => {
           const stat = yearStats.find((item: NewHireStatDTO) => item.quarter === label);
-          return stat ? stat.settlementRate : 0;
+          return stat ? stat.settlementRate : null;
         }),
         borderRadius: 4,
       },
@@ -323,7 +338,7 @@ const newHireChartData = computed(() => {
         backgroundColor: '#ef4444', // Red
         data: labels.map(label => {
           const stat = yearStats.find((item: NewHireStatDTO) => item.quarter === label);
-          return stat ? stat.turnoverRate : 0;
+          return stat ? stat.turnoverRate : null;
         }),
         borderRadius: 4,
       }
@@ -349,17 +364,122 @@ const commonOptions = {
     y: {
       beginAtZero: true,
       grid: { color: '#e2e8f0' },
-      ticks: { font: { family: 'Inter-Regular', size: 11 } }
+      ticks: { 
+        font: { family: 'Inter-Regular', size: 11 },
+        color: '#64748b'
+      }
     },
     x: {
       grid: { display: false },
-      ticks: { font: { family: 'Inter-Regular', size: 11 } }
+      ticks: { 
+        font: { family: 'Inter-Regular', size: 11 },
+        color: '#64748b',
+      },
+      title: {
+        display: false,
+        color: '#64748b',
+        font: {
+          size: 12,
+          weight: 'bold'
+        },
+        padding: { top: 10 }
+      }
     }
   }
 };
 
 const barOptions = { ...commonOptions };
-const newHireOptions = { ...commonOptions };
+const newHireOptions = {
+  ...commonOptions,
+  layout: {
+    padding: {
+      left: 10,
+      right: 20,
+      top: 20,
+      bottom: 10
+    }
+  },
+  scales: {
+    ...commonOptions.scales,
+    y: {
+      ...commonOptions.scales.y,
+      title: {
+        display: false,
+        text: '비율 (%)',
+        color: '#64748b',
+        font: {
+          size: 12,
+          weight: 'bold'
+        },
+        padding: { bottom: 10 }
+      },
+      ticks: {
+        ...commonOptions.scales.y.ticks,
+        callback: function(value: any) {
+          return value + '%';
+        }
+      }
+    },
+    x: {
+      ...commonOptions.scales.x,
+      title: {
+        ...commonOptions.scales.x.title,
+        text: '기간 (분기)'
+      }
+    }
+  }
+};
+
+const tenureOptions = {
+  ...commonOptions,
+  layout: {
+    padding: {
+      left: 10,
+      right: 20,
+      top: 20,
+      bottom: 10
+    }
+  },
+  plugins: {
+    legend: {
+      display: false
+    },
+    tooltip: {
+      callbacks: {
+        label: (context: any) => `비율: ${context.parsed.y}%`
+      }
+    }
+  },
+  scales: {
+    ...commonOptions.scales,
+    y: {
+      ...commonOptions.scales.y,
+      title: {
+        display: false,
+        text: '비율 (%)',
+        color: '#64748b',
+        font: {
+          size: 12,
+          weight: 'bold'
+        },
+        padding: { bottom: 10 }
+      },
+      ticks: {
+        ...commonOptions.scales.y.ticks,
+        callback: function(value: any) {
+          return value + '%';
+        }
+      }
+    },
+    x: {
+      ...commonOptions.scales.x,
+      title: {
+        ...commonOptions.scales.x.title,
+        text: '근속 기간'
+      }
+    }
+  }
+};
 
 const doughnutOptions = {
   responsive: true,
@@ -396,15 +516,12 @@ const getTurnoverClass = (rate: number) => {
 
 .turnover-wrapper {
   display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-  background-color: #f8fafc;
+  /* background-color: #f8fafc; */
+  min-height: 100vh;
 }
 
 .turnover-page {
   width: 100%;
-  height: 100%;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -414,7 +531,8 @@ const getTurnoverClass = (rate: number) => {
 /* 1. 상단 요약 카드 */
 .summary-cards {
   display: flex;
-  gap: 16px;
+  align-items: stretch;
+  gap: 20px;
 }
 
 .summary-card {
@@ -422,23 +540,25 @@ const getTurnoverClass = (rate: number) => {
   background: #ffffff;
   border-radius: 16px;
   border: 1px solid #e5e7eb;
-  padding: 20px;
+  padding: 12px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  justify-content: flex-start;
+  font-size: 18px;
 }
 
 .summary-title-row {
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-bottom: 8px;
 }
 
 .summary-title {
   color: #64748b;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
+  line-height: 1.2;
 }
 
 /* 툴팁 스타일 */
@@ -473,7 +593,7 @@ const getTurnoverClass = (rate: number) => {
   border-radius: 6px;
   padding: 8px 10px;
   position: absolute;
-  z-index: 10;
+  z-index: 100;
   bottom: 135%;
   left: 50%;
   transform: translateX(-50%);
@@ -484,6 +604,18 @@ const getTurnoverClass = (rate: number) => {
   line-height: 1.4;
   pointer-events: none;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  white-space: normal;
+  word-break: keep-all;
+}
+
+/* 첫 번째 탭 툴팁 위치 조정 (사이드바 가림 방지) */
+.tab-start .tooltip-text {
+  left: 0;
+  transform: none;
+}
+
+.tab-start .tooltip-text::after {
+  left: 20px;
 }
 
 .tooltip-text::after {
@@ -497,6 +629,28 @@ const getTurnoverClass = (rate: number) => {
   border-color: #334155 transparent transparent transparent;
 }
 
+/* 요약 카드 툴팁 위치 조정 (헤더 가림 방지 - 아래로 표시) */
+.summary-card .tooltip-text {
+  bottom: auto;
+  top: 135%;
+}
+
+.summary-card .tooltip-text::after {
+  top: auto;
+  bottom: 100%;
+  border-color: transparent transparent #334155 transparent;
+}
+
+/* 첫 번째 요약 카드 툴팁 위치 조정 (사이드바 가림 방지) */
+.summary-card:first-child .tooltip-text {
+  left: 0;
+  transform: none;
+}
+
+.summary-card:first-child .tooltip-text::after {
+  left: 8px;
+}
+
 .tooltip-wrapper:hover .tooltip-text {
   visibility: visible;
   opacity: 1;
@@ -505,19 +659,19 @@ const getTurnoverClass = (rate: number) => {
 .summary-value-wrapper {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 8px;
 }
 
 .summary-value {
-  font-size: 28px;
+  font-size: 18px;
   font-weight: 700;
-  color: #1e293b;
+  color: #000000;
 }
 
 .summary-unit {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 500;
-  color: #94a3b8;
+  color: #64748b;
 }
 
 /* 2. 패널 및 탭 스타일 */
@@ -526,44 +680,46 @@ const getTurnoverClass = (rate: number) => {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 0;
+  overflow: visible; /* 툴팁이 잘리지 않도록 overflow 속성 추가 */
 }
 
-.panel-tabs {
-  display: flex;
+.panel-header {
+  display: inline-flex;
   flex-direction: row;
+  position: relative; /* 툴팁이 panel-body 위에 표시되도록 z-index 컨텍스트 생성 */
+  z-index: 1;
 }
 
 .tab {
-  width: 150px;
-  height: 48px;
+  padding: 10px 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
+
   border-top: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
   border-right: 1px solid #e2e8f0;
-  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+
+  background: #ffffff;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+
+  white-space: nowrap;
 }
 
-.tab-left {
-  border-left: 1px solid #e2e8f0;
+.tab-start {
   border-top-left-radius: 14px;
 }
 
-.tab-right {
+.tab-end {
   border-top-right-radius: 14px;
 }
 
-.tab-active {
-  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
+.tab.active {
   color: #ffffff;
-  font-weight: 700;
-  border-color: transparent;
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
 }
 
 .panel-body {
@@ -573,29 +729,12 @@ const getTurnoverClass = (rate: number) => {
   border-bottom-right-radius: 14px;
   padding: 24px;
   flex: 1;
-  overflow-y: auto;
-}
-
-.chart-panel {
-  background: #ffffff;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-height: 360px;
+  /* overflow-y: auto; */
 }
 
 .full-height {
   height: 100%;
   min-height: 500px;
-}
-
-.panel-header {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1e293b;
 }
 
 .chart-container {
@@ -610,21 +749,10 @@ const getTurnoverClass = (rate: number) => {
   width: 100%;
 }
 
-.panel-header-row {
-  padding: 0 0 16px 0;
-  border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 16px;
-}
-
-.panel-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1e293b;
-}
-
 .panel-table-wrapper {
-  width: 100%;
   overflow-x: auto;
+  margin-left: -24px;
+  margin-right: -24px;
 }
 
 .turnover-table {
@@ -722,5 +850,17 @@ const getTurnoverClass = (rate: number) => {
   color: #1c398e;
   font-weight: 700;
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.chart-y-label {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: bold;
+  color: #64748b;
+  z-index: 10;
+  writing-mode: vertical-rl;
 }
 </style>

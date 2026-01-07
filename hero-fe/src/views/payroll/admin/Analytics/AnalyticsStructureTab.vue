@@ -423,8 +423,8 @@ onBeforeUnmount(() => {
 .mt { margin-top: 12px; }
 
 .card-title {
-  font-size: 13px;
-  font-weight: 900;
+  font-size: 18px;
+  font-weight: 700;
   color: #0f172a;
 }
 
@@ -519,7 +519,7 @@ onBeforeUnmount(() => {
 .mini-sub { font-size: 11px; font-weight: 800; color: #64748b; }
 
 .mini-empty { padding: 16px 12px; text-align: center; color: #94a3b8; font-weight: 900; font-size: 12px; }
-.table-wrap { border: 1px solid #eef2f7; border-radius: 10px; overflow: hidden; }
+.table-wrap { border: 1px solid #eef2f7; overflow: hidden; }
 .history-table {
   width: 100%;
   border-collapse: collapse;
@@ -529,7 +529,7 @@ onBeforeUnmount(() => {
 .history-table th,
 .history-table td {
   text-align: left;
-  padding: 12px 20px;
+  padding: 12px;
 }
 .right { text-align: right; font-weight: 900; }
 .table-header {
@@ -537,7 +537,6 @@ onBeforeUnmount(() => {
   color: #fff;
 }
 .table-header th { color: #fff; }
-.table-body tr:nth-child(2n) { background-color: #e2e8f0; }
 .history-table td.right { color: #0f172a; }
 .name { font-weight: 900; color: #0f172a; }
 .history-table--compact th,
@@ -567,6 +566,7 @@ onBeforeUnmount(() => {
   line-height: 1.45;
   grid-column: 1 / -1;
 }
+
 
 @media (max-width: 1100px) {
   .grid-2 { grid-template-columns: 1fr; }

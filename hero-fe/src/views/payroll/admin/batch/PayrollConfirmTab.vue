@@ -69,11 +69,7 @@
             <td>{{ formatDateTime(b.createdAt) }}</td>
 
             <td>
-              {{
-                store.selectedBatchId === b.batchId && store.batchDetail
-                  ? store.batchDetail.totalEmployeeCount
-                  : '-'
-              }}
+              {{ store.employeeCountByBatchId?.[b.batchId] ?? '-' }}
             </td>
             <td>{{ formatMoneyOrDash(b.totalGrossPay) }}</td>
             <td>{{ formatMoneyOrDash(b.totalDeduction) }}</td>
@@ -249,7 +245,6 @@ const canPay = (batch: Pick<PayrollBatchListResponse, 'status'>) => {
 <style scoped>
 .panel {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
   border-radius: 16px;
   display: flex;
   flex-direction: column;

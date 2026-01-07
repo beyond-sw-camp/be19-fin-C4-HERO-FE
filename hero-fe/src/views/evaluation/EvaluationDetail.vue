@@ -13,12 +13,13 @@
     <!-- Header (CreateEvaluation.vue와 동일 패턴) -->
     <div class="header">
       <div class="title-wrapper">
-        <img class="back-icon" src="/images/backArrow.svg" @click="goBack" />
+        <button class="back-button" type="button" aria-label="뒤로가기">
+          <img src="/images/arrow.svg" alt="" class="back-icon" @click="goBack"/>
+        </button>
         <h1 class="title">평가 상세</h1>
       </div>
 
       <div class="btn-container">
-        <button class="btn-edit" @click="reload">새로고침</button>
         <button class="btn-remove" @click="deleteEvaluation">삭제</button>
       </div>
     </div>
@@ -365,11 +366,11 @@ onMounted(loadEvaluation);
 
 /* ================= Header (CreateEvaluation.vue와 동일) ================= */
 .header {
-  width: 100%;
-  height: 50px;
-  background: white;
-  padding: 20px;
+  height: auto;
+  padding: 10px 20px;
+  background: #ffffff;
   border-bottom: 2px solid #e2e8f0;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -382,9 +383,16 @@ onMounted(loadEvaluation);
 }
 
 .title {
-  font-size: 18px;
-  font-weight: 600;
   color: #0f172b;
+  text-align: left;
+  white-space: nowrap;
+  font-family: "Inter-Regular", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0.07px;
+  font-weight: 400;
+  left: 0px;
+  top: 0px;
 }
 
 .back-icon {
@@ -399,7 +407,7 @@ onMounted(loadEvaluation);
 }
 
 .btn-edit {
-  background: #4b89dc;
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
   padding: 10px 24px;
   border-radius: 10px;
@@ -419,7 +427,7 @@ onMounted(loadEvaluation);
 /* ================= Typography ================= */
 .section-title {
   text-align: center;
-  font-size: 18px;
+  font-size: 25px;
   font-weight: 600;
   color: #1c398e;
 }
@@ -696,4 +704,44 @@ onMounted(loadEvaluation);
     grid-template-columns: 1fr;
   }
 }
+
+.back-button {
+  width: 40px;
+  height: 40px;                 /* 버튼 박스 고정 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.back-button:hover {
+  transform: translateX(-2px);
+  background: #F1F5F9;
+}
+
+.back-icon {
+  width: 20px;
+  height: 20px;
+  display: block;               /* baseline 튐 방지 */
+}
+
+@media (max-width: 768px) {
+
+  .back-button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .back-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
 </style>

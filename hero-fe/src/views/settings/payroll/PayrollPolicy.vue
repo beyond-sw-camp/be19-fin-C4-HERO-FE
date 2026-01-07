@@ -22,7 +22,7 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th style="width: 90px;">ID</th>
+            <th style="width: 90px;">정책번호</th>
             <th>정책명</th>
             <th style="width: 120px;">상태</th>
             <th style="width: 180px;">적용기간</th>
@@ -239,13 +239,36 @@ onMounted(reload);
 
 <style scoped>
 .page-content { display:flex; flex-direction:column; flex:1; min-height:0; overflow:hidden; }
-.page-header { display:flex; justify-content:flex-end; align-items:center; padding:24px 24px 0; margin-bottom:14px; }
+.page-header { display:flex; justify-content:flex-end; align-items:center; padding:24px 24px 0; margin-bottom:20px; }
 .header-actions { display:flex; gap:10px; }
 .muted{ color:#94a3b8; font-weight:800; }
-.table-container { overflow:auto; height:calc(100vh - 180px); border-top:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0; background:white; margin-bottom:20px; }
-.data-table { width:100%; border-collapse:collapse; text-align:left; }
-.data-table th, .data-table td { padding:15px; border-bottom:1px solid #e2e8f0; vertical-align:middle; }
+
+.table-container {
+  overflow-x: auto;
+  overflow-y: auto;
+  height: calc(100vh - 300px);
+  border: 1px solid #e2e8f0;
+  background: white;
+  margin-bottom: 20px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  table-layout: fixed;
+}
+
+.data-table th, .data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .data-table th { position:sticky; top:0; z-index:1; background:linear-gradient(180deg,#1c398e 0%,#162456 100%); color:white; font-weight:600; font-size:14px; }
+
 .text-center { text-align:center; }
 .no-data { padding:40px 0; text-align:center; color:#94a3b8; }
 .empty-title{ font-weight:900; color:#475569; }
@@ -261,14 +284,16 @@ onMounted(reload);
 .row-active{ background:#eff6ff; }
 .row-expired{ opacity:.72; }
 
-.btn-save { background:linear-gradient(180deg,#1c398e 0%,#162456 100%); color:white; border:none; padding:10px 18px; border-radius:10px; cursor:pointer; font-weight:700; }
+.btn-save { padding: 0 15px; height: 40px; background:linear-gradient(180deg,#1c398e 0%,#162456 100%); color:white; border:none; border-radius:10px; cursor:pointer; font-weight:700; }
+.btn-save:hover { background-color: #162456; }
 .btn-save:disabled { opacity:.7; cursor:not-allowed; }
 
-.btn-secondary { background:white; color:#0f172b; border:1px solid #e2e8f0; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700; }
+.btn-secondary { background-color:#f1f5f9; color:#475569; border:1px solid #cbd5e1; height:40px; padding:0 16px; border-radius:10px; cursor:pointer; font-weight:700; }
+.btn-secondary:hover { background-color: #e2e8f0; }
 .btn-secondary:disabled { opacity:.7; cursor:not-allowed; }
 
-.btn-link { border:none; background:transparent; color:#2855ff; font-weight:700; cursor:pointer; }
-.btn-link:hover { text-decoration:underline; }
+.btn-link { height: 40px; padding: 0 15px; border-radius: 10px; border: 1px solid #cbd5e1; background-color: #ffffff; color: #475569; font-weight: 700; cursor: pointer; }
+.btn-link:hover { background-color: #f1f5f9; }
 
 .badge { display:inline-flex; align-items:center; height:22px; padding:0 10px; border-radius:999px; font-size:12px; font-weight:800; border:1px solid #e2e8f0; background:#f8fafc; color:#334155; }
 .badge-active { border-color:#93c5fd; background:#eff6ff; color:#1d4ed8; }
@@ -283,8 +308,8 @@ onMounted(reload);
 .form-row { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
 .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 .label { font-size:.85rem; color:#475569; font-weight:800; }
-.input-text { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #e2e8f0; background:#f8fafc; outline:none; }
-.input-text:focus { border-color:#93c5fd; background:#fff; }
+.input-text { width:100%; height: 40px; padding:0 12px; border-radius:10px; border:2px solid #cad5e2; background:#ffffff; outline:none; box-sizing: border-box; }
+.input-text:focus { border-color:#155dfc; }
 .error-text { margin:6px 0 0; color:#ef4444; font-weight:700; }
 .hint { margin:10px 0 0; color:#64748b; font-size:.85rem; font-weight:600; }
 .modal-footer { padding:16px 18px; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px; }

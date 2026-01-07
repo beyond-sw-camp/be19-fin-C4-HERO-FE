@@ -82,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, ref } from 'vue';
+import { reactive, watch, ref, onBeforeUnmount } from 'vue';
 import type {
   DeductionCreateRequest,
   DeductionResponse,
@@ -147,6 +147,28 @@ watch(
 );
 
 const close = () => emit('update:modelValue', false);
+
+/**
+ * ESC ?? ?? ??
+ * - ??? ?? ?? ?? keydown ??? ???
+ */
+const onKeydown = (e: KeyboardEvent) => {
+  if (e.key !== 'Escape') return;
+  if (!props.modelValue) return;
+  close();
+};
+
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (open) window.addEventListener('keydown', onKeydown);
+    else window.removeEventListener('keydown', onKeydown);
+  }
+);
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeydown);
+});
 
 const syncCalcFields = () => {
   if (form.calculationType === 'RATE') {

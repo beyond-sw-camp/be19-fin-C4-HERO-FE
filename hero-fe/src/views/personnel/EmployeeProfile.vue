@@ -28,47 +28,80 @@
 
     <!-- Profile Content -->
     <template v-else-if="employee">
-      <!-- Left Sidebar -->
-      <div class="sidebar-card">
-        <!-- Profile Section -->
-        <div class="profile-section">
-          <div class="profile-avatar">{{ employee.employeeName?.charAt(0) || '?' }}</div>
-          <div class="profile-name">{{ employee.employeeName || '이름 없음' }}</div>
-          <div class="profile-team">{{ employee.team || '-' }}</div>
-          <div class="profile-badge">{{ employee.rank || '-' }}</div>
+      <div class="left-column">
+        <!-- Left Sidebar -->
+        <div class="sidebar-card">
+          <!-- Profile Section -->
+          <div class="profile-section">
+            <div class="profile-avatar">{{ employee.employeeName?.charAt(0) || '?' }}</div>
+            <div class="profile-name">{{ employee.employeeName || '이름 없음' }}</div>
+            <div class="profile-team">{{ employee.team || '-' }}</div>
+            <div class="profile-badge">{{ employee.rank || '-' }}</div>
+          </div>
+
+          <!-- Stamp Section -->
+          <div class="stamp-section">
+            <div class="stamp-header">
+              <img src="/images/seal.svg" alt="직인" style="width: 16px; height: 16px;" />
+              <span>등록된 직인</span>
+            </div>
+            <div class="stamp-empty" v-if="!employee.sealImageUrl">
+            <img 
+              src="/images/seal.svg" 
+              alt="직인" 
+              style="width: 32px; height: 32px; filter: grayscale(80%) brightness(0.6);"
+            />
+              <div class="empty-text">등록된 직인이 없습니다</div>
+              <div class="empty-subtext">아래 버튼을 눌러 등록하세요</div>
+            </div>
+            <div class="stamp-image" v-else>
+              <img :src="employee.sealImageUrl" alt="직인" />
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="action-buttons">
+            <button class="btn-secondary" @click="handlePasswordChange">
+              <img src="/images/password.svg" alt="비밀번호" style="width: 16px; height: 16px;" />  
+              비밀번호 변경
+            </button>
+            <button class="btn-primary" @click="handleSealEdit">
+              <img src="/images/seal.svg" alt="직인" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" />
+              직인 편집
+            </button>
+          </div>
         </div>
 
-        <!-- Stamp Section -->
-        <div class="stamp-section">
-          <div class="stamp-header">
-            <img src="/images/seal.svg" alt="직인" style="width: 16px; height: 16px;" />
-            <span>등록된 직인</span>
+        <!-- History Cards -->
+        <section class="info-card">
+          <h2 class="card-title">이력 조회</h2>
+          <div class="history-grid">
+            <div class="history-card history-blue" @click="handleDepartmentHistory">
+              <div class="history-icon-wrapper blue">
+                <img src="/images/history.svg" alt="history" style="width: 20px; height: 20px;" />
+              </div>
+              <div class="history-content">
+                <div class="history-title">부서 이동 이력 조회</div>
+              </div>
+            </div>
+            <div class="history-card history-purple" @click="handleGradeHistory">
+              <div class="history-icon-wrapper purple">
+                <img src="/images/change.svg" alt="change" style="width: 20px; height: 20px;" />
+              </div>
+              <div class="history-content">
+                <div class="history-title">직급 변경 이력 조회</div>
+              </div>
+            </div>
+            <div class="history-card history-green" @click="handlePerformanceHistory">
+              <div class="history-icon-wrapper green">
+                <img src="/images/select.svg" alt="select" style="width: 20px; height: 20px;" />
+              </div>
+              <div class="history-content">
+                <div class="history-title">성과평가 이력 조회</div>
+              </div>
+            </div>
           </div>
-          <div class="stamp-empty" v-if="!employee.sealImageUrl">
-          <img 
-            src="/images/seal.svg" 
-            alt="직인" 
-            style="width: 32px; height: 32px; filter: grayscale(80%) brightness(0.6);"
-          />
-            <div class="empty-text">등록된 직인이 없습니다</div>
-            <div class="empty-subtext">아래 버튼을 눌러 등록하세요</div>
-          </div>
-          <div class="stamp-image" v-else>
-            <img :src="employee.sealImageUrl" alt="직인" />
-          </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-          <button class="btn-secondary" @click="handlePasswordChange">
-            <img src="/images/password.svg" alt="비밀번호" style="width: 16px; height: 16px;" />  
-            비밀번호 변경
-          </button>
-          <button class="btn-primary" @click="handleSealEdit">
-            <img src="/images/seal.svg" alt="직인" style="width: 16px; height: 16px; filter: brightness(0) invert(1);" />
-            직인 편집
-          </button>
-        </div>
+        </section>
       </div>
 
       <!-- Main Content -->
@@ -87,18 +120,12 @@
             </div>
             <div class="info-item">
               <label>
-                <svg class="label-icon" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 5.5L10 5.5M2 7.5L10 7.5" stroke="#64748B" stroke-width="1"/>
-                </svg>
                 생년월일
               </label>
               <div class="info-value">{{ formatDate(employee.birthDate) }}</div>
             </div>
             <div class="info-item">
               <label>
-                <svg class="label-icon" viewBox="0 0 12 12" fill="none">
-                  <path d="M2 1L10 1L10 11M7 1L10 1" stroke="#64748B" stroke-width="1"/>
-                </svg>
                 계약 구분
               </label>
               <div class="badge badge-blue">{{ employee.contractType || '-' }}</div>
@@ -173,53 +200,9 @@
               <label>재직 상태</label>
               <div class="badge badge-green">{{ employee.status || '-' }}</div>
             </div>
-            <div class="info-item">
-              <label>성과평가</label>
-              <div class="info-value">{{ employee.performance || '-' }}</div>
-            </div>
           </div>
         </section>
 
-        <!-- History Cards -->
-        <section class="info-card">
-          <h2 class="card-title">이력 조회</h2>
-          <div class="history-grid">
-            <div class="history-card history-blue" @click="handleDepartmentHistory">
-              <div class="history-icon-wrapper blue">
-                <svg viewBox="0 0 20 20" fill="none">
-                  <path d="M2.5 2.5L17.5 2.5L17.5 17.5L2.5 17.5Z" stroke="white" stroke-width="1.67"/>
-                  <path d="M2.5 2.5L6.66 2.5M10 5.83L13.33 11.66" stroke="white" stroke-width="1.67"/>
-                </svg>
-              </div>
-              <div class="history-content">
-                <div class="history-title">부서 이동 이력 조회</div>
-                <div class="history-subtitle">부서 이동 이력 조회</div>
-              </div>
-            </div>
-            <div class="history-card history-purple" @click="handleGradeHistory">
-              <div class="history-icon-wrapper purple">
-                <svg viewBox="0 0 20 20" fill="none">
-                  <path d="M13.32 5.83L18.32 5.83L18.32 10.83" stroke="white" stroke-width="1.67"/>
-                  <path d="M1.67 5.83L18.33 5.83" stroke="white" stroke-width="1.67"/>
-                </svg>
-              </div>
-              <div class="history-content">
-                <div class="history-title">직급 변경</div>
-              </div>
-            </div>
-            <div class="history-card history-green" @click="handlePerformanceHistory">
-              <div class="history-icon-wrapper green">
-                <svg viewBox="0 0 20 20" fill="none">
-                  <path d="M5.83 10.73L14.16 10.73" stroke="white" stroke-width="1.67"/>
-                  <path d="M5 1.67L15 1.67L15 11.66L5 11.66Z" stroke="white" stroke-width="1.67"/>
-                </svg>
-              </div>
-              <div class="history-content">
-                <div class="history-title">성과평가 이력</div>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
     </template>
 
@@ -252,24 +235,103 @@
       @close="handleSealModalClose"
       @success="handleSealUpdateSuccess"
     />
+
+    <!-- 평가 이력 모달 -->
+    <EvaluationHistoryModal
+      :is-open="showEvaluationModal"
+      :employee-id="evaluationEmployeeId"
+      @close="showEvaluationModal = false"
+    />
+
+    <!-- 직급 로그 모달 -->
+    <div v-if="showGradeModal" class="modal-overlay" @click.self="closeModals">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>직급 변경 이력</h3>
+          <button class="close-modal-btn" @click="closeModals">×</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="isHistoryLoading" class="loading-state-modal">
+            <p>이력을 불러오는 중입니다...</p>
+          </div>
+          <div v-else-if="historyError" class="error-state-modal">
+            <p>{{ historyError }}</p>
+          </div>
+          <ul v-else-if="gradeHistoryList.length > 0" class="history-list">
+            <li v-for="item in gradeHistoryList" :key="item.employeeHistoryId" class="history-item">
+              <span class="history-date">{{ formatDateTime(item.changedAt) }}</span>
+              <div class="history-detail">
+                <span class="history-val">{{ item.gradeName }}</span>
+                <span class="history-type">{{ item.changeType }}</span>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="no-history">변경 이력이 없습니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 부서 로그 모달 -->
+    <div v-if="showDeptModal" class="modal-overlay" @click.self="closeModals">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>부서 변경 이력</h3>
+          <button class="close-modal-btn" @click="closeModals">×</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="isHistoryLoading" class="loading-state-modal">
+            <p>이력을 불러오는 중입니다...</p>
+          </div>
+          <div v-else-if="historyError" class="error-state-modal">
+            <p>{{ historyError }}</p>
+          </div>
+          <ul v-else-if="deptHistoryList.length > 0" class="history-list">
+            <li v-for="item in deptHistoryList" :key="item.employeeHistoryId" class="history-item">
+              <span class="history-date">{{ formatDateTime(item.changedAt) }}</span>
+              <div class="history-detail">
+                <span class="history-val">{{ item.departmentName }}</span>
+                <span class="history-type">{{ item.changeType }}</span>
+              </div>
+            </li>
+          </ul>
+          <p v-else class="no-history">변경 이력이 없습니다.</p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { storeToRefs } from 'pinia';
 import { useToast } from 'vue-toastification';
 import { fetchMyProfile, type EmployeeProfileResponse } from '@/api/personnel/personnel';
+import { useOrganizationStore } from '@/stores/organization/organization.store';
+import { useAuthStore } from '@/stores/auth';
 import ContactEditModal from '@/components/personnel/ContactEditModal.vue';
 import PasswordChangeModal from '@/components/personnel/PasswordChangeModal.vue';
 import SealEditModal from '@/components/personnel/SealEditModal.vue';
+import EvaluationHistoryModal from '@/views/evaluation/EvaluationHistoryModal.vue';
 
 const toast = useToast();
-const employee = ref<EmployeeProfileResponse | null>(null);
+const orgStore = useOrganizationStore();
+const { deptHistoryList, gradeHistoryList, isHistoryLoading, historyError } = storeToRefs(orgStore);
+const authStore = useAuthStore();
+
+type EmployeeProfileWithId = EmployeeProfileResponse & { employeeId: number };
+
+const employee = ref<EmployeeProfileWithId | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
 const isContactModalOpen = ref(false);
 const isPasswordModalOpen = ref(false);
 const isSealModalOpen = ref(false);
+
+// 이력 조회 모달 상태
+const showEvaluationModal = ref(false);
+const evaluationEmployeeId = ref<number | null>(null);
+const showDeptModal = ref(false);
+const showGradeModal = ref(false);
 
 /**
  * 프로필 정보 로드
@@ -281,7 +343,13 @@ const loadProfile = async () => {
 
   try {
     const response = await fetchMyProfile();
-    employee.value = response.data.data;
+    const data = response.data.data;
+
+    // API 응답에 employeeId가 없는 경우 authStore에서 가져와서 할당
+    if (!data.employeeId && authStore.user?.employeeId) {
+      data.employeeId = authStore.user.employeeId;
+    }
+    employee.value = data as EmployeeProfileWithId;
   } catch (err: any) {
     console.error('프로필 로드 에러:', err);
     error.value = err.response?.data?.message || '프로필 정보를 불러오는 중 오류가 발생했습니다.';
@@ -384,30 +452,58 @@ const handleContactUpdateSuccess = async () => {
 /**
  * 부서 이동 이력 핸들러
  */
-const handleDepartmentHistory = () => {
-  console.log('부서 이동 이력 조회');
-  toast.info('부서 이동 이력 조회 기능은 준비 중입니다');
+const handleDepartmentHistory = async () => {
+  if (!employee.value?.employeeId) return;
+  showDeptModal.value = true;
+  await orgStore.loadDepartmentHistory(employee.value.employeeId);
 };
 
 /**
  * 직급 변경 이력 핸들러
  */
-const handleGradeHistory = () => {
-  console.log('직급 변경 이력 조회');
-  toast.info('직급 변경 이력 조회 기능은 준비 중입니다');
+const handleGradeHistory = async () => {
+  if (!employee.value?.employeeId) return;
+  showGradeModal.value = true;
+  await orgStore.loadGradeHistory(employee.value.employeeId);
 };
 
 /**
  * 성과평가 이력 핸들러
  */
 const handlePerformanceHistory = () => {
-  console.log('성과평가 이력 조회');
-  toast.info('성과평가 이력 조회 기능은 준비 중입니다');
+  if (!employee.value?.employeeId) return;
+  evaluationEmployeeId.value = employee.value.employeeId;
+  showEvaluationModal.value = true;
+};
+
+const closeModals = () => {
+  showDeptModal.value = false;
+  showGradeModal.value = false;
+};
+
+const formatDateTime = (dateStr: string) => {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleString();
+};
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    isContactModalOpen.value = false;
+    isPasswordModalOpen.value = false;
+    isSealModalOpen.value = false;
+    showEvaluationModal.value = false;
+    closeModals();
+  }
 };
 
 // 컴포넌트 마운트 시 프로필 로드
 onMounted(() => {
   loadProfile();
+  window.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
 });
 </script>
 
@@ -418,6 +514,13 @@ onMounted(() => {
   padding: 32px;
   background: #F8FAFC;
   min-height: 100vh;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 544px;
 }
 
 /* Loading & Error States */
@@ -469,7 +572,7 @@ onMounted(() => {
 
 /* Sidebar Styles */
 .sidebar-card {
-  width: 544px;
+  width: 100%;
   background: white;
   border-radius: 16px;
   border: 1.2px solid #E2E8F0;
@@ -668,7 +771,7 @@ onMounted(() => {
 }
 
 .btn-edit {
-  color: #432DD7;
+  color: #2563eb;
   font-size: 14px;
   line-height: 20px;
   background: none;
@@ -738,13 +841,13 @@ onMounted(() => {
 /* History Cards */
 .history-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr;
   gap: 23px;
 }
 
 .history-card {
   border-radius: 12px;
-  border: 1.2px solid;
+border: 1px solid #e2e8f0;
   padding: 17px;
   display: flex;
   align-items: center;
@@ -754,11 +857,12 @@ onMounted(() => {
 }
 
 .history-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  /* transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+  background: #f3f4f6;  
 }
 
-.history-blue {
+/* .history-blue {
   background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
   border-color: #BEDBFF;
 }
@@ -771,7 +875,7 @@ onMounted(() => {
 .history-green {
   background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
   border-color: #B9F8CF;
-}
+} */
 
 .history-icon-wrapper {
   width: 40px;
@@ -841,5 +945,115 @@ onMounted(() => {
   .profile-container {
     padding: 16px;
   }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  width: 400px;
+  max-height: 600px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 0;
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-date {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.history-detail {
+  text-align: right;
+}
+
+.history-val {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.history-type {
+  font-size: 12px;
+  color: #3b82f6;
+}
+
+.no-history {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+  margin: 20px 0;
+}
+
+.loading-state-modal, .error-state-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #64748b;
+  text-align: center;
 }
 </style>
