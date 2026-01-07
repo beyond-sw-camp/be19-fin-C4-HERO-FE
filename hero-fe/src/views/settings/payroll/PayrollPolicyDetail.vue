@@ -185,7 +185,6 @@
                         :disabled="isAlreadyAdded(m.code)"
                       />
                       <span class="name">{{ m.name }}</span>
-                      <span class="code">{{ m.code }}</span>
                       <span v-if="isAlreadyAdded(m.code)" class="tag">이미 적용됨</span>
                     </label>
                     <div v-if="visibleMasters.length === 0" class="hint-under">항목이 없습니다.</div>
@@ -225,7 +224,8 @@
                         <td colspan="7" class="empty-td">아직 추가된 항목이 없습니다. 위에서 마스터 항목을 선택하고 “정책에 추가”를 눌러주세요.</td>
                       </tr>
 
-                      <tr v-for="row in currentRows" :key="row._key">
+                      <template v-for="row in currentRows" :key="row._key">
+                        <tr>
                         <td>
                           <div class="item-cell">
                             <div class="item-name">{{ getMasterName(row) }}</div>
@@ -254,21 +254,15 @@
                         <td>
                           <div class="period-cell">
                           <div class="period-text">{{ row.salaryMonthFrom }}</div>
-                          <button class="btn-secondary btn-small" type="button" @click="row._editPeriod = !row._editPeriod">
-                            {{ row._editPeriod ? '닫기' : '수정' }}
-                          </button>
-                        </div>
-                        <div v-if="row._editPeriod" class="period-edit">
-                          <input class="input-text" type="month" v-model="row.salaryMonthFrom" />
-                        </div>
+                            <button class="btn-secondary btn-small" type="button" @click="row._editPeriod = !row._editPeriod">
+                              {{ row._editPeriod ? '닫기' : '수정' }}
+                            </button>
+                          </div>
                         </td>
                         <td>
                           <div class="period-cell">
-                          <div class="period-text">{{ row.salaryMonthTo ? row.salaryMonthTo : '∞' }}</div>
-                        </div>
-                        <div v-if="row._editPeriod" class="period-edit">
-                          <input class="input-text" type="month" v-model="row.salaryMonthTo" placeholder="YYYY-MM(선택)" />
-                        </div>
+                            <div class="period-text">{{ row.salaryMonthTo ? row.salaryMonthTo : '∞' }}</div>
+                          </div>
                         </td>
                         <td>
                           <button class="btn-secondary btn-small" @click="openTargetsModal(row)">
@@ -279,6 +273,22 @@
                           <button class="btn-danger btn-small" @click="removeRow(row)">삭제</button>
                         </td>
                       </tr>
+                      <tr v-if="row._editPeriod" class="edit-row">
+                        <td colspan="7">
+                          <div class="edit-panel">
+                            <div class="edit-field">
+                              <div class="edit-label">적용 시작</div>
+                              <input class="input-text" type="month" v-model="row.salaryMonthFrom" />
+                            </div>
+                            <div class="edit-field">
+                              <div class="edit-label">적용 종료</div>
+                              <input class="input-text" type="month" v-model="row.salaryMonthTo" placeholder="YYYY-MM(선택)" />
+                            </div>
+                            <div class="edit-hint">종료를 비우면 무기한으로 적용됩니다.</div>
+                          </div>
+                        </td>
+                      </tr>
+                      </template>
                     </tbody>
                   </table>
                 </div>
@@ -1212,7 +1222,7 @@ async function submitActivate() {
   font-weight:800;
 }
 .btn-danger:hover { background:#fef2f2; }
-.btn-small { padding:8px 10px; border-radius:10px; font-size:.85rem; }
+.btn-small { padding:5px 8px; border-radius:10px; font-size:.85rem; }
 .period-cell{
   display:flex;
   align-items:center;
@@ -1224,7 +1234,37 @@ async function submitActivate() {
   color:#0f172b;
   font-size:.9rem;
 }
-.period-edit{ margin-top:8px; }
+.edit-row td{
+  background:#f8fafc;
+  padding:12px 12px;
+  border-bottom:1px solid #eef2f7;
+}
+.edit-panel{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  align-items:end;
+  padding:10px;
+  border:1px solid #e2e8f0;
+  background:#fff;
+  border-radius:12px;
+}
+.edit-label{
+  font-size:12px;
+  font-weight:900;
+  color:#64748b;
+  margin-bottom:6px;
+}
+.edit-hint{
+  grid-column:1 / -1;
+  font-size:12px;
+  font-weight:800;
+  color:#64748b;
+}
+@media (max-width: 900px){
+  .edit-panel{ grid-template-columns:1fr; }
+}
+
 .mini-count{
   display:inline-flex;
   margin-left:6px;
@@ -1359,7 +1399,13 @@ async function submitActivate() {
   color:#64748b;
 }
 .table-wrap{ overflow:auto; margin-top:12px; border:1px solid #e2e8f0; border-radius:12px; }
-.items-table{ width:100%; border-collapse:separate; border-spacing:0; min-width:1100px;}
+.items-table{ width:100%; border-collapse:separate; border-spacing:0; min-width:1100px; table-layout:fixed; }
+.items-table th,
+.items-table td{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
 .items-table thead th{
   position:sticky; top:0;
   background:#f8fafc;
@@ -1373,7 +1419,7 @@ async function submitActivate() {
 .items-table tbody td{
   border-bottom:1px solid #eef2f7;
   padding:10px 12px;
-  vertical-align:top;
+  vertical-align:middle;
 }
 .items-table tbody tr:hover td{ background:#fbfdff; }
 .empty-td{ color:#64748b; font-weight:800; padding:18px 12px; text-align:center; }

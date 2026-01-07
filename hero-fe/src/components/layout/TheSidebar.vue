@@ -238,7 +238,7 @@
       </div>
 
 
-        <div v-if="isPayrollAdminOpen && !isCollapsed" class="sub-menu-list">
+        <div v-if="canSeePayrollAdmin && isPayrollAdminOpen && !isCollapsed" class="sub-menu-list">
                   <!-- 급여 관리 하위 메뉴 -->
         <div class="sub-menu-item" :class="{ active: activeSubMenu === 'payrollBatch' }"
         @click="handleSubMenuClick('payrollBatch')">

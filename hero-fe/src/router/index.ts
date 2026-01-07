@@ -31,6 +31,7 @@ import settingsRoutes from './modules/settings';
 import { setupAuthGuard } from './guard'; // guard.ts에서 setupAuthGuard 함수 임포트
 import personnelRoutes from './modules/personnel';
 import authRoutes from './modules/auth';
+import errorRoutes from "./modules/error";
 import { useAuthStore } from '@/stores/auth';
 import { useSessionStore } from '@/stores/session';
 
@@ -41,6 +42,7 @@ import organizationRoutes from './modules/organization';
 // 전체 애플리케이션 라우트 정의
 const routes: RouteRecordRaw[] = [
   ...authRoutes,
+  ...errorRoutes,
   {
     path: '/',
     name: 'Home',
@@ -75,6 +77,12 @@ router.beforeEach((to, from, next) => {
 
   if (authStore.isAuthenticated && !isAuthRoute) {
     sessionStore.refreshSession();
+  }
+
+  const roles = (to.meta?.roles as string[] | undefined) ?? [];
+  if (roles.length > 0 && !authStore.hasAnyRole(roles)) {
+    // 403 페이지로 보내기 
+    return next({ name: 'Forbidden' });
   }
 
   next();
