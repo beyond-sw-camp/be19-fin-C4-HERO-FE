@@ -753,7 +753,7 @@ watch(
 .sidebar-container {
   height: auto;
   max-width: 100%;
-  width: 230px;
+  width: 215px;
   background: white;
   transition: width 0.3s ease;
 }

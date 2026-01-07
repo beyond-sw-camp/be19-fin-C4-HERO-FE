@@ -11,6 +11,17 @@
  * @version 1.0
  */
 
+/**
+ * 근무제 템플릿 정보
+ */
+export interface WorkSystemTemplateDTO {
+  workSystemTemplateId?: number;
+  templateId?: number;
+  startTime: string;
+  breakMinMinutes?: number;  // 분 단위 (120)  reason?: string;
+  workSystemTypeId?: number;
+}
+
 /** 출퇴근 상태 정보 */
 export interface ClockStatusDTO {
   attendanceId: number | null
@@ -21,6 +32,8 @@ export interface ClockStatusDTO {
   workDuration?: number | null
   isClockedIn: boolean
   isClockedOut: boolean
+  workSystemTemplateId: number | null  // 추가됨
+
 }
 
 /** 주간 근무 통계 정보 */

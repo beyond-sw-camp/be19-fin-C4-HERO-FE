@@ -7,10 +7,12 @@
  *
  * History
  * 2025/12/26 (혜원) 최초 작성
+ * 2026/01/06 (혜원) 퇴근 API에 휴게시간 포함 여부 파라미터 추가
+ * 2026/01/07 (혜원) 근무제 템플릿 조회 API 추가
  * </pre>
  *
  * @author 혜원
- * @version 1.0
+ * @version 1.2
  */
 import apiClient from '@/api/apiClient'
 import type {
@@ -21,6 +23,7 @@ import type {
   AttendanceStatsDTO,
   VacationStatsDTO,
   ApprovalStatsDTO,
+  WorkSystemTemplateDTO
 } from '@/types/dashboard/dashboard.types'
 
 const dashboardApi = {
@@ -36,9 +39,25 @@ const dashboardApi = {
   /**
    * 퇴근 처리
    * POST /api/dashboard/clock-out
+   * @param includeBreakTime 휴게시간 차감 여부 (true: 오후 1시 이후 - 휴게시간 차감, false: 오후 1시 이전 - 차감 안함)
    */
-  async clockOut(): Promise<ApiResponse<void>> {
-    const res = await apiClient.post<ApiResponse<void>>('/dashboard/clock-out')
+  async clockOut(includeBreakTime: boolean): Promise<ApiResponse<void>> {
+    const res = await apiClient.post<ApiResponse<void>>(
+      '/dashboard/clock-out',
+      { includeBreakTime }
+    )
+    return res.data
+  },
+
+  /**
+   * 근무제 템플릿 정보 조회
+   * GET /api/dashboard/work-system-template/{templateId}
+   * @param templateId 근무제 템플릿 ID
+   */
+  async getWorkSystemTemplate(templateId: number): Promise<ApiResponse<WorkSystemTemplateDTO>> {
+    const res = await apiClient.get<ApiResponse<WorkSystemTemplateDTO>>(
+      `/dashboard/work-system-template/${templateId}`
+    )
     return res.data
   },
 
@@ -93,6 +112,17 @@ const dashboardApi = {
    */
   async getApprovalStats(): Promise<ApiResponse<ApprovalStatsDTO>> {
     const res = await apiClient.get<ApiResponse<ApprovalStatsDTO>>('/dashboard/approval-stats')
+    return res.data
+  },
+
+   /**
+   * 내 기본 근무제 템플릿 정보 조회
+   * GET /api/dashboard/my-default-template
+   */
+  async getMyDefaultTemplate(): Promise<ApiResponse<WorkSystemTemplateDTO>> {
+    const res = await apiClient.get<ApiResponse<WorkSystemTemplateDTO>>(
+      '/dashboard/my-default-template'
+    )
     return res.data
   },
 }
