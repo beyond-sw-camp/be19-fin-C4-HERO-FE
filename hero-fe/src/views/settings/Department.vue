@@ -380,7 +380,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   flex: 1;
-  height: 100%;
   min-height: 0;
   padding: 24px;
   overflow: hidden;
@@ -419,11 +418,12 @@ onUnmounted(() => {
 }
 
 .tree-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 20px;
-  height: calc(100vh - 300px);
-  overflow-y: auto;
 }
 
 .tree-actions {

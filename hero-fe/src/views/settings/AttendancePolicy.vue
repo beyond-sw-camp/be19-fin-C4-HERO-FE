@@ -35,6 +35,13 @@
     <!-- 테이블 영역 -->
     <div class="table-container">
       <table class="data-table">
+          <colgroup>
+    <col style="width: 100px" />
+    <col /> 
+    <col style="width: 180px" />
+    <col style="width: 180px" />
+    <col style="width: 180px" />
+  </colgroup>
         <thead>
           <tr>
             <th class="w-100">정책 번호</th>
@@ -51,7 +58,7 @@
             :key="row.workSystemTemplateId"
           >
             <!-- 정책 번호 -->
-            <td class="text-center">
+            <td class="policy-id">
               {{ row.workSystemTemplateId > 0 ? row.workSystemTemplateId : '-' }}
             </td>
 
@@ -365,4 +372,21 @@ const onSaveTemplates = async (): Promise<void> => {
 .w-160 {
   width: 160px;
 }
+
+.policy-id {
+  width: 100px;
+  text-align: center;
+  vertical-align: middle;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.data-table th,
+.data-table td {
+  vertical-align: middle;
+}
+
+ .w-100 {
+   width: 100px;
+ }
 </style>

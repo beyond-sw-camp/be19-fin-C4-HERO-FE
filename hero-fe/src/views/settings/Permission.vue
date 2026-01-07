@@ -256,11 +256,13 @@ onUnmounted(() => {
 }
 
 .search-container {
+  flex: 0 0 auto;
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 24px 24px 0;
   justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 24px 0; 
+  margin-bottom: 20px;  
 }
 
 .search-input {
@@ -288,7 +290,8 @@ onUnmounted(() => {
 .page-content {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1;  
+  height: 100%;
   min-height: 0;
   overflow: hidden;
 }
@@ -298,11 +301,10 @@ onUnmounted(() => {
 }
 
 .table-container {
-  overflow-x: auto;
-  overflow-y: auto;
-  height: calc(100vh - 300px);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
   border: 1px solid #e2e8f0;
-  margin-bottom: 20px;
 }
 
 .data-table {
