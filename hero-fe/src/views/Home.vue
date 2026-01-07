@@ -75,8 +75,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { Doughnut } from 'vue-chartjs';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { useNotificationStore } from '@/stores/notification/notification.store';
 import type { Notification } from '@/types/notification/notification.types';
 import dashboardApi from '@/api/dashboard/dashboard.api';
@@ -109,7 +107,7 @@ let workDurationInterval: ReturnType<typeof setInterval> | null = null;
 // 휴게시간 계산 (분 → 시간 변환)
 const breakTimeMinutes = computed(() => {
   if (workSystemTemplate.value?.breakMinMinutes) {
-    return workSystemTemplate.value.breakMinMinutes / 60;
+    return workSystemTemplate.value.breakMinMinutes / 60;  // 120분 → 2시간
   }
   return 1; // 기본값 1시간
 });
@@ -158,32 +156,32 @@ const todayStats = computed(() => [
 
 // 이번 달 요약
 const monthlySummary = ref([
-  { label: '일수', value: '0일', sub: '근무', image: '/images/home-day.svg' },
+  { label: '근무', value: '0일', sub: '일수', image: '/images/home-day.svg' },
   { label: '잔여', value: '0일', sub: '연차', image: '/images/home-annualleave.svg' },
   { label: '사용', value: '0일', sub: '휴가', image: '/images/home-leave.svg' }
 ]);
 
 // 출근 통계
 const attendanceStatsItems = ref([
-  { label: '이번 달 출근율', value: '98.5%', colorClass: 't-blue' },
-  { label: '정상 출근', value: '21일', colorClass: 't-green' },
+  { label: '이번 달 출근율', value: '0%', colorClass: 't-blue' },
+  { label: '정상 출근', value: '0일', colorClass: 't-green' },
   { label: '지각', value: '0일', colorClass: 't-red' },
   { label: '결근', value: '0일', colorClass: 't-dark' }
 ]);
 
 // 휴가 현황
 const vacationStatsItems = ref([
-  { label: '전체 연차', value: '15일', colorClass: 't-blue' },
-  { label: '사용 연차', value: '7일', colorClass: 't-orange' },
-  { label: '잔여 연차', value: '8일', colorClass: 't-green' },
-  { label: '소멸 예정', value: '0일', colorClass: 't-red' }
+  { label: '연차', value: '0일', colorClass: 't-blue' },
+  { label: '반차', value: '0일', colorClass: 't-orange' },
+  { label: '병가', value: '0일', colorClass: 't-green' },
+  { label: '기타', value: '0일', colorClass: 't-red' }
 ]);
 
 // 결재 현황
 const approvalStatsItems = ref([
-  { label: '결재 대기', value: '5건', colorClass: 't-brown' },
-  { label: '결재 완료', value: '28건', colorClass: 't-green' },
-  { label: '반려됨', value: '1건', colorClass: 't-red' }
+  { label: '결재 대기', value: '0건', colorClass: 't-blue' },
+  { label: '결재 완료', value: '0건', colorClass: 't-green' },
+  { label: '결재 반려', value: '0건', colorClass: 't-red' }
 ]);
 
 // 최근 알림
@@ -239,18 +237,22 @@ const stopWorkDurationTimer = (): void => {
     workDurationInterval = null;
   }
 };
+
 const fetchWorkSystemTemplate = async (templateId: number): Promise<void> => {
   try {
     const response = await dashboardApi.getWorkSystemTemplate(templateId);
-    workSystemTemplate.value = (response as any).data.data;  // ✅ 타입 단언
     
-    console.log('✅ 근무제 템플릿 조회 성공:', {
-      templateId,
-      breakMinMinutes: workSystemTemplate.value?.breakMinMinutes,
-      breakTimeHours: breakTimeMinutes.value
-    });
+    if (response.data) {
+      workSystemTemplate.value = response.data;
+      
+      console.log('근무제 템플릿 조회 성공:', {
+        templateId,
+        breakMinMinutes: workSystemTemplate.value?.breakMinMinutes,
+        breakTimeHours: breakTimeMinutes.value
+      });
+    }
   } catch (error) {
-    console.error('❌ 근무제 템플릿 조회 실패:', error);
+    console.error('근무제 템플릿 조회 실패:', error);
     workSystemTemplate.value = null;
   }
 };
@@ -258,22 +260,17 @@ const fetchWorkSystemTemplate = async (templateId: number): Promise<void> => {
 const fetchMyDefaultTemplate = async (): Promise<void> => {
   try {
     const response = await dashboardApi.getMyDefaultTemplate();
-    workSystemTemplate.value = (response as any).data.data;  // ✅ 타입 단언
     
-    console.log('✅ 기본 템플릿 조회 성공 (출근 전):', {
-      breakMinMinutes: workSystemTemplate.value?.breakMinMinutes,
-      breakTimeHours: breakTimeMinutes.value
-    });
+    if (response.data) {
+      workSystemTemplate.value = response.data;
+      
+      console.log('기본 템플릿 조회 성공 (출근 전):', {
+        breakMinMinutes: workSystemTemplate.value?.breakMinMinutes,
+        breakTimeHours: breakTimeMinutes.value
+      });
+    }
   } catch (error) {
-    console.error('❌ 기본 템플릿 조회 실패:', error);
-    workSystemTemplate.value = {
-      workSystemTemplateId: 1,
-      startTime: '09:00:00',
-      endTime: '18:00:00',
-      breakMinMinutes: 60,
-      reason: '기본 근무제',
-      workSystemTypeId: 1
-    };
+    console.error('기본 템플릿 조회 실패:', error);
   }
 };
 
@@ -282,18 +279,18 @@ const fetchTodayAttendance = async (): Promise<void> => {
     const response = await dashboardApi.getTodayStatus();
     todayAttendance.value = response.data || null;
     
-    // ✅ 출근한 경우: 출근 시 저장된 템플릿 조회
+    // 출근한 경우: 출근 시 저장된 템플릿 조회
     if (todayAttendance.value?.workSystemTemplateId) {
-      console.log('📌 출근 완료 - 템플릿 ID:', todayAttendance.value.workSystemTemplateId);
+      console.log('출근 완료 - 템플릿 ID:', todayAttendance.value.workSystemTemplateId);
       await fetchWorkSystemTemplate(todayAttendance.value.workSystemTemplateId);
     } 
-    // ✅ 출근 전인 경우: 기본 템플릿 조회
+    // 출근 전인 경우: 기본 템플릿 조회
     else {
-      console.log('📌 출근 전 - 기본 템플릿 조회');
+      console.log('출근 전 - 기본 템플릿 조회');
       await fetchMyDefaultTemplate();
     }
   } catch (error) {
-    console.error('❌ 오늘 근태 정보 조회 실패:', error);
+    console.error('오늘 근태 정보 조회 실패:', error);
     todayAttendance.value = null;
     // 출근 정보 조회 실패 시에도 기본 템플릿 조회
     await fetchMyDefaultTemplate();
@@ -321,7 +318,6 @@ const fetchWeeklyAttendance = async (): Promise<void> => {
   }
 };
 
-// 이번 달 요약 조회
 const fetchMonthlyStats = async (): Promise<void> => {
   try {
     const response = await dashboardApi.getMonthlySummary();
@@ -339,7 +335,6 @@ const fetchMonthlyStats = async (): Promise<void> => {
   }
 };
 
-// 출근 통계 조회
 const fetchAttendanceStats = async (): Promise<void> => {
   try {
     const response = await dashboardApi.getAttendanceStats();
@@ -361,15 +356,12 @@ const fetchAttendanceStats = async (): Promise<void> => {
   }
 };
 
-// 휴가 현황 조회
 const fetchVacationStats = async (): Promise<void> => {
   try {
     const response = await dashboardApi.getVacationStats();
     const data = response.data;
     
     if (data) {
-      const total = data.annualLeaveDays + data.halfDayDays + data.sickLeaveDays + data.otherLeaveDays;
-      
       vacationStatsItems.value = [
         { label: '연차', value: `${data.annualLeaveDays}일`, colorClass: 't-blue' },
         { label: '반차', value: `${data.halfDayDays}일`, colorClass: 't-orange' },
@@ -382,7 +374,6 @@ const fetchVacationStats = async (): Promise<void> => {
   }
 };
 
-// 결재 현황 조회
 const fetchApprovalStats = async (): Promise<void> => {
   try {
     const response = await dashboardApi.getApprovalStats();
@@ -400,9 +391,6 @@ const fetchApprovalStats = async (): Promise<void> => {
   }
 };
 
-/**
- * 직인 체크 및 자동 생성
- */
 const checkAndGenerateSeal = async (): Promise<void> => {
   try {
     const response = await fetchMyProfile();
@@ -433,13 +421,9 @@ const handlePunchIn = async (): Promise<void> => {
     await dashboardApi.clockIn();
     alert('출근 완료!');
     
-    // ✅ 출퇴근 상태 먼저 갱신 (템플릿 정보도 함께 조회됨)
     await fetchTodayAttendance();
-    
-    // 타이머 시작
     startWorkDurationTimer();
     
-    // 주간/월간 통계 갱신
     await Promise.all([
       fetchWeeklyAttendance(),
       fetchMonthlyStats(),
@@ -456,12 +440,10 @@ const handlePunchIn = async (): Promise<void> => {
 };
 
 const handlePunchOut = async (): Promise<void> => {
-  // 현재 시간이 오후 1시 이후인지 확인
   const now = new Date();
   const currentHour = now.getHours();
   const isAfter1PM = currentHour >= 13;
 
-  // 시간대에 따른 경고 메시지
   let confirmMessage: string;
   if (isAfter1PM) {
     confirmMessage = '퇴근 처리하시겠습니까?';
@@ -469,7 +451,6 @@ const handlePunchOut = async (): Promise<void> => {
     confirmMessage = '퇴근시간이 아닙니다.\n퇴근 처리하시겠습니까?';
   }
   
-  // 퇴근 확인
   const confirmed = confirm(confirmMessage);
   if (!confirmed) {
     return;
@@ -478,18 +459,13 @@ const handlePunchOut = async (): Promise<void> => {
   try {
     isLoading.value = true;
     
-    // API 호출 시 휴게시간 포함 여부 전달
     await dashboardApi.clockOut(isAfter1PM);
     
     alert('퇴근 완료! 오늘도 수고하셨습니다.');
     
-    // 타이머 정지
     stopWorkDurationTimer();
-    
-    // 출퇴근 상태 먼저 갱신
     await fetchTodayAttendance();
     
-    // 주간/월간 통계 갱신
     await Promise.all([
       fetchWeeklyAttendance(),
       fetchMonthlyStats(),
@@ -508,12 +484,11 @@ const handlePunchOut = async (): Promise<void> => {
 const loadDashboardData = async (): Promise<void> => {
   isLoading.value = true;
   try {
-    // 직인 체크 및 자동 생성
     checkAndGenerateSeal();
     
     await Promise.all([
       notificationStore.fetchNotifications(),
-      fetchTodayAttendance(), // ✅ 출근 전/후 모두 템플릿 조회
+      fetchTodayAttendance(),
       fetchWeeklyAttendance(),
       fetchMonthlyStats(),
       fetchAttendanceStats(),
@@ -577,7 +552,6 @@ onUnmounted(() => {
   gap: 27px;
 }
 
-/* 모든 카드 제목 통일 */
 :deep(.time-clock-card h3),
 :deep(.card-title),
 :deep(h3) {
