@@ -1,5 +1,5 @@
 <!-- 
-  File Name   : DepartmentDashBoard2.vue
+  File Name   : TeamDashBoard4.vue
   Description : 팀 평가 대시보드: 팀원별 평가 점수 트렌드 페이지
  
   History
@@ -49,26 +49,34 @@
       <!-- 리스트 박스 -->
       <div class="list-box">
 
-        <!-- 필터 -->
-        <div class="filter-row">
-          <label
-            v-for="t in dashboardData"
-            :key="t.evaluationTemplateId"
-            class="checkbox"
-          >
-            <input
-              type="checkbox"
-              :value="t.evaluationTemplateId"
-              v-model="checkedTemplateIds"
-              @change="updateChart"
-            />
-            {{ t.evaluationTemplateName }}
-          </label>
+        <!-- 🔄 로딩 중 -->
+        <div v-if="isLoading" class="loading">
+          <div class="spinner"></div>
+          <p>데이터를 불러오는 중입니다.</p>
         </div>
 
-        <!-- 차트 -->
-        <div class="chart-wrapper">
-          <canvas ref="chartCanvas"></canvas>
+        <!-- 📊 실제 대시보드 -->
+        <div v-else>
+          <!-- 필터 -->
+          <div class="filter-row">
+            <label
+              v-for="t in dashboardData"
+              :key="t.evaluationTemplateId"
+              class="checkbox"
+            >
+              <input
+                type="checkbox"
+                :value="t.evaluationTemplateId"
+                v-model="checkedTemplateIds"
+              />
+              {{ t.evaluationTemplateName }}
+            </label>
+          </div>
+
+          <!-- 차트 -->
+          <div class="chart-wrapper">
+            <canvas ref="chartCanvas"></canvas>
+          </div>
         </div>
 
       </div>
@@ -79,7 +87,7 @@
 <!--script-->
 <script setup lang="ts">
 //Import 구문
-import { ref, onMounted, nextTick } from "vue";
+import { ref, onMounted, nextTick, watch } from "vue";
 import { useRouter } from "vue-router";
 import Chart from "chart.js/auto";
 import apiClient from "@/api/apiClient";
@@ -92,6 +100,7 @@ const authStore = useAuthStore();
 //Reactive 데이터
 const dashboardData = ref<any[]>([]);
 const checkedTemplateIds = ref<number[]>([]);
+const isLoading = ref(false);
 
 //차트 객체
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
@@ -103,15 +112,31 @@ let chartInstance: Chart | null = null;
 const loadDashboard = async () => {
   const departmentId = authStore.user?.departmentId;
 
-  const { data } = await apiClient.get(`/evaluation/dashboard/${departmentId}`);
+  try {
+    isLoading.value = true;
 
-  dashboardData.value = data;
-  checkedTemplateIds.value = data.map(
-    (t: any) => t.evaluationTemplateId
-  );
+    const { data } = await apiClient.get(
+      `/evaluation/dashboard/${departmentId}`
+    );
 
-  await nextTick();
-  renderChart();
+    if (!data || data.length === 0) {
+      alert("평가 데이터가 존재하지 않습니다.");
+      return;
+    }
+
+    dashboardData.value = data;
+    checkedTemplateIds.value = data.map(
+      (t: any) => t.evaluationTemplateId
+    );
+
+    await nextTick();
+    renderChart(); // ✅ 최초 렌더
+
+  } catch (e) {
+    console.error("트렌드 조회 실패", e);
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 /**
@@ -248,6 +273,14 @@ const goMemberSkill = () => {
 const goScoreTrend = () => {
   router.push("/evaluation/team/dashboard4");
 };
+
+watch([isLoading, checkedTemplateIds], async () => {
+  if (isLoading.value) return;
+  if (!dashboardData.value.length) return;
+
+  await nextTick();
+  renderChart();
+});
 
 onMounted(loadDashboard);
 </script>

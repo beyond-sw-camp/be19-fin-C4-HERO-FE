@@ -1,8 +1,6 @@
 <template>
   <div class="page-container">
-    <div class="header">
-      <h1 class="title">조직도</h1>
-    </div>
+
 
     <div v-if="isChartLoading" class="loading-state">
       <p>조직도 정보를 불러오는 중입니다...</p>
@@ -108,8 +106,8 @@
           </div>
           <div class="panel-body">
             <div class="employee-profile-card">
-              <div class="profile-img-large-wrapper">
-                <img v-if="!selectedEmployeeImageError" :src="getProfileImageUrl(selectedEmployee.imagePath)" @error="selectedEmployeeImageError = true" class="profile-img-large" alt="profile" />
+              <div class="profile-img-large-wrapper" :class="{ 'is-circle': !selectedEmployee.imagePath || selectedEmployeeImageError }">
+                <img v-if="selectedEmployee.imagePath && !selectedEmployeeImageError" :src="getProfileImageUrl(selectedEmployee.imagePath)" @error="selectedEmployeeImageError = true" class="profile-img-large" alt="profile" />
                 <div v-else class="profile-initial-large">{{ selectedEmployee.employeeName.charAt(0) }}</div>
               </div>
               <h3 class="employee-name-large">{{ selectedEmployee.employeeName }}</h3>
@@ -294,7 +292,7 @@ onMounted(() => {
   flex-direction: column;
   width: 100%;
   height: 100%;
-  background: #f8fafc;
+  /* background: #f8fafc; */
   overflow: hidden; 
 }
 
@@ -464,7 +462,7 @@ onMounted(() => {
 .profile-initial-small {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -528,7 +526,7 @@ onMounted(() => {
 .profile-initial {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -573,13 +571,18 @@ onMounted(() => {
   margin-bottom: 24px;
 }
 .profile-img-large-wrapper {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+  width: 150px;
+  height: 200px;
+  border-radius: 12px;
   overflow: hidden;
   margin: 0 auto 12px;
   border: 3px solid white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.profile-img-large-wrapper.is-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
 }
 .profile-img-large {
   width: 100%;
@@ -589,7 +592,7 @@ onMounted(() => {
 .profile-initial-large {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
   color: white;
   display: flex;
   align-items: center;

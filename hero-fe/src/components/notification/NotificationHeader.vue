@@ -125,7 +125,7 @@ defineEmits<{
 /* ===== 페이지 제목 ===== */
 .title {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #0F172A;
   letter-spacing: -0.02em;

@@ -15,10 +15,9 @@
       <div class="content-box">
         <!-- 헤더 -->
         <div class="header">
-          <button 
+          <button
+            v-if="authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_HR_EVALUATION'])"
             class="btn-new"
-            :class="{ disabled: !authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_HR_EVALUATION']) }"
-            :disabled="!authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN','ROLE_HR_MANAGER','ROLE_HR_EVALUATION'])" 
             @click="createGuide"
           >
             + 새 평가 가이드 작성
@@ -178,7 +177,12 @@ const pageNumbers = computed(() => {
  */
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString)
-  return date.toLocaleString("ko-KR", { hour12: false })
+
+  const year = date.getFullYear()
+  const month = date.getMonth() + 1   // 0부터 시작하므로 +1
+  const day = date.getDate()
+
+  return `${year}년 ${month}월 ${day}일`
 }
 
 /**
@@ -226,7 +230,6 @@ onMounted(async () => {
   background: white;
   border-radius: 14px;
   outline: 2px #E2E8F0 solid;
-  gap: 20px;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -240,11 +243,15 @@ onMounted(async () => {
 .btn-new {
   padding: 8px 16px;
   background: linear-gradient(180deg, #1C398E 0%, #162456 100%);
-  border-radius: 14px;
+  border-radius: 10px;
   color: #fff;
   font-size: 14px;
   border: none;
   cursor: pointer;
+}
+
+.btn-new:hover {
+  opacity: 0.9;
 }
 
 /* 테이블 */
@@ -270,6 +277,8 @@ onMounted(async () => {
   padding: 16px;
   border-top: 1px solid #E2E8F0;
   cursor: pointer;
+
+  align-items: center;
 }
 
 .table-body .row.alt {
@@ -295,7 +304,7 @@ onMounted(async () => {
   gap: 10px;
   justify-content: center;
   padding: 16px;
-  background: #F8FAFC;
+  background: white;
   border-bottom-left-radius: 14px;
   border-bottom-right-radius: 14px;
 }

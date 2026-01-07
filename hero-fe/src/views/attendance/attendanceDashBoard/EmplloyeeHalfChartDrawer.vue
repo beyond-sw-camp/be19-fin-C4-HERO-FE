@@ -10,6 +10,7 @@
   History
   2025/12/26 - 이지윤 최초 작성
   2026/01/02 - (지윤) 년도 필터링 부분 수정
+  2026/01/06 - (지윤) 디자인 수정
   </pre>
 
   @author 이지윤
@@ -31,17 +32,14 @@
       <!-- 헤더 영역 -->
       <header class="drawer-header">
         <div class="drawer-title">
+          <img
+            class="back-icon"
+            src="/images/backArrow.svg"
+            alt="뒤로가기"
+            @click="goBack"
+          />
           <span class="title-text">직원 근태 상세</span>
         </div>
-
-        <button
-          type="button"
-          class="btn-close"
-          aria-label="닫기"
-          @click="emitClose"
-        >
-          닫기
-        </button>
       </header>
 
       <!-- 직원 기본 정보 영역 -->
@@ -92,10 +90,6 @@
       <div class="half-dashboard-card">
         <!-- 카드 내부 헤더 -->
         <div class="half-dashboard-header">
-          <div
-            class="half-dashboard-icon"
-            aria-hidden="true"
-          ></div>
 
           <div class="half-dashboard-titles">
             <div class="half-dashboard-title">
@@ -360,7 +354,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import { useAttendanceEmployeeDashboardStore } from '@/stores/attendance/attendanceEmployeeDashboard';
@@ -385,6 +379,16 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'close'): void;
 }>();
+
+const goBack = (): void => {
+  emitClose();
+};
+
+const handleKeyDown = (e: KeyboardEvent): void => {
+  if (e.key !== 'Escape') return;
+  if (!props.open) return;
+  emitClose();
+};
 
 /**
  * Drawer 닫기 이벤트 핸들러
@@ -447,9 +451,15 @@ const fetchData = async (): Promise<void> => {
 watch(
   () => props.open,
   async (isOpen) => {
-    if (!isOpen) return;
-    await fetchData();
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      await fetchData();
+      return;
+    }
+
+    window.removeEventListener('keydown', handleKeyDown);
   },
+  { immediate: true },
 );
 
 /**
@@ -469,10 +479,9 @@ watch(
  * 컴포넌트 마운트 시 초기 데이터 로딩
  * - 이미 open 상태이고 employeeId가 있는 경우에만 실행
  */
-onMounted(async () => {
-  if (props.open && props.employeeId) {
-    await fetchData();
-  }
+
+ onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
 });
 
 /* =========================
@@ -703,235 +712,4 @@ const absencePath = computed(() => buildPath(absencePoints.value));
 </script>
 
 
-<style scoped>
-.drawer-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  justify-content: flex-end;
-  z-index: 9999;
-}
-
-.drawer-panel {
-  width: 480px;
-  height: 100%;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  gap: 16px;
-}
-
-.drawer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.btn-close {
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.employee-head {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px;
-}
-
-.employee-name {
-  font-weight: 700;
-  font-size: 18px;
-  margin-bottom: 6px;
-}
-
-.employee-meta {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.employee-meta .dot {
-  margin: 0 6px;
-}
-
-.filters {
-  display: flex;
-  gap: 12px;
-}
-
-.filter-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.filter-label {
-  font-size: 12px;
-  color: #374151;
-}
-
-.filter-select {
-  height: 36px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 0 10px;
-}
-
-.half-dashboard-card {
-  width: 100%;
-  background: #ffffff;
-  border-radius: 11.25px;
-  outline: 1.2px solid #e2e8f0;
-  outline-offset: -1.2px;
-  box-shadow: 0px 4px 6px -4px rgba(0, 0, 0, 0.1);
-  padding: 16px;
-  overflow: auto;
-}
-
-
-.half-dashboard-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.half-dashboard-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
-}
-
-.half-dashboard-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.half-dashboard-title {
-  color: #1c398e;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 30px;
-}
-
-.half-dashboard-subtitle {
-  color: #62748e;
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 19.5px;
-}
-
-.state-box {
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px dashed #d1d5db;
-  color: #374151;
-  margin-bottom: 12px;
-}
-
-.state-box.error {
-  border-color: #ef4444;
-  color: #b91c1c;
-}
-
-
-.half-dashboard-summary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.summary-mini-card {
-  background: #ffffff;
-  border-radius: 10px;
-  outline: 1.2px solid #e2e8f0;
-  outline-offset: -1.2px;
-  padding: 12px 14px;
-  text-align: center;
-}
-
-.summary-mini-label {
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 18px;
-  margin-bottom: 6px;
-}
-
-.summary-mini-value {
-  color: #64748b;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 30px;
-}
-
-
-.chart-block {
-  margin-top: 16px;
-}
-
-.chart-block-title {
-  color: #1c398e;
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 22.5px;
-  margin-bottom: 10px;
-}
-
-.chart-canvas-wrap {
-  width: 100%;
-  height: 180px;
-  position: relative;
-  overflow: hidden;
-}
-
-.chart-svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.axis-text {
-  fill: #64748b;
-  font-size: 12px;
-  font-weight: 400;
-}
-
-
-.chart-legend {
-  display: flex;
-  justify-content: center;
-  gap: 22px;
-  margin-top: 8px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  line-height: 19.5px;
-}
-
-.legend-line {
-  width: 14px;
-  height: 0px;
-  border-top: 2px solid currentColor;
-}
-
-.legend-absence {
-  color: #ef4444;
-}
-
-.legend-tardy {
-  color: #eab308;
-}
-</style>
+<style scoped src="@/assets/styles/attendance/employee-chart.css"></style>

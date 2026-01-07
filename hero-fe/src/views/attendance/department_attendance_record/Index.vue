@@ -8,54 +8,42 @@
   History
   2025/12/26 - 이지윤 최초 작성
   2026/01/01 - (지윤) 페이지네이션 디자인 수정 및 필터링 부분 수정
+  2026/01/05 - (지윤) 디자인 수정
   </pre>
 
   @author 이지윤
-  @version 1.1
+  @version 1.3
 -->
 
 <template>
   <div class="worksystem-wrapper">
     <div class="worksystem-page">
       <div class="panel">
+        <div class="panel-body">
         <!-- 검색 영역 : 단일 날짜 -->
         <div class="panel-search">
           <div class="panel-search-inner">
-            <!-- 왼쪽 안내 문구 -->
-            <p class="search-info">
-              오늘 날짜 기준으로 표시됩니다.
-            </p>
+            <p class="search-info"></p>
 
-            <!-- 오른쪽 : 날짜 + 버튼 묶음 -->
             <div class="filter-group">
-              <!-- 날짜 -->
-              <div class="date-filter-group">
-                <span class="date-label">날짜</span>
-                <div class="date-input-wrapper">
-                  <input
-                    v-model="selectedDate"
-                    type="date"
-                    class="date-input"
-                    :min="minDate"
-                    :max="today"
-                  />
-                </div>
+              <!-- 표준 필터 row -->
+              <div class="filter-row">
+                <span class="filter-label">날짜</span>
+                <input
+                  v-model="selectedDate"
+                  type="date"
+                  class="filter-input"
+                  :min="minDate"
+                  :max="today"
+                />
               </div>
 
-              <!-- 검색 / 초기화 버튼 -->
+              <!-- 표준 버튼 그룹 -->
               <div class="search-button-group">
-                <button
-                  class="btn-search"
-                  :class="{ 'btn-search--active': isSearching }"
-                  @click="onSearch"
-                >
+                <button class="btn-search" :disabled="isSearching" @click="onSearch">
                   검색
                 </button>
-                <button
-                  class="btn-reset"
-                  :class="{ 'btn-search--active': isSearching }"
-                  @click="onReset"
-                >
+                <button class="btn-reset" :disabled="isResetting" @click="onReset">
                   초기화
                 </button>
               </div>
@@ -63,11 +51,10 @@
           </div>
         </div>
 
-
         <!-- 테이블 영역 -->
         <div class="panel-table-wrapper">
           <div class="panel-table">
-            <table class="employee-table">
+            <table class="attendance-table dept-status-table">
               <thead>
                 <tr>
                   <th class="col-date">날짜</th>
@@ -140,7 +127,7 @@
               :disabled="currentPage === 1"
               @click="goPage(currentPage - 1)"
             >
-              ‹
+              이전
             </button>
 
             <!-- 이전 페이지(있을 때만) -->
@@ -175,7 +162,7 @@
               :disabled="currentPage >= totalPages"
               @click="goPage(currentPage + 1)"
             >
-              ›
+              다음
             </button>
           </div>
 
@@ -183,6 +170,7 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup lang="ts">
@@ -372,340 +360,6 @@ onMounted(async () => {
 </script>
 
 
-<style scoped>
-* {
-  font-size: 14px;
-  font-family: "Inter-Regular", sans-serif;
-}
-.worksystem-wrapper {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
+<style scoped src="@/assets/styles/attendance/attendance-common.css"></style>
+<style scoped src="@/assets/styles/attendance/attendance-dept-status.css"></style>
 
-.worksystem-page {
-  width: 100%;
-  height: 85%;              
-  padding: 24px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 36px;
-  overflow-y: auto;
-}
-
-/* 메인 패널 */
-.panel {
-  width: 100%;
-  background-color: #ffffff;
-  border-radius: 14px;
-  border: 2px solid #e2e8f0;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 버튼 */
-.btn-search,
-.btn-reset {
-  min-width: 60px;
-  height: 40px;
-  border-radius: 10px;
-  border: 2px solid #cad5e2;
-  background-color: #ffffff;
-  color: #62748e;
-  cursor: pointer;
-}
-
-.btn-search {
-  background-color: #155dfc;
-  border-color: #155dfc;
-  color: #ffffff;
-}
-
-.btn-search:disabled,
-.btn-reset:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-/* 테이블 영역 */
-.panel-table-wrapper {
-  padding: 0 0 16px;
-}
-
-.panel-table {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.employee-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-/* 헤더 */
-.employee-table thead tr {
-  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
-}
-
-.employee-table th {
-  height: 48px;
-  padding: 11px 16px;
-  font-weight: 700;
-  color: #ffffff;
-  text-align: center;
-  border: none;
-}
-
-/* 컬럼 폭 */
-.employee-table th.col-date {
-  text-align: left;
-  width: 10%;
-}
-.col-name {
-  width: 18%;
-}
-.col-status {
-  width: 14%;
-}
-.col-position {
-  width: 14%;
-}
-.col-worksystem {
-  width: 16%;
-}
-.col-worktime {
-  width: 25%;
-}
-
-.col-date,
-.col-name,
-.col-position,
-.col-worksystem,
-.col-worktime {
-  text-align: left;
-}
-
-.col-status {
-  text-align: center;
-}
-
-
-/* 바디 */
-.employee-table td {
-  height: 60px;
-  padding: 0 16px;
-  color: #7b839f;
-  border-top: 1px solid #e2e8f0;
-  vertical-align: middle;
-  text-align: center;
-}
-
-
-.row-striped {
-  background-color: #f8fafc;
-}
-
-
-.cell-name {
-  font-weight: 400;
-}
-
-/* 좌측 정렬해야 자연스러운 컬럼들만 override */
-.employee-table td.cell-date{
-  text-align: left;
-}
-
-.cell-name,
-.cell-position,
-.cell-worksystem,
-.cell-worktime {
-  text-align: left;
-}
-
-.cell-status {
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 80px;
-  height: 24px;
-  padding: 0 12px;
-  border-radius: 9999px;
-  border: 1px solid #cad5e2;
-  background-color: #ffffff;
-}
-
-/* 상태별 색상 */
-.status-normal {
-  color: #000000;
-}
-
-.status-late {
-  color: #ff0000;
-}
-
-.status-absent {
-  color: #16a34a;
-}
-
-.status-early {
-  color: rgb(187, 187, 30);
-}
-
-/* 근무시간은 살짝 가운데 정렬 */
-.cell-worktime {
-  text-align: left;
-}
-
-/* 빈 데이터 */
-.empty-row {
-  text-align: center;
-  padding: 24px 0;
-  color: #94a3b8;
-}
-
-/* 페이지네이션 */
-.pagination {
-  width: 100%;
-  padding: 16px 0;
-  background: #f8fafc;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-}
-
-.page-button {
-  min-width: 34px;
-  height: 29px;
-  padding: 4px 10px;
-  border-radius: 4px;
-  border: 0.67px solid #cad5e2;
-  background: #ffffff;
-  font-size: 14px;
-  color: #62748e;
-  cursor: pointer;
-}
-
-
-.page-button.page-active:disabled {
-  opacity: 1;
-}
-
-.page-button:disabled:not(.page-active) {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.page-active {
-  background: #155dfc;
-  border-color: #155dfc;
-  color: #ffffff;
-  font-weight: 700;
-}
-
-.page-button.page-active:disabled:hover {
-  background: #2b6bff;
-  border-color: #2b6bff;
-}
-
-/* 화살표 버튼 */
-.arrow-button {
-  min-width: 34px;
-  font-size: 18px;
-  line-height: 1;
-}
-
-.employee-table tbody tr:last-child td {
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.panel-search {
-  border-bottom: 2px solid #e2e8f0;
-  padding: 14px 18px;
-}
-
-.panel-search-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.search-info {
-  font-size: 18px;
-  color: #94a3b8;
-  margin: 0;
-
-  position: relative;
-  top: -2px;   
-}
-
-.filter-group {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;   /* 날짜와 버튼 사이 간격 */
-}
-
-/* 날짜 필터 그룹 */
-.date-filter-group {
-  display: flex;
-  flex-direction: row;  
-  align-items: center;   
-  gap: 10px;            
-}
-
-/* 날짜 라벨 */
-.date-label {
-  color: #64748b;
-  white-space: nowrap;   
-  margin: 0;             
-}
-
-
-/* 인풋 + 캘린더 아이콘 */
-.date-input-wrapper {
-  display: flex;
-  align-items: center;
-  width: 260px;
-  height: 40px;
-  border-radius: 10px;
-  border: 2px solid #cad5e2;
-  background: #ffffff;
-  overflow: hidden;
-}
-
-.date-input {
-  flex: 1;
-  border: none;
-  height: 100%;
-  padding: 0 12px;
-  color: #1f2933;
-}
-
-.date-input:focus {
-  outline: none;
-}
-
-/* 버튼 영역 */
-.search-button-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding-bottom: 2px;
-}
-
-.btn-search--active {
-  background-color: #2b6bff;
-  border-color: #2b6bff;
-}
-
-.btn-reset--active {
-  background-color: #e5edff;
-}
-</style>

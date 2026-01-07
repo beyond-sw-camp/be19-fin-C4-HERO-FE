@@ -109,6 +109,11 @@ apiClient.interceptors.response.use(
     async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+        // 로그인 요청에서 발생한 401 에러는 토큰 만료가 아니므로 재발급을 시도하지 않음
+        if (originalRequest.url?.includes('/auth/login')) {
+            return Promise.reject(error);
+        }
+
         if (!error.response || error.response.status !== 401 || originalRequest._retry) {
             return Promise.reject(error);
         }

@@ -192,14 +192,15 @@ const closeModal = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
+  padding: 16px 24px;
   border-bottom: 1px solid #e2e8f0;
 }
 
 .modal-title {
-  font-size: 1.25rem;
+  font-size: 18px;
   font-weight: 600;
   color: #1e293b;
+  margin: 0;
 }
 
 .close-button {
@@ -230,9 +231,9 @@ const closeModal = () => {
 }
 
 .profile-image {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+  width: 120px;
+  height: 160px;
+  border-radius: 12px;
   object-fit: cover;
   border: 3px solid #e2e8f0;
 }

@@ -305,10 +305,10 @@
             @click="handleSubMenuClick('review')">
           <div class="sub-menu-text">승진 심사</div>
         </div>
-        <div v-if="canSeePersonnelGeneral" class="sub-menu-item" :class="{ active: activeSubMenu === 'special' }"
+        <!-- <div v-if="canSeePersonnelGeneral" class="sub-menu-item" :class="{ active: activeSubMenu === 'special' }"
             @click="handleSubMenuClick('special')">
           <div class="sub-menu-text">특별 승진</div>
-        </div>
+        </div> -->
       </div>
 
         <!-- 조직도 -->
@@ -668,13 +668,27 @@ const syncActiveByRoute = (path: string) => {
 
   // 성과평가
   if (path.startsWith('/evaluation')) {
-    activeParent.value = 'evaluation';
-    if (!isCollapsed.value) isEvaluationOpen.value = true;
-    if (path.includes('/template')) activeSubMenu.value = 'template';
-    else if (path.includes('/guide')) activeSubMenu.value = 'guide';
-    else if (path.includes('/list')) activeSubMenu.value = 'list';
-    return;
+  activeParent.value = 'evaluation';
+  if (!isCollapsed.value) isEvaluationOpen.value = true;
+
+  if (path.includes('/template')) {
+    activeSubMenu.value = 'template';
   }
+  else if (path.includes('/guide')) {
+    activeSubMenu.value = 'guide';
+  }
+  else if (path.includes('/list')) {
+    activeSubMenu.value = 'list';
+  }
+  else if (path.startsWith('/evaluation/team')) {
+    activeSubMenu.value = 'teamDash';
+  }
+  else if (path.startsWith('/evaluation/department')) {
+    activeSubMenu.value = 'deptDash';
+  }
+
+  return;
+}
 
   // 급여(사원)
   if (path.startsWith('/payroll') && !path.startsWith('/payroll/admin')) {
@@ -702,8 +716,8 @@ const syncActiveByRoute = (path: string) => {
   if (path.startsWith('/personnel')) {
     activeParent.value = 'personnel';
     if (!isCollapsed.value) isPersonnelOpen.value = true;
-    if (path.startsWith('/personnel/list')) activeSubMenu.value = 'employeeList';
-    else if (path.startsWith('/personnel/turnover')) activeSubMenu.value = 'turnover';
+    if (path.startsWith('/personnel/list') || path.startsWith('/personnel/register')) activeSubMenu.value = 'employeeList';
+    else if (path.startsWith('/personnel/retirement/turnover')) activeSubMenu.value = 'turnover';
     else if (path.startsWith('/personnel/promotion/plan')) activeSubMenu.value = 'plan';
     else if (path.startsWith('/personnel/promotion/recommend')) activeSubMenu.value = 'recommend';
     else if (path.startsWith('/personnel/promotion/review')) activeSubMenu.value = 'review';
