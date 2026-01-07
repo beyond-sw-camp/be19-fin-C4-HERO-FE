@@ -13,40 +13,58 @@
   2025/12/16 (혜원) Notification 타입 맞춤 수정, 링크 버튼 추가
   2026/01/04 (혜원) 알림 디자인 수정
   2026/01/04 (혜원) 아이템 클릭 제거, 버튼만 클릭 가능하도록 수정
+  2026/01/06 (혜원) 드롭다운 메뉴 버튼 형식으로 변경
   </pre>
 
   @author 혜원
-  @version 2.3
+  @version 2.4
 -->
-
 <template>
-  <!-- 알림 아이템 최상위 컨테이너 (클릭 불가) -->
-  <div
-    class="notification-item"
-    :class="{ unread: !notification.isRead }"
-  >
-    <!-- 알림 헤더 영역 (클릭 불가로 변경) -->
+  <!-- 알림 아이템 최상위 컨테이너 -->
+    <div
+      class="notification-item"
+      :class="{
+        unread: !notification.isRead,
+        read: notification.isRead
+      }"
+    >
+    <!-- 알림 헤더 영역 -->
     <div class="notification-header">
       <!-- 알림 타입 아이콘 -->
-      <img
-        :src="getIcon(notification.type)"
-        :alt="`${notification.type} 아이콘`"
-        class="notification-icon"
-      />
+      <div class="icon-wrap" :class="`icon-${notification.type}`">
+        <img
+          :src="getIcon(notification.type)"
+          :alt="`${notification.type} 아이콘`"
+          class="notification-icon"
+        />
+      </div>
 
       <!-- 알림 내용 영역 -->
       <div class="content">
-        <!-- 알림 제목 -->
-        <h3 class="title">{{ notification.title }}</h3>
+        <!-- 제목 + New 배지 -->
+        <div class="title-row">
+          <h3 class="title">{{ notification.title }}</h3>
+          <span v-if="!notification.isRead" class="new-badge">New</span>
+        </div>
 
-        <!-- 알림 메시지 (2줄 말줄임) -->
+        <!-- 알림 메시지 -->
         <p class="description">{{ notification.message }}</p>
 
-        <!-- 시간 + 링크버튼을 같은 줄로 -->
+        <!-- 시간/날짜/링크버튼을 한 줄에 -->
         <div class="meta-row">
-          <span class="time">{{ notification.timeAgo }}</span>
+          <div class="meta-time">
+            <div class="meta-chip">
+              <img class="meta-icon" src="/images/clock.png" alt="시간" />
+              <span class="time">{{ notification.timeAgo }}</span>
+            </div>
 
-          <!-- 원래 있던 링크 버튼 로직 유지 (link 있을 때만) -->
+            <div class="meta-chip">
+              <img class="meta-icon" src="/images/calendar.svg" alt="날짜" />
+              <span class="date">{{ formatDate(notification.createdAt) }}</span>
+            </div>
+          </div>
+
+          <!-- 링크 버튼 -->
           <button
             v-if="notification.link"
             class="link-btn inline"
@@ -58,84 +76,62 @@
         </div>
       </div>
 
-      <!-- 삭제 버튼 (우측 상단 고정) -->
-      <button
-        class="delete-btn"
-        type="button"
-        @click.stop="handleDeleteClick"
-        title="삭제"
-      >
-        ✕
-      </button>
+      <!-- 더보기 메뉴 버튼 (우측 상단 고정) -->
+      <div class="menu-wrapper">
+        <button
+          class="menu-btn"
+          type="button"
+          @click.stop="toggleMenu"
+          title="더보기"
+        >
+          ⋮
+        </button>
 
-      <!-- 링크 버튼 영역 (link가 있을 때만 표시) -->
-      <!-- 기존 구조는 남겨두되, '같은 줄' 요구사항 때문에 실제 버튼은 meta-row에 배치 -->
-      <div v-if="notification.link" class="notification-footer">
-        <!-- (기존 자리 유지용 / 필요하면 여기 스타일로 다른 액션 넣어도 됨) -->
+        <!-- 드롭다운 메뉴 - 2개 버튼으로 변경 -->
+        <!-- 드롭다운 메뉴 - 단일 아이템 -->
+<div v-if="showMenu" class="dropdown-menu">
+  <button
+    class="menu-item"
+    type="button"
+    @click.stop="handleHideClick"
+  >
+    이 알림 숨기기
+  </button>
+</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// 1. Import 구문
+import { ref, onMounted, onUnmounted } from 'vue';
 import type { Notification, NotificationCategory } from '@/types/notification/notification.types';
 
-// 2. Props 정의
-/**
- * 컴포넌트 Props
- *
- * @property {Notification} notification - 표시할 알림 데이터 객체
- * @property {number} notification.notificationId - 알림 고유 ID
- * @property {string} notification.title - 알림 제목
- * @property {string} notification.message - 알림 내용
- * @property {string} notification.timeAgo - 상대 시간 (예: 방금 전)
- * @property {boolean} notification.isRead - 읽음 여부
- * @property {string | null} notification.link - 이동할 링크 (없으면 null)
- * @property {NotificationCategory} notification.type - 알림 카테고리
- */
 const props = defineProps<{
   notification: Notification;
 }>();
 
-// 3. Emits 정의
-/**
- * 컴포넌트 이벤트 정의
- *
- * @event view - 상세 보기 버튼 클릭 시 발생
- *               부모 컴포넌트에서 읽음 처리 및 페이지 이동 처리
- *               @param {Notification} notification - 클릭된 알림 객체
- *
- * @event delete - 삭제 버튼 클릭 시 발생
- *                 부모 컴포넌트에서 소프트 삭제 처리
- *                 @param {number} id - 삭제할 알림 ID
- */
 const emit = defineEmits<{
   view: [notification: Notification];
   delete: [id: number];
 }>();
 
-// 4. 이벤트 핸들러
+const showMenu = ref(false);
 
-/**
- * 상세 보기 버튼 클릭 핸들러
- */
+const toggleMenu = (): void => {
+  showMenu.value = !showMenu.value;
+};
+
+const handleHideClick = (): void => {
+  showMenu.value = false;
+  emit('delete', props.notification.notificationId);
+};
+
+
 const handleViewClick = (): void => {
   emit('view', props.notification);
 };
 
-/**
- * 삭제 버튼 클릭 핸들러
- */
-const handleDeleteClick = (): void => {
-  emit('delete', props.notification.notificationId);
-};
-
-// 5. 헬퍼 함수 (비즈니스 로직)
-
-/**
- * 알림 타입에 따른 아이콘 경로 반환
- */
 const getIcon = (type: string): string => {
   const iconMap: Record<string, string> = {
     attendance: '/images/alarm/alarm-check.svg',
@@ -144,13 +140,9 @@ const getIcon = (type: string): string => {
     evaluation: '/images/alarm/alarm-paper.svg',
     system: '/images/alarm/alarmsetting.svg',
   };
-
   return iconMap[type] || '/images/alarm/alarmsetting.svg';
 };
 
-/**
- * 알림 타입에 따른 링크 버튼 텍스트 반환
- */
 const getLinkText = (type: NotificationCategory): string => {
   const linkTextMap: Record<NotificationCategory, string> = {
     attendance: '근태 확인하기',
@@ -159,40 +151,117 @@ const getLinkText = (type: NotificationCategory): string => {
     evaluation: '평가 보기',
     system: '자세히 보기',
   };
-
   return linkTextMap[type] || '자세히 보기';
 };
+
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return `${month}월 ${day}일`;
+};
+
+const handleClickOutside = (event: MouseEvent): void => {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.menu-wrapper')) {
+    showMenu.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 </script>
 
 <style scoped>
-/**
- * 알림 아이템 최상위 컨테이너
- */
 .notification-item {
   position: relative;
   display: flex;
   flex-direction: column;
-  background: #EFF6FF; /* 카드 배경 통일 */
+  background: #fff;
   border-radius: 8px;
   margin-bottom: 12px;
   overflow: hidden;
-  cursor: default; /* 클릭 불가능 표시 */
+  cursor: default;
+
+  /* 읽은 알림 기본: 테두리만 */
+  border: 1px solid #E2E8F0;
+  transition: all 0.2s ease;
 }
 
-/* 공통 띠 */
-.notification-item::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 4px;          /* 항상 동일 */
-  height: 100%;
-  background: #CBD5E1; /* 읽음 = 회색 */
+/* 읽은 알림(read): 테두리만 유지 + 배경 흰색 */
+.notification-item.read {
+  background: #fff;
+  border-color: #E2E8F0;
+  border-left: 1px solid #E2E8F0; /* 띠 없음 */
 }
 
-/* 안 읽은 알림 */
-.notification-item.unread::before {
-  background: #3B82F6; /* 안 읽음 = 파랑 */
+/* 새 알림(unread): 왼쪽 띠 + 배경 살짝 */
+.notification-item.unread {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  border-left: 4px solid #3B82F6; /* 띠는 여기만 */
+}
+
+/* hover는 공통 */
+.notification-header:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+
+.notification-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  position: relative;
+  cursor: default;
+}
+
+.notification-header:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.icon-wrap {
+  width: 36px;
+  height: 36px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #F1F5F9;
+  flex-shrink: 0;
+}
+
+.notification-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  padding-right: 52px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E293B;
+  margin: 0;
+  line-height: 1.4;
 }
 
 .notification-item.unread .title {
@@ -200,70 +269,20 @@ const getLinkText = (type: NotificationCategory): string => {
   color: #1E40AF;
 }
 
-.notification-item .title {
-  color: #1E293B;
+.new-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  background: #3B82F6;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/**
- * 읽지 않은 알림 시각적 강조
- */
-.notification-item.unread {
-  background: #EFF6FF !important;
-}
-
-.notification-item.unread .description {
-  color: #1E293B;
-}
-
-/**
- * 알림 헤더 (아이콘 + 내용 + 삭제 버튼)
- */
-.notification-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 16px;
-  position: relative;
-  cursor: default; /* 클릭 불가능 */
-}
-
-/* 호버 효과는 유지 (시각적 피드백) */
-.notification-header:hover {
-  background: rgba(0, 0, 0, 0.02);
-}
-
-/**
- * 알림 타입 아이콘
- */
-.notification-icon {
-  margin-top: 5px;
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-/**
- * 알림 내용 컨테이너
- */
-.content {
-  flex: 1;
-  min-width: 0;
-  padding-right: 52px; /* 삭제 버튼이랑 겹침 방지(기존 32px -> 52px) */
-}
-
-/**
- * 알림 제목
- */
-.title {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 4px 0;
-  line-height: 1.4;
-}
-
-/**
- * 알림 메시지
- */
 .description {
   font-size: 14px;
   color: #64748b;
@@ -276,30 +295,80 @@ const getLinkText = (type: NotificationCategory): string => {
   text-overflow: ellipsis;
 }
 
-/* 시간 + 링크버튼 같은 줄 */
+.notification-item.unread .description {
+  color: #1E293B;
+}
+
 .meta-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  margin-top: 6px;
 }
 
-/**
- * 상대 시간 표시
- */
-.time {
-  font-size: 12px;
+.meta-time {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #94a3b8;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
   white-space: nowrap;
 }
 
-/**
- * 삭제 버튼 (우측 상단 고정)
- */
-.delete-btn {
+.meta-icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+}
+
+.link-btn.inline {
+  padding: 8px 14px;
+  background: linear-gradient(180deg, #1E3A8A 0%, #0B1B4D 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.link-btn.inline:hover {
+  background: linear-gradient(180deg, #1E40AF 0%, #1E3A8A 100%);
+  color: white;
+}
+
+.notification-item.unread .link-btn.inline {
+  background: linear-gradient(180deg, #1E3A8A 0%, #0B1B4D 100%);
+  border: none;
+  color: white;
+}
+
+.notification-item.unread .link-btn.inline:hover {
+  background: linear-gradient(180deg, #1E40AF 0%, #1E3A8A 100%);
+  color: white;
+}
+
+.menu-wrapper {
   position: absolute;
   top: 12px;
   right: 12px;
+  flex-shrink: 0;
+}
+
+.menu-btn {
   width: 28px;
   height: 28px;
   border: none;
@@ -308,74 +377,77 @@ const getLinkText = (type: NotificationCategory): string => {
   cursor: pointer;
   border-radius: 4px;
   transition: all 0.2s ease;
-  font-size: 16px;
+  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  line-height: 1;
 }
 
-.delete-btn:hover {
-  background: #FEE2E2;
-  color: #EF4444;
+.menu-btn:hover {
+  background: #F1F5F9;
+  color: #64748b;
 }
-
-/**
- * 링크 버튼 컨테이너 (기존 유지)
- */
-.notification-footer {
-  margin-top: 20px;
-  padding: 0 16px 16px 16px;
-  border-top: 1px solid #F1F5F9;
-  padding-top: 12px;
-  display: none; /* "같은 줄"로 올렸으니 화면에는 안 보이게(구조는 유지) */
-}
-
-/**
- * 링크 버튼 (명세서 보기, 결재 상세보기 등)
- */
-.link-btn {
-  width: 100%;
-  padding: 10px 16px;
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
   background: white;
-  color: #3B82F6;
-  border: 1px solid #3B82F6;
-  border-radius: 6px;
-  cursor: pointer;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  min-width: 160px;
+  overflow: hidden;
+}
+
+.menu-item {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: white;
+  color: black;
+  text-align: left;
   font-size: 14px;
   font-weight: 500;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-/* 같은 줄에서 쓰는 버튼은 width 100%면 깨져서 override */
-.link-btn.inline {
-  width: auto;
-  padding: 8px 14px;
-  font-size: 13px;
+.menu-item:hover {
+    background-color: #f8fafc;
+}
+
+/* 액션 버튼 공통 스타일 */
+.action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 1px solid;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
-.link-btn:hover {
-  background: #3B82F6;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+.btn-icon {
+  width: 16px;
+  height: 16px;
 }
+/* 읽은 알림: 왼쪽 띠(라인)만 표시 */
+.notification-item.read {
+  border-left: 4px solid #1C398E ; /* 회색 라인 */
+}
+/* 만약 “안읽음은 띠 말고 테두리만” 원하면 위 줄 지우고 이걸로 */
+ /* .notification-item.unread { border-left: 4px solid transparent; } */
 
-/**
- * 읽지 않은 알림의 링크 버튼 스타일
- */
-.notification-item.unread .link-btn.inline {
-  background: #DBEAFE;
-  border-color: #3B82F6;
-  color: #1E40AF;
-}
 
-.notification-item.unread .link-btn.inline:hover {
-  background: #3B82F6;
-  color: white;
-}
 
 /* 반응형 스타일 */
 @media (max-width: 768px) {
@@ -385,8 +457,8 @@ const getLinkText = (type: NotificationCategory): string => {
   }
 
   .notification-icon {
-    width: 36px;
-    height: 36px;
+    width: 18px;
+    height: 18px;
   }
 
   .title {
@@ -397,12 +469,15 @@ const getLinkText = (type: NotificationCategory): string => {
     font-size: 13px;
   }
 
-  .delete-btn {
-    top: 8px;
-    right: 8px;
+  .menu-btn {
     width: 24px;
     height: 24px;
-    font-size: 14px;
+    font-size: 18px;
+  }
+
+  .menu-wrapper {
+    top: 8px;
+    right: 8px;
   }
 
   .meta-row {
@@ -412,6 +487,20 @@ const getLinkText = (type: NotificationCategory): string => {
   }
 
   .link-btn.inline {
+    width: 100%;
+  }
+
+  .new-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .dropdown-menu {
+    flex-direction: column;
+    min-width: 160px;
+  }
+
+  .action-btn {
     width: 100%;
   }
 }

@@ -13,10 +13,11 @@
   2025/12/17 (혜원) 알림 마운트 수정
   2026/01/04 (혜원) 스타일 수정
   2026/01/04 (혜원) 설정 저장 후 페이지 이동 제거
+  2026/01/06 (혜원) 디자인 수정
   </pre>
 
   @author 혜원
-  @version 1.3
+  @version 1.4
 -->
 <template>
   <div class="notification-settings-page">
@@ -303,7 +304,6 @@ onMounted(async () => {
   padding: 0 16px;              /* 과한 padding 제거 */
   background: #fff;
   border-bottom: 1px solid #e5e7eb;
-
   display: flex;
   align-items: center;          /* 수직 가운데 */
   gap: 12px;
@@ -341,7 +341,7 @@ onMounted(async () => {
 
 .settings-title {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #1f2937;
   line-height: 1;             
@@ -397,13 +397,12 @@ onMounted(async () => {
   flex-direction: column;
   gap: 16px;
 }
-
 /* 개별 설정 항목 */
 .setting-item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
+  gap: 12px; /* 16px → 12px */
+  padding: 12px; /* 16px → 12px */
   background: #f9fafb;
   border-radius: 8px;
   transition: all 0.2s;
@@ -414,8 +413,8 @@ onMounted(async () => {
 }
 
 .setting-icon {
-  width: 40px;
-  height: 40px;
+  width: 32px; /* 40px → 32px */
+  height: 32px; /* 40px → 32px */
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -426,7 +425,7 @@ onMounted(async () => {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  display: block;              
+  display: block;
 }
 
 .setting-content {
@@ -434,14 +433,14 @@ onMounted(async () => {
 }
 
 .setting-label {
-  font-size: 16px;
+  font-size: 15px; /* 16px → 15px */
   font-weight: 600;
   color: #1f2937;
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0; /* 4px → 2px */
 }
 
 .setting-description {
-  font-size: 14px;
+  font-size: 13px; /* 14px → 13px */
   color: #6b7280;
   margin: 0;
 }
@@ -450,8 +449,8 @@ onMounted(async () => {
 .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 52px;
-  height: 28px;
+  width: 48px; /* 52px → 48px */
+  height: 26px; /* 28px → 26px */
   flex-shrink: 0;
 }
 
@@ -470,14 +469,14 @@ onMounted(async () => {
   bottom: 0;
   background-color: #cbd5e1;
   transition: 0.3s;
-  border-radius: 28px;
+  border-radius: 26px; /* 28px → 26px */
 }
 
 .slider:before {
   position: absolute;
   content: '';
-  height: 20px;
-  width: 20px;
+  height: 18px; /* 20px → 18px */
+  width: 18px; /* 20px → 18px */
   left: 4px;
   bottom: 4px;
   background-color: white;
@@ -490,8 +489,9 @@ input:checked + .slider {
 }
 
 input:checked + .slider:before {
-  transform: translateX(24px);
+  transform: translateX(22px); /* 24px → 22px */
 }
+
 
 /* 액션 버튼 */
 .settings-actions {
