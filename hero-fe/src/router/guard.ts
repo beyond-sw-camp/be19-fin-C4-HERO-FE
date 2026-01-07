@@ -29,7 +29,7 @@ export function setupAuthGuard(router: Router) {
         // 디버깅: 어떤 경로로 이동을 시도하는지 확인합니다.
         console.log(`[Auth Guard] Navigating from '${from.fullPath}' to '${to.fullPath}' (name: ${String(to.name)})`);
 
-        const publicRoutes = ['Login', 'FindPassword', 'ResetPassword'];
+        const publicRoutes = ['Login', 'FindPassword', 'ResetPassword', 'Forbidden'];
         const isProtectedRoute = !publicRoutes.includes(to.name as string);
 
         // 1. 보호된 경로에 접근하려 하고, 현재 인증되지 않은 경우에만 토큰 갱신을 시도합니다.
@@ -48,13 +48,19 @@ export function setupAuthGuard(router: Router) {
         // 3. 최종 상태에 따라 페이지 이동을 결정합니다.
         if (to.name === 'Login' && isAuthenticated) {
             // 이미 로그인한 사용자가 로그인 페이지로 가려는 경우 -> 홈으로 리디렉션
-            next({ path: '/' });
+            return next({ path: '/' });
         } else if (isProtectedRoute && !isAuthenticated) {
             // 보호된 페이지에 접근하려 하지만, 최종적으로 인증에 실패한 경우 -> 로그인 페이지로 리디렉션
-            next({ name: 'Login', query: { redirect: to.fullPath } });
-        } else {
-            // 그 외 모든 경우 (정상 접근) -> 그대로 진행
-            next();
+            return next({ name: 'Login', query: { redirect: to.fullPath } });
         }
+        const requiredRoles = (to.meta?.roles as string[] | undefined) ?? [];
+        if (requiredRoles.length > 0 && !authStore.hasAnyRole(requiredRoles)) {
+            console.warn(
+                `[Auth Guard] Forbidden: missing roles ${requiredRoles.join(', ')}`
+            );
+            return next({ name: 'Forbidden' });
+        }
+        // 그 외 모든 경우 (정상 접근) -> 그대로 진행
+        next();
     });
 }
