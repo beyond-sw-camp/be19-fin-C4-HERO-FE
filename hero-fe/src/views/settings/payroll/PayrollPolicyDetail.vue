@@ -41,7 +41,6 @@
     <template v-else>
       <div class="settings-container">
         <div class="side-nav">
-          <div class="nav-title">설정 탭</div>
           <button class="nav-item" :class="{ active: tab === 'pay' }" @click="tab = 'pay'">
             급여 지급 & 정산 설정
             <span class="sub">급여일/휴일 처리</span>
@@ -57,14 +56,6 @@
         </div>
         <div class="content-area">
           <div class="panel">
-            <div class="panel-header">
-              <div class="panel-actions">
-                <button class="btn-save" :disabled="!configsDirty || savingConfigs" @click="saveConfigs">
-                  <template v-if="savingConfigs">저장 중...</template>
-                  <template v-else>{{ configsDirty ? '저장' : '저장됨' }}</template>
-                </button>
-              </div>
-            </div>
             <div v-if="tab === 'pay'" class="content-stack">
               <div class="card">
                 <div class="form-grid-2">
@@ -147,7 +138,7 @@
                   </div>
                   <div class="actions">
                     <button class="btn-save" :disabled="savingItems || !itemsDirty" @click="saveItems">
-                      {{ savingItems ? '저장 중...' : itemsDirty ? '항목 저장' : '저장됨' }}
+                      {{ savingItems ? '저장 중...' : itemsDirty ? '항목 저장' : '항목 저장됨' }}
                     </button>
                   </div>
                 </div>
@@ -163,10 +154,6 @@
                       <input type="checkbox" v-model="hideAlreadyAdded" />
                       <span>이미 적용됨 숨기기</span>
                     </label>
-                  </div>
-                  <div class="picker-row">
-                    <button class="btn-secondary" @click="toggleAllMasters(true)">전체 선택</button>
-                    <button class="btn-secondary" @click="toggleAllMasters(false)">선택 해제</button>
                   </div>
                   <div v-if="selectedPreview.length > 0" class="selected-chips">
                     <button
@@ -201,7 +188,7 @@
                       <span class="code">{{ m.code }}</span>
                       <span v-if="isAlreadyAdded(m.code)" class="tag">이미 적용됨</span>
                     </label>
-                    <div v-if="visibleMasters.length === 0" class="hint-under">검색 결과가 없어요.</div>
+                    <div v-if="visibleMasters.length === 0" class="hint-under">항목이 없습니다.</div>
                   </div>
                   <div class="picker-actions">
                     <button
@@ -235,14 +222,14 @@
                     </thead>
                     <tbody>
                       <tr v-if="currentRows.length === 0">
-                        <td colspan="7" class="empty-td">아직 추가된 항목이 없어요. 위에서 마스터 항목을 선택하고 “정책에 추가”를 눌러주세요.</td>
+                        <td colspan="7" class="empty-td">아직 추가된 항목이 없습니다. 위에서 마스터 항목을 선택하고 “정책에 추가”를 눌러주세요.</td>
                       </tr>
 
                       <tr v-for="row in currentRows" :key="row._key">
                         <td>
                           <div class="item-cell">
                             <div class="item-name">{{ getMasterName(row) }}</div>
-                            <div class="item-code">{{ row.itemCode }}</div>
+                            <!-- <div class="item-code">{{ row.itemCode }}</div> -->
                           </div>
                         </td>
 
@@ -251,13 +238,6 @@
                             <div class="master-line">{{ masterInfo(row).line1 }}</div>
                             <div class="master-badges">
                               <span v-for="b in masterInfo(row).badges" :key="b" class="badge">{{ b }}</span>
-                              <span
-                              v-if="masterInfo(row).desc"
-                              class="desc"
-                              :title="masterInfo(row).desc ?? undefined"
-                              >
-                              설명
-                            </span>
                             </div>
                           </div>
                         </td>
@@ -270,7 +250,6 @@
                             />
                             <span class="slider"></span>
                           </label>
-                          <div class="switch-text">{{ row.activeYn === 'Y' ? '활성' : '비활성' }}</div>
                         </td>
                         <td>
                           <div class="period-cell">
@@ -305,8 +284,14 @@
                 </div>
               </div>
             </div>
+                      <div v-if="tab !== 'basic'" class="panel-footer-actions">
+              <button class="btn-save" :disabled="!configsDirty || savingConfigs" @click="saveConfigs">
+                <template v-if="savingConfigs">저장 중...</template>
+                <template v-else>{{ configsDirty ? '저장' : '저장됨' }}</template>
+              </button>
+            </div>
             <div v-if="configsDirty" class="dirty-hint">
-              변경사항이 있어요. 상단 <b>저장</b>을 눌러 반영해주세요.
+               변경사항이 있어요. 우측 하단 <b>저장</b>을 눌러 반영해주세요.
             </div>
           </div>
         </div>
@@ -1191,19 +1176,19 @@ async function submitActivate() {
   box-shadow:0 6px 18px rgba(15,23,43,.06);
 }
 .content-area{ flex:1; min-width:0; overflow:auto; background:#fff; }
-.panel { padding:16px; min-height:0; display:flex; flex-direction:column; gap:10px; }
+.panel { padding:16px; min-height:0; display:flex; flex-direction:column; gap:10px; position:relative; }
 .panel-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:6px; }
 .panel-actions { display:flex; gap:10px; flex-wrap:wrap; }
 .content-stack { display:flex; flex-direction:column; gap:10px; }
-.card-title{ font-weight:900; color:#0f172b; }
+.card-title{ font-weight:900; color:#0f172b; font-size:16px;}
 .card-desc{ margin-top:6px; color:#64748b; font-size:.9rem; font-weight:650; }
 .card-actions{ display:flex; justify-content:flex-end; margin-top:10px; }
 .form-row { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
 .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.label { font-size:.85rem; color:#475569; font-weight:800; }
+.label { font-size:16px; color:#475569; font-weight:800; }
 .input-text { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #e2e8f0; background:#f8fafc; outline:none; }
 .input-text:focus { border-color:#93c5fd; background:#fff; }
-.hint-under { margin:10px 0 0; color:#64748b; font-size:.85rem; font-weight:600; }
+.hint-under { margin:10px 0 0; color:#64748b; font-size:12px; font-weight:600; }
 .dirty-hint{ padding:12px 14px; border:1px solid #fde68a; background:#fffbeb; border-radius:12px; color:#92400e; font-weight:800; }
 .state-area { padding:40px 24px; color:#64748b; font-weight:800; }
 .btn-save {
@@ -1309,8 +1294,12 @@ async function submitActivate() {
   font-weight:900;
   color:#0f172b;
 }
+
+.t{
+  font-size:16px;
+}
 .picker-title .meta{
-  font-size:.82rem;
+  font-size:12px;
   font-weight:800;
   color:#64748b;
 }
@@ -1339,12 +1328,7 @@ async function submitActivate() {
   display:flex;
   justify-content:flex-end;
 }
-.picker-row{
-  display:flex;
-  gap:10px;
-  align-items:center;
-  flex-wrap:wrap;
-}
+
 .picker-list{
   margin-top:10px;
   display:grid;
@@ -1375,14 +1359,14 @@ async function submitActivate() {
   color:#64748b;
 }
 .table-wrap{ overflow:auto; margin-top:12px; border:1px solid #e2e8f0; border-radius:12px; }
-.items-table{ width:100%; border-collapse:separate; border-spacing:0; min-width:1100px; }
+.items-table{ width:100%; border-collapse:separate; border-spacing:0; min-width:1100px;}
 .items-table thead th{
   position:sticky; top:0;
   background:#f8fafc;
   border-bottom:1px solid #e2e8f0;
   padding:12px 12px;
   text-align:left;
-  font-size:.85rem;
+  font-size:14px;
   color:#475569;
   font-weight:900;
 }
@@ -1392,7 +1376,7 @@ async function submitActivate() {
   vertical-align:top;
 }
 .items-table tbody tr:hover td{ background:#fbfdff; }
-.empty-td{ color:#64748b; font-weight:800; padding:18px 12px; }
+.empty-td{ color:#64748b; font-weight:800; padding:18px 12px; text-align:center; }
 .value-box{ min-width:160px; }
 .value-hint{
   margin-top:6px;
@@ -1537,5 +1521,20 @@ async function submitActivate() {
   color:#64748b;
   border-bottom:1px dashed #cbd5e1;
   cursor:help;
+}
+
+tr td{
+  font-size:14px;
+}
+
+.panel-footer-actions{
+  position: sticky;
+  bottom: 12px;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+  z-index: 10;
+  padding-top: 12px;
+  background: linear-gradient(to top, #fff 70%, rgba(255,255,255,0));
 }
 </style>
