@@ -240,7 +240,7 @@ const handlePunchOut = () => {
 
 .current-date {
   color: #90A1B9;
-  font-size: 18px;
+  font-size: 14px;
   white-space: nowrap;
 }
 
