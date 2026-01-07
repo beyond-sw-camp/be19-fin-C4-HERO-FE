@@ -81,8 +81,8 @@ router.beforeEach((to, from, next) => {
 
   const roles = (to.meta?.roles as string[] | undefined) ?? [];
   if (roles.length > 0 && !authStore.hasAnyRole(roles)) {
-    // 403 페이지로 보내기 (너희 라우트 이름/경로에 맞게)
-    return next({ name: 'Forbidden' }); // 또는 next('/403')
+    // 403 페이지로 보내기 
+    return next({ name: 'Forbidden' });
   }
 
   next();
