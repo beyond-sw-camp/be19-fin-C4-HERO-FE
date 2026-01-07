@@ -579,7 +579,6 @@ watch(rows, (list) => {
   color: #2563eb;
   font-size: 13px;
   cursor: pointer;
-  text-decoration: underline;
 }
 
 .btn-lite:disabled,

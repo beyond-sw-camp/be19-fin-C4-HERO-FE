@@ -520,7 +520,6 @@ watch(payslipModalOpen, (v) => {
   color: #2563eb;
   font-size: 13px;
   cursor: pointer;
-  text-decoration: underline;
 }
 .pay-row--net {
   margin-top: 8px;
