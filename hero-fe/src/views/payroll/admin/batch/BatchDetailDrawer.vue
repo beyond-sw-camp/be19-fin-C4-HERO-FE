@@ -23,7 +23,7 @@
             </h3>
           </div>
 
-          <button class="icon-btn" @click="emitClose" aria-label="닫기">✕</button>
+          <button class="icon-btn" :disabled="loading" @click="emitClose" aria-label="닫기">✕</button>
         </header>
 
         <section class="drawer__body">
@@ -61,35 +61,32 @@
                   <span class="kpi__value">{{ detail.totalEmployeeCount }}</span>
                 </div>
                 <div class="kpi">
-                  <span class="kpi__label">계산 완료</span>
-                  <span class="kpi__value">{{ detail.calculatedCount }}</span>
+                  <span class="kpi__label">{{ kpi2.label }}</span>
+                  <span class="kpi__value">{{ kpi2.value }}</span>
                 </div>
                 <div class="kpi">
-                  <span class="kpi__label">실패</span>
-                  <span class="kpi__value kpi__value--danger">{{ detail.failedCount }}</span>
+                  <span class="kpi__label">{{ kpi3.label }}</span>
+                  <span :class="['kpi__value', kpi3.tone === 'danger' ? 'kpi__value--danger' : '']">
+                    {{ kpi3.value }}
+                  </span>
                 </div>
                 <div class="kpi">
-                  <span class="kpi__label">확정</span>
-                  <span class="kpi__value">{{ detail.confirmedCount }}</span>
+                  <span class="kpi__label">{{ kpi4.label }}</span>
+                  <span class="kpi__value">{{ kpi4.value }}</span>
                 </div>
               </div>
 
               <div class="actions">
-                <button class="btn btn--ghost" type="button" @click="emitClose">닫기</button>
-
-                <button
+                                <button
                   class="btn btn--primary"
                   type="button"
-                  :disabled="!detail"
+                  :disabled="!detail || loading"
                   @click="goNext"
                 >
                   다음 단계로
                 </button>
+                <button class="btn btn--ghost" type="button" @click="emitClose">닫기</button>
               </div>
-
-              <p class="hint">
-                “다음 단계로”는 BatchPage에서 계산 탭으로 전환됩니다.
-              </p>
             </div>
 
             <div v-else class="empty">
@@ -101,12 +98,13 @@
     </transition>
     
     <transition name="fade">
-      <div v-if="modelValue" class="backdrop" @click="emitClose" />
+      <div v-if="modelValue" class="backdrop" @click="!loading && emitClose()" />
     </transition>
   </teleport>
 </template>
 
 <script setup lang="ts">
+import { onMounted, onBeforeUnmount, computed } from 'vue';
 import type { PayrollBatchDetailResponse, PayrollBatchStatus } from '@/types/payroll/payroll.batch';
 
 const props = defineProps<{
@@ -122,6 +120,15 @@ const emit = defineEmits<{
 
 const emitClose = () => emit('update:modelValue', false);
 const goNext = () => emit('next');
+
+const onKeydown = (e: KeyboardEvent) => {
+  if (!props.modelValue) return;
+  if (props.loading) return;
+  if (e.key === 'Escape') emitClose();
+};
+
+onMounted(() => window.addEventListener('keydown', onKeydown));
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown));
 
 const formatDateTime = (v: string | null) => {
   if (!v) return '-';
@@ -146,6 +153,63 @@ const badgeClass = (s: PayrollBatchStatus) => {
     default: return 'wait';
   }
 };
+
+type Kpi = { label: string; value: string | number; tone?: 'normal' | 'danger' };
+
+const kpi2 = computed<Kpi>(() => {
+  const d = props.detail;
+  if (!d) return { label: '-', value: '-' };
+ const total = d.totalEmployeeCount ?? 0;
+
+ if (d.status === 'PAID') {
+   return { label: '지급 완료', value: total };
+ }
+ if (d.status === 'CONFIRMED') {
+   return { label: '확정 완료', value: d.confirmedCount ?? total };
+ }
+ return { label: '계산 완료', value: d.calculatedCount ?? 0 };
+});
+
+const kpi3 = computed<Kpi>(() => {
+  const d = props.detail;
+  if (!d) return { label: '-', value: '-' };
+
+  const failed = d.failedCount ?? 0;
+  return {
+    label: '처리 실패',
+    value: failed === 0 ? '없음' : failed,
+    tone: failed > 0 ? 'danger' : 'normal',
+  };
+});
+
+const kpi4 = computed<Kpi>(() => {
+  const d = props.detail;
+  if (!d) return { label: '-', value: '-' };
+
+  const total = d.totalEmployeeCount ?? 0;
+  const calculated = d.calculatedCount ?? 0;
+  const confirmed = d.confirmedCount ?? 0;
+  const failed = d.failedCount ?? 0;
+
+  if (d.status === 'READY') {
+    const pending = Math.max(0, total - calculated - failed);
+    return { label: '계산 대기', value: pending };
+  }
+
+  if (d.status === 'CALCULATED') {
+    const pending = Math.max(0, calculated - failed);
+    return { label: '확정 대기', value: pending };
+  }
+
+  if (d.status === 'CONFIRMED') {
+    // 확정 후 지급 전 단계
+    const pending = Math.max(0, confirmed - failed);
+    return { label: '지급 대기', value: pending };
+  }
+
+  // PAID
+  return { label: '처리 완료', value: total };
+});
 </script>
 
 <style scoped>

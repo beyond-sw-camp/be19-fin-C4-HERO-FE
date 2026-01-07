@@ -34,54 +34,56 @@
             </p>
             <ul v-else class="account-list-ul">
               <li
-                v-for="acc in accounts"
-                :key="acc.id"
-                class="account-item"
-                :class="{ 'account-item--selected': selectedAccountId === acc.id }"
-                @click="
-                  () => {
-                    selectedAccountId = acc.id;
-                    isAddingNew = false;
-                    editingAccountId = null;
-                  }
-                "
-              >
-                <div class="account-item-main">
-                  <input
-                    type="radio"
-                    :value="acc.id"
-                    v-model="selectedAccountId"
-                    @click.stop
-                  />
-                  <div class="account-item-text">
-                    <p class="account-item-bank">{{ acc.bankName }}</p>
-                    <p class="account-item-number">
-                      {{ acc.accountNumber }} ({{ acc.accountHolder }})
-                    </p>
-                  </div>
-                </div>
-                <div class="account-item-right">
-                <span v-if="acc.isPrimary" class="account-badge">
-                  급여 수령 계좌
-                </span>
-                  <div class="account-item-actions">
-                  <button
-                  type="button"
-                  class="account-item-action"
-                  @click.stop="startEdit(acc)"
-                  >
-                  수정
-                  </button>
-                  <button
-                  type="button"
-                  class="account-item-action account-item-action--danger"
-                  @click.stop="deleteAccount(acc.id)"
-                  >
-                  삭제
-                  </button>
-                  </div>
-                </div>
-              </li>
+  v-for="acc in accounts"
+  :key="acc.id"
+  class="account-item"
+  :class="{ 'account-item--selected': selectedAccountId === acc.id }"
+  @click="
+    () => {
+      selectedAccountId = acc.id;
+      isAddingNew = false;
+      editingAccountId = null;
+    }
+  "
+>
+  <div class="account-item-main row">
+    <input
+      type="radio"
+      :value="acc.id"
+      v-model="selectedAccountId"
+      @click.stop
+    />
+
+    <p class="account-item-bank bank">{{ acc.bankName }}</p>
+
+    <div class="account-item-number-row number-row">
+      <p class="account-item-number">
+        {{ acc.accountNumber }} ({{ acc.accountHolder }})
+      </p>
+    </div>
+
+    <div class="account-item-actions right actions">
+      <button
+        type="button"
+        class="account-item-action"
+        @click.stop="startEdit(acc)"
+      >
+        수정
+      </button>
+      <button
+        type="button"
+        class="account-item-action account-item-action--danger"
+        @click.stop="deleteAccount(acc.id)"
+      >
+        삭제
+      </button>
+    </div>
+  </div>
+
+  <span v-if="acc.isPrimary" class="account-badge">
+    급여 수령 계좌
+  </span>
+</li>
             </ul>
           </div>
 
@@ -137,8 +139,8 @@
         </section>
 
         <footer class="modal-footer">
-          <button class="btn-secondary" @click="close">취소</button>
           <button class="btn-primary" @click="saveAccount">저장</button>
+          <button class="btn-secondary" @click="close">취소</button>
         </footer>
       </div>
     </div>
@@ -400,7 +402,7 @@ const saveAccount = async () => {
 .account-item {
   border-radius: 10px;
   border: 1px solid #e5e7eb;
-  padding: 8px 10px;
+  padding: 12px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -417,20 +419,45 @@ const saveAccount = async () => {
   align-items: center;
   gap: 8px;
 }
+.account-item-main.row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 20px 1fr auto; 
+  grid-template-rows: auto auto;   
+  column-gap: 8px;
+  row-gap: 4px;
+  align-items: center;
+}
 
 .account-item-text {
   display: flex;
   flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  
 }
 
 .account-item-bank {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
 }
 
 .account-item-number {
-  font-size: 12px;
+  font-size: 15px;
+  font-weight: 700;
   color: #6b7280;
+}
+
+.account-item-number-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.account-item-actions.right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .account-badge {
@@ -513,22 +540,10 @@ const saveAccount = async () => {
   color: #374151;
 }
 
-.account-item-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-
-.account-item-actions {
-  display: flex;
-  gap: 4px;
-}
-
 .account-item-action {
   border: none;
   background: none;
-  font-size: 11px;
+  font-size: 14px;
   color: #123c9c;
   cursor: pointer;
   padding: 0;
@@ -536,5 +551,32 @@ const saveAccount = async () => {
 
 .account-item-action--danger {
   color: #b91c1c;
+}
+
+.account-item-main.row > input[type="radio"] {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+.account-item-bank.bank {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.account-item-number-row.number-row {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.account-item-actions.actions {
+  grid-column: 3;
+  grid-row: 2;
+  justify-self: end;
+  align-self: center;
+  margin-left: 0; 
+}
+.account-item-bank,
+.account-item-number {
+  margin: 0;
 }
 </style>

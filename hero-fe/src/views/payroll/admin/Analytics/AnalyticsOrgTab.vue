@@ -468,7 +468,7 @@ onBeforeUnmount(() => {
 
 .filter-label {
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 500;
   color: #334155;
 }
 
@@ -492,24 +492,24 @@ onBeforeUnmount(() => {
 .stat-card {
   border: 1px solid #eef2f7;
   border-radius: 12px;
-  background: #fff;
+  background: #F8FAFC;
   padding: 14px;
 }
 
-.label { font-size: 12px; font-weight: 900; color: #334155; }
-.value { margin-top: 8px; font-size: 18px; font-weight: 900; color: #0f172a; }
+.label { font-size: 18px; font-weight: 500; color: #334155; }
+.value { margin-top: 8px; font-size: 18px; font-weight: 700; color: #0f172a; }
 .hint { margin-top: 6px; font-size: 11px; font-weight: 800; color: #94a3b8; }
 
 .card {
   border: 1px solid #eef2f7;
   border-radius: 12px;
   background: #fff;
-  padding: 16px;
+  padding: 16px 0;
 }
 
 .mt { margin-top: 12px; }
 
-.card-title { font-size: 13px; font-weight: 900; color: #0f172a; }
+.card-title { font-size: 18px; font-weight: 700; color: #0f172a; padding-left:12px;}
 .card-desc { margin-top: 4px; font-size: 12px; font-weight: 700; color: #64748b; }
 .card-body { margin-top: 12px; }
 
@@ -531,7 +531,7 @@ onBeforeUnmount(() => {
   line-height: 1.45;
 }
 
-.table-wrap { border: 1px solid #eef2f7; border-radius: 10px; overflow: hidden; }
+.table-wrap { border: 1px solid #eef2f7; overflow: hidden; }
 
 .history-table {
   width: 100%;
@@ -556,10 +556,6 @@ onBeforeUnmount(() => {
   color: #fff;
 }
 
-.table-body tr:nth-child(2n) {
-  background-color: #e2e8f0;
-}
-
 .name { font-weight: 900; color: #0f172a; }
 .muted { color: #64748b; font-weight: 800; }
 .right { font-weight: 900; }
@@ -576,7 +572,6 @@ onBeforeUnmount(() => {
 
 .chart-wrap {
   height: 320px;
-  border: 1px solid #eef2f7;
   border-radius: 10px;
   overflow: hidden;
   padding: 8px;

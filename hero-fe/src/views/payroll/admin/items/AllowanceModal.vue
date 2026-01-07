@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, ref } from 'vue';
+import { reactive, watch, ref, onBeforeUnmount } from 'vue';
 import type { AllowanceCreateRequest, AllowanceResponse, Yn } from '@/types/payroll/payroll.items';
 
 const props = defineProps<{
@@ -122,6 +122,28 @@ watch(
 );
 
 const close = () => emit('update:modelValue', false);
+/**
+ * ESC 키로 모달 닫기
+ * - 모달 open 상태일 때만 리스너 활성화
+ */
+const onKeydown = (e: KeyboardEvent) => {
+  if (e.key !== 'Escape') return;
+  if (!props.modelValue) return;
+  close();
+};
+
+watch(
+  () => props.modelValue,
+  (open) => {
+    if (open) window.addEventListener('keydown', onKeydown);
+    else window.removeEventListener('keydown', onKeydown);
+  }
+);
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKeydown);
+});
+
 
 /**
  * 저장 버튼 클릭 처리

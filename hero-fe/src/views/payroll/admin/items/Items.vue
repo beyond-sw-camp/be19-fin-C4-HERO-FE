@@ -61,40 +61,45 @@ const activeTab = ref<TabKey>('allowance');
 
 .panel {
   width: 100%;
-  background: #ffffff;
-  border-radius: 14px;
+  background: transparent;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
 }
 
 .panel-tabs {
   display: inline-flex;
-  border-bottom: 1px solid #e2e8f0;
+  gap: 0;
+  margin-bottom:0;
 }
 
 .tab {
-  width: 146px;
-  height: 52px;
+  width: 95px;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #ffffff;
-  border-top: 2px solid #e2e8f0;
-  border-bottom: 2px solid #e2e8f0;
-  border-right: 2px solid #e2e8f0;
+  border: 1px solid #e2e8f0;
   font-size: 14px;
   color: #62748e;
   cursor: pointer;
-  padding: 0;
+  padding: 10px;
 }
 
 .tab-left {
-  border-left: 2px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
   border-top-left-radius: 14px;
+  border-bottom-left-radius: 0;
 }
 
 .tab-right {
   border-top-right-radius: 14px;
+  border-bottom-right-radius: 0;
+}
+
+.tab + .tab {
+  border-left: none;
 }
 
 .tab-active {
@@ -104,6 +109,10 @@ const activeTab = ref<TabKey>('allowance');
 }
 
 .panel-body {
-  padding: 16px 0px 24px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-top: none;    
+  border-radius: 0 14px 14px 14px; 
+  padding: 16px 0 24px;
 }
 </style>

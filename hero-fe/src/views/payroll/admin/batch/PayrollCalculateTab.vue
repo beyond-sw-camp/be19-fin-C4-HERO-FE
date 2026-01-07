@@ -86,9 +86,6 @@
         </span>
       </div>
 
-      <button class="btn-secondary" type="button" disabled title="추후">
-        시뮬레이션
-      </button>
     </header>
 
     <div class="table-wrap">
@@ -129,7 +126,7 @@
 
           <tr
             v-else
-            v-for="e in filteredEmployees"
+            v-for="e in pagedEmployees"
             :key="e.payrollId"
           >
             <td>
@@ -153,7 +150,7 @@
             </td>
             <td>{{ e.departmentName ?? '-' }}</td>
             <td>{{ formatMoney(e.baseSalary) }}</td>
-            <td>{{ formatMoney((e.allowanceTotal ?? 0) + (e.overtimePay ?? 0)) }}</td>
+            <td>{{ formatMoney(e.allowanceTotal) }}</td>
             <td>{{ formatMoney(e.deductionTotal) }}</td>
             <td>{{ formatMoney(e.totalPay) }}</td>
 
@@ -186,6 +183,39 @@
         </tbody>
       </table>
     </div>
+
+    <div v-if="store.selectedBatchId && filteredEmployees.length > 0" class="pager">
+      <button
+        class="pbtn"
+        type="button"
+        :disabled="store.loading || page <= 1"
+        @click="goPage(page - 1)"
+      >
+        이전
+      </button>
+
+      <button
+        v-for="p in pageNumbers"
+        :key="p"
+        class="pnum"
+        type="button"
+        :class="{ active: p === page }"
+        :disabled="store.loading"
+        @click="goPage(p)"
+      >
+        {{ p }}
+      </button>
+
+      <button
+        class="pbtn"
+        type="button"
+        :disabled="store.loading || page >= (totalPages || 1)"
+        @click="goPage(page + 1)"
+      >
+        다음
+      </button>
+    </div>
+
 
     <p v-if="store.errorMessage" class="error">{{ store.errorMessage }}</p>
 
@@ -257,7 +287,7 @@ const isAllChecked = computed(() =>
 );
 
 const selectableEmployeeIds = computed(() =>
-  filteredEmployees.value
+  pagedEmployees.value
     .filter(e => e.status !== 'CONFIRMED')
     .map(e => e.employeeId)
 );
@@ -282,6 +312,46 @@ const canCalculateAll = computed(() => {
   if (isConfirmed.value) return false;
   return true;
 });
+
+const pageSize = 10;
+const page = ref(1);
+
+const totalPages = computed(() => {
+  const total = filteredEmployees.value.length;
+  return Math.max(1, Math.ceil(total / pageSize));
+});
+
+const pagedEmployees = computed(() => {
+  const start = (page.value - 1) * pageSize;
+  return filteredEmployees.value.slice(start, start + pageSize);
+});
+
+const pageNumbers = computed(() => {
+  const tp = totalPages.value || 1;
+  const cur = page.value || 1;
+  if (tp <= 3) return Array.from({ length: tp }, (_, i) => i + 1);
+
+  let start = cur - 1;
+  let end = cur + 1;
+
+  if (start < 1) {
+    start = 1;
+    end = 3;
+  }
+  if (end > tp) {
+    end = tp;
+    start = tp - 2;
+  }
+
+  const pages: number[] = [];
+  for (let p = start; p <= end; p++) pages.push(p);
+  return pages;
+});
+
+const goPage = (p: number) => {
+  const next = Math.min(Math.max(1, p), totalPages.value);
+  page.value = next;
+};
 
 const calculateDisabledReason = computed(() => {
   if (!store.selectedBatchId) return '배치를 먼저 선택하세요';
@@ -331,18 +401,22 @@ const badgeClass = (s: PayrollStatus) => {
 watch(
   () => store.selectedBatchId,
   () => {
+    page.value = 1;
     showFailedOnly.value = false;
     showNoAttendanceOnly.value = false;
     selectedIds.value = [];
   }
 );
+
+watch([showFailedOnly, showNoAttendanceOnly], () => {
+  page.value = 1;
+});
+
 </script>
 
 <style scoped>
 .panel {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
 }
 
 .panel-head {
@@ -450,26 +524,6 @@ th, td {
   gap: 6px;
 }
 
-.pager-btn {
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.pager-btn.active {
-  background: #2563eb;
-  color: #fff;
-  border-color: #2563eb;
-}
-
-.pager-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
 .badge {
   display: inline-flex;
   align-items: center;
@@ -533,10 +587,6 @@ th, td {
   font-size: 13px;
 }
 
-tbody tr:not(.empty):nth-child(even) {
-  background-color: #E2E8F0;
-}
-
 .employee-name {
   display: inline-flex;
   align-items: center;
@@ -554,16 +604,89 @@ tbody tr:not(.empty):nth-child(even) {
   line-height: 18px;
 }
 
-thead th:nth-child(2),
-tbody td:nth-child(2) {
-  width: 160px; 
-  max-width: 160px;
-  white-space: nowrap;
-}
-
 .count-danger {
   color: #dc2626;
   font-weight: 700;
   margin-left: 4px;
 }
+
+.pager {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.pbtn,
+.pnum {
+  height: 30px;
+  min-width: 32px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pnum.active {
+  background: #2855ff;
+  color: #fff;
+  border-color: #2855ff;
+}
+
+.pbtn:disabled,
+.pnum:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.table-wrap table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.table-wrap th,
+.table-wrap td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-wrap td:nth-child(4),
+.table-wrap td:nth-child(5),
+.table-wrap td:nth-child(6),
+.table-wrap td:nth-child(7) {
+  font-variant-numeric: tabular-nums;
+}
+
+.table-wrap th:nth-child(1),
+.table-wrap td:nth-child(1) { width: 46px; }
+
+.table-wrap th:nth-child(2),
+.table-wrap td:nth-child(2) { width: 160px; }
+
+.table-wrap th:nth-child(3),
+.table-wrap td:nth-child(3) { width: 160px; }
+
+.table-wrap th:nth-child(4),
+.table-wrap td:nth-child(4) { width: 120px; }
+
+.table-wrap th:nth-child(5),
+.table-wrap td:nth-child(5) { width: 140px; }
+
+.table-wrap th:nth-child(6),
+.table-wrap td:nth-child(6) { width: 120px; }
+
+.table-wrap th:nth-child(7),
+.table-wrap td:nth-child(7) { width: 130px; }
+
+.table-wrap th:nth-child(8),
+.table-wrap td:nth-child(8) { width: 90px; }
+
+.table-wrap th:nth-child(9),
+.table-wrap td:nth-child(9) { width: 110px; }
+
 </style>
