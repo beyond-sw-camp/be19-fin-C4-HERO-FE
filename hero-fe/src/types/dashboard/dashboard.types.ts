@@ -15,12 +15,11 @@
  * 근무제 템플릿 정보
  */
 export interface WorkSystemTemplateDTO {
-  workSystemTemplateId: number  // 템플릿 ID
-  startTime: string              // 출근 시간 (HH:mm:ss)
-  endTime: string                // 퇴근 시간 (HH:mm:ss)
-  breakMinMinutes: number        // 휴게시간 (분)
-  reason: string                 // 사유
-  workSystemTypeId: number       // 근무제 타입 ID
+  workSystemTemplateId?: number;
+  templateId?: number;
+  startTime: string;
+  breakMinMinutes?: number;  // 분 단위 (120)  reason?: string;
+  workSystemTypeId?: number;
 }
 
 /** 출퇴근 상태 정보 */
