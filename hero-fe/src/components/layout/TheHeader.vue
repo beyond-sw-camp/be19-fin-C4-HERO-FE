@@ -224,7 +224,8 @@ onBeforeUnmount(() => {
 }
 
 .logo {
-  width: 120px;
+  width: 100px;
+  margin-left: -25px;
   padding: 10px;
 }
 
