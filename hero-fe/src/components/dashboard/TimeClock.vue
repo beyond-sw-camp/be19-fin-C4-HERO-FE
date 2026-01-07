@@ -4,26 +4,26 @@
   Description : 출퇴근 타각 컴포넌트
                 - 출근/퇴근 버튼 UI 및 이벤트 발생
                 - 주간 근무시간 도넛 차트 표시 (법정 52시간 기준)
+                - 휴식시간 표시 추가
                 - 버튼 활성화/비활성화 로직 (출근 전/후 상태 관리)
  
   History
   2025/12/26 (혜원) 최초 작성
   2026/01/06 (혜원) 디자인 수정
+  2026/01/07 (혜원) 휴식시간 표시 및 차트 크기 조정
   </pre>
  
   @author 혜원
-  @version 1.0
+  @version 1.1
 -->
 <template>
   <section class="card main-attendance-card">
-   <div class="card-header">
-    <h3>근태현황</h3>
-
-    <!-- 오른쪽: 최근 시간 + 시간 같은 줄 -->
-    <div class="recent-time">
-      <span class="current-date">{{ currentDateTime }}</span>
+    <div class="card-header">
+      <h3>근태현황</h3>
+      <div class="recent-time">
+        <span class="current-date">{{ currentDateTime }}</span>
+      </div>
     </div>
-  </div>
 
     <!-- 출근/퇴근 버튼 -->
     <div class="punch-group-row">
@@ -67,11 +67,23 @@
         <div class="btn-text">
           <span class="guide">
             {{ !todayAttendance?.startTime ? '먼저 출근해주세요' : 
-               todayAttendance?.endTime ? '퇴근 완료' : '오늘 하루 수고하셨습니다' }}
+               todayAttendance?.endTime ? '퇴근 완료' : '수고하셨습니다' }}
           </span>
           <strong class="action-label">퇴근하기</strong>
         </div>
       </button>
+    </div>
+
+    <!-- 휴식시간 표시 (피그마 디자인) -->
+    <div class="break-time-section">
+      <div class="break-time-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 18C14.4183 18 18 14.4183 18 10C18 5.58172 14.4183 2 10 2C5.58172 2 2 5.58172 2 10C2 14.4183 5.58172 18 10 18Z" stroke="#90A1B9" stroke-width="1.5"/>
+          <path d="M10 6V10L13 13" stroke="#90A1B9" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="break-time-label">휴식시간</span>
+      <span class="break-time-value">{{ breakTimeMinutes }}시간</span>
     </div>
 
     <!-- 주간 근무시간 도넛 차트 (법정 52시간 기준) -->
@@ -107,17 +119,20 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 // Props
 interface Props {
-  currentDateTime: string;        // 현재 날짜/시간 문자열
-  todayAttendance: ClockStatusDTO | null;  // 오늘 출퇴근 상태
-  weeklyWorkHours: number;         // 이번 주 총 근무시간
+  currentDateTime: string;                  // 현재 날짜/시간 문자열
+  todayAttendance: ClockStatusDTO | null;   // 오늘 출퇴근 상태
+  weeklyWorkHours: number;                  // 이번 주 총 근무시간
+  breakTimeMinutes?: number;                // 휴게시간 (분) - 기본값 60분
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  breakTimeMinutes: 60
+});
 
 // Emits
 const emit = defineEmits<{
   punchIn: [];    // 출근 버튼 클릭 이벤트
-  punchOut: [];   // 퇴근 버튼 클릭 이벤트
+  punchOut: [includeBreak: boolean];   // 퇴근 버튼 클릭 이벤트 (휴게시간 포함 여부)
 }>();
 
 // 법정 주 근무시간 (주 52시간 기준)
@@ -162,10 +177,37 @@ const chartOptions = {
 const handlePunchIn = () => emit('punchIn');
 
 /**
- * 퇴근 버튼 클릭 핸들러
- * - 부모 컴포넌트로 punchOut 이벤트 발생
+ * 현재 시간이 오후 1시 이후인지 확인
+ * @returns {boolean} 오후 1시 이후면 true
  */
-const handlePunchOut = () => emit('punchOut');
+const isAfter1PM = (): boolean => {
+  const now = new Date();
+  const currentHour = now.getHours();
+  return currentHour >= 13; // 13시(오후 1시) 이후
+};
+
+/**
+ * 퇴근 버튼 클릭 핸들러
+ * - 오후 1시 이전: "퇴근시간이 아닙니다. 퇴근하시겠습니까?" 경고
+ * - 오후 1시 이후: "퇴근하시겠습니까?" 확인
+ * - 확인 시 휴게시간 포함 여부를 함께 전달
+ */
+const handlePunchOut = () => {
+  const after1PM = isAfter1PM();
+  
+  let confirmMessage: string;
+  if (after1PM) {
+    confirmMessage = '퇴근하시겠습니까?';
+  } else {
+    confirmMessage = '퇴근시간이 아닙니다.\n퇴근하시겠습니까?';
+  }
+  
+  if (confirm(confirmMessage)) {
+    // 오후 1시 이후면 휴게시간을 차감해야 함 (true)
+    // 오후 1시 이전이면 휴게시간 차감 안함 (false)
+    emit('punchOut', after1PM);
+  }
+};
 </script>
 
 <style scoped>
@@ -182,10 +224,11 @@ const handlePunchOut = () => emit('punchOut');
   display: flex;
   flex-direction: column;
 }
+
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center; /* 기존 flex-start -> center */
+  align-items: center;
   margin-bottom: 24px;
 }
 
@@ -198,15 +241,13 @@ const handlePunchOut = () => emit('punchOut');
 .current-date {
   color: #90A1B9;
   font-size: 18px;
-  margin-top: 0; /* 기존 5px 제거 */
-  white-space: nowrap; /* 줄바꿈 방지 */
+  white-space: nowrap;
 }
-
 
 .punch-group-row {
   display: flex;
   gap: 18px;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   width: 100%;
 }
 
@@ -232,6 +273,22 @@ const handlePunchOut = () => emit('punchOut');
 .btn-punch.disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-punch.out:not(.disabled) {
+  background: #F1F5F9;
+}
+
+.btn-punch.out:not(.disabled) .btn-icon-box.gray {
+  background: #45556C;
+}
+
+.btn-punch.out:not(.disabled) .action-label {
+  color: #45556C;
+}
+
+.btn-punch.out:not(.disabled):hover {
+  background: #E2E8F0;
 }
 
 .btn-icon-box {
@@ -276,6 +333,35 @@ const handlePunchOut = () => emit('punchOut');
   font-weight: 700;
 }
 
+/* 휴식시간 섹션 (피그마 디자인) */
+.break-time-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #F8FAFC;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.break-time-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.break-time-label {
+  font-size: 14px;
+  color: #62748E;
+  flex: 1;
+}
+
+.break-time-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1E3A8A;
+}
+
 .chart-section {
   flex: 1;
   display: flex;
@@ -284,9 +370,10 @@ const handlePunchOut = () => emit('punchOut');
   align-items: center;
 }
 
+/* 차트 크기 축소 (220px → 180px) */
 .chart-container {
-  width: 220px;
-  height: 220px;
+  width: 180px;
+  height: 180px;
   position: relative;
   display: flex;
   justify-content: center;
@@ -300,22 +387,31 @@ const handlePunchOut = () => emit('punchOut');
   align-items: center;
 }
 
+/* 폰트 크기도 비례해서 축소 */
 .hours-val {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 700;
   color: #1C398E;
 }
 
+.unit-val {
+  font-size: 14px;
+  color: #90A1B9;
+  margin-top: -4px;
+}
+
 .progress-footer {
-  margin-top: 36px;
+  margin-top: 24px;
 }
 
 .active-text {
   color: #1C398E;
   font-weight: 600;
+  font-size: 14px;
 }
 
 .muted-text {
   color: #90A1B9;
+  font-size: 14px;
 }
 </style>
