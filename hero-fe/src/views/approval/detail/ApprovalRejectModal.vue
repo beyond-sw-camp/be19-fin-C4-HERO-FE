@@ -7,12 +7,13 @@
  * - 부모 컴포넌트: ApprovalDetail.vue
  *
  * History
- *   2025/12/26 (민철) 최초 작성
+ * 2025/12/26 (민철) 최초 작성
+ * 2026/01/06 (민철) 주석 제거
  * </pre>
  *
  * @module approval
  * @author 민철
- * @version 1.0
+ * @version 1.1
 -->
 <template>
     <div class="modal-container">
@@ -60,18 +61,11 @@ const emit = defineEmits<{
 const rejectComment = ref('');
 const errorMessage = ref('');
 
-/**
- * 모달 닫기
- */
 const closeModal = () => {
     emit('close');
 };
 
-/**
- * 반려 사유 확인
- */
 const handleConfirm = () => {
-    // 유효성 검사
     if (!rejectComment.value.trim()) {
         errorMessage.value = '반려 사유를 입력해주세요.';
         return;

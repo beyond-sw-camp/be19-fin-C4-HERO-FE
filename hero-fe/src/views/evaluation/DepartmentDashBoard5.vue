@@ -44,82 +44,83 @@
             class="tab active tab-end"
             @click="goRecommendation"
           >
-            승진 대상자 추천
+            우수 사원 추천
           </button>
         </div>
       </div>
 
       <div class="list-box">
+        <div class="promotion-container">
+          <!-- 🔹 AI 분석 중 -->
+          <div v-if="analyzing" class="loading-overlay">
+            <div class="spinner"></div>
+            <p>AI가 승진 추천 대상자를 분석 중입니다.(1~2분 정도 시간이 소요됩니다.)</p>
+          </div>
 
-        <!-- 🔹 AI 분석 중 -->
-        <div v-if="analyzing" class="analysis-loading">
-          AI가 승진 추천 대상자를 분석 중입니다...
+          <!-- 🔹 Promotion Cards -->
+          <div v-else class="promotion-wrapper">
+              <div
+                  v-for="(c, idx) in promotionCandidates"
+                  :key="c.name + idx"
+                  class="promotion-card"
+              >
+                  <!-- Top Row -->
+                  <div class="card-top">
+                  <div class="left">
+                      <div class="rank-badge">{{ idx + 1 }}</div>
+                      <div class="name-area">
+                      <div class="name">{{ c.name }}</div>
+                      <div class="sub">
+                          <span class="dept">{{ c.department }}</span>
+                          <span class="dot">•</span>
+                          <span class="growth">▲ {{ c.growth_rate }}%</span>
+                      </div>
+                      </div>
+                  </div>
+
+                  <div class="right">
+                      <div class="kv">
+                      <div class="k">현재 직급</div>
+                      <div class="v">{{ c.current_grade }}</div>
+                      </div>
+                      <div class="kv">
+                      <div class="k">추천 직급</div>
+                      <div class="v highlight">{{ c.recommended_grade }}</div>
+                      </div>
+                  </div>
+                  </div>
+
+                  <div class="divider"></div>
+
+                  <!-- Core Competencies -->
+                  <div class="section">
+                  <div class="section-title">핵심 역량</div>
+                  <div class="chips">
+                      <span
+                      class="chip"
+                      v-for="(skill, i) in (c.core_competencies || []).slice(0, 3)"
+                      :key="i"
+                      >
+                      {{ skill }}
+                      </span>
+
+                      <!-- 역량이 없을 때 -->
+                      <span v-if="!c.core_competencies || c.core_competencies.length === 0" class="empty">
+                      (등록된 핵심 역량 없음)
+                      </span>
+                  </div>
+                  </div>
+
+                  <!-- Reason -->
+                  <div class="section">
+                  <div class="section-title">추천 사유</div>
+                  <div class="reason-box">
+                      {{ c.reason }}
+                  </div>
+                  </div>
+              </div>
+          </div>
         </div>
-
-        <!-- 🔹 Promotion Cards -->
-        <div v-else class="promotion-wrapper">
-            <div
-                v-for="(c, idx) in promotionCandidates"
-                :key="c.name + idx"
-                class="promotion-card"
-            >
-                <!-- Top Row -->
-                <div class="card-top">
-                <div class="left">
-                    <div class="rank-badge">{{ idx + 1 }}</div>
-                    <div class="name-area">
-                    <div class="name">{{ c.name }}</div>
-                    <div class="sub">
-                        <span class="dept">{{ c.department }}</span>
-                        <span class="dot">•</span>
-                        <span class="growth">▲ {{ c.growth_rate }}%</span>
-                    </div>
-                    </div>
-                </div>
-
-                <div class="right">
-                    <div class="kv">
-                    <div class="k">현재 직급</div>
-                    <div class="v">{{ c.current_grade }}</div>
-                    </div>
-                    <div class="kv">
-                    <div class="k">추천 직급</div>
-                    <div class="v highlight">{{ c.recommended_grade }}</div>
-                    </div>
-                </div>
-                </div>
-
-                <div class="divider"></div>
-
-                <!-- Core Competencies -->
-                <div class="section">
-                <div class="section-title">핵심 역량</div>
-                <div class="chips">
-                    <span
-                    class="chip"
-                    v-for="(skill, i) in (c.core_competencies || []).slice(0, 3)"
-                    :key="i"
-                    >
-                    {{ skill }}
-                    </span>
-
-                    <!-- 역량이 없을 때 -->
-                    <span v-if="!c.core_competencies || c.core_competencies.length === 0" class="empty">
-                    (등록된 핵심 역량 없음)
-                    </span>
-                </div>
-                </div>
-
-                <!-- Reason -->
-                <div class="section">
-                <div class="section-title">추천 사유</div>
-                <div class="reason-box">
-                    {{ c.reason }}
-                </div>
-                </div>
-            </div>
-        </div>
-
       </div>
     </div>
   </div>
@@ -128,7 +129,7 @@
 <!--script-->
 <script setup lang="ts">
 //Import 구문
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import apiClient from "@/api/apiClient";
@@ -184,11 +185,9 @@ const loadPromotionCandidates = async () => {
   try {
     analyzing.value = true;
 
-    // Spring 서버 데이터
     const { data } = await apiClient.get("/evaluation/dashboard/all");
     dashboardData.value = data;
 
-    // Python AI 분석
     const res = await apiClient.post(
       "/ai/promotion",
       dashboardData.value
@@ -438,11 +437,53 @@ onMounted(loadPromotionCandidates);
   border-radius: 12px;
   padding: 12px;
 
-  font-size: 13px;
+  font-size: 15px;
   color: #334155;
   line-height: 1.55;
 
   white-space: pre-line;
   
+}
+
+.promotion-container {
+  position: relative;     
+  min-height: 280px;      
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(248, 250, 252, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 14px;
+  backdrop-filter: blur(2px);
+}
+
+/* 스피너 */
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #1c398e;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+
+.loading-overlay p {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  text-align: center;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

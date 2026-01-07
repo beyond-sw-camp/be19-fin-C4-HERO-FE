@@ -38,6 +38,12 @@
   border-radius: 12px;
   padding: 0 14px;
   font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.formtpl-search-input:focus {
+  border-color: #cbd5e1;
 }
 
 .formtpl-search-button {
@@ -45,9 +51,13 @@
   padding: 0 20px;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #45556c;
+  background: linear-gradient(180deg, #1c398e 0%, #162456 100%);
+  color: #ffff;
   cursor: pointer;
+}
+
+.formtpl-search-button:hover {
+  opacity: 0.9;
 }
 
 .formtpl-section {
@@ -89,11 +99,17 @@
   border-radius: 14px;
   background: #ffffff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.3s ease;
 }
 
 .formtpl-card.is-favorite .formtpl-action {
   color: #f0b400;
 }
+
+.formtpl-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 
 .formtpl-meta {
   display: flex;
@@ -112,7 +128,7 @@
 
 .formtpl-name {
   font-size: 16px;
-  color: #0f172b;
+  color: #0F172B !important;
   font-weight: 600;
   text-align: left;
 }
