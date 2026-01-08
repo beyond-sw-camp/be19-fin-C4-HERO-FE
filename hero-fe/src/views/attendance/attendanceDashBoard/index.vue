@@ -85,7 +85,7 @@
                     전체 부서
                   </option>
                   <option
-                    v-for="dept in departmentOptions"
+                    v-for="dept in filteredDepartmentOptions"
                     :key="dept.departmentId"
                     :value="dept.departmentId"
                   >
@@ -298,6 +298,17 @@ const {
   deptLoading,
 } = storeToRefs(dashboardStore);
 
+const EXCLUDED_DEPARTMENTS = [
+  '관리자 부서',
+  '발령 대기 부서',
+]
+
+const filteredDepartmentOptions = computed(() =>
+  departmentOptions.value.filter(
+    (d) => !EXCLUDED_DEPARTMENTS.includes(d.departmentName),
+  ),
+)
+
 /**
  * 현재 페이지 직원 목록
  * - 서버 페이징 결과를 그대로 사용
@@ -311,6 +322,11 @@ dashboardList.value.filter((row) => !isAdminRow(row))
  * - 필터값을 스토어에 반영 후 1페이지부터 재조회
  */
 const onSearch = (): void => {
+    if (
+    selectedDepartmentId.value != null &&
+    !filteredDepartmentOptions.value.some(d => d.departmentId === selectedDepartmentId.value)
+  ) selectedDepartmentId.value = null;
+
   dashboardStore.setMonth(selectedMonth.value);
   dashboardStore.setDepartment(selectedDepartmentId.value);
   dashboardStore.setScoreSort(scoreSort.value);
