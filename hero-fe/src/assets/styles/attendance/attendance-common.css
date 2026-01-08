@@ -108,7 +108,7 @@
 
 .tab {
   min-width: 146px;
-  height: 52px;
+  height: auto;
   padding: 10px;
 
   display: flex;
@@ -160,7 +160,8 @@
 .panel-search {
   padding: 14px 18px;
   border: 0;
-  border-bottom: 1px solid #e2e8f0; /* 검색 영역과 테이블 구분선 */
+  border-bottom: 1px solid #e2e8f0;
+  /* 검색 영역과 테이블 구분선 */
 }
 
 .panel-search-inner {
@@ -362,4 +363,8 @@
 
 .arrow-button {
   min-width: 34px;
+}
+
+td.empty-row {
+  text-align: center;
 }

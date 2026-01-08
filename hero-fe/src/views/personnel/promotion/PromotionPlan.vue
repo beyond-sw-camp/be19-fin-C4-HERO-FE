@@ -285,7 +285,6 @@ onMounted(() => {
   align-items: center;
   padding: 16px;
   gap: 10px;
-  background: #f8fafc;
   border-bottom-left-radius: 14px;
   border-bottom-right-radius: 14px;
 }

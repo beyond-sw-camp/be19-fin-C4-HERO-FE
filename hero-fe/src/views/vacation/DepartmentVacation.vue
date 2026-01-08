@@ -11,7 +11,7 @@
             <template v-else>부서 휴가 캘린더</template>
           </div>
           <div class="month-nav">
-            <button type="button" class="month-btn" @click="changeMonth(-1)">‹</button>
+            <button type="button" class="month-btn" :disabled="!canPrev" @click="changeMonth(-1)">‹</button>
             <span class="month-label">{{ currentYear }}년 {{ currentMonth + 1 }}월</span>
             <button type="button" class="month-btn" @click="changeMonth(1)">›</button>
           </div>
@@ -91,8 +91,13 @@ interface DeptVacationEvent {
 
 const weekdayLabels = ['일', '월', '화', '수', '목', '금', '토']
 const today = new Date()
-const currentYear = ref(today.getFullYear())
-const currentMonth = ref(today.getMonth())
+const initial = new Date(today.getFullYear(), today.getMonth(), 1)
+
+const currentYear = ref(initial.getFullYear())
+const currentMonth = ref(initial.getMonth())
+const minMonth = new Date(2025, 0, 1)
+const currentMonthDate = computed(() => new Date(currentYear.value, currentMonth.value, 1))
+const canPrev = computed(() => currentMonthDate.value > minMonth)
 
 const toLocalMidnightMs = (d: Date): number => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
 const isToday = (date: Date | null): boolean => date ? toLocalMidnightMs(date) === toLocalMidnightMs(today) : false
@@ -183,6 +188,7 @@ const calendarWeeks = computed(() => {
 const loadCurrentMonth = () => deptVacationStore.fetchDepartmentVacation(currentYear.value, currentMonth.value + 1)
 const changeMonth = (diff: number) => {
   const newDate = new Date(currentYear.value, currentMonth.value + diff, 1)
+  if (newDate < minMonth) return
   currentYear.value = newDate.getFullYear(); currentMonth.value = newDate.getMonth()
   loadCurrentMonth()
 }

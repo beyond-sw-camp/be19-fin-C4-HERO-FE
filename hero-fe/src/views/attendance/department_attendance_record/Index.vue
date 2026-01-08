@@ -212,6 +212,9 @@ interface EmployeeWorkSystemRow {
   workTime: string;
 }
 
+ const formatHHmm = (time?: string | null): string => {
+   return time ? time.slice(0, 5) : '';
+ };
 /* =========================
    스토어 & 인증 관련
    ========================= */
@@ -263,7 +266,7 @@ const allList = computed<EmployeeWorkSystemRow[]>(() => {
     status: row.state,
     position: row.jobTitle,
     workSystem: row.workSystemName,
-    workTime: `${row.startTime} - ${row.endTime}`,
+    workTime: `${formatHHmm(row.startTime)} - ${formatHHmm(row.endTime)}`,
   }));
 });
 

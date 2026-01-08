@@ -19,18 +19,21 @@
 
 /* 근무제명 컬럼 헤더 정렬 (본문과 패딩 맞춤) */
 .attendance-table th.col-worksystem {
-  padding-left: 100px; /* td.worksystem-name 과 동일하게 정렬 */
+  padding-left: 100px;
+  /* td.worksystem-name 과 동일하게 정렬 */
 }
 
 /* 시간 컬럼 헤더 정렬 (중앙 정렬 + 좌측 여백) */
 .attendance-table th.col-time {
   text-align: center;
-  padding-left: 10px; /* td.time-cell 과 동일하게 정렬 */
+  padding-left: 10px;
+  /* td.time-cell 과 동일하게 정렬 */
 }
 
 /* 사유 컬럼 헤더 정렬 */
 .attendance-table th.col-reason {
-  padding-left: 48px; /* td.reason-cell 과 동일하게 정렬 */
+  padding-left: 48px;
+  /* td.reason-cell 과 동일하게 정렬 */
 }
 
 /* =========================

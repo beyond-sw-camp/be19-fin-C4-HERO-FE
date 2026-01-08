@@ -23,7 +23,7 @@
       <div class="summary-card">
         <div class="summary-title">전체 직원</div>
         <div class="summary-value-wrapper">
-          <span class="summary-value">{{ summary.totalEmployees }}</span>
+          <span class="summary-value">{{ summaryView?.totalEmployees ?? 0 }}</span>
           <span class="summary-unit">명</span>
         </div>
       </div>
@@ -31,7 +31,7 @@
       <div class="summary-card">
         <div class="summary-title">우수 직원(95점 이상)</div>
         <div class="summary-value-wrapper">
-          <span class="summary-value">{{ summary.excellentEmployees }}</span>
+          <span class="summary-value">{{ summary.excellentEmployees ?? 0}}</span>
           <span class="summary-unit">명</span>
         </div>
       </div>
@@ -39,7 +39,7 @@
       <div class="summary-card">
         <div class="summary-title">위험 직원(85점 이하)</div>
         <div class="summary-value-wrapper">
-          <span class="summary-value">{{ summary.riskyEmployees }}</span>
+          <span class="summary-value">{{ summary.riskyEmployees ?? 0}}</span>
           <span class="summary-unit">명</span>
         </div>
       </div>
@@ -85,7 +85,7 @@
                     전체 부서
                   </option>
                   <option
-                    v-for="dept in departmentOptions"
+                    v-for="dept in filteredDepartmentOptions"
                     :key="dept.departmentId"
                     :value="dept.departmentId"
                   >
@@ -255,7 +255,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { storeToRefs } from 'pinia';
-
 import EmployeeHalfChart from '@/views/attendance/attendanceDashBoard/EmplloyeeHalfChartDrawer.vue';
 import { useAttendanceEmployeeDashboardStore } from '@/stores/attendance/attendanceEmployeeDashboard';
 import { useAttendanceDashboardStore } from '@/stores/attendance/dashboard';
@@ -276,6 +275,9 @@ const {
 const currentMonth = new Date().toISOString().slice(0, 7);
 const minMonth = '2025-01';
 
+const isAdminRow = (row: AttendanceDashboardDTO): boolean => {
+  return row.employeeName === 'admin';
+};
 /**
  * 로컬 필터 상태
  */
@@ -296,17 +298,35 @@ const {
   deptLoading,
 } = storeToRefs(dashboardStore);
 
+const EXCLUDED_DEPARTMENTS = [
+  '관리자 부서',
+  '발령 대기 부서',
+]
+
+const filteredDepartmentOptions = computed(() =>
+  departmentOptions.value.filter(
+    (d) => !EXCLUDED_DEPARTMENTS.includes(d.departmentName),
+  ),
+)
+
 /**
  * 현재 페이지 직원 목록
  * - 서버 페이징 결과를 그대로 사용
  */
-const pagedEmployees = computed<AttendanceDashboardDTO[]>(() => dashboardList.value);
+const pagedEmployees = computed<AttendanceDashboardDTO[]>(() =>
+dashboardList.value.filter((row) => !isAdminRow(row))
+);
 
 /**
  * 검색 버튼 클릭
  * - 필터값을 스토어에 반영 후 1페이지부터 재조회
  */
 const onSearch = (): void => {
+    if (
+    selectedDepartmentId.value != null &&
+    !filteredDepartmentOptions.value.some(d => d.departmentId === selectedDepartmentId.value)
+  ) selectedDepartmentId.value = null;
+
   dashboardStore.setMonth(selectedMonth.value);
   dashboardStore.setDepartment(selectedDepartmentId.value);
   dashboardStore.setScoreSort(scoreSort.value);
@@ -357,6 +377,9 @@ const visiblePages = computed<number[]>(() => {
   return [current - 1, current, current + 1];
 });
 
+const summaryView = computed(() => {
+return summary.value;
+});
 /**
  * 페이지 이동
  */
@@ -371,6 +394,8 @@ const goPage = (page: number): void => {
  * 직원 반기 근태 Drawer 열기
  */
 const openEmployeeChart = async (employeeId: number): Promise<void> => {
+ const row = dashboardList.value.find((r) => r.employeeId === employeeId);
+ if (row && isAdminRow(row)) return;
   employeeDashboardStore.setOpen(true);
   await employeeDashboardStore.fetchEmployeeHalfDashboard(employeeId);
 };
