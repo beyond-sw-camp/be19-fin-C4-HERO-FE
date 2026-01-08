@@ -222,7 +222,7 @@ const store = usePayrollAnalyticsStore();
 const org = computed(() => store.organization);
 
 const kpi = computed(() => org.value?.kpi ?? null);
-const HIDDEN_DEPT_NAMES = new Set(['관리자 부서', '발령 대기 부서']);
+const HIDDEN_DEPT_NAMES = new Set(['관리자 부서', '발령 대기 부서','경영지원본부','개발본부','영업본부']);
 
 const departments = computed(() =>
   (org.value?.departments ?? []).filter((d) => !HIDDEN_DEPT_NAMES.has(d.departmentName))
@@ -613,4 +613,5 @@ onBeforeUnmount(() => {
   .grid-3 { grid-template-columns: 1fr; }
   .chart-wrap { height: 280px; }
 }
+
 </style>
