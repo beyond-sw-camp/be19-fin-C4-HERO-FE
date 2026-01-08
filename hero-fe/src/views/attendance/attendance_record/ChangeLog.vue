@@ -157,11 +157,18 @@
                 </tr>
               </thead>
               <tbody>
-                <tr
-                  v-for="(row, index) in changeLogStore.changeLogList"
-                  :key="row.workSystemChangeLogId"
-                  :class="{ 'row-striped': index % 2 === 1 }"
-                >
+              <tr v-if="!changeLogStore.changeLogList.length">
+              <td colspan="5" class="empty-row">
+              조회된 근무 유형 변경 이력이 없습니다.
+              </td>
+              </tr>
+
+  <tr
+    v-else
+    v-for="(row, index) in changeLogStore.changeLogList"
+    :key="row.workSystemChangeLogId"
+    :class="{ 'row-striped': index % 2 === 1 }"
+  >
                   <td>{{ row.date }}</td>
                   <td class="worksystem-name">
                     {{ row.workSystemName }}

@@ -157,7 +157,13 @@
                 </tr>
               </thead>
               <tbody>
+                  <tr v-if="!correctionList.length">
+                  <td colspan="6" class="empty-row">
+                  조회된 근태 기록 수정 이력이 없습니다.
+                  </td>
+                  </tr>
                 <tr
+                v-else
                   v-for="(row, index) in correctionList"
                   :key="row.correctionId"
                   :class="{ 'row-striped': index % 2 === 1 }"

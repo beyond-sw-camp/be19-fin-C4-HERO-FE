@@ -364,3 +364,7 @@
 .arrow-button {
   min-width: 34px;
 }
+
+td.empty-row {
+  text-align: center;
+}

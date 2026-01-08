@@ -161,6 +161,11 @@
                 </thead>
 
                 <tbody>
+                    <tr v-if="!personalList.length">
+                    <td colspan="7" class="empty-row">
+                    조회된 개인 근태 이력이 없습니다.
+                    </td>
+                      </tr>
                     <tr
                       v-for="(row, index) in personalList"
                       :key="row.attendanceId"
