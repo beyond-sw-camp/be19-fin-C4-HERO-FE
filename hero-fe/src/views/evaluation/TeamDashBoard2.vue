@@ -1,6 +1,6 @@
 <!-- 
-  File Name   : TeamDashBoard2.vue
-  Description : 팀 평가 대시보드: 부서별 점수 비교 페이지
+  File Name   : TeamDashBoard4.vue
+  Description : 팀 평가 대시보드: 팀원별 평가 점수 트렌드 페이지
  
   History
   2025/12/19 - 승민 최초 작성
@@ -18,27 +18,13 @@
         <div class="inbox-tabs">
           <button
             class="tab tab-start"
-            @click="goRank"
-          >
-            부서 등급 분포
-          </button>
-
-          <button
-            class="tab active"
-            @click="goAvgScore"
-          >
-            부서별 점수 비교
-          </button>
-
-          <button
-            class="tab"
             @click="goMemberSkill"
           >
             팀원별 역량 상세 분석
           </button>
 
           <button
-            class="tab tab-end"
+            class="tab tab-end active"
             @click="goScoreTrend"
           >
             팀원별 평가 점수 트렌드
@@ -55,19 +41,22 @@
           <p>데이터를 불러오는 중입니다.</p>
         </div>
 
-        <!-- 📊 실제 차트 -->
+        <!-- 📊 실제 대시보드 -->
         <div v-else>
           <!-- 필터 -->
           <div class="filter-row">
-            <select v-model="selectedTemplateId" @change="updateChart">
-              <option
-                v-for="t in dashboardData"
-                :key="t.evaluationTemplateId"
+            <label
+              v-for="t in dashboardData"
+              :key="t.evaluationTemplateId"
+              class="checkbox"
+            >
+              <input
+                type="checkbox"
                 :value="t.evaluationTemplateId"
-              >
-                {{ t.evaluationTemplateName }}
-              </option>
-            </select>
+                v-model="checkedTemplateIds"
+              />
+              {{ t.evaluationTemplateName }}
+            </label>
           </div>
 
           <!-- 차트 -->
@@ -88,13 +77,15 @@ import { ref, onMounted, nextTick, watch } from "vue";
 import { useRouter } from "vue-router";
 import Chart from "chart.js/auto";
 import apiClient from "@/api/apiClient";
+import { useAuthStore } from "@/stores/auth";
 
 //외부 로직
 const router = useRouter();
+const authStore = useAuthStore();
 
 //Reactive 데이터
 const dashboardData = ref<any[]>([]);
-const selectedTemplateId = ref<number | null>(null);
+const checkedTemplateIds = ref<number[]>([]);
 const isLoading = ref(false);
 
 //차트 객체
@@ -105,10 +96,14 @@ let chartInstance: Chart | null = null;
  * 설명: 대시보드 데이터 조회 메소드
  */
 const loadDashboard = async () => {
-  try {
-    isLoading.value = true; // 🔥 로딩 시작
+  const departmentId = authStore.user?.departmentId;
 
-    const { data } = await apiClient.get("/evaluation/dashboard/all");
+  try {
+    isLoading.value = true;
+
+    const { data } = await apiClient.get(
+      `/evaluation/dashboard/${departmentId}`
+    );
 
     if (!data || data.length === 0) {
       alert("평가 데이터가 존재하지 않습니다.");
@@ -116,50 +111,72 @@ const loadDashboard = async () => {
     }
 
     dashboardData.value = data;
-    selectedTemplateId.value = data[0].evaluationTemplateId;
+    checkedTemplateIds.value = data.map(
+      (t: any) => t.evaluationTemplateId
+    );
 
     await nextTick();
-    renderChart();
+    renderChart(); // ✅ 최초 렌더
 
   } catch (e) {
-    console.error("대시보드 조회 실패", e);
+    console.error("트렌드 조회 실패", e);
   } finally {
-    isLoading.value = false; // 🔥 로딩 종료
+    isLoading.value = false;
   }
 };
 
 /**
- * 설명: 평균 점수 비교 데이터 계산 메소드
+ * 설명: 평가 점수 트렌드 계산 메소드
  */
-const calculateAvgScoreByDepartment = () => {
-  const template = dashboardData.value.find(
-    t => t.evaluationTemplateId === selectedTemplateId.value
+const buildTrendData = () => {
+  const templates = dashboardData.value.filter(t =>
+    checkedTemplateIds.value.includes(t.evaluationTemplateId)
   );
 
-  if (!template) return { labels: [], values: [] };
+  // 사원 목록 수집
+  const memberSet = new Set<string>();
 
-  const deptMap: Record<string, { sum: number; count: number }> = {};
-
-  template.evaluations.forEach((evaluation: any) => {
-    const score = evaluation.evaluationTotalScore;
-    const dept = evaluation.evaluationDepartmentName;
-
-    if (score == null) return;
-
-    if (!deptMap[dept]) {
-      deptMap[dept] = { sum: 0, count: 0 };
-    }
-
-    deptMap[dept].sum += score;
-    deptMap[dept].count += 1;
+  templates.forEach(template => {
+    template.evaluations.forEach((evaluation: any) => {
+      evaluation.evaluatees.forEach((e: any) => {
+        memberSet.add(e.evaluationEvaluateeName);
+      });
+    });
   });
 
-  const labels = Object.keys(deptMap);
-  const values = labels.map(dept =>
-    Number((deptMap[dept].sum / deptMap[dept].count).toFixed(1))
-  );
+  const labels = Array.from(memberSet); // X축: 사원
 
-  return { labels, values };
+  const colors = [
+    "#1c398e",
+    "#10b981",
+    "#f59e0b",
+    "#ef4444",
+    "#6366f1",
+  ];
+
+  const datasets = templates.map((template, idx) => {
+    const scoreMap: Record<string, number | null> = {};
+
+    labels.forEach(name => (scoreMap[name] = null));
+
+    template.evaluations.forEach((evaluation: any) => {
+      evaluation.evaluatees.forEach((e: any) => {
+        scoreMap[e.evaluationEvaluateeName] =
+          e.evaluationEvaluateeTotalScore;
+      });
+    });
+
+    return {
+      label: template.evaluationTemplateName,
+      data: labels.map(name => scoreMap[name]),
+      backgroundColor: colors[idx % colors.length],
+      borderRadius: 6,
+      barPercentage: 0.7,
+      categoryPercentage: 0.7,
+    };
+  });
+
+  return { labels, datasets };
 };
 
 /**
@@ -168,44 +185,38 @@ const calculateAvgScoreByDepartment = () => {
 const renderChart = () => {
   if (!chartCanvas.value) return;
 
-  const { labels, values } = calculateAvgScoreByDepartment();
+  const { labels, datasets } = buildTrendData();
 
   if (chartInstance) chartInstance.destroy();
 
   chartInstance = new Chart(chartCanvas.value, {
     type: "bar",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "부서 평균 점수",
-          data: values,
-          backgroundColor: "#1c398e",
-          borderRadius: 6,
-        },
-      ],
-    },
+    data: { labels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { position: "bottom" },
         tooltip: {
           callbacks: {
-            label: ctx => `${ctx.raw} 점`,
+            label: ctx =>
+              `${ctx.dataset.label}: ${ctx.raw} 점`,
           },
         },
       },
       scales: {
+        x: {
+          grid: { display: false },
+        },
         y: {
           beginAtZero: true,
           max: 100,
           ticks: {
-            stepSize: 10,
+            stepSize: 20,
           },
           title: {
             display: true,
-            text: "평균 점수",
+            text: "최종 평가 점수",
           },
         },
       },
@@ -222,34 +233,20 @@ const updateChart = async () => {
 };
 
 /**
- * 설명: 부서 등급 분포 페이지로 이동하는 메서드
- */
-const goRank = () => {
-  router.push("/evaluation/team/dashboard");
-};
-
-/**
- * 설명: 부서별 점수 비교 페이지로 이동하는 메서드
- */
-const goAvgScore = () => {
-  router.push("/evaluation/team/dashboard2");
-};
-
-/**
  * 설명: 팀원별 역량 상세 분석 페이지로 이동하는 메서드
  */
 const goMemberSkill = () => {
-  router.push("/evaluation/team/dashboard3");
+  router.push("/evaluation/team/dashboard");
 };
 
 /**
  * 설명: 팀원별 평가 점수 트렌드 페이지로 이동하는 메서드
  */
 const goScoreTrend = () => {
-  router.push("/evaluation/team/dashboard4");
+  router.push("/evaluation/team/dashboard2");
 };
 
-watch([isLoading, selectedTemplateId], async () => {
+watch([isLoading, checkedTemplateIds], async () => {
   if (isLoading.value) return;
   if (!dashboardData.value.length) return;
 
@@ -262,7 +259,6 @@ onMounted(loadDashboard);
 
 <!--style-->
 <style scoped>
-/* 공통 */
 .page {
   width: 100%;
   height: 100%;
@@ -328,18 +324,19 @@ onMounted(loadDashboard);
   padding: 24px 32px 32px;
 }
 
-/* ===== Filter ===== */
+/* Filter */
 .filter-row {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
   margin-bottom: 16px;
 }
 
-select {
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #cad5e2;
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
 }
 
 /* Chart */
@@ -357,30 +354,5 @@ select {
   width: 100% !important;
   height: 100% !important;
   max-width: 900px;
-}
-
-.loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 20px;
-  color: #64748b;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #e2e8f0;
-  border-top-color: #1c398e;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 16px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 </style>

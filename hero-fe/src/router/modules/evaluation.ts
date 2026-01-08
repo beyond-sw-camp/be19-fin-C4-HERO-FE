@@ -173,24 +173,6 @@ const evaluationRoutes: RouteRecordRaw[] = [
     children: [],
   },
   {
-    path: '/evaluation/team/dashboard3',
-    name: 'teamdashboard3',
-    component: () => import('@/views/evaluation/TeamDashBoard3.vue'),
-    meta: {
-      title: '팀 대시보드3',
-    },
-    children: [],
-  },
-  {
-    path: '/evaluation/team/dashboard4',
-    name: 'teamdashboard4',
-    component: () => import('@/views/evaluation/TeamDashBoard4.vue'),
-    meta: {
-      title: '팀 대시보드4',
-    },
-    children: [],
-  },
-  {
     path: '/evaluation/department/dashboard',
     name: 'departmentdashboard',
     component: () => import('@/views/evaluation/DepartmentDashBoard.vue'),
