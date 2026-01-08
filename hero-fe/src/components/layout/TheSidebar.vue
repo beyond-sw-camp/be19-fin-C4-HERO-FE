@@ -28,6 +28,7 @@
 
         <!-- 대시보드 -->
         <div class="menu-item"
+             v-if="!isSystemAdmin"
              :class="{ 'active-parent': activeParent === 'dashboard' }"
              @click="handleParentClick('dashboard')">
           <div class="menu-content">
@@ -40,6 +41,7 @@
 
         <!-- 근태관리  -->
         <div
+             v-if="!isSystemAdmin"
              class="menu-item has-dropdown"
              :class="{'active-parent': activeParent === 'attendance'}"
              @click="handleParentClick('attendance')"
@@ -59,7 +61,7 @@
         </div>
 
         <!-- 근태관리 하위 메뉴 -->
-        <div v-if="isAttendanceOpen && !isCollapsed" class="sub-menu-list">
+        <div v-if="!isSystemAdmin && isAttendanceOpen && !isCollapsed" class="sub-menu-list">
           <div
             class="sub-menu-item"
             :class="{ active: activeSubMenu === 'attendanceRecord' }"
@@ -85,7 +87,8 @@
         </div>
 
         <!-- 휴가/연차 -->
-        <div class="menu-item has-dropdown"
+        <div v-if="!isSystemAdmin"
+             class="menu-item has-dropdown"
              :class="{ 'active-parent': activeParent === 'vacation' }"
              @click="handleParentClick('vacation')">
           <div class="menu-content">
@@ -100,7 +103,7 @@
         </div>
 
         <!-- 휴가/연차 하위 메뉴 -->
-        <div v-if="isVacationOpen && !isCollapsed" class="sub-menu-list">
+        <div v-if="!isSystemAdmin && isVacationOpen && !isCollapsed" class="sub-menu-list">
           <div class="sub-menu-item" :class="{ active: activeSubMenu === 'vacationHistory' }"
               @click="handleSubMenuClick('vacationHistory')">
             <div class="sub-menu-text">휴가 이력</div>
@@ -112,7 +115,8 @@
         </div>
 
         <!-- 전자결재 -->
-        <div class="menu-item has-dropdown"
+        <div v-if="!isSystemAdmin"
+             class="menu-item has-dropdown"
              :class="{ 'active-parent': activeParent === 'approval' }"
              @click="handleParentClick('approval')">
           <div class="menu-content">
@@ -126,7 +130,7 @@
           </div>
         </div>
 
-        <div v-if="isApprovalOpen && !isCollapsed" class="sub-menu-list">
+        <div v-if="!isSystemAdmin && isApprovalOpen && !isCollapsed" class="sub-menu-list">
           <div class="sub-menu-item" :class="{ active: activeSubMenu === 'document-templates' }"
                @click="handleSubMenuClick('document-templates')">
             <div class="sub-menu-text">결재문서서식</div>
@@ -138,7 +142,8 @@
         </div>
 
         <!-- 성과평가 -->
-        <div class="menu-item has-dropdown"
+        <div v-if="!isSystemAdmin"
+             class="menu-item has-dropdown"
              :class="{ 'active-parent': activeParent === 'evaluation' }"
              @click="handleParentClick('evaluation')">
           <div class="menu-content">
@@ -151,7 +156,7 @@
             <img src="/images/dropdownArrow.png" />
           </div>
         </div>
-        <div v-if="isEvaluationOpen && !isCollapsed" class="sub-menu-list">
+        <div v-if="!isSystemAdmin && isEvaluationOpen && !isCollapsed" class="sub-menu-list">
           <div class="sub-menu-item" :class="{ active: activeSubMenu === 'template' }"
                @click="handleSubMenuClick('template')">
             <div class="sub-menu-text">평가템플릿</div>
@@ -182,6 +187,7 @@
 
         <!-- 급여 -->
         <div
+          v-if="!isSystemAdmin"
           class="menu-item has-dropdown"
           :class="{ 'active-parent': activeParent === 'payroll' }"
           @click="handleParentClick('payroll')"
@@ -201,7 +207,7 @@
         </div>
 
         <!-- 급여 하위 메뉴 -->
-        <div v-if="isPayrollOpen && !isCollapsed" class="sub-menu-list">
+        <div v-if="!isSystemAdmin && isPayrollOpen && !isCollapsed" class="sub-menu-list">
           <div
             class="sub-menu-item"
             :class="{ active: activeSubMenu === 'myPayroll' }"
@@ -238,7 +244,7 @@
       </div>
 
 
-        <div v-if="isPayrollAdminOpen && !isCollapsed" class="sub-menu-list">
+        <div v-if="canSeePayrollAdmin && isPayrollAdminOpen && !isCollapsed" class="sub-menu-list">
                   <!-- 급여 관리 하위 메뉴 -->
         <div class="sub-menu-item" :class="{ active: activeSubMenu === 'payrollBatch' }"
         @click="handleSubMenuClick('payrollBatch')">
@@ -374,9 +380,10 @@ import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore();
 
+const isSystemAdmin = computed(() => authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN']));
+
 const canSeeAttendanceDashboard = computed(() =>
-  authStore.hasAnyRole([
-    'ROLE_SYSTEM_ADMIN',
+  !isSystemAdmin.value && authStore.hasAnyRole([
     'ROLE_HR_EVALUATION',
     'ROLE_HR_ATTENDANCE',
     'ROLE_DEPT_MANAGER',
@@ -384,26 +391,24 @@ const canSeeAttendanceDashboard = computed(() =>
 );
 
 const canSeeTeamDashboard = computed(() => 
-  authStore.hasAnyRole([
-    'ROLE_SYSTEM_ADMIN',
+  !isSystemAdmin.value && authStore.hasAnyRole([
     'ROLE_DEPT_MANAGER',
   ])
 );
 const canSeeDeptDashboard = computed(() =>
-  authStore.hasAnyRole([
-    'ROLE_SYSTEM_ADMIN',
+  !isSystemAdmin.value && authStore.hasAnyRole([
     'ROLE_HR_EVALUATION',
   ])
 )
 
 // 사원 관리 일반 메뉴 (HR_TRANSFER)
 const canSeePersonnelGeneral = computed(() =>
-  authStore.hasAnyRole(['ROLE_HR_TRANSFER', 'ROLE_SYSTEM_ADMIN'])
+  !isSystemAdmin.value && authStore.hasAnyRole(['ROLE_HR_TRANSFER'])
 );
 
 // 승진 추천 (DEPT_MANAGER)
 const canSeePromotionRecommend = computed(() =>
-  authStore.hasAnyRole(['ROLE_DEPT_MANAGER', 'ROLE_SYSTEM_ADMIN'])
+  !isSystemAdmin.value && authStore.hasAnyRole(['ROLE_DEPT_MANAGER'])
 );
 
 // 사원 관리 상위 메뉴 (하위 메뉴 중 하나라도 볼 수 있으면 노출)
@@ -413,8 +418,7 @@ const canSeePersonnelParent = computed(() =>
 
 // 급여 관리자 담당 메뉴
 const canSeePayrollAdmin = computed(() =>
-  authStore.hasAnyRole([
-    'ROLE_SYSTEM_ADMIN',
+  !isSystemAdmin.value && authStore.hasAnyRole([
     'ROLE_HR_MANAGER',
     'ROLE_HR_PAYROLL',
   ])
@@ -422,12 +426,12 @@ const canSeePayrollAdmin = computed(() =>
 
 // 조직도 (EMPLOYEE)
 const canSeeOrganization = computed(() =>
-  authStore.hasAnyRole(['ROLE_EMPLOYEE', 'ROLE_SYSTEM_ADMIN'])
+  !isSystemAdmin.value && authStore.hasAnyRole(['ROLE_EMPLOYEE'])
 );
 
 // 설정 (SYSTEM_ADMIN, HR_MANAGER)
 const canSeeSettings = computed(() =>
-  authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN', 'ROLE_HR_MANAGER'])
+  authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN'])
 );
 
 const router = useRouter();
@@ -629,6 +633,11 @@ const syncActiveByRoute = (path: string) => {
   closeAllSubMenus();
   // 대시보드
   if (path === '/') {
+    // SYSTEM_ADMIN이 홈으로 접근 시 설정 페이지로 리다이렉트
+    if (isSystemAdmin.value) {
+      router.replace('/settings');
+      return;
+    }
     activeParent.value = 'dashboard';
     return;
   }
@@ -753,7 +762,7 @@ watch(
 .sidebar-container {
   height: auto;
   max-width: 100%;
-  width: 230px;
+  width: 215px;
   background: white;
   transition: width 0.3s ease;
 }

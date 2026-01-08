@@ -10,10 +10,12 @@
   2025/12/22 - (혜원) 최초 작성
   2025/12/22 - (혜원) 최근 활동 알림 연동 추가
   2025/12/26 - (혜원) 대시보드 API 연동
+  2026/01/06 - (혜원) 디자인 수정 & 퇴근 확인 모달 추가
+  2026/01/07 - (혜원) 휴게시간 데이터 연동 & 출근 전 기본 템플릿 조회
   </pre>
  
   @author 혜원
-  @version 1.4
+  @version 1.6
 -->
 <template>
   <div class="dashboard-wrapper">
@@ -24,6 +26,7 @@
         :current-date-time="currentDateTime"
         :today-attendance="todayAttendance"
         :weekly-work-hours="weeklyWorkHours"
+        :break-time-minutes="breakTimeMinutes"
         @punch-in="handlePunchIn"
         @punch-out="handlePunchOut"
       />
@@ -72,12 +75,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { Doughnut } from 'vue-chartjs';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { useNotificationStore } from '@/stores/notification/notification.store';
 import type { Notification } from '@/types/notification/notification.types';
 import dashboardApi from '@/api/dashboard/dashboard.api';
-import type { ClockStatusDTO } from '@/types/dashboard/dashboard.types';
+import type { 
+  ClockStatusDTO,
+  WorkSystemTemplateDTO
+} from '@/types/dashboard/dashboard.types';
 import { fetchMyProfile, generateMySeal } from '@/api/personnel/personnel';
 
 // 컴포넌트 임포트
@@ -96,8 +100,17 @@ const isLoading = ref(false);
 const todayAttendance = ref<ClockStatusDTO | null>(null);
 const currentWorkDuration = ref(0);
 const weeklyWorkHours = ref(0);
+const workSystemTemplate = ref<WorkSystemTemplateDTO | null>(null);
 let timeInterval: ReturnType<typeof setInterval> | null = null;
 let workDurationInterval: ReturnType<typeof setInterval> | null = null;
+
+// 휴게시간 계산 (분 → 시간 변환)
+const breakTimeMinutes = computed(() => {
+  if (workSystemTemplate.value?.breakMinMinutes) {
+    return workSystemTemplate.value.breakMinMinutes / 60;  // 120분 → 2시간
+  }
+  return 1; // 기본값 1시간
+});
 
 // 오늘 근무 현황
 const todayStats = computed(() => [
@@ -143,32 +156,32 @@ const todayStats = computed(() => [
 
 // 이번 달 요약
 const monthlySummary = ref([
-  { label: '일수', value: '0일', sub: '근무', image: '/images/home-day.svg' },
+  { label: '근무', value: '0일', sub: '일수', image: '/images/home-day.svg' },
   { label: '잔여', value: '0일', sub: '연차', image: '/images/home-annualleave.svg' },
   { label: '사용', value: '0일', sub: '휴가', image: '/images/home-leave.svg' }
 ]);
 
 // 출근 통계
 const attendanceStatsItems = ref([
-  { label: '이번 달 출근율', value: '98.5%', colorClass: 't-blue' },
-  { label: '정상 출근', value: '21일', colorClass: 't-green' },
+  { label: '이번 달 출근율', value: '0%', colorClass: 't-blue' },
+  { label: '정상 출근', value: '0일', colorClass: 't-green' },
   { label: '지각', value: '0일', colorClass: 't-red' },
   { label: '결근', value: '0일', colorClass: 't-dark' }
 ]);
 
 // 휴가 현황
 const vacationStatsItems = ref([
-  { label: '전체 연차', value: '15일', colorClass: 't-blue' },
-  { label: '사용 연차', value: '7일', colorClass: 't-orange' },
-  { label: '잔여 연차', value: '8일', colorClass: 't-green' },
-  { label: '소멸 예정', value: '0일', colorClass: 't-red' }
+  { label: '연차', value: '0일', colorClass: 't-blue' },
+  { label: '반차', value: '0일', colorClass: 't-orange' },
+  { label: '병가', value: '0일', colorClass: 't-green' },
+  { label: '기타', value: '0일', colorClass: 't-red' }
 ]);
 
 // 결재 현황
 const approvalStatsItems = ref([
-  { label: '결재 대기', value: '5건', colorClass: 't-brown' },
-  { label: '결재 완료', value: '28건', colorClass: 't-green' },
-  { label: '반려됨', value: '1건', colorClass: 't-red' }
+  { label: '결재 대기', value: '0건', colorClass: 't-blue' },
+  { label: '결재 완료', value: '0건', colorClass: 't-green' },
+  { label: '결재 반려', value: '0건', colorClass: 't-red' }
 ]);
 
 // 최근 알림
@@ -195,18 +208,12 @@ const updateWorkDuration = (): void => {
   if (todayAttendance.value?.startTime && !todayAttendance.value?.endTime) {
     const now = new Date();
     
-    // 1. 서버에서 받은 startTime(HH:mm:ss)을 오늘 날짜의 Date 객체로 생성
     const [hours, minutes, seconds] = todayAttendance.value.startTime.split(':').map(Number);
     const startDateTime = new Date();
     startDateTime.setHours(hours, minutes, seconds, 0);
 
-    // 2. 만약 계산된 시작 시간이 현재보다 미래라면 (서버-클라이언트 시간차) 
-    // 시간대 보정을 하거나 0으로 처리
     let diffMs = now.getTime() - startDateTime.getTime();
     
-    // 배포 환경에서 9시간 차이가 발생할 경우 강제 보정 로직 (선택)
-    // if (diffMs < 0) { startDateTime.setHours(startDateTime.getHours() - 9); diffMs = ... }
-
     currentWorkDuration.value = diffMs > 0 ? Math.floor(diffMs / 60000) : 0;
   } else {
     currentWorkDuration.value = 0;
@@ -231,13 +238,62 @@ const stopWorkDurationTimer = (): void => {
   }
 };
 
+const fetchWorkSystemTemplate = async (templateId: number): Promise<void> => {
+  try {
+    const response = await dashboardApi.getWorkSystemTemplate(templateId);
+    
+    if (response.data) {
+      workSystemTemplate.value = response.data;
+      
+      console.log('근무제 템플릿 조회 성공:', {
+        templateId,
+        breakMinMinutes: workSystemTemplate.value?.breakMinMinutes,
+        breakTimeHours: breakTimeMinutes.value
+      });
+    }
+  } catch (error) {
+    console.error('근무제 템플릿 조회 실패:', error);
+    workSystemTemplate.value = null;
+  }
+};
+
+const fetchMyDefaultTemplate = async (): Promise<void> => {
+  try {
+    const response = await dashboardApi.getMyDefaultTemplate();
+    
+    if (response.data) {
+      workSystemTemplate.value = response.data;
+      
+      console.log('기본 템플릿 조회 성공 (출근 전):', {
+        breakMinMinutes: workSystemTemplate.value?.breakMinMinutes,
+        breakTimeHours: breakTimeMinutes.value
+      });
+    }
+  } catch (error) {
+    console.error('기본 템플릿 조회 실패:', error);
+  }
+};
+
 const fetchTodayAttendance = async (): Promise<void> => {
   try {
     const response = await dashboardApi.getTodayStatus();
     todayAttendance.value = response.data || null;
+    
+    // 출근한 경우: 출근 시 저장된 템플릿 조회
+    if (todayAttendance.value?.workSystemTemplateId) {
+      console.log('출근 완료 - 템플릿 ID:', todayAttendance.value.workSystemTemplateId);
+      await fetchWorkSystemTemplate(todayAttendance.value.workSystemTemplateId);
+    } 
+    // 출근 전인 경우: 기본 템플릿 조회
+    else {
+      console.log('출근 전 - 기본 템플릿 조회');
+      await fetchMyDefaultTemplate();
+    }
   } catch (error) {
     console.error('오늘 근태 정보 조회 실패:', error);
     todayAttendance.value = null;
+    // 출근 정보 조회 실패 시에도 기본 템플릿 조회
+    await fetchMyDefaultTemplate();
   }
 };
 
@@ -262,7 +318,6 @@ const fetchWeeklyAttendance = async (): Promise<void> => {
   }
 };
 
-// 이번 달 요약 조회
 const fetchMonthlyStats = async (): Promise<void> => {
   try {
     const response = await dashboardApi.getMonthlySummary();
@@ -270,7 +325,7 @@ const fetchMonthlyStats = async (): Promise<void> => {
     
     if (data) {
       monthlySummary.value = [
-        { label: '일수', value: `${data.workDays}일`, sub: '근무', image: '/images/home-day.svg' },
+        { label: '근무', value: `${data.workDays}일`, sub: '일수', image: '/images/home-day.svg' },
         { label: '잔여', value: `${data.remainingAnnualLeave}일`, sub: '연차', image: '/images/home-annualleave.svg' },
         { label: '사용', value: `${data.usedVacationDays}일`, sub: '휴가', image: '/images/home-leave.svg' }
       ];
@@ -280,7 +335,6 @@ const fetchMonthlyStats = async (): Promise<void> => {
   }
 };
 
-// 출근 통계 조회
 const fetchAttendanceStats = async (): Promise<void> => {
   try {
     const response = await dashboardApi.getAttendanceStats();
@@ -302,15 +356,12 @@ const fetchAttendanceStats = async (): Promise<void> => {
   }
 };
 
-// 휴가 현황 조회
 const fetchVacationStats = async (): Promise<void> => {
   try {
     const response = await dashboardApi.getVacationStats();
     const data = response.data;
     
     if (data) {
-      const total = data.annualLeaveDays + data.halfDayDays + data.sickLeaveDays + data.otherLeaveDays;
-      
       vacationStatsItems.value = [
         { label: '연차', value: `${data.annualLeaveDays}일`, colorClass: 't-blue' },
         { label: '반차', value: `${data.halfDayDays}일`, colorClass: 't-orange' },
@@ -323,7 +374,6 @@ const fetchVacationStats = async (): Promise<void> => {
   }
 };
 
-// 결재 현황 조회
 const fetchApprovalStats = async (): Promise<void> => {
   try {
     const response = await dashboardApi.getApprovalStats();
@@ -341,9 +391,6 @@ const fetchApprovalStats = async (): Promise<void> => {
   }
 };
 
-/**
- * 직인 체크 및 자동 생성
- */
 const checkAndGenerateSeal = async (): Promise<void> => {
   try {
     const response = await fetchMyProfile();
@@ -354,7 +401,7 @@ const checkAndGenerateSeal = async (): Promise<void> => {
       await generateMySeal();
       console.log('직인 자동 생성 완료');
     } else {
-      console.log('직인이 이미 존재합니다:');
+      console.log('직인이 이미 존재합니다');
     }
   } catch (error) {
     console.warn('직인 생성 중 오류 발생 (무시):', error);
@@ -374,13 +421,9 @@ const handlePunchIn = async (): Promise<void> => {
     await dashboardApi.clockIn();
     alert('출근 완료!');
     
-    // 출퇴근 상태 먼저 갱신
     await fetchTodayAttendance();
-    
-    // 타이머 시작
     startWorkDurationTimer();
     
-    // 주간/월간 통계 갱신 (차트 업데이트!)
     await Promise.all([
       fetchWeeklyAttendance(),
       fetchMonthlyStats(),
@@ -397,18 +440,32 @@ const handlePunchIn = async (): Promise<void> => {
 };
 
 const handlePunchOut = async (): Promise<void> => {
+  const now = new Date();
+  const currentHour = now.getHours();
+  const isAfter1PM = currentHour >= 13;
+
+  let confirmMessage: string;
+  if (isAfter1PM) {
+    confirmMessage = '퇴근 처리하시겠습니까?';
+  } else {
+    confirmMessage = '퇴근시간이 아닙니다.\n퇴근 처리하시겠습니까?';
+  }
+  
+  const confirmed = confirm(confirmMessage);
+  if (!confirmed) {
+    return;
+  }
+
   try {
     isLoading.value = true;
-    await dashboardApi.clockOut();
+    
+    await dashboardApi.clockOut(isAfter1PM);
+    
     alert('퇴근 완료! 오늘도 수고하셨습니다.');
     
-    // 타이머 정지
     stopWorkDurationTimer();
-    
-    // 출퇴근 상태 먼저 갱신
     await fetchTodayAttendance();
     
-    // 주간/월간 통계 갱신 (차트 업데이트!)
     await Promise.all([
       fetchWeeklyAttendance(),
       fetchMonthlyStats(),
@@ -427,7 +484,6 @@ const handlePunchOut = async (): Promise<void> => {
 const loadDashboardData = async (): Promise<void> => {
   isLoading.value = true;
   try {
-    // 직인 체크 및 자동 생성
     checkAndGenerateSeal();
     
     await Promise.all([
@@ -477,7 +533,7 @@ onUnmounted(() => {
 }
 
 .left-panel {
-  width: 680px;
+  width: 600px;
   display: flex;
   flex-direction: column;
   gap: 27px;
@@ -494,5 +550,14 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 27px;
+}
+
+:deep(.time-clock-card h3),
+:deep(.card-title),
+:deep(h3) {
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  letter-spacing: -0.02em;
 }
 </style>

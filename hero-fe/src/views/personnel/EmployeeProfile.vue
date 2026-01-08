@@ -33,7 +33,14 @@
         <div class="sidebar-card">
           <!-- Profile Section -->
           <div class="profile-section">
-            <div class="profile-avatar">{{ employee.employeeName?.charAt(0) || '?' }}</div>
+            <img
+              v-if="profileImageSrc && !imageError"
+              :src="profileImageSrc"
+              class="profile-avatar-img"
+              alt="프로필 이미지"
+              @error="imageError = true"
+            />
+            <div v-else class="profile-avatar">{{ employee.employeeName?.charAt(0) || '?' }}</div>
             <div class="profile-name">{{ employee.employeeName || '이름 없음' }}</div>
             <div class="profile-team">{{ employee.team || '-' }}</div>
             <div class="profile-badge">{{ employee.rank || '-' }}</div>
@@ -189,10 +196,7 @@
             </div>
             <div class="info-item">
               <label>
-                <svg class="label-icon" viewBox="0 0 12 12" fill="none">
-                  <path d="M3 2.5L9 2.5L9 9.5L3 9.5Z" stroke="#64748B" stroke-width="1"/>
-                </svg>
-                기본급 (연봉)
+                기본급 (월 기준)
               </label>
               <div class="info-value">{{ formatCurrency(employee.salary) }}원</div>
             </div>
@@ -302,7 +306,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useToast } from 'vue-toastification';
 import { fetchMyProfile, type EmployeeProfileResponse } from '@/api/personnel/personnel';
@@ -318,11 +322,12 @@ const orgStore = useOrganizationStore();
 const { deptHistoryList, gradeHistoryList, isHistoryLoading, historyError } = storeToRefs(orgStore);
 const authStore = useAuthStore();
 
-type EmployeeProfileWithId = EmployeeProfileResponse & { employeeId: number };
+type EmployeeProfileWithId = EmployeeProfileResponse & { employeeId: number; imagePath?: string };
 
 const employee = ref<EmployeeProfileWithId | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
+const imageError = ref(false);
 const isContactModalOpen = ref(false);
 const isPasswordModalOpen = ref(false);
 const isSealModalOpen = ref(false);
@@ -333,6 +338,11 @@ const evaluationEmployeeId = ref<number | null>(null);
 const showDeptModal = ref(false);
 const showGradeModal = ref(false);
 
+const profileImageSrc = computed(() => {
+  if (!employee.value) return '';
+  return employee.value.profileImageUrl || employee.value.imagePath || '';
+});
+
 /**
  * 프로필 정보 로드
  * JWT 토큰에서 사용자 정보를 추출하여 조회
@@ -340,6 +350,7 @@ const showGradeModal = ref(false);
 const loadProfile = async () => {
   loading.value = true;
   error.value = null;
+  imageError.value = false;
 
   try {
     const response = await fetchMyProfile();
@@ -602,6 +613,13 @@ onUnmounted(() => {
   color: white;
   font-size: 48px;
   font-weight: 400;
+}
+
+.profile-avatar-img {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .profile-name {

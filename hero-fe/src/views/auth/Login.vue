@@ -127,8 +127,13 @@ const handleLogin = async () => {
       if (response.data && response.data.passwordChangeRequired) {
         showPasswordChangeModal.value = true;
       } else {
-        // 로그인 후 리디렉션 쿼리가 있으면 해당 경로로, 없으면 메인 페이지로 이동
-        router.push((route.query.redirect as string) || '/');
+        // SYSTEM_ADMIN인 경우 설정 페이지로 이동
+        if (authStore.hasAnyRole(['ROLE_SYSTEM_ADMIN'])) {
+          router.push('/settings');
+        } else {
+          // 로그인 후 리디렉션 쿼리가 있으면 해당 경로로, 없으면 메인 페이지로 이동
+          router.push((route.query.redirect as string) || '/');
+        }
       }
     } else {
       errorMessage.value = '로그인 실패: 서버로부터 유효한 인증 토큰을 받지 못했습니다.';

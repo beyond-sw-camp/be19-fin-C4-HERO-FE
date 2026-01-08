@@ -857,13 +857,13 @@ const handleElectronicApproval = () => {
 }
 
 .btn-approve {
-  background-color: #dbeafe;
-  color: #1e40af;
+  background-color: #3b82f6;
+  color: white;
 }
 
 .btn-reject {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: #ef4444;
+  color: white;
 }
 
 .no-data {
