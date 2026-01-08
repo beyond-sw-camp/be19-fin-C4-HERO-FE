@@ -45,7 +45,7 @@
             <input 
               class="input employee-input" 
               type="text" 
-              v-model="creator",
+              v-model="creator"
               readonly
             />
           </div>
