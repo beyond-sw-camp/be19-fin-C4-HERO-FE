@@ -157,7 +157,13 @@
                 </tr>
               </thead>
               <tbody>
+                  <tr v-if="!displayList.length">
+                  <td colspan="5" class="empty-row">
+                  조회된 초과 근무 이력이 없습니다.
+                  </td>
+                  </tr>
                 <tr
+                v-else
                   v-for="(row, index) in displayList"
                   :key="row.overtimeId"
                   :class="{ 'row-striped': index % 2 === 1 }"

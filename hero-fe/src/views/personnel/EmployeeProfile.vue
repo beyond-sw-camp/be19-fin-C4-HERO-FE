@@ -189,10 +189,7 @@
             </div>
             <div class="info-item">
               <label>
-                <svg class="label-icon" viewBox="0 0 12 12" fill="none">
-                  <path d="M3 2.5L9 2.5L9 9.5L3 9.5Z" stroke="#64748B" stroke-width="1"/>
-                </svg>
-                기본급 (연봉)
+                기본급 (월 기준)
               </label>
               <div class="info-value">{{ formatCurrency(employee.salary) }}원</div>
             </div>
